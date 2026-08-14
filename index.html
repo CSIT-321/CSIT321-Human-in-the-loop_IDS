@@ -3,55 +3,498 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Human-in-the-Loop Intrusion Detection Dashboard</title>
+    <meta name="description" content="FYP-26-S3-13 — A Human-in-the-Loop Intrusion Detection Dashboard. Hybrid signature + ML detection with structured analyst feedback, safety guardrails, and audit logging." />
+    <title>Human-in-the-Loop IDS — FYP-26-S3-13 · CSIT321</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet" />
     <style>
-      :root { color-scheme: dark; font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; --line: rgba(154,190,196,.22); --text:#edf7f8; --muted:#9fb7bd; --cyan:#40d8e8; --teal:#27c29f; --amber:#f2b84b; --red:#ff6b6b; }
+      :root {
+        color-scheme: dark;
+        --bg: #060a09; --bg2: #0a100e;
+        --panel: rgba(15,22,20,.82); --panel2: rgba(19,28,26,.9);
+        --line: rgba(126,168,156,.17); --line2: rgba(126,168,156,.32);
+        --ink: #e6f0ec; --body: #9db4ad; --dim: #6d847d;
+        --acc: #3ce39b; --acc-dim: rgba(60,227,155,.12);
+        --amber: #ffb454; --red: #ff5d6c; --cyan: #54c8ff;
+        --disp: "Chakra Petch", sans-serif;
+        --sans: "IBM Plex Sans", sans-serif;
+        --mono: "JetBrains Mono", monospace;
+      }
       * { box-sizing: border-box; }
       html { scroll-behavior: smooth; }
-      body { margin: 0; background: linear-gradient(120deg, rgba(20,107,118,.28), transparent 34rem), linear-gradient(180deg,#081015,#0d1418 50%,#091116); color: var(--text); }
-      body::before { position: fixed; inset: 0; z-index: -1; content: ""; background-image: linear-gradient(rgba(255,255,255,.035) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.035) 1px, transparent 1px); background-size: 44px 44px; mask-image: linear-gradient(to bottom, black, transparent 82%); }
-      a { color: inherit; text-decoration: none; } h1,h2,h3,p { margin-top: 0; } p { color: var(--muted); line-height: 1.7; }
-      .wrap { width: min(1160px, calc(100% - 40px)); margin: 0 auto; }
-      .nav { display: flex; justify-content: space-between; align-items: center; gap: 20px; padding: 24px 0; }
-      .brand,.links { display: flex; align-items: center; gap: 14px; } .links a { color: var(--muted); font-size: .94rem; } .links a:hover { color: var(--cyan); }
-      .mark { display: grid; width: 42px; height: 42px; place-items: center; border: 1px solid rgba(64,216,232,.5); border-radius: 8px; color: var(--cyan); font-size: .78rem; font-weight: 900; }
-      .hero { min-height: 90vh; padding-bottom: 56px; } .hero-grid { display: grid; grid-template-columns: minmax(0,1fr) minmax(320px,.72fr); gap: 44px; align-items: center; padding: 64px 0 34px; }
-      .eyebrow { margin-bottom: 12px; color: var(--cyan); font-size: .78rem; font-weight: 900; text-transform: uppercase; } h1 { max-width: 850px; margin-bottom: 20px; font-size: clamp(2.55rem,7vw,5.75rem); line-height: .96; } h2 { margin-bottom: 14px; font-size: clamp(2rem,4vw,3.15rem); line-height: 1.06; } h3 { margin-bottom: 10px; font-size: 1.08rem; }
-      .subtitle { max-width: 760px; color: #cdf2f4; font-size: clamp(1.15rem,2vw,1.55rem); font-weight: 750; } .actions { display: flex; flex-wrap: wrap; gap: 14px; margin-top: 28px; }
-      .button { display: inline-flex; align-items: center; justify-content: center; min-height: 48px; padding: 0 20px; border-radius: 8px; font-weight: 850; } .primary { border: 1px solid rgba(64,216,232,.55); background: linear-gradient(135deg,#28bfd0,#20a17f); color: #041114; } .secondary { border: 1px solid var(--line); background: rgba(255,255,255,.04); }
-      .preview,.card,.panel { border: 1px solid var(--line); border-radius: 8px; background: rgba(17,29,35,.78); box-shadow: 0 24px 80px rgba(0,0,0,.25); } .preview { padding: 18px; }
-      .preview-top { display:flex; justify-content:space-between; gap:10px; padding-bottom:16px; border-bottom:1px solid var(--line); color:var(--muted); font-size:.86rem; } .score { display:grid; grid-template-columns:1fr 112px; gap:18px; align-items:center; padding:28px 0; } .score strong { display:block; font-size:4.4rem; line-height:1; }
-      .ring { width:112px; aspect-ratio:1; border-radius:50%; background:conic-gradient(var(--cyan) 0 78%, rgba(255,255,255,.08) 78% 100%); position:relative; } .ring::after { position:absolute; inset:13px; content:""; border-radius:50%; background:#101a20; }
-      .alert { display:grid; grid-template-columns:54px 1fr auto; gap:12px; align-items:center; min-height:58px; margin-top:10px; padding:12px; border:1px solid var(--line); border-radius:8px; background:rgba(255,255,255,.035); } .alert p { margin:0; color:#d8e9ea; } .high{color:var(--red)} .med{color:var(--amber)} .low{color:var(--teal)}
-      .metrics,.grid,.scope,.team { display:grid; gap:18px; } .metrics { grid-template-columns:repeat(3,1fr); } .metrics div,.card { padding:22px; } .metrics strong { display:block; color:var(--cyan); font-size:1.7rem; }
-      section { padding:82px 0; } .section-head { max-width:760px; margin-bottom:34px; } .grid.four { grid-template-columns:repeat(4,1fr); } .grid.three,.scope { grid-template-columns:repeat(3,1fr); }
-      .num { display:inline-grid; width:42px; height:42px; place-items:center; margin-bottom:18px; border:1px solid rgba(64,216,232,.35); border-radius:8px; color:var(--cyan); font-weight:900; }
-      .solution { display:grid; grid-template-columns:minmax(280px,.78fr) 1fr; gap:22px; } .panel { padding:24px; } .label { display:block; margin-top:12px; padding:14px; border-radius:8px; font-weight:850; } .positive{background:rgba(35,185,154,.16);color:#8cf1dc} .warning{background:rgba(242,184,75,.14);color:#ffd37a} .neutral{background:rgba(64,216,232,.13);color:#a4f2fb}
-      ul { display:grid; gap:12px; margin:0; padding:0; list-style:none; } li { position:relative; min-height:48px; padding:13px 14px 13px 42px; border:1px solid var(--line); border-radius:8px; background:rgba(255,255,255,.035); color:#dbecee; } li::before { position:absolute; left:14px; top:14px; content:""; width:12px; height:12px; border:2px solid var(--teal); border-radius:50%; }
-      .flow { display:grid; grid-template-columns:repeat(6,1fr); gap:12px; } .step { position:relative; min-height:132px; padding:18px; border:1px solid var(--line); border-radius:8px; background:linear-gradient(180deg,rgba(20,36,43,.9),rgba(12,20,25,.9)); } .step:not(:last-child)::after { position:absolute; top:50%; right:-14px; content:">"; color:var(--cyan); font-weight:900; transform:translateY(-50%); } .step span { display:block; margin-bottom:30px; color:var(--cyan); font-weight:900; }
-      .timeline { display:grid; gap:14px; } .time { display:grid; grid-template-columns:140px 1fr; gap:18px; align-items:center; padding:18px; border:1px solid var(--line); border-radius:8px; background:rgba(17,29,35,.72); } .time span { color:var(--cyan); font-weight:900; } .time p { margin:0; color:#dcecee; }
-      .team { grid-template-columns:repeat(4,1fr); } .avatar { display:grid; width:58px; height:58px; place-items:center; margin-bottom:18px; border-radius:8px; background:linear-gradient(135deg,rgba(64,216,232,.26),rgba(242,184,75,.16)); color:var(--cyan); font-weight:900; }
-      footer { display:grid; grid-template-columns:1.3fr 1fr auto; gap:24px; align-items:center; padding:34px 0 42px; border-top:1px solid var(--line); } footer p { margin:4px 0 0; } footer small { color:var(--muted); }
-      @media (max-width:960px) { .hero-grid,.solution,footer{grid-template-columns:1fr} .grid.four,.grid.three,.scope,.team{grid-template-columns:repeat(2,1fr)} .flow{grid-template-columns:repeat(3,1fr)} .step:not(:last-child)::after{content:""} }
-      @media (max-width:680px) { .wrap{width:min(100% - 28px,1160px)} .nav{align-items:flex-start;flex-direction:column} .links{flex-wrap:wrap} .hero{min-height:auto} .hero-grid{padding-top:42px} .score,.metrics,.grid.four,.grid.three,.scope,.team,.flow{grid-template-columns:1fr} .alert{grid-template-columns:48px 1fr} .alert strong{grid-column:2} .time{grid-template-columns:1fr;gap:8px} }
+      body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--sans); -webkit-font-smoothing: antialiased; }
+      body::before { position: fixed; inset: 0; z-index: -2; content: ""; background:
+        radial-gradient(52rem 30rem at 82% -6%, rgba(60,227,155,.075), transparent 62%),
+        radial-gradient(40rem 26rem at -8% 14%, rgba(84,200,255,.045), transparent 60%),
+        linear-gradient(180deg, var(--bg), var(--bg2) 58%, var(--bg)); }
+      body::after { position: fixed; inset: 0; z-index: -1; content: ""; pointer-events: none; opacity: .5; background:
+        repeating-linear-gradient(0deg, rgba(255,255,255,.014) 0 1px, transparent 1px 3px); }
+      a { color: inherit; text-decoration: none; }
+      h1,h2,h3,p { margin: 0; }
+      .wrap { width: min(1180px, calc(100% - 44px)); margin: 0 auto; }
+
+      /* ---- top status strip ---- */
+      .status { border-bottom: 1px solid var(--line); background: rgba(8,13,12,.92); }
+      .status .wrap { display: flex; flex-wrap: wrap; gap: 6px 26px; padding: 9px 0; font-family: var(--mono); font-size: .68rem; letter-spacing: .08em; color: var(--dim); text-transform: uppercase; }
+      .status b { color: var(--acc); font-weight: 500; }
+      .status .dot { display: inline-block; width: 6px; height: 6px; margin-right: 7px; border-radius: 50%; background: var(--acc); box-shadow: 0 0 8px var(--acc); animation: pulse 2.4s infinite; vertical-align: 1px; }
+      @keyframes pulse { 0%,100% { opacity: 1 } 50% { opacity: .35 } }
+
+      /* ---- nav ---- */
+      .nav { display: flex; justify-content: space-between; align-items: center; gap: 20px; padding: 22px 0; }
+      .brand { display: flex; align-items: center; gap: 13px; }
+      .mark { display: grid; width: 40px; height: 40px; place-items: center; border: 1px solid rgba(60,227,155,.5); border-radius: 3px; color: var(--acc); font: 700 .74rem var(--disp); letter-spacing: .06em; background: var(--acc-dim); box-shadow: inset 0 0 18px rgba(60,227,155,.08); }
+      .brand strong { font: 600 .98rem var(--disp); letter-spacing: .04em; }
+      .brand small { display: block; font: 500 .62rem var(--mono); letter-spacing: .14em; color: var(--dim); text-transform: uppercase; }
+      .links { display: flex; flex-wrap: wrap; gap: 4px; }
+      .links a { padding: 8px 12px; border: 1px solid transparent; border-radius: 3px; font: 500 .74rem var(--mono); letter-spacing: .1em; color: var(--body); text-transform: uppercase; transition: .18s; }
+      .links a:hover { color: var(--acc); border-color: var(--line2); background: var(--acc-dim); }
+
+      /* ---- hero ---- */
+      .hero { padding: 58px 0 70px; }
+      .hero-grid { display: grid; grid-template-columns: minmax(0,1fr) minmax(340px,.8fr); gap: 48px; align-items: center; }
+      .eyebrow { display: inline-flex; align-items: center; gap: 10px; margin-bottom: 20px; padding: 7px 13px; border: 1px solid var(--line2); border-radius: 3px; background: var(--panel); font: 500 .68rem var(--mono); letter-spacing: .16em; color: var(--acc); text-transform: uppercase; }
+      h1 { margin-bottom: 22px; font: 700 clamp(2.5rem,5.6vw,4.6rem)/1.02 var(--disp); letter-spacing: -.01em; text-wrap: balance; }
+      h1 em { font-style: normal; color: var(--acc); }
+      .lede { max-width: 620px; margin-bottom: 16px; font-size: clamp(1.02rem,1.5vw,1.22rem); font-weight: 500; color: #c9ded6; line-height: 1.55; }
+      .lede b { color: var(--ink); }
+      .sub { max-width: 620px; color: var(--body); line-height: 1.75; font-size: .95rem; }
+      .actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 30px; }
+      .button { display: inline-flex; align-items: center; gap: 9px; min-height: 46px; padding: 0 22px; border-radius: 3px; font: 600 .8rem var(--mono); letter-spacing: .1em; text-transform: uppercase; cursor: pointer; transition: .18s; }
+      .primary { border: 1px solid rgba(60,227,155,.6); background: linear-gradient(135deg, #2bd48c, #1fa874); color: #03130b; box-shadow: 0 8px 28px rgba(60,227,155,.22); }
+      .primary:hover { transform: translateY(-1px); box-shadow: 0 12px 34px rgba(60,227,155,.32); }
+      .ghost { border: 1px solid var(--line2); background: rgba(255,255,255,.03); color: var(--body); }
+      .ghost:hover { color: var(--acc); border-color: rgba(60,227,155,.5); }
+
+      /* ---- console panel ---- */
+      .console { position: relative; border: 1px solid var(--line2); border-radius: 4px; background: var(--panel); box-shadow: 0 30px 90px rgba(0,0,0,.5); }
+      .console::before, .console::after, .console .ct::before, .console .ct::after { position: absolute; content: ""; width: 14px; height: 14px; border: 2px solid var(--acc); opacity: .85; }
+      .console::before { top: -2px; left: -2px; border-width: 2px 0 0 2px; }
+      .console::after { top: -2px; right: -2px; border-width: 2px 2px 0 0; }
+      .console .ct::before { bottom: -2px; left: -2px; border-width: 0 0 2px 2px; }
+      .console .ct::after { bottom: -2px; right: -2px; border-width: 0 2px 2px 0; }
+      .console-head { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 13px 17px; border-bottom: 1px solid var(--line); font: 500 .68rem var(--mono); letter-spacing: .14em; color: var(--dim); text-transform: uppercase; }
+      .console-head b { color: var(--ink); font-weight: 500; }
+      .console-body { display: grid; grid-template-columns: 168px 1fr; gap: 0; }
+      .radar-cell { display: grid; place-items: center; padding: 20px; border-right: 1px solid var(--line); }
+      .radar { position: relative; width: 128px; aspect-ratio: 1; border-radius: 50%; border: 1px solid var(--line2); background:
+        radial-gradient(circle, transparent 62%, rgba(60,227,155,.05) 62.2%), repeating-radial-gradient(circle, transparent 0 30px, rgba(126,168,156,.1) 30px 31px); overflow: hidden; }
+      .radar::before, .radar::after { content: ""; position: absolute; background: rgba(126,168,156,.16); }
+      .radar::before { left: 50%; top: 8%; bottom: 8%; width: 1px; }
+      .radar::after { top: 50%; left: 8%; right: 8%; height: 1px; }
+      .sweep { position: absolute; inset: 0; border-radius: 50%; background: conic-gradient(from 0deg, rgba(60,227,155,.5), transparent 72deg); animation: spin 3.6s linear infinite; }
+      @keyframes spin { to { transform: rotate(360deg) } }
+      .blip { position: absolute; width: 5px; height: 5px; border-radius: 50%; background: var(--red); box-shadow: 0 0 8px var(--red); animation: blipfade 3.6s infinite; }
+      .blip.b1 { top: 30%; left: 62%; } .blip.b2 { top: 58%; left: 30%; background: var(--amber); box-shadow: 0 0 8px var(--amber); animation-delay: 1.4s; }
+      @keyframes blipfade { 0%,12% { opacity: 1 } 60%,100% { opacity: .12 } }
+      .radar-cell figcaption { position: absolute; visibility: hidden; }
+      .feed { min-height: 218px; padding: 10px 12px; font: 500 .72rem/1.5 var(--mono); }
+      .feed-row { display: grid; grid-template-columns: 62px 46px 1fr; gap: 10px; align-items: baseline; padding: 7px 6px; border-bottom: 1px dashed rgba(126,168,156,.12); animation: feedin .4s ease; }
+      .feed-row .t { color: var(--dim); } .feed-row .sev { font-weight: 700; letter-spacing: .04em; }
+      .feed-row .m { color: #c4d8d0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+      .s-high { color: var(--red); } .s-med { color: var(--amber); } .s-low { color: var(--acc); } .s-info { color: var(--cyan); }
+      @keyframes feedin { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: none; } }
+      .console-foot { display: flex; justify-content: space-between; gap: 12px; padding: 11px 17px; border-top: 1px solid var(--line); font: 500 .66rem var(--mono); letter-spacing: .12em; color: var(--dim); text-transform: uppercase; }
+      .console-foot b { color: var(--acc); font-weight: 500; }
+
+      /* ---- metrics ---- */
+      .metrics { display: grid; grid-template-columns: repeat(4,1fr); gap: 1px; margin-top: 46px; border: 1px solid var(--line); border-radius: 4px; background: var(--line); overflow: hidden; }
+      .metrics div { padding: 20px 22px; background: var(--panel); }
+      .metrics strong { display: block; font: 700 2rem/1 var(--disp); color: var(--acc); }
+      .metrics span { display: block; margin-top: 8px; font: 500 .66rem var(--mono); letter-spacing: .14em; color: var(--dim); text-transform: uppercase; }
+
+      /* ---- sections ---- */
+      section { padding: 88px 0; }
+      .sec-head { max-width: 780px; margin-bottom: 40px; }
+      .kicker { display: flex; align-items: center; gap: 14px; margin-bottom: 16px; font: 500 .7rem var(--mono); letter-spacing: .2em; color: var(--acc); text-transform: uppercase; }
+      .kicker::after { content: ""; flex: 1; max-width: 120px; height: 1px; background: linear-gradient(90deg, var(--line2), transparent); }
+      h2 { margin-bottom: 14px; font: 700 clamp(1.7rem,3.4vw,2.6rem)/1.08 var(--disp); letter-spacing: -.005em; }
+      .sec-head p { color: var(--body); line-height: 1.75; font-size: .96rem; max-width: 700px; }
+
+      .grid { display: grid; gap: 14px; }
+      .four { grid-template-columns: repeat(4,1fr); } .three { grid-template-columns: repeat(3,1fr); }
+      .card { position: relative; padding: 24px; border: 1px solid var(--line); border-radius: 4px; background: var(--panel); transition: .2s; }
+      .card:hover { border-color: rgba(60,227,155,.45); transform: translateY(-3px); box-shadow: 0 18px 44px rgba(0,0,0,.35); }
+      .card .idx { font: 700 .68rem var(--mono); color: var(--acc); letter-spacing: .12em; }
+      .card h3 { margin: 12px 0 9px; font: 600 1.04rem var(--disp); letter-spacing: .02em; }
+      .card p { color: var(--body); font-size: .86rem; line-height: 1.65; }
+
+      /* ---- solution ---- */
+      .solution { display: grid; grid-template-columns: minmax(300px,.82fr) 1fr; gap: 20px; align-items: start; }
+      .panelbox { position: relative; padding: 24px; border: 1px solid var(--line2); border-radius: 4px; background: var(--panel2); }
+      .panelbox h3 { font: 600 .8rem var(--mono); letter-spacing: .18em; color: var(--dim); text-transform: uppercase; margin-bottom: 6px; }
+      .keys { display: grid; gap: 8px; margin-top: 12px; }
+      .key { display: flex; align-items: center; gap: 12px; padding: 11px 13px; border: 1px solid var(--line); border-radius: 3px; background: rgba(255,255,255,.025); font: 600 .78rem var(--mono); letter-spacing: .03em; }
+      .key kbd { min-width: 34px; padding: 3px 6px; border: 1px solid var(--line2); border-radius: 3px; background: rgba(0,0,0,.35); color: var(--dim); font: 700 .62rem var(--mono); text-align: center; }
+      .k-red { color: #ffa3ab; border-color: rgba(255,93,108,.35); background: rgba(255,93,108,.07); }
+      .k-grn { color: #8cf0c6; border-color: rgba(60,227,155,.35); background: rgba(60,227,155,.07); }
+      .k-cyn { color: #a4e4ff; border-color: rgba(84,200,255,.35); background: rgba(84,200,255,.07); }
+      .k-amb { color: #ffd39d; border-color: rgba(255,180,84,.35); background: rgba(255,180,84,.07); }
+      .k-gry { color: #c2d2cc; }
+      .delta { margin-top: 16px; padding-top: 14px; border-top: 1px dashed var(--line2); font: 500 .74rem var(--mono); color: var(--dim); letter-spacing: .06em; }
+      .delta b { color: var(--acc); font-weight: 700; }
+      ul.feats { display: grid; gap: 10px; margin: 0; padding: 0; list-style: none; }
+      ul.feats li { display: grid; grid-template-columns: 22px 1fr; gap: 13px; padding: 14px 16px; border: 1px solid var(--line); border-radius: 3px; background: var(--panel); color: #cfe0da; font-size: .88rem; line-height: 1.55; }
+      ul.feats li::before { content: "▸"; color: var(--acc); font-weight: 700; }
+      ul.feats b { color: var(--ink); }
+
+      /* ---- architecture lanes ---- */
+      .lanes { display: grid; gap: 14px; }
+      .lane { display: grid; grid-template-columns: 218px 1fr; gap: 16px; align-items: stretch; padding: 18px; border: 1px solid var(--line); border-radius: 4px; background: var(--panel); }
+      .lane-tag small { display: block; font: 500 .62rem var(--mono); letter-spacing: .16em; color: var(--acc); text-transform: uppercase; }
+      .lane-tag strong { display: block; margin-top: 6px; font: 600 1.06rem var(--disp); letter-spacing: .02em; }
+      .lane-tag span { display: block; margin-top: 7px; color: var(--dim); font-size: .78rem; line-height: 1.5; }
+      .mods { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; }
+      .mod { display: flex; flex-direction: column; gap: 6px; padding: 13px 14px; border: 1px solid var(--line); border-radius: 3px; background: linear-gradient(180deg, rgba(24,36,33,.9), rgba(13,20,18,.9)); }
+      .mod em { font: 700 .62rem var(--mono); color: var(--dim); font-style: normal; letter-spacing: .1em; }
+      .mod strong { font: 600 .86rem var(--disp); letter-spacing: .02em; }
+      .mod span { color: var(--dim); font-size: .72rem; line-height: 1.45; }
+
+      /* ---- dataset bars ---- */
+      .dist { display: grid; gap: 9px; margin-top: 26px; }
+      .bar-row { display: grid; grid-template-columns: 118px 1fr 74px; gap: 14px; align-items: center; font: 500 .74rem var(--mono); }
+      .bar-row .lbl { color: var(--body); letter-spacing: .04em; }
+      .track { height: 13px; border: 1px solid var(--line); border-radius: 2px; background: rgba(0,0,0,.3); overflow: hidden; }
+      .fill { height: 100%; background: linear-gradient(90deg, rgba(60,227,155,.55), var(--acc)); animation: grow 1.1s cubic-bezier(.2,.7,.2,1) backwards; }
+      .fill.attack { background: linear-gradient(90deg, rgba(255,93,108,.5), #ff7d89); }
+      .fill.warn { background: linear-gradient(90deg, rgba(255,180,84,.5), var(--amber)); }
+      .bar-row .val { color: var(--dim); text-align: right; }
+      @keyframes grow { from { width: 0 !important; } }
+      .note { margin-top: 18px; font: 400 .7rem var(--mono); color: var(--dim); letter-spacing: .04em; }
+      .chips { display: flex; flex-wrap: wrap; gap: 9px; margin-top: 22px; }
+      .chip { padding: 8px 14px; border: 1px solid rgba(60,227,155,.35); border-radius: 3px; background: var(--acc-dim); color: #b5ecd8; font: 600 .74rem var(--mono); letter-spacing: .05em; }
+
+      /* ---- stack spec sheet ---- */
+      .spec { border: 1px solid var(--line); border-radius: 4px; overflow: hidden; }
+      .spec-row { display: grid; grid-template-columns: 218px 1fr; gap: 18px; padding: 15px 20px; border-bottom: 1px solid var(--line); background: var(--panel); }
+      .spec-row:last-child { border-bottom: 0; }
+      .spec-row:nth-child(odd) { background: rgba(19,28,26,.55); }
+      .spec-row dt { font: 700 .68rem var(--mono); letter-spacing: .16em; color: var(--acc); text-transform: uppercase; }
+      .spec-row dd { margin: 0; font: 500 .82rem/1.7 var(--mono); color: #c4d8d0; }
+
+      /* ---- scope ---- */
+      .scope .card h3 { display: flex; align-items: center; gap: 10px; font: 600 .78rem var(--mono); letter-spacing: .18em; text-transform: uppercase; }
+      .scope ul { display: grid; gap: 8px; margin: 14px 0 0; padding: 0; list-style: none; }
+      .scope li { padding: 10px 12px 10px 34px; border: 1px solid var(--line); border-radius: 3px; background: rgba(255,255,255,.02); color: #c9dad3; font-size: .84rem; position: relative; }
+      .scope li::before { position: absolute; left: 12px; content: "✓"; color: var(--acc); font: 700 .8rem var(--mono); }
+      .scope .out li::before { content: "✕"; color: var(--red); }
+
+      /* ---- gantt ---- */
+      .gantt { border: 1px solid var(--line); border-radius: 4px; background: var(--panel); padding: 22px; overflow-x: auto; }
+      .g-inner { min-width: 640px; }
+      .g-weeks { display: grid; grid-template-columns: 178px repeat(14, 1fr); gap: 3px 4px; margin-bottom: 12px; }
+      .g-weeks span { font: 500 .58rem var(--mono); color: var(--dim); text-align: center; letter-spacing: .05em; }
+      .g-row { display: grid; grid-template-columns: 178px repeat(14, 1fr); gap: 3px 4px; align-items: center; margin-bottom: 9px; }
+      .g-row .g-lbl { font: 600 .7rem var(--mono); color: var(--body); letter-spacing: .05em; }
+      .g-row .g-lbl small { display: block; font-weight: 400; font-size: .6rem; color: var(--dim); letter-spacing: .08em; }
+      .g-bar { height: 20px; border-radius: 2px; background: linear-gradient(90deg, rgba(60,227,155,.35), rgba(60,227,155,.75)); position: relative; animation: grow2 .9s cubic-bezier(.2,.7,.2,1) backwards; }
+      .g-bar.done { background: linear-gradient(90deg, rgba(84,200,255,.4), rgba(84,200,255,.85)); }
+      .g-bar.hard { background: linear-gradient(90deg, rgba(255,180,84,.4), rgba(255,180,84,.8)); }
+      @keyframes grow2 { from { transform: scaleX(0); opacity: 0; } }
+      .g-legend { display: flex; flex-wrap: wrap; gap: 18px; margin-top: 16px; font: 500 .64rem var(--mono); color: var(--dim); letter-spacing: .1em; text-transform: uppercase; }
+      .g-legend i { display: inline-block; width: 18px; height: 9px; border-radius: 2px; margin-right: 7px; vertical-align: -1px; }
+
+      /* ---- team ---- */
+      .team { grid-template-columns: repeat(3,1fr); }
+      .member .avatar { display: grid; width: 52px; height: 52px; place-items: center; margin-bottom: 16px; border: 1px solid rgba(60,227,155,.4); border-radius: 3px; background: linear-gradient(135deg, rgba(60,227,155,.18), rgba(84,200,255,.1)); color: var(--acc); font: 700 .92rem var(--disp); letter-spacing: .04em; }
+      .member .mid { font: 500 .6rem var(--mono); color: var(--dim); letter-spacing: .16em; }
+      .member h3 { margin: 6px 0 5px; font-size: 1rem; }
+      .member p { font: 500 .72rem var(--mono); color: var(--body); letter-spacing: .03em; }
+
+      footer { border-top: 1px solid var(--line); background: rgba(8,13,12,.85); }
+      .foot { display: grid; grid-template-columns: 1.4fr 1fr auto; gap: 26px; align-items: center; padding: 34px 0 40px; }
+      .foot strong { font: 600 .95rem var(--disp); letter-spacing: .02em; }
+      .foot p { margin-top: 5px; font: 500 .68rem var(--mono); color: var(--dim); letter-spacing: .1em; text-transform: uppercase; line-height: 1.8; }
+      .foot small { font: 400 .66rem var(--mono); color: var(--dim); letter-spacing: .1em; }
+
+      /* ---- load reveal ---- */
+      .rise { animation: rise .7s cubic-bezier(.2,.7,.2,1) backwards; }
+      @keyframes rise { from { opacity: 0; transform: translateY(16px); } }
+
+      @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } }
+
+      @media (max-width: 1000px) {
+        .hero-grid, .solution { grid-template-columns: 1fr; }
+        .four, .three, .team { grid-template-columns: repeat(2, 1fr); }
+        .metrics { grid-template-columns: repeat(2, 1fr); }
+        .console-body { grid-template-columns: 1fr; }
+        .radar-cell { border-right: 0; border-bottom: 1px solid var(--line); }
+        .lane { grid-template-columns: 1fr; }
+      }
+      @media (max-width: 660px) {
+        .wrap { width: min(100% - 30px, 1180px); }
+        .nav { flex-direction: column; align-items: flex-start; }
+        .four, .three, .team, .metrics, .spec-row, .g-row, .g-weeks { grid-template-columns: 1fr; }
+        .g-weeks span { display: none; }
+        section { padding: 62px 0; }
+      }
     </style>
   </head>
   <body>
+    <div class="status"><div class="wrap">
+      <span><span class="dot"></span>SYSTEM <b>NOMINAL</b></span>
+      <span>GROUP <b>FYP-26-S3-13</b></span>
+      <span>MODULE <b>CSIT321</b></span>
+      <span>FEED <b>CICIDS2017</b></span>
+      <span>SUPERVISOR <b>LIM MIN HAN</b></span>
+      <span>BUILD <b>2026.08</b></span>
+    </div></div>
+
     <header class="hero wrap" id="top">
-      <nav class="nav" aria-label="Primary navigation"><a class="brand" href="#top"><span class="mark">HIL</span><strong>IDS Project</strong></a><div class="links"><a href="#solution">Solution</a><a href="#features">Features</a><a href="#timeline">Timeline</a><a href="#team">Team</a></div></nav>
-      <div class="hero-grid"><section><p class="eyebrow">CSIT321 Final Year Project</p><h1>Human-in-the-Loop Intrusion Detection Dashboard</h1><p class="subtitle">Adaptive IDS alert review with human feedback for false-positive reduction</p><p>A security-focused dashboard that combines automated intrusion detection alerts with administrator feedback to improve alert prioritisation, reduce repeated false positives, and support more usable security operations.</p><div class="actions"><a class="button primary" href="#overview">View Project Overview</a><a class="button secondary" href="#footer">Dashboard Demo Coming Soon</a></div></section><aside class="preview"><div class="preview-top"><span>Alert Review Console</span><strong>FYP prototype</strong></div><div class="score"><div><span>Risk score</span><strong>78</strong></div><div class="ring"></div></div><div class="alert"><span class="high">HIGH</span><p>SQL injection pattern</p><strong>TP</strong></div><div class="alert"><span class="med">MED</span><p>Repeated login anomaly</p><strong>Review</strong></div><div class="alert"><span class="low">LOW</span><p>Expected maintenance scan</p><strong>FP</strong></div></aside></div>
-      <div class="metrics"><div><strong>03</strong><span>Feedback labels</span></div><div><strong>06</strong><span>Core features</span></div><div><strong>20</strong><span>Week delivery plan</span></div></div>
+      <nav class="nav rise" aria-label="Primary navigation">
+        <a class="brand" href="#top"><span class="mark">HIL</span><span><strong>Human-in-the-Loop IDS</strong><small>Alert Review Console</small></span></a>
+        <div class="links"><a href="#problem">Problem</a><a href="#solution">Solution</a><a href="#architecture">Architecture</a><a href="#dataset">Dataset</a><a href="#roadmap">Roadmap</a><a href="#team">Team</a></div>
+      </nav>
+
+      <div class="hero-grid">
+        <section class="rise" style="animation-delay:.08s">
+          <p class="eyebrow">Final Year Project · CSIT321</p>
+          <h1>Detection that <em>learns</em> from the analyst.</h1>
+          <p class="lede">A hybrid <b>signature + XGBoost</b> intrusion detection pipeline fused into one explainable 0–100 risk score — then refined by <b>structured analyst feedback</b> under safety guardrails.</p>
+          <p class="sub">Analyst verdicts are captured once and reused: repeated false positives get suppressed, true positives rank higher, and guardrails guarantee critical alerts can never be silenced. Every decision lands in an append-only audit log.</p>
+          <div class="actions"><a class="button primary" href="#solution">Explore the System</a><a class="button ghost" href="#roadmap">View Roadmap ↗</a></div>
+        </section>
+
+        <aside class="console rise" style="animation-delay:.2s" aria-label="Alert review console preview">
+          <span class="ct"></span>
+          <div class="console-head"><span>ALERT QUEUE · <b>LIVE PREVIEW</b></span><span>148 ALERTS</span></div>
+          <div class="console-body">
+            <figure class="radar-cell">
+              <div class="radar"><div class="sweep"></div><span class="blip b1"></span><span class="blip b2"></span></div>
+            </figure>
+            <div class="feed" id="feed" aria-live="polite"></div>
+          </div>
+          <div class="console-foot"><span>FUSION SCORE <b>0–100</b></span><span>GUARDRAIL <b>ACTIVE</b></span><span>AUDIT <b>ON</b></span></div>
+        </aside>
+      </div>
+
+      <div class="metrics rise" style="animation-delay:.32s">
+        <div><strong data-count="6">0</strong><span>Feedback categories</span></div>
+        <div><strong data-count="8">0</strong><span>System modules</span></div>
+        <div><strong data-count="48">0</strong><span>Use cases specified</span></div>
+        <div><strong data-count="6">0</strong><span>Attack categories</span></div>
+      </div>
     </header>
+
     <main>
-      <section class="wrap" id="overview"><div class="section-head"><p class="eyebrow">Problem</p><h2>Security teams need more than another alert list</h2><p>IDS tools generate many alerts, many may be false positives, and repeated noise can cause alert fatigue.</p></div><div class="grid four"><article class="card"><span class="num">01</span><h3>High Alert Volume</h3><p>Large alert queues make priority review difficult.</p></article><article class="card"><span class="num">02</span><h3>False Positives</h3><p>Benign activity can be flagged as suspicious.</p></article><article class="card"><span class="num">03</span><h3>Alert Fatigue</h3><p>Repeated low-value alerts reduce focus and trust.</p></article><article class="card"><span class="num">04</span><h3>Limited Learning</h3><p>Traditional dashboards rarely adapt from feedback.</p></article></div></section>
-      <section class="wrap" id="solution"><div class="section-head"><p class="eyebrow">Proposed Solution</p><h2>A feedback-aware review workflow</h2><p>The planned dashboard keeps administrators in control while making repeated alert handling traceable.</p></div><div class="solution"><div class="panel"><h3>Feedback labels</h3><span class="label positive">True Positive</span><span class="label warning">False Positive</span><span class="label neutral">Expected Activity</span><p style="margin:24px 0 0">Risk score adjustment: <strong>86 &gt; 41</strong></p></div><ul><li>Display IDS alerts in a structured dashboard</li><li>Allow administrators to review alerts</li><li>Support feedback labels for alert decisions</li><li>Adjust risk scores based on human feedback</li><li>Group similar alerts to reduce repeated false positives</li><li>Provide evaluation summaries to show improvement</li></ul></div></section>
-      <section class="wrap" id="features"><div class="section-head"><p class="eyebrow">Key Features</p><h2>Built around review, feedback, and evidence</h2></div><div class="grid three"><article class="card"><span class="num">01</span><h3>IDS Alert Dashboard</h3><p>View severity, risk score, source, destination, protocol, and attack type.</p></article><article class="card"><span class="num">02</span><h3>Human Feedback Loop</h3><p>Mark alerts as true positive, false positive, or expected activity.</p></article><article class="card"><span class="num">03</span><h3>Adaptive Risk Scoring</h3><p>Update current risk scores after administrator feedback.</p></article><article class="card"><span class="num">04</span><h3>Similar Alert Grouping</h3><p>Group similar alerts to support repeated false-positive reduction.</p></article><article class="card"><span class="num">05</span><h3>Evaluation Summary</h3><p>Compare alert decisions against ground truth to evaluate handling.</p></article><article class="card"><span class="num">06</span><h3>Audit-Friendly Design</h3><p>Make feedback decisions and score changes explainable and traceable.</p></article></div></section>
-      <section class="wrap"><div class="section-head"><p class="eyebrow">System Architecture</p><h2>Simple flow from data to improvement</h2></div><div class="flow"><div class="step"><span>01</span><strong>Raw IDS Dataset</strong></div><div class="step"><span>02</span><strong>Alert Preprocessing</strong></div><div class="step"><span>03</span><strong>Dashboard Alert View</strong></div><div class="step"><span>04</span><strong>Human Feedback</strong></div><div class="step"><span>05</span><strong>Risk Score Adjustment</strong></div><div class="step"><span>06</span><strong>Evaluation Summary</strong></div></div></section>
-      <section class="wrap"><div class="section-head"><p class="eyebrow">Target Users</p><h2>Security Administrators and SOC Analysts</h2><p>Main needs: identify high-risk alerts, reduce repeated false positives, understand risk, provide feedback quickly, and review improvement.</p></div></section>
-      <section class="wrap"><div class="section-head"><p class="eyebrow">Project Scope</p><h2>Clear boundaries for the FYP timeline</h2></div><div class="scope"><article class="card"><h3>Minimum Requirements</h3><ul><li>Project website</li><li>IDS alert dataset preparation</li><li>Alert dashboard prototype</li><li>Alert filtering</li><li>Human feedback input</li><li>Basic risk score update</li></ul></article><article class="card"><h3>Nice-to-Have Features</h3><ul><li>Similar alert grouping</li><li>Feedback history</li><li>Evaluation summary</li><li>Better visualisation of risk changes</li><li>Exportable summary</li></ul></article><article class="card"><h3>Stretch Goals</h3><ul><li>Machine learning-based alert scoring</li><li>Real-time alert simulation</li><li>User role management</li><li>Advanced analytics</li><li>Deployment-ready SOC demo</li></ul></article></div></section>
-      <section class="wrap" id="timeline"><div class="section-head"><p class="eyebrow">Timeline</p><h2>From project setup to final demonstration</h2></div><div class="timeline"><article class="time"><span>Week 1</span><p>Form team and create project website</p></article><article class="time"><span>Week 2-4</span><p>Research, requirement analysis, WBS, tool selection</p></article><article class="time"><span>Week 5</span><p>Submit PRD</p></article><article class="time"><span>Week 6-11</span><p>SRS, TDM, wireframes, prototype development</p></article><article class="time"><span>Week 10/12</span><p>Session 1 assessment and functional prototype demo</p></article><article class="time"><span>Week 12-16</span><p>Module development, database/hosting, testing</p></article><article class="time"><span>Week 16-18</span><p>Integration testing and final documentation</p></article><article class="time"><span>Week 19</span><p>Final submission</p></article><article class="time"><span>Week 20</span><p>Final presentation and live product demonstration</p></article></div></section>
-      <section class="wrap" id="team"><div class="section-head"><p class="eyebrow">Team</p><h2>Project team placeholders</h2></div><div class="team"><article class="card"><div class="avatar">1</div><h3>Team Member 1</h3><p>Project Lead / Feedback Engine</p></article><article class="card"><div class="avatar">2</div><h3>Team Member 2</h3><p>Frontend Dashboard / UI</p></article><article class="card"><div class="avatar">3</div><h3>Team Member 3</h3><p>Research / Documentation</p></article><article class="card"><div class="avatar">4</div><h3>Team Member 4</h3><p>Testing / Deployment</p></article></div></section>
+      <section class="wrap" id="problem">
+        <div class="sec-head"><p class="kicker">01 · Problem</p><h2>Alert fatigue is a human problem, not a detection problem</h2><p>IDS tools raise alerts far faster than analysts can review them — and a large share are false positives. Every unnecessary re-review taxes attention, and the noise trains people to stop trusting the tool exactly when it matters.</p></div>
+        <div class="grid four">
+          <article class="card"><span class="idx">/01</span><h3>High Alert Volume</h3><p>Queues grow faster than review capacity; priority ordering becomes guesswork.</p></article>
+          <article class="card"><span class="idx">/02</span><h3>False Positives</h3><p>The same benign activity is flagged again and again, session after session.</p></article>
+          <article class="card"><span class="idx">/03</span><h3>Alert Fatigue</h3><p>Repeated low-value alerts erode focus, trust, and response quality.</p></article>
+          <article class="card"><span class="idx">/04</span><h3>No Learning Loop</h3><p>Analyst verdicts evaporate — the dashboard never adapts from them.</p></article>
+        </div>
+      </section>
+
+      <section class="wrap" id="solution">
+        <div class="sec-head"><p class="kicker">02 · Solution</p><h2>Six verdicts. One adjusted score. Zero silenced threats.</h2><p>Two complementary detectors score every network flow. The analyst's verdict then adjusts the fused risk score within guardrailed limits — and the decision is reused across similar alerts.</p></div>
+        <div class="solution">
+          <div class="panelbox">
+            <h3>Feedback Categories</h3>
+            <div class="keys">
+              <span class="key k-red"><kbd>MC</kbd>Confirmed Malicious</span>
+              <span class="key k-grn"><kbd>FP</kbd>False Positive</span>
+              <span class="key k-cyn"><kbd>EA</kbd>Expected Activity</span>
+              <span class="key k-amb"><kbd>ES</kbd>Escalate</span>
+              <span class="key k-gry"><kbd>UN</kbd>Uncertain</span>
+              <span class="key k-gry"><kbd>DUP</kbd>Duplicate</span>
+            </div>
+            <p class="delta">SCORE ADJUSTMENT · <b>86 → 41</b> · FLOOR ENFORCED</p>
+          </div>
+          <ul class="feats">
+            <li><span><b>Hybrid detection</b> — signature rules catch known patterns; an XGBoost model scores anomalous flows.</span></li>
+            <li><span><b>Alert fusion</b> — both detectors combine into one 0–100 explainable risk score.</span></li>
+            <li><span><b>Structured feedback</b> — six verdict categories drive deterministic score adjustment.</span></li>
+            <li><span><b>Safety guardrails</b> — score floors, ceilings, and critical-alert protection stop feedback from hiding real threats.</span></li>
+            <li><span><b>Similar-alert grouping</b> — one decision suppresses an entire family of repeated false positives.</span></li>
+            <li><span><b>Append-only audit log</b> — every decision and score change stays traceable, forever.</span></li>
+          </ul>
+        </div>
+      </section>
+
+      <section class="wrap" id="features">
+        <div class="sec-head"><p class="kicker">03 · Features</p><h2>Built around review, feedback, and evidence</h2></div>
+        <div class="grid three">
+          <article class="card"><span class="idx">F·01</span><h3>Hybrid Detection Engine</h3><p>Signature rules and a supervised ML model classify flows in parallel, providing complementary evidence for every alert.</p></article>
+          <article class="card"><span class="idx">F·02</span><h3>Fused Risk Scoring</h3><p>Detector outputs combine into a single 0–100 score that assigns and adjusts alert priority across the queue.</p></article>
+          <article class="card"><span class="idx">F·03</span><h3>Explainable Alerts</h3><p>Signature evidence and SHAP feature attributions on every alert — the analyst sees exactly why it fired.</p></article>
+          <article class="card"><span class="idx">F·04</span><h3>Human Feedback Loop</h3><p>Six structured verdicts with feedback history, amendment, and bulk actions for high-volume triage.</p></article>
+          <article class="card"><span class="idx">F·05</span><h3>Safety Guardrails</h3><p>Admin-configurable floors, ceilings, and critical-alert protection ensure feedback never hides a real threat.</p></article>
+          <article class="card"><span class="idx">F·06</span><h3>Audit &amp; Reporting</h3><p>Append-only audit logging plus exportable reports of alert activity, trends, and review performance.</p></article>
+        </div>
+      </section>
+
+      <section class="wrap" id="architecture">
+        <div class="sec-head"><p class="kicker">04 · Architecture</p><h2>Eight modules, three vertical slices</h2><p>Each pair owns a slice end-to-end — detection, feedback loop, and interface — so the system integrates continuously instead of in one big-bang merge.</p></div>
+        <div class="lanes">
+          <div class="lane">
+            <div class="lane-tag"><small>Slice A</small><strong>Detection Engine</strong><span>Turns raw flows into scored, evidenced detections.</span></div>
+            <div class="mods">
+              <div class="mod"><em>MOD·01</em><strong>Data Preparation</strong><span>CICIDS2017 flows cleaned and featurised</span></div>
+              <div class="mod"><em>MOD·02</em><strong>Signature Detection</strong><span>Rule engine matches known attack patterns</span></div>
+              <div class="mod"><em>MOD·03</em><strong>Machine Learning</strong><span>XGBoost classifier with SHAP attributions</span></div>
+            </div>
+          </div>
+          <div class="lane">
+            <div class="lane-tag"><small>Slice B</small><strong>Feedback &amp; Trust Loop</strong><span>Where analyst judgement enters the system.</span></div>
+            <div class="mods">
+              <div class="mod"><em>MOD·04</em><strong>Alert Fusion</strong><span>Detector evidence merged into one risk score</span></div>
+              <div class="mod"><em>MOD·05</em><strong>Human Feedback</strong><span>Six structured verdicts per alert</span></div>
+              <div class="mod"><em>MOD·06</em><strong>Safety Guardrail</strong><span>Floors, ceilings, critical-alert protection</span></div>
+            </div>
+          </div>
+          <div class="lane">
+            <div class="lane-tag"><small>Slice C</small><strong>Interface &amp; Evaluation</strong><span>Where the system is used and judged.</span></div>
+            <div class="mods">
+              <div class="mod"><em>MOD·07</em><strong>Dashboard</strong><span>Queue, drill-downs, visualisations, exports</span></div>
+              <div class="mod"><em>MOD·08</em><strong>Evaluation</strong><span>Feedback vs. no-feedback baseline runs</span></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="wrap" id="dataset">
+        <div class="sec-head"><p class="kicker">05 · Dataset</p><h2>Trained and evaluated on CICIDS2017</h2><p>A public benchmark of labelled network flows from the Canadian Institute for Cybersecurity (UNB) — six attack categories against benign background traffic, with severe class imbalance handled via weighting and resampling.</p></div>
+        <div class="chips">
+          <span class="chip">Brute Force</span><span class="chip">Botnet</span><span class="chip">DoS</span><span class="chip">DDoS</span><span class="chip">Web Attack</span><span class="chip">Infiltration</span>
+        </div>
+        <div class="dist" role="img" aria-label="Approximate class distribution of CICIDS2017 flows">
+          <div class="bar-row"><span class="lbl">BENIGN</span><span class="track"><span class="fill" style="width:80.3%"></span></span><span class="val">80.30%</span></div>
+          <div class="bar-row"><span class="lbl">DoS</span><span class="track"><span class="fill attack" style="width:8.9%; animation-delay:.15s"></span></span><span class="val">8.92%</span></div>
+          <div class="bar-row"><span class="lbl">DDoS</span><span class="track"><span class="fill attack" style="width:4.5%; animation-delay:.25s"></span></span><span class="val">4.52%</span></div>
+          <div class="bar-row"><span class="lbl">BRUTE FORCE</span><span class="track"><span class="fill warn" style="width:.7%; min-width:5px; animation-delay:.35s"></span></span><span class="val">0.49%</span></div>
+          <div class="bar-row"><span class="lbl">WEB ATTACK</span><span class="track"><span class="fill warn" style="width:.25%; min-width:4px; animation-delay:.45s"></span></span><span class="val">0.08%</span></div>
+          <div class="bar-row"><span class="lbl">BOTNET</span><span class="track"><span class="fill warn" style="width:.2%; min-width:3px; animation-delay:.55s"></span></span><span class="val">0.07%</span></div>
+          <div class="bar-row"><span class="lbl">INFILTRATION</span><span class="track"><span class="fill warn" style="width:.05%; min-width:2px; animation-delay:.65s"></span></span><span class="val">&lt;0.01%</span></div>
+        </div>
+        <p class="note">// APPROXIMATE SHARE OF LABELLED FLOWS — ILLUSTRATIVE; IMBALANCE DRIVES THE RECALL-WEIGHTED EVALUATION DESIGN</p>
+      </section>
+
+      <section class="wrap" id="stack">
+        <div class="sec-head"><p class="kicker">06 · Technology</p><h2>A modern, fully open stack</h2></div>
+        <dl class="spec">
+          <div class="spec-row"><dt>Frontend</dt><dd>React · Vite · Tailwind CSS · Recharts</dd></div>
+          <div class="spec-row"><dt>Backend &amp; Data</dt><dd>FastAPI (Python) · PostgreSQL · SQLite (dev)</dd></div>
+          <div class="spec-row"><dt>Detection &amp; ML</dt><dd>XGBoost · scikit-learn · imbalanced-learn · SHAP</dd></div>
+          <div class="spec-row"><dt>Workflow</dt><dd>GitHub branch-and-PR reviews · Scrum board · sprint cadence</dd></div>
+          <div class="spec-row"><dt>Testing</dt><dd>pytest · React Testing Library · Postman</dd></div>
+          <div class="spec-row"><dt>Deployment</dt><dd>Vercel free tier (frontend) · container image (API)</dd></div>
+        </dl>
+      </section>
+
+      <section class="wrap" id="scope">
+        <div class="sec-head"><p class="kicker">07 · Scope</p><h2>Clear boundaries for the FYP timeline</h2></div>
+        <div class="grid three scope">
+          <article class="card"><h3>In Scope</h3><ul>
+            <li>Hybrid signature + ML detection on recorded flows</li>
+            <li>Fused 0–100 risk scoring with explanations</li>
+            <li>Structured analyst feedback &amp; score adjustment</li>
+            <li>Safety guardrails &amp; append-only audit log</li>
+            <li>Offline evaluation vs. no-feedback baseline</li>
+          </ul></article>
+          <article class="card"><h3 class="out" style="color:#ffb1b8">Out of Scope</h3><ul class="out">
+            <li>Live packet capture / real-time inspection</li>
+            <li>Automated blocking or response</li>
+            <li>Host-based / endpoint detection</li>
+            <li>SIEM / SOAR integration</li>
+            <li>Online model retraining</li>
+          </ul></article>
+          <article class="card"><h3 style="color:#a4e4ff">Success Criteria</h3><ul>
+            <li>Fewer repeated false positives than baseline</li>
+            <li>Improved ranking of true positives</li>
+            <li>Zero suppression of protected critical alerts</li>
+            <li>Explainable, traceable score changes</li>
+            <li>Usable review workflow for analysts</li>
+          </ul></article>
+        </div>
+      </section>
+
+      <section class="wrap" id="roadmap">
+        <div class="sec-head"><p class="kicker">08 · Roadmap</p><h2>Scrum delivery across 14 weeks</h2><p>Three slices developed in parallel against agreed interfaces, integrated every sprint — with a MoSCoW-ordered backlog so the must-have subset always ships first.</p></div>
+        <div class="gantt">
+          <div class="g-inner">
+            <div class="g-weeks"><span></span><span>W1</span><span>W2</span><span>W3</span><span>W4</span><span>W5</span><span>W6</span><span>W7</span><span>W8</span><span>W9</span><span>W10</span><span>W11</span><span>W12</span><span>W13</span><span>W14</span></div>
+            <div class="g-row"><span class="g-lbl">Requirements<small>PRD ✓ · URS DRAFTED</small></span><span class="g-bar done" style="grid-column:2/span 2"></span></div>
+            <div class="g-row"><span class="g-lbl">Architecture &amp; Data<small>REPO · PIPELINE · CONTRACTS</small></span><span class="g-bar" style="grid-column:3/span 2; animation-delay:.1s"></span></div>
+            <div class="g-row"><span class="g-lbl">Slice Development<small>DETECT · FEEDBACK · DASHBOARD</small></span><span class="g-bar" style="grid-column:5/span 6; animation-delay:.2s"></span></div>
+            <div class="g-row"><span class="g-lbl">Guardrails &amp; Audit<small>MOD·06 + APPEND-ONLY LOG</small></span><span class="g-bar hard" style="grid-column:8/span 3; animation-delay:.3s"></span></div>
+            <div class="g-row"><span class="g-lbl">Integration &amp; Testing<small>E2E · USABILITY · HARDENING</small></span><span class="g-bar" style="grid-column:11/span 3; animation-delay:.4s"></span></div>
+            <div class="g-row"><span class="g-lbl">Evaluation &amp; Demo<small>BASELINE RUNS · FINAL DEMO</small></span><span class="g-bar done" style="grid-column:13/span 2; animation-delay:.5s"></span></div>
+          </div>
+          <div class="g-legend">
+            <span><i style="background:rgba(84,200,255,.7)"></i>Milestones</span>
+            <span><i style="background:rgba(60,227,155,.65)"></i>Build sprints</span>
+            <span><i style="background:rgba(255,180,84,.65)"></i>Safety-critical</span>
+          </div>
+        </div>
+      </section>
+
+      <section class="wrap" id="team">
+        <div class="sec-head"><p class="kicker">09 · Team</p><h2>Six members, three slices</h2><p>Group FYP-26-S3-13, supervised by Mr Lim Min Han.</p></div>
+        <div class="grid three team">
+          <article class="card member"><div class="avatar">GA</div><span class="mid">M·01</span><h3>Glenn Ang Zhen Xiang</h3><p>PROJECT LEAD</p></article>
+          <article class="card member"><div class="avatar">TJ</div><span class="mid">M·02</span><h3>Tan Jing Kai</h3><p>DETECTION ENGINE / FEEDBACK LOOP</p></article>
+          <article class="card member"><div class="avatar">ZN</div><span class="mid">M·03</span><h3>Zay Yar Naing</h3><p>DETECTION ENGINE / FEEDBACK LOOP</p></article>
+          <article class="card member"><div class="avatar">IK</div><span class="mid">M·04</span><h3>Isaac Koh Zhi Xian</h3><p>INTERFACE &amp; EVALUATION</p></article>
+          <article class="card member"><div class="avatar">TG</div><span class="mid">M·05</span><h3>Thian Wen Jun Gene</h3><p>INTERFACE &amp; EVALUATION</p></article>
+          <article class="card member"><div class="avatar">LC</div><span class="mid">M·06</span><h3>Liow Chee Kuang</h3><p>INTERFACE &amp; EVALUATION</p></article>
+        </div>
+      </section>
     </main>
-    <footer class="wrap" id="footer"><div><strong>Human-in-the-Loop Intrusion Detection Dashboard</strong><p>CSIT321 Final Year Project</p></div><div><p>University of Wollongong / SIM</p><p>Dashboard demo link coming soon</p></div><small>Copyright 2026</small></footer>
+
+    <footer>
+      <div class="wrap foot">
+        <div><strong>Human-in-the-Loop Intrusion Detection Dashboard</strong><p>FYP-26-S3-13 · CSIT321 Final Year Project</p></div>
+        <div><p>University of Wollongong / SIM · Supervisor: Mr Lim Min Han</p><p>Dashboard prototype in development</p></div>
+        <small>© 2026 · BUILD 2026.08</small>
+      </div>
+    </footer>
+
+    <script>
+      // ---- live alert feed ----
+      const EVENTS = [
+        ["HIGH", "s-high", "DDoS flood · 192.168.10.50 → ext"],
+        ["HIGH", "s-high", "SSH brute-force burst detected"],
+        ["MED", "s-med", "Port scan sweep · /24 subnet"],
+        ["MED", "s-med", "Repeated login anomaly · svc-acct"],
+        ["LOW", "s-low", "Expected backup scan · verified"],
+        ["LOW", "s-low", "Scheduled pentest traffic · EA"],
+        ["INFO", "s-info", "Guardrail: floor enforced on 3 alerts"],
+        ["INFO", "s-info", "Feedback applied · 12 duplicates grouped"],
+        ["HIGH", "s-high", "Web attack · SQL injection pattern"],
+        ["INFO", "s-info", "Audit log appended · 27 records"],
+      ];
+      const feed = document.getElementById("feed");
+      let t = 0;
+      function clock() {
+        const base = 14 * 3600 + 22 * 60;
+        const s = base + Math.floor(t * 2.3);
+        return String(Math.floor(s / 3600)).padStart(2, "0") + ":" + String(Math.floor((s % 3600) / 60)).padStart(2, "0") + ":" + String(s % 60).padStart(2, "0");
+      }
+      function push() {
+        const [sev, cls, msg] = EVENTS[Math.floor(Math.random() * EVENTS.length)];
+        const row = document.createElement("div");
+        row.className = "feed-row";
+        row.innerHTML = '<span class="t">' + clock() + '</span><span class="sev ' + cls + '">' + sev + '</span><span class="m">' + msg + "</span>";
+        feed.prepend(row);
+        while (feed.children.length > 6) feed.lastChild.remove();
+        t++;
+      }
+      for (let i = 0; i < 5; i++) push();
+      setInterval(push, 2600);
+
+      // ---- count-up metrics ----
+      document.querySelectorAll("[data-count]").forEach((el) => {
+        const target = +el.dataset.count;
+        const start = performance.now();
+        (function tick(now) {
+          const p = Math.min((now - start) / 900, 1);
+          el.textContent = String(Math.round(target * (1 - Math.pow(1 - p, 3)))).padStart(2, "0");
+          if (p < 1) requestAnimationFrame(tick);
+        })(start);
+      });
+    </script>
   </body>
 </html>
