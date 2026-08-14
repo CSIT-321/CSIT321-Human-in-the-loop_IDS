@@ -121,19 +121,7 @@
       .card p { color: var(--body); font-size: .86rem; line-height: 1.65; }
 
       /* ---- solution ---- */
-      .solution { display: grid; grid-template-columns: minmax(300px,.82fr) 1fr; gap: 20px; align-items: start; }
-      .panelbox { position: relative; padding: 24px; border: 1px solid var(--line2); border-radius: 4px; background: var(--panel2); }
-      .panelbox h3 { font: 600 .8rem var(--mono); letter-spacing: .18em; color: var(--dim); text-transform: uppercase; margin-bottom: 6px; }
-      .keys { display: grid; gap: 8px; margin-top: 12px; }
-      .key { display: flex; align-items: center; gap: 12px; padding: 11px 13px; border: 1px solid var(--line); border-radius: 3px; background: rgba(255,255,255,.025); font: 600 .78rem var(--mono); letter-spacing: .03em; }
-      .key kbd { min-width: 34px; padding: 3px 6px; border: 1px solid var(--line2); border-radius: 3px; background: rgba(0,0,0,.35); color: var(--dim); font: 700 .62rem var(--mono); text-align: center; }
-      .k-red { color: #ffa3ab; border-color: rgba(255,93,108,.35); background: rgba(255,93,108,.07); }
-      .k-grn { color: #8cf0c6; border-color: rgba(60,227,155,.35); background: rgba(60,227,155,.07); }
-      .k-cyn { color: #a4e4ff; border-color: rgba(84,200,255,.35); background: rgba(84,200,255,.07); }
-      .k-amb { color: #ffd39d; border-color: rgba(255,180,84,.35); background: rgba(255,180,84,.07); }
-      .k-gry { color: #c2d2cc; }
-      .delta { margin-top: 16px; padding-top: 14px; border-top: 1px dashed var(--line2); font: 500 .74rem var(--mono); color: var(--dim); letter-spacing: .06em; }
-      .delta b { color: var(--acc); font-weight: 700; }
+      .solution { display: grid; grid-template-columns: 1fr; gap: 20px; align-items: start; }
       ul.feats { display: grid; gap: 10px; margin: 0; padding: 0; list-style: none; }
       ul.feats li { display: grid; grid-template-columns: 22px 1fr; gap: 13px; padding: 14px 16px; border: 1px solid var(--line); border-radius: 3px; background: var(--panel); color: #cfe0da; font-size: .88rem; line-height: 1.55; }
       ul.feats li::before { content: "▸"; color: var(--acc); font-weight: 700; }
@@ -179,21 +167,6 @@
       .scope li { padding: 10px 12px 10px 34px; border: 1px solid var(--line); border-radius: 3px; background: rgba(255,255,255,.02); color: #c9dad3; font-size: .84rem; position: relative; }
       .scope li::before { position: absolute; left: 12px; content: "✓"; color: var(--acc); font: 700 .8rem var(--mono); }
       .scope .out li::before { content: "✕"; color: var(--red); }
-
-      /* ---- gantt ---- */
-      .gantt { border: 1px solid var(--line); border-radius: 4px; background: var(--panel); padding: 22px; overflow-x: auto; }
-      .g-inner { min-width: 640px; }
-      .g-weeks { display: grid; grid-template-columns: 178px repeat(14, 1fr); gap: 3px 4px; margin-bottom: 12px; }
-      .g-weeks span { font: 500 .58rem var(--mono); color: var(--dim); text-align: center; letter-spacing: .05em; }
-      .g-row { display: grid; grid-template-columns: 178px repeat(14, 1fr); gap: 3px 4px; align-items: center; margin-bottom: 9px; }
-      .g-row .g-lbl { font: 600 .7rem var(--mono); color: var(--body); letter-spacing: .05em; }
-      .g-row .g-lbl small { display: block; font-weight: 400; font-size: .6rem; color: var(--dim); letter-spacing: .08em; }
-      .g-bar { height: 20px; border-radius: 2px; background: linear-gradient(90deg, rgba(60,227,155,.35), rgba(60,227,155,.75)); position: relative; animation: grow2 .9s cubic-bezier(.2,.7,.2,1) backwards; }
-      .g-bar.done { background: linear-gradient(90deg, rgba(84,200,255,.4), rgba(84,200,255,.85)); }
-      .g-bar.hard { background: linear-gradient(90deg, rgba(255,180,84,.4), rgba(255,180,84,.8)); }
-      @keyframes grow2 { from { transform: scaleX(0); opacity: 0; } }
-      .g-legend { display: flex; flex-wrap: wrap; gap: 18px; margin-top: 16px; font: 500 .64rem var(--mono); color: var(--dim); letter-spacing: .1em; text-transform: uppercase; }
-      .g-legend i { display: inline-block; width: 18px; height: 9px; border-radius: 2px; margin-right: 7px; vertical-align: -1px; }
 
       /* ---- team ---- */
       .team { grid-template-columns: repeat(3,1fr); }
@@ -244,7 +217,7 @@
     <header class="hero wrap" id="top">
       <nav class="nav rise" aria-label="Primary navigation">
         <a class="brand" href="#top"><span class="mark">HIL</span><span><strong>Human-in-the-Loop IDS</strong><small>Alert Review Console</small></span></a>
-        <div class="links"><a href="#problem">Problem</a><a href="#solution">Solution</a><a href="#architecture">Architecture</a><a href="#dataset">Dataset</a><a href="#roadmap">Roadmap</a><a href="#team">Team</a></div>
+        <div class="links"><a href="#problem">Problem</a><a href="#solution">Solution</a><a href="#architecture">Architecture</a><a href="#dataset">Dataset</a><a href="#team">Team</a></div>
       </nav>
 
       <div class="hero-grid">
@@ -253,7 +226,7 @@
           <h1>Detection that <em>learns</em> from the analyst.</h1>
           <p class="lede">A hybrid <b>signature + XGBoost</b> intrusion detection pipeline fused into one explainable 0–100 risk score — then refined by <b>structured analyst feedback</b> under safety guardrails.</p>
           <p class="sub">Analyst verdicts are captured once and reused: repeated false positives get suppressed, true positives rank higher, and guardrails guarantee critical alerts can never be silenced. Every decision lands in an append-only audit log.</p>
-          <div class="actions"><a class="button primary" href="#solution">Explore the System</a><a class="button ghost" href="#roadmap">View Roadmap ↗</a></div>
+          <div class="actions"><a class="button primary" href="#solution">Explore the System</a><a class="button ghost" href="#team">Meet the Team ↗</a></div>
         </section>
 
         <aside class="console rise" style="animation-delay:.2s" aria-label="Alert review console preview">
@@ -270,7 +243,7 @@
       </div>
 
       <div class="metrics rise" style="animation-delay:.32s">
-        <div><strong data-count="6">0</strong><span>Feedback categories</span></div>
+        <div><strong data-count="0">0</strong><span>Suppressed critical alerts</span></div>
         <div><strong data-count="8">0</strong><span>System modules</span></div>
         <div><strong data-count="48">0</strong><span>Use cases specified</span></div>
         <div><strong data-count="6">0</strong><span>Attack categories</span></div>
@@ -289,24 +262,12 @@
       </section>
 
       <section class="wrap" id="solution">
-        <div class="sec-head"><p class="kicker">02 · Solution</p><h2>Six verdicts. One adjusted score. Zero silenced threats.</h2><p>Two complementary detectors score every network flow. The analyst's verdict then adjusts the fused risk score within guardrailed limits — and the decision is reused across similar alerts.</p></div>
+        <div class="sec-head"><p class="kicker">02 · Solution</p><h2>Analyst judgement, folded into the risk score</h2><p>Two complementary detectors score every network flow. The analyst's verdict then adjusts the fused risk score within guardrailed limits — and the decision is reused across similar alerts.</p></div>
         <div class="solution">
-          <div class="panelbox">
-            <h3>Feedback Categories</h3>
-            <div class="keys">
-              <span class="key k-red"><kbd>MC</kbd>Confirmed Malicious</span>
-              <span class="key k-grn"><kbd>FP</kbd>False Positive</span>
-              <span class="key k-cyn"><kbd>EA</kbd>Expected Activity</span>
-              <span class="key k-amb"><kbd>ES</kbd>Escalate</span>
-              <span class="key k-gry"><kbd>UN</kbd>Uncertain</span>
-              <span class="key k-gry"><kbd>DUP</kbd>Duplicate</span>
-            </div>
-            <p class="delta">SCORE ADJUSTMENT · <b>86 → 41</b> · FLOOR ENFORCED</p>
-          </div>
           <ul class="feats">
             <li><span><b>Hybrid detection</b> — signature rules catch known patterns; an XGBoost model scores anomalous flows.</span></li>
             <li><span><b>Alert fusion</b> — both detectors combine into one 0–100 explainable risk score.</span></li>
-            <li><span><b>Structured feedback</b> — six verdict categories drive deterministic score adjustment.</span></li>
+            <li><span><b>Structured feedback</b> — analyst verdicts drive deterministic score adjustment.</span></li>
             <li><span><b>Safety guardrails</b> — score floors, ceilings, and critical-alert protection stop feedback from hiding real threats.</span></li>
             <li><span><b>Similar-alert grouping</b> — one decision suppresses an entire family of repeated false positives.</span></li>
             <li><span><b>Append-only audit log</b> — every decision and score change stays traceable, forever.</span></li>
@@ -320,7 +281,7 @@
           <article class="card"><span class="idx">F·01</span><h3>Hybrid Detection Engine</h3><p>Signature rules and a supervised ML model classify flows in parallel, providing complementary evidence for every alert.</p></article>
           <article class="card"><span class="idx">F·02</span><h3>Fused Risk Scoring</h3><p>Detector outputs combine into a single 0–100 score that assigns and adjusts alert priority across the queue.</p></article>
           <article class="card"><span class="idx">F·03</span><h3>Explainable Alerts</h3><p>Signature evidence and SHAP feature attributions on every alert — the analyst sees exactly why it fired.</p></article>
-          <article class="card"><span class="idx">F·04</span><h3>Human Feedback Loop</h3><p>Six structured verdicts with feedback history, amendment, and bulk actions for high-volume triage.</p></article>
+          <article class="card"><span class="idx">F·04</span><h3>Human Feedback Loop</h3><p>Analyst verdicts with feedback history, amendment, and bulk actions for high-volume triage.</p></article>
           <article class="card"><span class="idx">F·05</span><h3>Safety Guardrails</h3><p>Admin-configurable floors, ceilings, and critical-alert protection ensure feedback never hides a real threat.</p></article>
           <article class="card"><span class="idx">F·06</span><h3>Audit &amp; Reporting</h3><p>Append-only audit logging plus exportable reports of alert activity, trends, and review performance.</p></article>
         </div>
@@ -411,28 +372,8 @@
         </div>
       </section>
 
-      <section class="wrap" id="roadmap">
-        <div class="sec-head"><p class="kicker">08 · Roadmap</p><h2>Scrum delivery across 14 weeks</h2><p>Three slices developed in parallel against agreed interfaces, integrated every sprint — with a MoSCoW-ordered backlog so the must-have subset always ships first.</p></div>
-        <div class="gantt">
-          <div class="g-inner">
-            <div class="g-weeks"><span></span><span>W1</span><span>W2</span><span>W3</span><span>W4</span><span>W5</span><span>W6</span><span>W7</span><span>W8</span><span>W9</span><span>W10</span><span>W11</span><span>W12</span><span>W13</span><span>W14</span></div>
-            <div class="g-row"><span class="g-lbl">Requirements<small>PRD ✓ · URS DRAFTED</small></span><span class="g-bar done" style="grid-column:2/span 2"></span></div>
-            <div class="g-row"><span class="g-lbl">Architecture &amp; Data<small>REPO · PIPELINE · CONTRACTS</small></span><span class="g-bar" style="grid-column:3/span 2; animation-delay:.1s"></span></div>
-            <div class="g-row"><span class="g-lbl">Slice Development<small>DETECT · FEEDBACK · DASHBOARD</small></span><span class="g-bar" style="grid-column:5/span 6; animation-delay:.2s"></span></div>
-            <div class="g-row"><span class="g-lbl">Guardrails &amp; Audit<small>MOD·06 + APPEND-ONLY LOG</small></span><span class="g-bar hard" style="grid-column:8/span 3; animation-delay:.3s"></span></div>
-            <div class="g-row"><span class="g-lbl">Integration &amp; Testing<small>E2E · USABILITY · HARDENING</small></span><span class="g-bar" style="grid-column:11/span 3; animation-delay:.4s"></span></div>
-            <div class="g-row"><span class="g-lbl">Evaluation &amp; Demo<small>BASELINE RUNS · FINAL DEMO</small></span><span class="g-bar done" style="grid-column:13/span 2; animation-delay:.5s"></span></div>
-          </div>
-          <div class="g-legend">
-            <span><i style="background:rgba(84,200,255,.7)"></i>Milestones</span>
-            <span><i style="background:rgba(60,227,155,.65)"></i>Build sprints</span>
-            <span><i style="background:rgba(255,180,84,.65)"></i>Safety-critical</span>
-          </div>
-        </div>
-      </section>
-
       <section class="wrap" id="team">
-        <div class="sec-head"><p class="kicker">09 · Team</p><h2>Six members, three slices</h2><p>Group FYP-26-S3-13, supervised by Mr Lim Min Han.</p></div>
+        <div class="sec-head"><p class="kicker">08 · Team</p><h2>Six members, three slices</h2><p>Group FYP-26-S3-13, supervised by Mr Lim Min Han.</p></div>
         <div class="grid three team">
           <article class="card member"><div class="avatar">GA</div><span class="mid">M·01</span><h3>Glenn Ang Zhen Xiang</h3><p>PROJECT LEAD</p></article>
           <article class="card member"><div class="avatar">TJ</div><span class="mid">M·02</span><h3>Tan Jing Kai</h3><p>DETECTION ENGINE / FEEDBACK LOOP</p></article>
