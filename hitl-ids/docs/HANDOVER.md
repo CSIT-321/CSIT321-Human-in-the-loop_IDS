@@ -53,7 +53,7 @@ hitl-ids/
   data/processed/ label_scan · demo_sample(5,000) · train_sample(250,655) · manifests
   models/         8-class XGBoost + metrics + port ablation
   notebooks/      01-04, all execute with ZERO errors
-  packages/detection/ml/inference.py   vendored+adapted TreeSHAP inference (see sec. 9)
+  packages/detection/ml/inference.py   vendored+adapted TreeSHAP inference (see sec. 8)
   scripts/        9 scripts, all runnable
   tests/fixtures/legacy/   8 FROZEN files - never regenerate
   docs/           HANDOVER · iteration-report · plan-changelog(v0.1-v1.4) ·
@@ -171,7 +171,7 @@ These were believed, then disproved. Re-proposing them wastes a cycle.
 | 2 | **S2 — data contracts**: 12 tables, append-only `audit_log` trigger, `evidence_class` + `evidence_priority` on `alerts` | Claude | Keystone. Expensive to change after S9. |
 | 3 | S5 + S4b — signature engine and tuned rules in Python; **write the tuned rule set to a file** | Delegate + review | Golden-test against frozen fixtures |
 | 4 | S6 — fusion re-specification | **Claude only** | **The notebook-03 CEF spec is STALE** — it was built around `signature_override`, which now has zero instances. Must be rewritten for the v1.3 trust/triage model before implementing |
-| 5 | S7 — feedback + guardrails | **Claude only** | **Port the collaborator's design** (sec. 9) to Python rather than authoring fresh |
+| 5 | S7 — feedback + guardrails | **Claude only** | **Port the collaborator's design** (sec. 8) to Python rather than authoring fresh |
 | 6 | S8–S9 — audit writer, SQLite, batch runner | Mixed | |
 
 Full detail per step: [`../../plans/hitl-ids-demo-build.md`](../../plans/hitl-ids-demo-build.md).
@@ -193,7 +193,7 @@ adjustment. The docs' "six categories" miscounts by folding a queue action into 
 
 ---
 
-## 9. The collaborator's work — what to use, what to ignore
+## 8. The collaborator's work — what to use, what to ignore
 
 A collaborator force-pushed 14 commits to `origin/main`, merged into our branch. **Their 6-class
 model and every output derived from it are INVALIDATED** — trained on the uncorrected dataset,
@@ -227,12 +227,12 @@ them before the next merge.
 
 ---
 
-## 8. Open questions for the user
+## 9. Open questions for the user
 
 1. ~~Push the branch?~~ **User decision: keep local.** Do not push without being asked.
 2. ~~Held-out re-test~~ **Done, reported.** Next task is S2 — data contracts.
 3. Review [`finding-infiltration-mislabelling.md`](finding-infiltration-mislabelling.md) — a
    report-ready write-up of the Infiltration finding, drafted and awaiting your edit.
-4. **Agree a file-ownership boundary with the collaborator** before the next merge (see sec. 9).
+4. **Agree a file-ownership boundary with the collaborator** before the next merge (see sec. 8).
 5. When ready, our tree is intended to **supersede** their `stage-3/`/`stage-5/` on push — user
    decision, not yet actioned. Branch is deliberately **local only**; do not push unasked.
