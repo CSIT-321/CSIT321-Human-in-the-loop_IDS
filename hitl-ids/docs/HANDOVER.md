@@ -1,0 +1,177 @@
+# HANDOVER — read this first in a new session
+
+**Purpose.** Carry the full state of this project into a fresh session with zero loss of context
+and minimal token cost. Everything a new session needs is here or one link away.
+
+**Last updated:** 2026-09-11 · **Branch:** `feat/corrected-dataset-and-findings` · **Phase 1 complete**
+
+---
+
+## 0. Paste this to start the next session
+
+> Read `hitl-ids/docs/HANDOVER.md` in this repo, then confirm you have the state loaded by telling
+> me (a) the current phase and next step, (b) the two findings that were reversed and why, and
+> (c) what I have told you never to delegate. Do not re-derive any settled decision. Then begin
+> the next step.
+
+The confirmation is not ceremony — if a new session cannot answer those three, it has not loaded
+the state and will re-litigate settled ground.
+
+---
+
+## 1. What this project is
+
+**FYP-26-S3-13**, CSIT321 final-year project: a **Human-in-the-Loop Intrusion Detection Dashboard**.
+Network-based IDS over recorded flow data, combining signature rules and an ML classifier, where an
+analyst reviews alerts and their feedback adjusts scoring within safety guardrails.
+
+Repo: `github.com/CSIT-321/CSIT321-Human-in-the-loop_IDS` · working tree `hitl-ids/`
+
+---
+
+## 2. User's standing instructions — do not re-ask
+
+| Instruction | Detail |
+|---|---|
+| **No deadlines** | The PRD's 14-week schedule is discarded. Sequence by dependency only. Never produce a Gantt or date estimate. |
+| **Documents are reference-only** | PRD, URS, TDM (in the parent `FYP/` folder) are **not to be amended**. Log divergences in `docs/plan-changelog.md` instead. |
+| **Team is out of scope** | The 6 members / 3 pairs are irrelevant here. This workplan is **the user + Claude + delegated workers** only. |
+| **Delegate for token efficiency** | Use the `delegate-providers` skill for bulk work. See §6 for what may and may not be delegated. |
+| **Old repo structure is ignored** | `stage-1/`…`stage-5/`, `dashboard/`, `prototype-demo/`, `docs/` are **frozen research record**. Never modify them. New work lives in `hitl-ids/`. |
+| **Demo first** | Full backend, PostgreSQL, real auth and the flow exporter are all deferred until the demo gate (S16) passes. |
+
+---
+
+## 3. Current state
+
+**Phase 1 (evidence & direction) is COMPLETE and committed.** 35 files, 209,205 insertions.
+
+```
+hitl-ids/
+  data/raw/       CSECICIDS2018_improved.zip   10.4 GB, GITIGNORED, must be re-downloaded
+  data/processed/ label_scan · demo_sample(5,000) · train_sample(250,655) · manifests
+  models/         8-class XGBoost + metrics + port ablation
+  notebooks/      01-04, all execute with ZERO errors
+  scripts/        7 scripts, all runnable
+  tests/fixtures/legacy/   8 FROZEN files - never regenerate
+  docs/           HANDOVER · iteration-report · plan-changelog · feasibility-study · rule-retuning-report
+plans/hitl-ids-demo-build.md    18-step build plan (S1-S18), v1.0
+```
+
+**Start here:** [`iteration-report.md`](iteration-report.md) has the diagrams and statistics.
+[`plan-changelog.md`](plan-changelog.md) has every decision and its evidence.
+
+---
+
+## 4. Settled facts — never re-derive these
+
+Everything below is measured, verified, and reproducible from the notebooks.
+
+### Dataset (corrected CSE-CIC-IDS2018, Engelen et al. IEEE CNS 2022)
+- **63,195,145 flows**, 10 capture days, 93.9% benign
+- **Infiltration was never one class** — 99.6% is `NMAP Portscan`; true infiltration = **317 flows**
+- **FTP brute force is 100% `Attempted`** — never succeeded
+- **Web Attack = 283 successful flows** in 63.2M; the old sample held 29% of the entire class
+- Schema is **91 columns**, not 79; `CWE Flag Count` → `CWR Flag Count` fixed a typo
+
+### Decisions (all confirmed by the user)
+| ID | Decision |
+|---|---|
+| Q18 | Attempted attacks are **malicious**, flagged via `is_attempted` |
+| Q19 | **Port Scan** is an 8th class, split out of Infiltration |
+| Q20 | Disjoint **train (250,655)** + **demo (5,000)** samples, seed `20260911` |
+| Q21 | Signature layer = **trust/explainability**, not coverage |
+
+### Model
+- 8 classes, macro F1 **0.9882**, weighted F1 0.9997, 82 features
+- **The 0.99 F1 is a testbed artefact.** Port-shortcut hypothesis tested by ablation and
+  **rejected** (−0.0011). Cause is single-tool attack generation giving each class a constant flow
+  fingerprint. **Never present as a real-world capability claim.**
+
+### Detector relationship (the crux)
+```
+1,000 malicious flows:  ml_only 794 · both 200 · signature_only 0 · missed_by_both 6
+```
+Retuned signature rules: **precision 1.000, recall 20%**, but **zero unique coverage**.
+
+---
+
+## 5. Reversed and rejected — do not resurrect
+
+These were believed, then disproved. Re-proposing them wastes a cycle.
+
+| Claim | Status | Why |
+|---|---|---|
+| "Signature + ML **agreement** is the strongest evidence" (PRD) | Partially restored | Was withdrawn on old data; agreement does occur (200×) on corrected data |
+| "Detectors are **complementary**" (notebook 02/03) | **WITHDRAWN** | `signature_only = 0` on corrected data |
+| "Zero co-occurrence" (notebook 01 F5) | **WITHDRAWN** | Occurs 200 times |
+| **Weighted-sum fusion** (TDM §6.2.7) | **REJECTED** | Scores from different evidence classes are not commensurable |
+| **Retune the fusion weights** to fix coverage | **REJECTED** | Mathematically inert while co-occurrence is low; hides the problem |
+| **Retune rules** to restore complementarity | **TESTED, CLOSED** | Precision reached 1.000 but `signature_only` stayed 0 |
+| **Suricata** as the prefix module | **REJECTED** | Cannot emit CIC flow features; use the GintsEngelen CICFlowMeter fork instead |
+| **Curated demo slice** where both detectors fire | **REJECTED** | Would conceal real recall; fails viva scrutiny |
+| Demo on **static JSON** with no persistence | **REJECTED** | Feedback that dies on refresh cannot demonstrate the thesis |
+
+---
+
+## 6. Working rules learned the hard way
+
+**Delegation (`delegate-providers` skill)**
+- ✅ Delegate: bulk analysis scripts, CRUD endpoints, React components from a contract, test
+  fixtures, boilerplate, document extraction.
+- ❌ **Never delegate:** fusion maths, feedback/guardrail logic, data contracts, or the
+  `POST /alerts/{id}/feedback` endpoint (it invokes guardrails).
+- ❌ **Never delegate research.** GLM's provider rejects WebSearch and it **silently fabricates** —
+  it produced 23 KB citing 29 URLs it never fetched. DeepSeek fails loudly instead. Both are fine
+  for read/write/transform work.
+- **Read the files a worker wrote.** Never trust its returned `result`; one agent returned only
+  "Standing by." while its 28 findings sat in a 1.47 MB transcript.
+
+**Verification**
+- **Verification code needs the same scrutiny as the thing it verifies.** A delegated worker was
+  wrongly rejected on a coverage figure because the *verification* dropped each rule's other
+  clauses. The worker was right. Re-check the checker before disputing a result.
+- **Execute notebooks, don't just write them.** Three separate errors were caught only by running
+  them — including a fusion design that ranked its own key alerts #414 of 417.
+
+**Environment**
+- **GateGuard** intercepts the first Bash command and every new-file Write. It requires a short
+  facts preamble (callers, no-duplicate check, schemas, verbatim user instruction) before it
+  allows the call. `ECC_GATEGUARD=off` disables it if it becomes obstructive.
+- `gh` is **not authenticated** — no PR/CI automation. Git branches work fine.
+- Kaggle is **not authenticated** — irrelevant now; the dataset came from the authors' own server.
+- The 10.4 GB archive and 142 MB `train_sample.csv` are gitignored. The **frozen fixture CSVs are
+  force-added** because they are the reproducibility anchor.
+
+---
+
+## 7. Next steps, in dependency order
+
+| # | Step | Owner | Note |
+|---|---|---|---|
+| **1** | **Held-out re-test of rule thresholds** | Claude | Thresholds were tuned *on the demo sample*. Real overfitting risk. Do this before building on them. |
+| 2 | **S2 — data contracts**: 12 tables, append-only `audit_log` trigger, `evidence_class` + `evidence_priority` on `alerts` | Claude | Keystone. Expensive to change after S9. |
+| 3 | S5 + S4b — signature engine and tuned rules in Python | Delegate + review | Golden-test against frozen fixtures |
+| 4 | S6 — fusion re-specification, invariants I1–I5 | **Claude only** | I5: no `signature_override` may rank below any `ml_only` |
+| 5 | S7 — feedback + guardrails | **Claude only** | The safety claim |
+| 6 | S8–S9 — audit writer, SQLite, batch runner | Mixed | |
+
+Full detail per step: [`../../plans/hitl-ids-demo-build.md`](../../plans/hitl-ids-demo-build.md).
+
+**Guardrail constants** (consistent across PRD/URS/TDM): max reduction **30**, critical floor
+**70**, critical threshold **80**, exception min **3** occurrences at **60%** confidence, plus
+`infiltration_floor_75` which exists in `stage-5/core/feedback-engine.js:65-69`.
+
+**Feedback categories:** the engine implements **five** (`confirmed_malicious +10`,
+`false_positive −30`, `expected_activity −30`, `uncertain 0`, `escalate +15`). The docs list six —
+`duplicate` is new and its delta must be **decided deliberately**, not invented.
+
+---
+
+## 8. Open questions for the user
+
+1. **Push the branch?** It is committed locally but not pushed.
+2. **Held-out re-test** — proceed automatically, or report first?
+3. **`duplicate` feedback delta** — needs a number.
+4. Should the corrected-dataset findings (the Infiltration mislabelling especially) be written up
+   for the FYP report as a contribution? It is genuinely publishable and costs little.
