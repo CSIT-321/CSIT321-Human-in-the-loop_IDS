@@ -45,6 +45,24 @@ For a production build:
 npm run build
 ```
 
+## GitHub Pages Deployment
+
+The public dashboard URL is:
+
+```txt
+https://lck0629.github.io/ids-dashboard/
+```
+
+GitHub Pages deployment is rebuilt automatically from `main` using the dashboard GitHub Actions workflow. The workflow installs dependencies from `dashboard/package-lock.json`, builds the Vite app from this folder, and deploys `dashboard/dist`.
+
+Local development still uses:
+
+```powershell
+npm run dev
+```
+
+This deployed site is a static/offline prototype. It does not imply a backend, database, authentication, live packet capture, or production IDS monitoring.
+
 ## Dashboard Features
 
 - KPI cards for pipeline feedback and review impact.

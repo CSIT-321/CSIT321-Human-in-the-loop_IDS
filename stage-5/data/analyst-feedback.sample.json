@@ -2,6 +2,7 @@
   {
     "feedbackId": "FB-0001",
     "alertId": "AL-0031",
+    "eventType": "feedback_submitted",
     "feedbackType": "mark_false_positive",
     "analystId": "analyst-01",
     "timestamp": "2026-07-04T10:15:00Z",
@@ -11,6 +12,7 @@
   {
     "feedbackId": "FB-0002",
     "alertId": "AL-0585",
+    "eventType": "feedback_submitted",
     "feedbackType": "mark_expected_activity",
     "analystId": "analyst-02",
     "timestamp": "2026-07-04T10:18:00Z",
@@ -20,6 +22,7 @@
   {
     "feedbackId": "FB-0003",
     "alertId": "AL-0038",
+    "eventType": "feedback_submitted",
     "feedbackType": "confirm_true_positive",
     "analystId": "analyst-01",
     "timestamp": "2026-07-04T10:22:00Z",
@@ -29,6 +32,7 @@
   {
     "feedbackId": "FB-0004",
     "alertId": "AL-0251",
+    "eventType": "feedback_submitted",
     "feedbackType": "needs_investigation",
     "analystId": "analyst-03",
     "timestamp": "2026-07-04T10:30:00Z",
@@ -38,6 +42,7 @@
   {
     "feedbackId": "FB-0005",
     "alertId": "AL-0143",
+    "eventType": "feedback_submitted",
     "feedbackType": "escalate",
     "analystId": "analyst-02",
     "timestamp": "2026-07-04T10:35:00Z",
@@ -47,6 +52,7 @@
   {
     "feedbackId": "FB-0006",
     "alertId": "AL-9999",
+    "eventType": "feedback_submitted",
     "feedbackType": "mark_false_positive",
     "analystId": "analyst-01",
     "timestamp": "2026-07-04T10:40:00Z",

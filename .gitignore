@@ -1,16 +1,20 @@
 __pycache__/
 .compile-check/
+.tmp-stage-3-tests/
 .tmp-stage-3-artifacts/
 .tmp-stage-3-artifacts*/
 *.py[cod]
+.venv/
 archive.zip
 *.zip
 *.csv
 stage-3/notebooks/*Colab*.pdf
 stage-3/notebooks/*.pdf
+stage-3/outputs/ml-predictions.regenerated.json
 dashboard/node_modules/
 dashboard/dist/
 
 # hitl-ids: agent state, never tracked
 .omc/
 hitl-ids/**/.omc/
+stage-5/evaluation/feedback-evaluation-records.json

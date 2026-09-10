@@ -1,0 +1,94 @@
+{
+  "similarity": {
+    "threshold": 0.7,
+    "minimumEvidenceCoverage": 0.7,
+    "fields": [
+      {
+        "name": "fusionAttackType",
+        "path": "fusionAttackType",
+        "weight": 0.35,
+        "required": true,
+        "canonicalType": "string"
+      },
+      {
+        "name": "protocol",
+        "path": "flowFeatureSummary.protocol",
+        "weight": 0.2,
+        "required": false,
+        "canonicalType": "protocol"
+      },
+      {
+        "name": "destinationPort",
+        "path": "flowFeatureSummary.destinationPort",
+        "weight": 0.2,
+        "required": false,
+        "canonicalType": "number"
+      },
+      {
+        "name": "signatureId",
+        "path": "signatureId",
+        "weight": 0.15,
+        "required": false,
+        "canonicalType": "string"
+      },
+      {
+        "name": "fusionDecision",
+        "path": "fusionDecision",
+        "weight": 0.1,
+        "required": false,
+        "canonicalType": "string"
+      }
+    ]
+  },
+  "aggregation": {
+    "learningFeedbackTypes": [
+      "mark_false_positive",
+      "confirm_true_positive",
+      "mark_expected_activity"
+    ],
+    "workflowFeedbackTypes": [
+      "escalate",
+      "needs_investigation",
+      "duplicate",
+      "uncertain"
+    ],
+    "minimumFeedbackCount": 3,
+    "minimumAgreementRatio": 0.67,
+    "strongAgreementRatio": 0.8,
+    "expectedActivity": {
+      "enabledForFutureAdaptation": false,
+      "minimumFeedbackCount": 5,
+      "minimumAgreementRatio": 0.9,
+      "requiredExactContextFields": [
+        "flowFeatureSummary.protocol",
+        "flowFeatureSummary.destinationPort",
+        "signatureId"
+      ]
+    }
+  },
+  "adjustments": {
+    "mark_false_positive": {
+      "moderate": -10,
+      "strong": -25
+    },
+    "confirm_true_positive": {
+      "moderate": 8,
+      "strong": 15
+    },
+    "mark_expected_activity": {
+      "strong": -15
+    }
+  },
+  "guardrails": {
+    "maximumNegativeAdjustment": -30,
+    "maximumPositiveAdjustment": 20,
+    "criticalFloor": 70,
+    "infiltrationFloor": 75,
+    "reviewThreshold": 70,
+    "highRiskThreshold": 70
+  },
+  "formalEvaluation": {
+    "useManualExceptionMemory": false,
+    "notes": "Manual exception memory is retained only for backwards-compatible demo runs. Formal adaptive evaluation must use analyst feedback events as the source of truth."
+  }
+}

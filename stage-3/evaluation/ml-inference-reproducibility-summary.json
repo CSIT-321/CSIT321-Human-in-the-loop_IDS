@@ -1,0 +1,46 @@
+{
+  "inputPath": "stage-1/data/processed/flow-feature-full.csv",
+  "outputPath": "stage-3/outputs/ml-predictions.regenerated.json",
+  "referencePredictionPath": "stage-3/outputs/ml-predictions.sample.json",
+  "inputRowCount": 1000,
+  "availablePredictionCount": 996,
+  "unavailablePredictionCount": 4,
+  "comparison": {
+    "regeneratedRows": 1000,
+    "committedRows": 996,
+    "sharedRows": 996,
+    "availableRows": 996,
+    "unavailableRows": 4,
+    "predictedClassAgreementCount": 996,
+    "predictedClassAgreementRate": 1.0,
+    "confidenceDifferenceStats": {
+      "count": 996,
+      "max": 5.00000000069889e-07,
+      "mean": 2.350200803245432e-07,
+      "median": 2.299999999344493e-07
+    },
+    "mismatchExamples": []
+  },
+  "modelSha256": "0a002d41d20f9b8ae1c7d1231f4c47b010f6bea2c34537c4fbb0554594e4af4d",
+  "featureSchemaSha256": "bbe392324367669d47364ebf1bebf11bf9b814f1035c557176815980ef0b36c4",
+  "preprocessingConfigSha256": "7f29f28fc19490a5feeec4f148683e5a06877d07c385501ca25e7961f60936d1",
+  "labelMappingSha256": "32534d1267eeaacbf6263b5b08859ea6fbd98eb9bd58b86fc1aed260f487ac79",
+  "inputCsvSha256": "3cb08f3bd585c1391e0f511b7821bcd2558979625bca3f15b4d8a125caa6b08a",
+  "pythonVersion": "3.12.14",
+  "xgboostVersion": "3.3.0",
+  "modelArtifactVersion": "3.3.0",
+  "mlClasses": [
+    "Benign",
+    "Botnet",
+    "Brute Force",
+    "DDoS",
+    "DoS",
+    "Web Attack"
+  ],
+  "infiltrationSupportedByMl": false,
+  "notes": [
+    "Prediction output is model evidence, not calibrated certainty or threat risk.",
+    "The full regenerated prediction artifact is reproducible and should not be treated as the primary committed evidence.",
+    "The committed Stage 3 sample should not be overwritten until Stage 4 supports predictionStatus=unavailable."
+  ]
+}

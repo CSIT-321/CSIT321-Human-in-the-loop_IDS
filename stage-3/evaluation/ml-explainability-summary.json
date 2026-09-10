@@ -1,0 +1,84 @@
+{
+  "method": "xgboost_native_treeshap_pred_contribs",
+  "outputSpace": "raw_margin",
+  "inputPath": "stage-1/data/processed/flow-feature-full.csv",
+  "outputPath": "stage-3/outputs/ml-predictions.regenerated.json",
+  "inputCount": 1000,
+  "availablePredictionCount": 996,
+  "unavailablePredictionCount": 4,
+  "availableExplanationCount": 996,
+  "unavailableExplanationCount": 4,
+  "unavailableExplanationReasons": {
+    "predictionUnavailable": 4,
+    "treeShapGenerationFailure": 0,
+    "additivityFailure": 0,
+    "other": 0
+  },
+  "validTreeShapExplanationCount": 996,
+  "treeShapGenerationFailureCount": 0,
+  "additivityPassedCount": 996,
+  "additivityFailedCount": 0,
+  "additivityTolerance": 0.0001,
+  "maxAdditivityDifference": 4.533518222160637e-06,
+  "meanAdditivityDifference": 9.499043732052613e-07,
+  "predictedClassesRepresented": [
+    "Benign",
+    "Botnet",
+    "Brute Force",
+    "DDoS",
+    "DoS",
+    "Web Attack"
+  ],
+  "perPredictedClassExplanationCoverage": {
+    "Benign": {
+      "predictions": 491,
+      "explanationsAvailable": 491,
+      "explanationsUnavailable": 0,
+      "additivityPassed": 491,
+      "additivityFailed": 0
+    },
+    "Botnet": {
+      "predictions": 84,
+      "explanationsAvailable": 84,
+      "explanationsUnavailable": 0,
+      "additivityPassed": 84,
+      "additivityFailed": 0
+    },
+    "Brute Force": {
+      "predictions": 67,
+      "explanationsAvailable": 67,
+      "explanationsUnavailable": 0,
+      "additivityPassed": 67,
+      "additivityFailed": 0
+    },
+    "DDoS": {
+      "predictions": 76,
+      "explanationsAvailable": 76,
+      "explanationsUnavailable": 0,
+      "additivityPassed": 76,
+      "additivityFailed": 0
+    },
+    "DoS": {
+      "predictions": 127,
+      "explanationsAvailable": 127,
+      "explanationsUnavailable": 0,
+      "additivityPassed": 127,
+      "additivityFailed": 0
+    },
+    "Web Attack": {
+      "predictions": 151,
+      "explanationsAvailable": 151,
+      "explanationsUnavailable": 0,
+      "additivityPassed": 151,
+      "additivityFailed": 0
+    }
+  },
+  "modelSha256": "0a002d41d20f9b8ae1c7d1231f4c47b010f6bea2c34537c4fbb0554594e4af4d",
+  "featureSchemaSha256": "bbe392324367669d47364ebf1bebf11bf9b814f1035c557176815980ef0b36c4",
+  "xgboostVersion": "3.3.0",
+  "notes": [
+    "TreeSHAP explains the predicted class raw margin, not probability change.",
+    "TreeSHAP values are explanation-only and are not Detection Score, Operational Priority, or Fusion input.",
+    "The current ML model remains a six-class prototype and does not predict Infiltration."
+  ]
+}

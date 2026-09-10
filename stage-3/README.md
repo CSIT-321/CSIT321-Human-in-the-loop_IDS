@@ -76,6 +76,115 @@ The prediction step must not read ground truth, raw labels, mapped attack types,
 
 After Colab training, only model artifacts and small output/evaluation files should be copied back into the repository.
 
+## Local Inference Reproducibility
+
+The committed model can be used for local inference without retraining. Install the pinned Stage 3 inference dependencies in an isolated environment:
+
+```powershell
+python -m venv .venv
+.\.venv\Scripts\python.exe -m pip install -r stage-3\requirements.txt
+```
+
+Then regenerate prediction evidence from the committed artifacts:
+
+```powershell
+.\.venv\Scripts\python.exe stage-3\scripts\run_ml_prediction_demo.py
+```
+
+The script reads feature-only input from:
+
+```txt
+stage-1/data/processed/flow-feature-full.csv
+```
+
+and writes regenerated predictions to:
+
+```txt
+stage-3/outputs/ml-predictions.regenerated.json
+```
+
+The full regenerated prediction file is local derived evidence and is ignored by Git. The script also writes a small committed summary to:
+
+```txt
+stage-3/evaluation/ml-inference-reproducibility-summary.json
+```
+
+The committed `ml-predictions.sample.json` must not be overwritten in this increment. Stage 4 does not yet explicitly handle `predictionStatus = unavailable`, so replacing the Stage 4 input before that migration could accidentally change downstream behaviour.
+
+Inference enforces the saved 78-feature schema from `feature-columns.json`, preserves feature order, detects missing or duplicate columns, coerces numeric values deterministically, and reports invalid rows as `predictionStatus = unavailable` instead of silently dropping them.
+
+Formal inference also requires stable alert IDs. Missing `id` columns, blank row IDs, NaN row IDs, and duplicate alert IDs are reported as unavailable records. Synthetic row IDs are not generated unless a legacy compatibility option is explicitly enabled in code.
+
+Stage 3 prediction output is model evidence, not threat risk. XGBoost probabilities are raw `multi:softprob` outputs and should not be treated as calibrated certainty.
+
+For backward compatibility with the current Stage 4 fusion input contract, regenerated records still include `baseRiskScore`, but it is marked with:
+
+```txt
+baseRiskScoreStatus = legacy_confidence_compatibility_not_threat_risk
+```
+
+Stage 4 should later migrate to deriving risk from prediction evidence rather than treating Stage 3 confidence as threat risk, especially for high-confidence Benign predictions.
+
+Each regenerated prediction also includes deterministic model provenance:
+
+```txt
+xgboostVersion
+modelArtifactVersion
+modelSha256
+featureSchemaSha256
+preprocessingConfigSha256
+labelMappingSha256
+```
+
+## ML Explainability
+
+Stage 3 now generates XGBoost native TreeSHAP explanation evidence during local inference. This uses the committed `xgboost_ids_model.json` Booster with native `pred_contribs=True`; the separate Python `shap` package is not required for this increment.
+
+TreeSHAP is generated only after a row has passed feature validation and received a valid model prediction. Invalid rows keep `predictionStatus = unavailable` and receive an unavailable explanation with `reason = prediction_unavailable`.
+
+For multiclass output, Stage 3 explains only the predicted class:
+
+```txt
+softprob argmax
+-> predictedClassIndex
+-> selected raw margin
+-> selected TreeSHAP contribution vector
+```
+
+The explanation output space is `raw_margin`. SHAP contributions explain the raw XGBoost model margin for the predicted class. They are not probability changes, threat severity, Detection Score, Operational Priority, Fusion input, or HITL adaptation input.
+
+Each available explanation includes:
+
+```txt
+method
+outputSpace
+explainedClass
+explainedClassIndex
+baseValue
+rawModelMargin
+topSupportingFeatures
+topOpposingFeatures
+additivityCheck
+```
+
+The full 78 feature contributions are used internally for additivity validation:
+
+```txt
+baseValue + sum(78 feature SHAP contributions) ~= predicted-class rawModelMargin
+```
+
+The display-oriented explanation keeps only the top supporting and opposing features, up to five each. Supporting features must have positive SHAP contributions, and opposing features must have negative SHAP contributions.
+
+The compact explainability summary is written to:
+
+```txt
+stage-3/evaluation/ml-explainability-summary.json
+```
+
+Explanation coverage is reported across all input rows. Rows rejected before ML prediction are counted as unavailable explanations with `predictionUnavailable`, while valid predictions can separately report `treeShapGenerationFailure` or `additivityFailure`. An explanation is analyst-usable only when its TreeSHAP additivity check passes.
+
+The full regenerated prediction output remains local/regenerable and should not be treated as the primary committed evidence.
+
 ## Expected Model Artifacts
 
 Future training should write:
@@ -111,13 +220,27 @@ Each prediction should eventually include:
 ```json
 {
   "id": "AL-0001",
+  "predictionStatus": "available",
+  "predictedClassIndex": 4,
   "predictedAttackType": "DoS",
   "modelConfidence": 0.91,
-  "baseRiskScore": 91
+  "classProbabilities": {
+    "Benign": 0.01,
+    "Botnet": 0.01,
+    "Brute Force": 0.01,
+    "DDoS": 0.03,
+    "DoS": 0.91,
+    "Web Attack": 0.03
+  },
+  "mlExplanation": {
+    "status": "available",
+    "method": "xgboost_native_treeshap_pred_contribs",
+    "outputSpace": "raw_margin"
+  }
 }
 ```
 
-`modelConfidence` is the classifier probability for the selected class. `baseRiskScore` can initially be derived from confidence, for example confidence multiplied by 100, but this can be refined in Stage 4.
+`modelConfidence` is the classifier score for the selected class from XGBoost `multi:softprob`. It is not calibrated certainty and should not be used directly as threat risk.
 
 ## Evaluation Plan
 
@@ -170,12 +293,12 @@ This is a known limitation, not a silent model feature. Future retraining should
 
 ## What Is Not Included Yet
 
-- No final model is trained in this scaffold task.
 - No dashboard integration.
 - No Fusion Engine.
 - No human feedback adaptation.
 - No production IDS deployment.
 - No Snort or Suricata integration.
+- No SHAP package dependency; explainability currently uses native XGBoost TreeSHAP only.
 
 ## How to Run Later
 
@@ -196,10 +319,15 @@ MAX_ROWS_PER_CLASS = 2_000
 
 If RAM still crashes, reduce `ROW_CAP_PER_CSV` to `5_000` or `10_000`, or set `MAX_CSV_FILES = 3` for a first test run.
 
-The Python scripts remain scaffold commands for later local implementation:
+The training script remains a scaffold for later local training reproducibility:
 
 ```powershell
 python stage-3/scripts/train_xgboost_ids.py
+```
+
+The prediction script now performs local inference from committed artifacts:
+
+```powershell
 python stage-3/scripts/run_ml_prediction_demo.py
 ```
 

@@ -1,0 +1,83 @@
+[
+  {
+    "memoryId": "HM-0001",
+    "profile": {
+      "fusionAttackType": "Web Attack",
+      "fusionDecision": "SIGNATURE_ONLY_ML_BENIGN",
+      "protocol": "TCP",
+      "destinationPort": 443,
+      "signatureId": "SIG-WEB-ATTACK-FLOW"
+    },
+    "effectiveFeedbackCount": 1,
+    "falsePositiveCount": 1,
+    "confirmedThreatCount": 0,
+    "expectedActivityCount": 0,
+    "dominantFeedback": "mark_false_positive",
+    "agreementRatio": 1,
+    "conflictDetected": false,
+    "sourceFeedbackIds": [
+      "FB-0001"
+    ],
+    "sourceAlertIds": [
+      "AL-0031"
+    ],
+    "exampleReasons": [
+      "Web signature matched, but this flow is believed to be approved test traffic."
+    ],
+    "derivedFrom": "analyst-feedback events"
+  },
+  {
+    "memoryId": "HM-0002",
+    "profile": {
+      "fusionAttackType": "Botnet",
+      "fusionDecision": "ML_ONLY_HIGH_CONFIDENCE",
+      "protocol": "TCP",
+      "destinationPort": 8080,
+      "signatureId": null
+    },
+    "effectiveFeedbackCount": 1,
+    "falsePositiveCount": 0,
+    "confirmedThreatCount": 0,
+    "expectedActivityCount": 1,
+    "dominantFeedback": "mark_expected_activity",
+    "agreementRatio": 1,
+    "conflictDetected": false,
+    "sourceFeedbackIds": [
+      "FB-0002"
+    ],
+    "sourceAlertIds": [
+      "AL-0585"
+    ],
+    "exampleReasons": [
+      "Traffic pattern matches a known internal lab simulation window."
+    ],
+    "derivedFrom": "analyst-feedback events"
+  },
+  {
+    "memoryId": "HM-0003",
+    "profile": {
+      "fusionAttackType": "DoS",
+      "fusionDecision": "ML_ONLY_HIGH_CONFIDENCE",
+      "protocol": "TCP",
+      "destinationPort": 80,
+      "signatureId": null
+    },
+    "effectiveFeedbackCount": 1,
+    "falsePositiveCount": 0,
+    "confirmedThreatCount": 1,
+    "expectedActivityCount": 0,
+    "dominantFeedback": "confirm_true_positive",
+    "agreementRatio": 1,
+    "conflictDetected": false,
+    "sourceFeedbackIds": [
+      "FB-0003"
+    ],
+    "sourceAlertIds": [
+      "AL-0038"
+    ],
+    "exampleReasons": [
+      "DoS-like flow should remain high priority for response testing."
+    ],
+    "derivedFrom": "analyst-feedback events"
+  }
+]

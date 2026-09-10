@@ -94,6 +94,14 @@ These dependencies will be formalized later in:
 requirements.txt
 ```
 
+Stage 3 local inference uses a smaller pinned dependency set:
+
+```txt
+stage-3/requirements.txt
+```
+
+The current committed XGBoost model artifact was saved with XGBoost `3.3.0`, so local inference should use the matching `xgboost==3.3.0` runtime.
+
 ## Current Status
 
 - Node.js is needed to run the Stage 2 signature demo.

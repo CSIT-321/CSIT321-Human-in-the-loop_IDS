@@ -85,6 +85,10 @@
 - Refined Stage 6 dashboard view structure so global operational metrics appear only in the Operations view, while Investigations, Feedback Model, and Reports focus on their specific workflows.
 - Fixed Stage 6 dashboard correctness issues by propagating per-record ground truth after feedback evaluation, preventing Benign/Malicious filters from using predictions as truth, separating score guardrails from exception trust-gate rejections, and aligning local Expected Activity feedback with Stage 5.
 - Updated the system architecture slide deck to reflect the current pipeline wording, ground-truth joining boundary, score guardrail versus trust-gate semantics, Operations-only global metrics, and Investigation feedback workflow.
+- Started the ML explainability workstream by adding reproducible local Stage 3 inference from committed XGBoost artifacts, strict 78-feature validation, model provenance hashes, class probability output, and regenerated prediction evidence without retraining or changing the dashboard.
+- Hardened Stage 3 local inference by enforcing stable alert IDs, validating the model/class/schema contract, blocking unsafe replacement of the Stage 4 ML sample input, and replacing the committed full regenerated prediction artifact with a compact reproducibility summary.
+- Added native XGBoost TreeSHAP explainability for Stage 3 inference, explaining only the predicted class raw margin and recording compact explainability coverage without changing prediction, risk, fusion, dashboard, or HITL adaptation behaviour.
+- Hardened Stage 3 TreeSHAP explanation integrity so failed additivity checks are not marked analyst-usable and explainability coverage reports prediction-unavailable, TreeSHAP-generation, and additivity-failure counts separately.
 
 ## Notes
 
