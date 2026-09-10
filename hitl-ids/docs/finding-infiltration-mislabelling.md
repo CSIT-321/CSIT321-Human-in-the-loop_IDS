@@ -1,0 +1,135 @@
+# Finding: The CSE-CIC-IDS2018 "Infiltration" Class Conflates Two Unrelated Behaviours
+
+**Draft for inclusion in the FYP report** (suggested placement: Evaluation / Dataset Analysis, or
+as a short contribution subsection). Written to be liftable into the report with light editing.
+
+---
+
+## Summary
+
+The `Infiltration` class of CSE-CIC-IDS2018 is widely reported as difficult or impossible to
+classify, with published per-class F1 scores frequently near zero. Working from the corrected
+release of the dataset, we find that this is not primarily a modelling problem. **99.6% of flows
+labelled `Infiltration` are in fact NMAP port scans** — reconnaissance activity — while genuine
+post-compromise infiltration accounts for **317 flows out of 63,195,145**.
+
+The class is therefore not one behaviour but two, in a ratio of roughly 282:1. A classifier asked
+to learn "Infiltration" is being asked to learn a label that does not correspond to a coherent
+phenomenon. Once the reconnaissance activity is separated into its own class, both parts become
+tractable: our model reaches **F1 1.000 on Port Scan** and **F1 0.913 on the residual
+Infiltration** class.
+
+---
+
+## Background
+
+CIC-IDS-2017 and CSE-CIC-IDS2018 are among the most widely used benchmarks in network intrusion
+detection research. Both have documented defects. Engelen, Rimmer and Joosen identified labelling
+errors, packet duplication and a flow-termination bug in CICFlowMeter that terminates TCP flows on
+a single FIN rather than a mutual FIN exchange [1]. The follow-up study by Liu, Engelen, Lynar,
+Essam and Joosen extended the analysis to CSE-CIC-IDS2018 and reported errors across attack
+orchestration, feature generation, documentation and labelling; it received the Best Paper award
+at IEEE CNS 2022 [2]. Both teams published corrected datasets and a fixed flow exporter [3].
+
+This project adopted the corrected release. The observation reported here emerged from a routine
+label census performed before sampling.
+
+## Method
+
+All ten capture-day CSV files of the corrected release were streamed and every `Label` value
+counted, together with the `Attempted Category` field the corrected release introduces. No
+sampling was involved: the census covers the complete dataset of **63,195,145 flows**.
+
+Reproducible via `hitl-ids/scripts/scan_labels.py`; raw counts in
+`hitl-ids/data/processed/label_scan.json`.
+
+## Result
+
+| Label | Flows | Share of "Infiltration" |
+|---|---:|---:|
+| `Infiltration - NMAP Portscan` | 89,374 | **99.646%** |
+| `Infiltration - Communication Victim Attacker` | 204 | 0.227% |
+| `Infiltration - Dropbox Download` | 85 | 0.095% |
+| `Infiltration - Dropbox Download - Attempted` | 28 | 0.031% |
+| **Total** | **89,691** | 100% |
+
+The original dataset exposes these as a single `Infiltration` label. The corrected release
+preserves the sub-labels, which is what makes the composition visible.
+
+## Interpretation
+
+A port scan and a post-compromise data transfer are different activities at every level a
+flow-based detector can observe:
+
+| | NMAP port scan | Infiltration (Dropbox download / C2 communication) |
+|---|---|---|
+| Intent | Reconnaissance, pre-compromise | Exploitation, post-compromise |
+| Flow shape | Many very short flows, minimal payload, high fan-out across ports | Few longer-lived flows, substantial payload transfer |
+| Direction | Predominantly outbound probes | Sustained bidirectional exchange |
+| MITRE ATT&CK phase | Discovery (TA0007) | Command and Control / Exfiltration (TA0011, TA0010) |
+
+Because the reconnaissance flows outnumber the genuine infiltration flows by roughly 282:1, any
+model trained on the combined label will optimise almost entirely for the port-scan signature. The
+minority behaviour contributes too little loss to be learned. Reported failure to classify
+"Infiltration" is therefore better read as **a labelling artefact than a limitation of the
+classifier**, and results that treat it as a modelling difficulty may be misattributing the cause.
+
+This is consistent with the broader critique in [2]: errors introduced during dataset construction
+propagate silently into every downstream evaluation.
+
+## Consequence for this project
+
+The class was split. `Port Scan` is treated as a distinct attack class, giving an eight-class
+problem: `Benign, Botnet, Brute Force, DDoS, DoS, Infiltration, Port Scan, Web Attack`.
+
+| Class | Precision | Recall | F1 | Held-out support |
+|---|---:|---:|---:|---:|
+| Port Scan | 1.000 | 1.000 | **1.000** | 6,000 |
+| Infiltration (residual) | 0.979 | 0.855 | **0.913** | 55 |
+
+Both parts are learnable once separated. Two caveats must accompany these figures:
+
+1. **The residual Infiltration score rests on 55 held-out examples.** With only 317 such flows in
+   the entire dataset, the confidence interval is wide and the result should be read as indicative.
+2. **These scores do not generalise beyond this testbed.** Each attack class in CSE-CIC-IDS2018 was
+   generated by a single tool under fixed configuration, so each carries a near-constant flow
+   fingerprint. We tested whether the classifier was simply reading destination port — a plausible
+   shortcut, since several classes map 1:1 to a port — and **rejected that hypothesis**: removing
+   `Dst Port` and `Protocol` costs only 0.0011 macro F1. The shortcut is the flow shape itself,
+   which is a property of the data generation process rather than of real network traffic.
+
+## Recommendation for researchers using this dataset
+
+Report `Port Scan` and `Infiltration` separately. Aggregating them produces a metric dominated by
+reconnaissance traffic while appearing to measure infiltration detection, which overstates
+capability against the attack that matters more operationally.
+
+---
+
+## References
+
+[1] G. Engelen, V. Rimmer and W. Joosen, "Troubleshooting an Intrusion Detection Dataset: the
+CICIDS2017 Case Study," *IEEE Security and Privacy Workshops (WTMC)*, 2021.
+https://intrusion-detection.distrinet-research.be/WTMC2021/index.html
+
+[2] L. Liu, G. Engelen, T. Lynar, D. Essam and W. Joosen, "Error Prevalence in NIDS Datasets: A
+Case Study on CIC-IDS-2017 and CSE-CIC-IDS-2018," *IEEE Conference on Communications and Network
+Security (CNS)*, 2022. **Best Paper Award.**
+https://intrusion-detection.distrinet-research.be/CNS2022/index.html
+
+[3] Corrected datasets and fixed CICFlowMeter:
+https://intrusion-detection.distrinet-research.be/CNS2022/Datasets/ ·
+https://github.com/GintsEngelen/CICFlowMeter
+
+---
+
+## Provenance
+
+| Item | Location |
+|---|---|
+| Label census script | `hitl-ids/scripts/scan_labels.py` |
+| Raw counts | `hitl-ids/data/processed/label_scan.json` |
+| Class split logic | `hitl-ids/scripts/build_samples.py` (`classify()`) |
+| Model metrics | `hitl-ids/models/training-metrics.json` |
+| Port-shortcut ablation | `hitl-ids/models/ablation-port.json` |
+| Executable narrative | `hitl-ids/notebooks/04_corrected_findings.ipynb` §1 |

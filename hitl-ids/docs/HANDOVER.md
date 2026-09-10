@@ -149,7 +149,7 @@ These were believed, then disproved. Re-proposing them wastes a cycle.
 
 | # | Step | Owner | Note |
 |---|---|---|---|
-| **1** | **Held-out re-test of rule thresholds** | Claude | Thresholds were tuned *on the demo sample*. Real overfitting risk. Do this before building on them. |
+| ~~1~~ | ~~Held-out re-test of rule thresholds~~ | **DONE 2026-09-11** | precision **0.9999**, recall **0.1993** on 250,655 unseen rows; 2 FPs in 30,025 hits. Not overfit. |
 | 2 | **S2 — data contracts**: 12 tables, append-only `audit_log` trigger, `evidence_class` + `evidence_priority` on `alerts` | Claude | Keystone. Expensive to change after S9. |
 | 3 | S5 + S4b — signature engine and tuned rules in Python | Delegate + review | Golden-test against frozen fixtures |
 | 4 | S6 — fusion re-specification, invariants I1–I5 | **Claude only** | I5: no `signature_override` may rank below any `ml_only` |
@@ -162,16 +162,19 @@ Full detail per step: [`../../plans/hitl-ids-demo-build.md`](../../plans/hitl-id
 **70**, critical threshold **80**, exception min **3** occurrences at **60%** confidence, plus
 `infiltration_floor_75` which exists in `stage-5/core/feedback-engine.js:65-69`.
 
-**Feedback categories:** the engine implements **five** (`confirmed_malicious +10`,
-`false_positive −30`, `expected_activity −30`, `uncertain 0`, `escalate +15`). The docs list six —
-`duplicate` is new and its delta must be **decided deliberately**, not invented.
+**Feedback categories — RESOLVED.** The engine (`stage-5/core/feedback-engine.js:80-112`) is
+authoritative and implements **five**, under different names from the docs:
+`confirm_true_positive +10` · `mark_false_positive −30` · `mark_expected_activity −30` ·
+`needs_investigation 0` (forces review) · `escalate +15` (forces review).
+**`duplicate` needs no delta.** It appears zero times in the engine or dashboard, and URS UC-SA-15
+defines it as a *queue action* (link to original, suppress from active queue), not a score
+adjustment. The docs' "six categories" miscounts by folding a queue action into the scoring set.
 
 ---
 
 ## 8. Open questions for the user
 
-1. **Push the branch?** It is committed locally but not pushed.
-2. **Held-out re-test** — proceed automatically, or report first?
-3. **`duplicate` feedback delta** — needs a number.
-4. Should the corrected-dataset findings (the Infiltration mislabelling especially) be written up
-   for the FYP report as a contribution? It is genuinely publishable and costs little.
+1. ~~Push the branch?~~ **User decision: keep local.** Do not push without being asked.
+2. ~~Held-out re-test~~ **Done, reported.** Next task is S2 — data contracts.
+3. Review [`finding-infiltration-mislabelling.md`](finding-infiltration-mislabelling.md) — a
+   report-ready write-up of the Infiltration finding, drafted and awaiting your edit.

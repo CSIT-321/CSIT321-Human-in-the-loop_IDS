@@ -12,6 +12,11 @@ being built on.
 
 ## 1. What was built
 
+![Build pipeline](img/01_pipeline.png)
+
+<details>
+<summary>Mermaid source (for viewers that render it)</summary>
+
 ```mermaid
 graph LR
     A["CSECICIDS2018_improved.zip<br/>10.43 GB · 10 days"] --> B["scan_labels.py<br/>63,195,145 flows"]
@@ -31,12 +36,19 @@ graph LR
     style I fill:#ffe6cc
 ```
 
+</details>
+
 A hard rule throughout: the 36 GB of uncompressed CSV is **streamed from the zip**, never
 extracted. Nothing but the two samples touches disk.
 
 ---
 
 ## 2. The dataset, as it actually is
+
+![Class distribution](img/02_class_distribution.png)
+
+<details>
+<summary>Mermaid source (for viewers that render it)</summary>
 
 ```mermaid
 pie showData
@@ -51,6 +63,8 @@ pie showData
     "Web Attack" : 438
 ```
 
+</details>
+
 | Finding | Value | Why it matters |
 |---|---|---|
 | **Infiltration was never one class** | 99.6% is `NMAP Portscan`; true infiltration = **317 flows** | Explains why the literature calls Infiltration "unlearnable" — the label conflates reconnaissance with post-compromise activity |
@@ -62,6 +76,11 @@ pie showData
 ---
 
 ## 3. How the direction changed
+
+![Direction history](img/03_version_history.png)
+
+<details>
+<summary>Mermaid source (for viewers that render it)</summary>
 
 ```mermaid
 graph TD
@@ -84,10 +103,14 @@ graph TD
     style V13 fill:#d5e8d4
 ```
 
+</details>
+
 Red nodes are conclusions that were **later overturned by evidence**. They are kept in the record
 rather than erased — notebooks 01–03 carry supersession banners and remain unchanged.
 
 ### The reversal, in numbers
+
+![The reversal](img/04_reversal.png)
 
 | | Old sample (v1.0 basis) | Corrected sample |
 |---|---:|---:|
@@ -130,6 +153,11 @@ subsumes weak rules.
 
 ## 5. Where the project now stands
 
+![Triage effort allocation](img/05_triage.png)
+
+<details>
+<summary>Mermaid source (for viewers that render it)</summary>
+
 ```mermaid
 graph LR
     F["1,000 malicious flows"] --> C["corroborated<br/>200<br/>rule + model agree"]
@@ -145,6 +173,8 @@ graph LR
     style X fill:#f8cecc
 ```
 
+</details>
+
 **The claim the project can now defend:** the hybrid does not detect *more* — it tells the analyst
 **where their attention is worth spending**. When the signature layer fires it is right 100% of
 the time and a human can verify *why*: `SSH on port 22, >10.67 pkt/s, ≥10 fwd packets, <5s` is
@@ -157,6 +187,11 @@ the two claims it replaces, it is true on this data.
 ---
 
 ## 6. How to proceed
+
+![Phase roadmap](img/06_roadmap.png)
+
+<details>
+<summary>Mermaid source (for viewers that render it)</summary>
 
 ```mermaid
 graph TD
@@ -174,11 +209,17 @@ graph TD
     style P5 fill:#dae8fc
 ```
 
+</details>
+
 ### Immediate next steps, in dependency order
+
+> **Held-out validation passed.** The tuned thresholds were re-tested on `train_sample.csv`
+> (250,655 rows the rules had never seen — 50× the tuning set): combined precision **0.9999**,
+> recall **0.1993**, two false positives in 30,025 hits. The overfitting risk is closed.
 
 | # | Step | Why now | Owner |
 |---|---|---|---|
-| 1 | **Held-out re-test of rule thresholds** | Thresholds were tuned *on the demo sample* — real overfitting risk. Cheapest way to protect every downstream claim | Claude |
+| ~~1~~ | ~~Held-out re-test of rule thresholds~~ | **DONE** — precision 0.9999 / recall 0.1993 on 250,655 unseen rows. FTP recall even improved (0.730 → 0.760) | Claude |
 | 2 | **S2 — data contracts** (12 tables, append-only audit) | Keystone; everything after depends on it, and it is expensive to change after persistence lands | Claude |
 | 3 | **S5/S4b — signature engine + tuned rules in Python** | Golden-tested against frozen fixtures | Delegate + review |
 | 4 | **S6 — fusion re-specification** | Evidence classes + queue ordering + invariants I1–I5 | Claude only |
@@ -190,7 +231,7 @@ graph TD
 | Risk | Severity | Mitigation |
 |---|---|---|
 | 0.99 F1 is a testbed artefact | **High** — invalidates any generalisation claim | State it in every report; never present as real-world capability |
-| Rule thresholds tuned on the demo sample | **High** — may not survive held-out test | Step 1 above, before building on them |
+| ~~Rule thresholds tuned on the demo sample~~ | **CLEARED** | Held-out re-test on 250,655 unseen rows: precision **0.9999**, recall **0.1993** — 2 false positives in 30,025 hits. Thresholds are not overfit. |
 | Infiltration F1 rests on 55 held-out rows | Medium | Report the support count beside the metric |
 | 5 rules retired (DoS/Botnet precision 0.000) | Medium | Documented as a finding, not a gap |
 | 6 flows missed by both detectors | Low | Honest residual; feeds rule development |
@@ -235,5 +276,6 @@ Only notebook 04 needs the regenerated artifacts.
 - [`plan-changelog.md`](plan-changelog.md) — v0.1 → v1.3, every change with its evidence
 - [`feasibility-study.md`](feasibility-study.md) — method, limits, and where the process failed
 - [`rule-retuning-report.md`](rule-retuning-report.md) — threshold search detail
+- [`finding-infiltration-mislabelling.md`](finding-infiltration-mislabelling.md) — report-ready write-up of the Infiltration finding
 - [`../../plans/hitl-ids-demo-build.md`](../../plans/hitl-ids-demo-build.md) — the 18-step build plan
 - [`../notebooks/04_corrected_findings.ipynb`](../notebooks/04_corrected_findings.ipynb) — the executable decision record
