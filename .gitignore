@@ -18,3 +18,6 @@ dashboard/dist/
 .omc/
 hitl-ids/**/.omc/
 stage-5/evaluation/feedback-evaluation-records.json
+
+# regenerable inference output (16 MB)
+hitl-ids/data/processed/demo_ml_predictions_shap.json

@@ -246,6 +246,47 @@ Coverage with the retuned set: `ml_only 794 · signature_only **0** · both 200 
 
 ---
 
+## v1.4 — Collaborator merge; their model invalidated, ours is truth (2026-09-11) ← **current**
+
+A collaborator force-pushed 14 commits to `origin/main` (rewriting history past our branch base).
+Merged into `feat/corrected-dataset-and-findings`; **our frozen fixtures were unaffected**, which
+is exactly why they were frozen.
+
+### What they contributed
+
+| Asset | Lines | Value to us |
+|---|---:|---|
+| `stage-3/core/ml_inference.py` | 671 | Python inference + **native TreeSHAP with additivity verification** |
+| `stage-3/tests/test_ml_inference.py` | 624 | Behavioural spec |
+| `stage-5/config/adaptation-config.json` | 94 | Similarity weights, graduated adjustments, guardrails |
+| `stage-5/core/similarity-engine.js` | 159 | Weighted similar-alert matching |
+| `stage-5/core/feedback-aggregation-engine.js` | 451 | Agreement-gated aggregation |
+
+### Two independent confirmations of our analysis
+
+- **`duplicate` is a workflow action, not a scoring one.** Their config places it in
+  `workflowFeedbackTypes`, never `learningFeedbackTypes` — matching the conclusion drawn from
+  URS UC-SA-15 before their code was seen.
+- **`infiltrationFloor: 75` retained**, confirming the guardrail our plan had dropped.
+
+### Decisions
+
+| | Change | Rationale |
+|---|---|---|
+| CHG | **Their 6-class model and all its outputs are INVALIDATED.** Our corrected 8-class model is the single source of truth | Theirs is trained on the uncorrected dataset and cannot emit `Infiltration` or `Port Scan` |
+| ADD | `packages/detection/ml/inference.py` — vendored, adapted copy of their module | Upstream **hard-asserts 78 features**; ours has 82, so it rejected our model outright |
+| FIX | Extended the leakage guard with `Attempted Category`, `attack_class`, `is_attempted` | `Attempted Category` states whether an attack succeeded — a leakage vector that did not exist before the corrected release, so the upstream guard predates it |
+| ADD | `models/preprocessing-config.json` (8-class, 82 features) | Required by their loader; supersedes the 6-class version |
+| ADD | `scripts/run_ml_inference.py` + `data/processed/ml-explainability-summary.json` | **5,000/5,000 alerts carry a TreeSHAP explanation with verified additivity** (max deviation 1.13e-5, tolerance 1e-4). **NFR-01 is now satisfied on corrected data.** |
+
+Adaptations are marked `ADAPTED:` inline; their TreeSHAP logic, schema validation and provenance
+hashing are preserved unchanged. Intent is that our tree eventually supersedes `stage-3/`/`stage-5/`.
+
+**Coordination risk:** the collaborator is actively developing in `stage-3/` and `stage-5/`, which
+our plan declared frozen. That convention now conflicts with reality and needs agreeing with them.
+
+---
+
 ## Open items
 
 | Item | Blocker | Owner |

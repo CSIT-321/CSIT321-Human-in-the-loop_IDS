@@ -1,0 +1,32 @@
+{
+  "method": "xgboost_native_treeshap_pred_contribs",
+  "outputSpace": "raw_margin",
+  "additivityTolerance": 0.0001,
+  "datasetSource": "corrected CSE-CIC-IDS2018 (Engelen et al., IEEE CNS 2022)",
+  "inputCount": 5000,
+  "explanationsAvailable": 5000,
+  "explanationsUnavailable": 0,
+  "additivityPassed": 5000,
+  "additivityFailed": 0,
+  "maxAdditivityDifference": 1.128189978771843e-05,
+  "meanAdditivityDifference": 2.940171638897482e-06,
+  "predictedClassDistribution": {
+    "Benign": 4004,
+    "DoS": 200,
+    "DDoS": 200,
+    "Brute Force": 200,
+    "Botnet": 150,
+    "Port Scan": 150,
+    "Infiltration": 35,
+    "Web Attack": 61
+  },
+  "modelProvenance": {
+    "xgboostVersion": "3.2.0",
+    "modelArtifactVersion": "3.2.0",
+    "modelSha256": "32b117ff91501d7363d474f0bb658a7aa82787d6563a70406dd6bdedb8efd1a6",
+    "featureSchemaSha256": "0c6e756c4e197b02fe4408604c5bd67fdb5787e8db4519d60c12c24bb91c705e",
+    "preprocessingConfigSha256": "4033ffe672a707021b6087182d75c88a8dd99ad71fac31365fa7b8abf5c6edb5",
+    "labelMappingSha256": "b39af204853c6d4af79bc51b520779ad126972322165dc8b4cedd232bdd378fe"
+  },
+  "supersedes": "stage-3/evaluation/ml-explainability-summary.json (6-class, uncorrected)"
+}
