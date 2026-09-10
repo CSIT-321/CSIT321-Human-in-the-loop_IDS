@@ -73,7 +73,7 @@ against source before acceptance.
 
 ---
 
-## v1.0 — Evidence-driven redirection (2026-09-11) ← **current**
+## v1.0 — Evidence-driven redirection (2026-09-11)
 
 Notebooks `01`–`03` were built to test v0.3's assumptions against the actual data. They
 invalidated the project's central technical claim. This is the largest change so far.
@@ -118,7 +118,7 @@ invalidated the project's central technical claim. This is the largest change so
 
 ---
 
-## v1.1 — Corrected dataset acquired (2026-09-11) ← **current**
+## v1.1 — Corrected dataset acquired (2026-09-11)
 
 `CSECICIDS2018_improved.zip` (10.43 GB, 10 capture days, 36.04 GB uncompressed) was downloaded
 from the authors' own server and a full label scan run over all **63,195,145 flows**. The
@@ -154,7 +154,7 @@ corrected data changes the class taxonomy, not just the numbers.
 
 ---
 
-## v1.2 — Corrected data reverses v1.0's premise (2026-09-11) ← **current**
+## v1.2 — Corrected data reverses v1.0's premise (2026-09-11)
 
 The 8-class model was trained on `train_sample.csv` and the findings re-measured on the disjoint
 `demo_sample.csv`. **Both empirical pillars of v1.0 failed.**
@@ -201,7 +201,7 @@ suggestive), making the hybrid's contribution **trust rather than recall**.
 
 ---
 
-## v1.3 — Retuning closed on evidence; signature layer repositioned (2026-09-11) ← **current**
+## v1.3 — Retuning closed on evidence; signature layer repositioned (2026-09-11)
 
 Option (b) — retune the rules against corrected data to recover complementarity — was tested and
 **closed negative**. Option (a) adopted.
