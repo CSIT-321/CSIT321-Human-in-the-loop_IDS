@@ -1,0 +1,503 @@
+# Blueprint — Human-in-the-Loop IDS Dashboard
+
+**Version 1.0** · supersedes v0.2 (post-grilling) and v0.3 (post-adversarial-review).
+**Read [`hitl-ids/docs/plan-changelog.md`](../hitl-ids/docs/plan-changelog.md) first** — it records
+every change and the evidence that forced it, including the claims this plan no longer makes.
+Method and limitations: [`hitl-ids/docs/feasibility-study.md`](../hitl-ids/docs/feasibility-study.md).
+
+**Objective:** A presentable, end-to-end working demo of the HITL IDS dashboard, on a foundation that grows into the full specified system without a rewrite.
+
+> ### What changed in v1.0, in one paragraph
+> Executable evidence (notebooks `01`–`03`) invalidated the project's central claim. **Zero** alerts
+> carry both signature and ML evidence, so "signature + ML agreement is the strongest evidence case"
+> describes a state that never occurs, and the TDM's weighted-sum fusion has **mathematically inert**
+> weights. The replacement claim is stronger and true: the detectors are **complementary** — the
+> signature layer catches 8 brute-force attacks the ML model labels Benign at 0.75–0.80 confidence.
+> Fusion is therefore re-specified as **Complementary Evidence Fusion** (notebook `03`), and a new
+> rule-tuning step **S4b** earns the precision the design depends on.
+
+**Repo:** `github.com/CSIT-321/CSIT321-Human-in-the-loop_IDS` (branch `main`)
+**Mode:** git branches, **no `gh` automation** (`gh` not authenticated — run `gh auth login` to enable PR/CI steps)
+**Scheduling:** dependency-ordered. **No dates.** A step is ready when its dependencies' exit criteria pass.
+
+---
+
+## Locked decisions (from grilling rounds 1–3)
+
+| # | Decision | Consequence |
+|---|---|---|
+| D1 | Dataset = **corrected** CSE-CIC-IDS2018 (Engelen et al., IEEE CNS 2022) | Cite as methodological contribution; pre-empts dataset-validity challenge |
+| D2 | Retrain XGBoost to **7 classes incl. Infiltration** | Must land before any evaluation work |
+| D3 | Backend = **option (c)**: batch detection writes SQLite; minimal API for feedback/audit path only | Grows into full FastAPI without schema rewrite |
+| D4 | All detection logic in **Python** | Node engines are reimplemented, not transliterated |
+| D5 | **New structure** `hitl-ids/` inside existing repo; old folders disregarded | `stage-*/`, `dashboard/`, `prototype-demo/` frozen as research record |
+| D6 | **All 3 role UIs**, analyst path deepest | Guardrail + evaluation screens are the selling point |
+| D7 | Prefix module = **flow exporter** (Engelen CICFlowMeter fork), post-demo | Avoids train/serve skew: same tool produced D1's dataset |
+| D8 | SHAP **precomputed** top-5 at detection time | Protects NFR-04 ~2s budget |
+| D9 | Evaluation = **3 seeded runs** (control / treatment / guardrails-off) | Only way to demonstrate rather than assert guardrails |
+| D10 | Docs (PRD/URS/TDM) are **reference only**, not amended | Deviations logged in `hitl-ids/docs/deviations.md` |
+
+**Known deviations from approved docs** (log, don't hide): dataset is 2018-corrected not CICIDS2017; SQLite before PostgreSQL; fusion may become 3-way if a third detector is added later.
+
+---
+
+## Target structure
+
+```
+hitl-ids/
+  apps/
+    api/            FastAPI service
+    web/            React + Vite + Tailwind + Recharts
+  packages/
+    detection/
+      ingest/       FlowSource interface + CsvReplaySource (+ future ExporterSource)
+      signature/    custom flow rule engine
+      ml/           model load, predict, SHAP
+      fusion/       combined scoring
+      feedback/     category deltas, exception memory
+      guardrail/    caps, floors, trust gates
+      audit/        append-only writer
+  data/             versioned datasets
+  models/           model artifacts
+  evaluation/       harness + run outputs
+  notebooks/        training
+  tests/
+  docs/deviations.md
+```
+
+---
+
+## Ownership and delegation policy
+
+**Claude (me) — never delegated:** architecture, data contracts, fusion maths, feedback maths, guardrail logic, evaluation design, every review gate.
+
+**GLM / DeepSeek workers:** scaffolding, CRUD endpoints, React components from a given contract, test fixtures, docstrings, type stubs, migration boilerplate, doc drafting.
+
+**Provider constraints (verified this session):** DeepSeek **cannot** use WebSearch (`unrecognized_model` on `web_search_tool`); GLM likewise failed web search and answered from training knowledge instead. **All research stays with Claude.** Every worker output is verified by reading the files it wrote — never its self-report.
+
+---
+
+## Dependency graph
+
+```
+S1 ──> S2 ──┬──> S3 ──> S4 ───────────────┐
+            │                             │
+            ├──> S5 ──> S4b ──> S6 ──> S7 ─┴──> S9 ──> S15 ──> S10a ──> S10b ──> S11 ──┬──> S12 ──┐
+            │                                                                          ├──> S13 ──┤
+            └──> S8 ───────────────────────────────────────────────────────────────────┴──> S14 ──┴──> S16 ──┬──> S17
+                                                                                                             └──> S18
+```
+
+**Parallel opportunities:** S5 ∥ S8 · S3/S4 ∥ S5/S4b/S6 · S12 ∥ S13 · S17 ∥ S18
+
+> **v0.3 FIX — two dependency errors corrected.**
+> **(a)** `S15 → S10` was missing. S10's endpoint list includes `GET /api/evaluation/*`, whose response schemas cannot be specified until S15 defines the metrics. The v0.2 claim `S15 ∥ S11` was **false** and is withdrawn.
+> **(b)** "S11 may start once OpenAPI is frozen" was circular — FastAPI *generates* OpenAPI from implemented route handlers, so the document does not exist until S10 is substantially built. **S10 is therefore split:** **S10a** (contract — Pydantic response models, hand-authored OpenAPI; Claude) and **S10b** (handlers; delegable). S11 depends on S10a only, which restores real parallelism instead of asserting it.
+>
+> **v1.0 CHANGE.** **S4b** (rule tuning) inserted between S5 and S6. S6 no longer depends on S4, because the golden test that created that dependency is deleted — decoupling fusion from the retrain.
+
+---
+
+# PHASE 0 — Foundation
+
+## S1 — Scaffold structure and tooling
+
+**Deps:** none · **Owner:** delegate (GLM) · **Branch:** `feat/s1-scaffold`
+
+**Context brief.** New greenfield tree `hitl-ids/` inside an existing repo whose other top-level folders are a frozen research record and must not be touched. Python 3.11, Node 22. Backend FastAPI, frontend React + Vite + TypeScript + Tailwind + Recharts.
+
+**Tasks.** Create the target structure above. `pyproject.toml` with ruff + pytest + FastAPI + xgboost + shap + pandas + scikit-learn. Vite app in `apps/web` with Tailwind and Recharts configured. `.gitignore` for data/models/venv. A `README.md` stating this tree supersedes `stage-*/`.
+
+**Verify.** `python -m pytest -q` (0 tests, exits clean) · `cd apps/web && npm run build` succeeds · `ruff check .` clean.
+
+**Exit criteria.** Both toolchains build from a clean clone. No file outside `hitl-ids/` and `plans/` modified.
+
+**Rollback.** Delete `hitl-ids/`; nothing else is touched.
+
+## S2 — Canonical data contracts ⭐ KEYSTONE
+
+**Deps:** S1 · **Owner:** **Claude** · **Branch:** `feat/s2-contracts`
+
+**Context brief.** Every later step depends on these types. The TDM defines 13 tables; the demo needs a coherent subset that can grow to all 13 without migration pain. Guardrail defaults are fixed and consistent across all three source documents: max reduction **30**, critical floor **70**, critical threshold **80**, exception min occurrences **3**, min confidence **60%**.
+
+**Tasks.** Pydantic models: `FlowRecord`, `SignatureMatch`, `MlPrediction`, `ShapAttribution`, `Alert`, `FeedbackEvent`, `GuardrailOutcome`, `AuditEntry`, `DetectionRun`, `EvaluationRun`. SQLite DDL for the demo subset — **twelve** tables: `users`, `datasets`, `signature_rules`, `ml_models`, `detection_runs`, `alerts`, `flow_data`, `feedback_events`, `audit_log`, `guardrail_config`, `evaluation_scenarios`, `evaluation_runs` — with TDM column names preserved so the Postgres migration is mechanical. Append-only `audit_log` enforced by trigger. Seed `guardrail_config` with the five defaults above **plus `infiltration_floor_75`** (a third guardrail present in `feedback-engine.js:65-69` that v0.2 of this plan had dropped).
+
+> **v0.3 FIX.** Four tables were missing from v0.2 and are now mandatory: `ml_models` (S4's rollback names `ml_models.status`), `evaluation_scenarios` (FK parent of `evaluation_runs`; holds S15's `feedback_sequence` and `guardrails_active`), `users` (FK parent of `audit_log.actor_id`; S16's narrative opens with login), `signature_rules` (S9 takes `rule_version`; NFR-08 requires admin-configurable rules).
+
+**Alert schema addition (v1.0).** `alerts` gains `evidence_class` (`corroborated | signature_override | ml_only | none`) and `evidence_priority` (int). These are load-bearing, not decorative — the queue orders by them (see S6).
+
+**Verify.** `pytest tests/test_contracts.py` — round-trip every model; assert an `UPDATE`/`DELETE` on `audit_log` raises; **enumerate `PRAGMA foreign_key_list` for every table and assert zero dangling references**.
+
+**Exit criteria.** Schema instantiates on a fresh SQLite file; append-only proven by a failing-write test; column names match TDM; every FK resolves within the schema.
+
+**Rollback.** Schema is not yet consumed — drop and redefine freely. **After S9 this becomes expensive: get it right here.**
+
+---
+
+# PHASE 1 — Data and model
+
+## S3 — Corrected dataset + FlowSource ingestion
+
+**Deps:** S2 · **Owner:** Claude (acquisition) + delegate (transforms) · **Branch:** `feat/s3-ingest`
+
+**Context brief.** Replace the original CSE-CIC-IDS2018 with the Engelen corrected release. Define the seam D7 depends on: a `FlowSource` protocol whose only implementation now is `CsvReplaySource` (streams rows in timestamp order to simulate a sensor). The existing 1,000-row `AL-XXXX` sample is **verified sound** — its 78 model features align exactly with `feature-columns.json`, extras are `Flow ID`, `Src IP`, `Dst IP`, `Src Port`, `Timestamp`, `id` — so it may be carried over as an interim fixture.
+
+**Tasks.** Acquire corrected dataset; record provenance and citation in `docs/deviations.md`. Implement `FlowSource` protocol + `CsvReplaySource`. Stratified sampler producing a versioned demo sample **including Infiltration**. Register into `datasets` with `class_distribution`. Emit a held-out split with an explicit leakage check.
+
+**Verify.** `pytest tests/test_ingest.py` — schema validation, no train/test id overlap, all 7 classes present in both splits.
+
+**Exit criteria.** Versioned dataset row in DB; leakage test passes; `CsvReplaySource` yields records in timestamp order.
+
+**Rollback.** Keep old sample as `data/legacy/`; ingestion is additive.
+
+## S4 — Retrain XGBoost to 7 classes + precompute SHAP
+
+**Deps:** S3 · **Owner:** Claude (design) + delegate (notebook boilerplate) · **Branch:** `feat/s4-model`
+
+**Context brief.** Current model has **6** classes — `Benign`, `Botnet`, `Brute Force`, `DDoS`, `DoS`, `Web Attack`. **Infiltration is absent while 83 of 1,000 demo rows are Infiltration**, so 8.3% of the demo set is unclassifiable by construction and every per-class metric is currently invalid. Infiltration is known to be near-unlearnable in this dataset; a poor-but-honest per-class score is a legitimate finding, a missing class is not.
+
+**Tasks.** Retrain on corrected data, 7 classes, `imbalanced-learn` for skew. Export model + `feature-columns.json` + `label-mapping.json` + `preprocessing-config.json`. TreeSHAP top-5 per record, persisted to `alerts.shap_attributions` at detection time (D8). Record per-class precision/recall/F1 to `ml_models`.
+
+**Verify.** `pytest tests/test_model.py` — label map has 7 classes including Infiltration; feature order matches training; SHAP contributions sum to (prediction − base value) within tolerance.
+
+**Exit criteria.** 7-class model loads and predicts; SHAP additivity assertion passes; per-class metrics recorded, Infiltration included even if weak.
+
+**Rollback.** Model artifacts are versioned; `ml_models.status` flips back to the prior version.
+
+---
+
+# PHASE 2 — Detection core (Python port)
+
+> **Port strategy for S5–S7:** the Node engines are the **specification**, not the source. Reimplement in Python, then assert the Python output matches the existing Node JSON outputs on the same 1,000-row input (golden tests). This proves the port preserves behaviour before any new logic is added.
+
+## S5 — Signature engine to Python
+
+**Deps:** S2 **only** · **Owner:** delegate (DeepSeek) + Claude review · **Branch:** `feat/s5-signature` · ∥ S8
+
+> **v0.3 FIX.** v0.2 declared `Deps: S2, S3`, scheduling this step *after* the dataset swap — so an agent reading it cold would golden-test the port against the **new** data and get a total mismatch. This step needs a frozen fixture, not new data. The dependency on S3 is removed.
+
+**Context brief.** Port `stage-2/core/signature-engine.js` (296 LOC). Rules are flow-feature predicates in `flow-signatures.json`, AND-combined, each emitting normalised severity 0–1. **Hard rule: `attackType` and `groundTruth` are labels, never detection inputs** — the original project already had to correct this once.
+
+**Fixtures are already frozen** at `hitl-ids/tests/fixtures/legacy/` (done during the feasibility study): `flow-feature-sample.csv`, `flow-feature-full.csv`, `ground-truth.json`, `flow-signatures.json`, `signature-output.sample.json`, `ml-predictions.sample.json`, `fusion-alerts.sample.json`, `feedback-adjusted-alerts.sample.json`. **Never regenerate these.**
+
+**Reference implementation.** Notebook `02` already contains a working clause evaluator that reproduces the Node engine's 15 hits exactly. Port from it rather than from scratch.
+
+**Tasks.** Python rule engine reading the same JSON rule format. Rules enable/disable without code change (NFR-08). Golden test against the **frozen** `signature-output.sample.json`.
+
+**Verify.** `pytest tests/test_signature.py` — golden match; a test asserting label fields are absent from the feature vector reaching a rule.
+
+**Exit criteria.** Equivalent verdicts to Node on the 1,000-row sample; label-leakage test passes.
+
+**Rollback.** Isolated package; delete and retry.
+
+## S4b — Signature rule tuning ⭐ NEW IN v1.0
+
+**Deps:** S5 (needs the Python rule engine) · **Owner:** **Claude** · **Branch:** `feat/s4b-rules`
+
+**Context brief.** Notebook `02` proved the rule set barely functions: recall **0.016**, precision **0.533**, and **5 of 7 rules never fire**. The inert rules are not selective, they are **inverted** — `SIG-DDOS-HIGH-RATE-FLOW` demands `flowPacketsPerSecond >= 900` while actual DDoS flows sit at 0.07–8.94 and *benign* traffic reaches 23,529. Every rule is marked `"validationStatus": "prototype-heuristic"`; none was ever calibrated against data.
+
+**Tasks.**
+- **Retune `SIG-SSH-BRUTE-FORCE`**: raise `flowPacketsPerSecond.min` from 10 to **20**. Notebook `02`'s sweep shows precision **1.000** anywhere in 20–110 with no loss of true positives (8/8 retained, 3 false positives eliminated).
+- **Retire** `SIG-DOS-HIGH-RATE-FLOW`, `SIG-DDOS-HIGH-RATE-FLOW`, `SIG-BOTNET-BEACON-FLOW`, `SIG-INFILTRATION-LONG-FLOW`, `SIG-FTP-BRUTE-FORCE`. Best achievable single-threshold precision on the 17 observable features is **0.14–0.37** — unusable for a high-precision posture. Record the retirement and its evidence in `docs/deviations.md`; do not silently delete them.
+- **Fix or retire `SIG-WEB-ATTACK-FLOW`** — current precision is **0.000** (all 4 hits benign).
+- Re-run notebook `02` against the corrected dataset once S3 lands and re-derive every threshold.
+
+**Verify.** `pytest tests/test_rules.py` — retuned SSH rule yields precision 1.000 on the frozen fixture; no retired rule remains enabled; overall signature precision **>= 0.9**.
+
+**Exit criteria.** Signature precision >= 0.9 with recall in the 5–20% band. **This is deliberately low recall** — the layer is a high-precision oracle, not a detector of everything.
+
+**Rollback.** Rules are JSON; revert the file.
+
+> **Note on the goal.** v0.2 assumed tuning would restore signature+ML co-occurrence. It does not — notebook `02` shows co-occurrence stays **0** even after retuning. That is not a failure; §S6 explains why it is the point.
+
+---
+
+## S6 — Fusion re-specification (Complementary Evidence Fusion) ⭐ REWRITTEN IN v1.0
+
+**Deps:** S5, S4b · **Owner:** **Claude (never delegated)** · **Branch:** `feat/s6-fusion`
+
+> **v0.3 FIX.** v0.2 demanded the TDM weighted formula **and** a golden match against `fusion-engine.js` — impossible, because that file implements no weighted sum. It is an 8-branch decision tree (`clampScore(base + 10)`, `+5`, `-10`) over a severity map `Low:40 Medium:60 High:80 Critical:95`, and it bands Critical at **>= 90**, not the 80 v0.2 assumed. **The golden test is deleted.**
+>
+> **v1.0 CHANGE.** The weighted formula is *also* deleted. Notebook `01` F7 proved the weights inert: with zero co-occurrence they rescale two **disjoint** populations, ρ = 1.0000 across every weight setting. Notebook `03` showed the weight sweep is a see-saw — at `W_sig >= 0.7` signature alerts reach rank 4 only by crushing all 403 correct ML detections. **This step is a re-specification, not a port, and the deviation is logged in `docs/deviations.md`.**
+
+**Context brief.** Implement **Complementary Evidence Fusion** exactly as specified in notebook `03`. Governing principle: *a high-precision detector is never averaged away by a disagreeing one.* Fusion scope stays **signature-record-scoped** — unmatched ML predictions are reported out-of-scope, never unioned (the real bug that produced 1000 + 2186 = 3186 phantom alerts). Note **996 of 1000** flows have an ML prediction; the 4 missing must be handled explicitly, not silently dropped.
+
+**Tasks.** Evidence classification (`corroborated` / `signature_override` / `ml_only` / `none`). Score per class. `requires_review`. **Queue ordering by `evidence_priority` then score** — this is part of the contract, not a UI concern. Explanation generator = matched rules + top SHAP features. Delete the Infiltration special-case hack (it is dead code: `infiltrationMlLimitationCount: 0`).
+
+**Verify.** `pytest tests/test_fusion.py` — the five invariants:
+- **I1** a signature hit can never lower an alert below `sig_severity × 100`
+- **I2** `signature_override` alerts are always review-flagged, whatever the score
+- **I3** feedback cannot decay a `signature_override` alert; it routes to the administrator
+- **I4** scoring is a pure function of its inputs
+- **I5** **no `signature_override` alert may rank below any `ml_only` alert**
+
+Plus: alert count equals signature scope exactly; the 8 known complementary detections occupy review-queue positions 1–8.
+
+> **Why I5 exists.** CEF's own first design flagged those alerts for review and then sorted the queue by score — ranking them **#414 of 417**, *worse* than the weighted sum it replaced. Comparing a precision-1.000 rule's 60 against an ML probability's 85 is the original error in a new costume. The failure is preserved in notebook `03`.
+
+**Exit criteria.** All five invariants pass. Alert count == signature record count. `AGREEMENT_BONUS` and `CRITICAL_THRESHOLD` configurable (these replace the inert weights and genuinely change behaviour on data that exists).
+
+**Rollback.** Revert branch; S5 output unaffected.
+
+## S7 — Feedback + guardrails to Python
+
+**Deps:** S6 · **Owner:** **Claude (never delegated)** · **Branch:** `feat/s7-feedback`
+
+**Context brief.** Port `stage-5/core/feedback-engine.js` (437 LOC). Deterministic category deltas — **no Bayesian model** (`docs/tech-stack.md` claims Beta-Bernoulli; the code does not implement it and the TDM does not specify it — the doc is stale). Score guardrails and exception trust-gates are **separate mechanisms** and must not be conflated in metrics.
+
+> **v0.3 FIX — three corrections to v0.2.**
+> **(a) Categories.** v0.2 listed six; the engine implements **five** (`feedback-engine.js:81-112`) and `duplicate` is genuinely new. Specify all six deltas explicitly — the existing five are `confirmed_malicious +10`, `false_positive −30`, `expected_activity −30`, `uncertain 0`, `escalate +15` — and **decide `duplicate` deliberately**. Do not let an implementer invent a number.
+> **(b) A third guardrail was dropped.** `infiltration_floor_75` exists at `feedback-engine.js:65-69` and was absent from v0.2's five defaults. Keep it or remove it, but **log the decision** in `docs/deviations.md`.
+> **(c) The floor trigger changes semantics.** Node fires the floor when `fusionConfidenceLevel === 'Critical'`, which is score **≥ 90**. v0.2 said "critical floor 70 for alerts ≥ 80", widening coverage substantially. Defensible as a decision — but it is a behaviour change presented as a port, so log it.
+
+**Guardrails.** Max reduction 30; critical floor 70; `infiltration_floor_75`; exceptions require ≥ 3 occurrences at ≥ 60% confidence. Every outcome records `applied | capped | rejected` with a reason.
+
+**v1.0 addition — invariant I3.** Feedback **cannot decay a `signature_override` alert**; such feedback routes to the administrator as a possible rule regression. A precision-1.000 rule contradicted by an analyst is either a genuine regression worth escalating or analyst error, and in neither case should the score quietly erode.
+
+**Tasks.** Category delta table (all six, explicit). Guardrail service returning `GuardrailOutcome`. Exception memory with occurrence/confidence gate. Every event written to append-only audit.
+
+**Verify.** `pytest tests/test_guardrail.py` —
+- the TDM worked example: score 92, requested −40, actual −22, final 70, floor enforced
+- a critical alert can never be driven below 70 under **any** category or sequence
+- **a `signature_override` alert's score is unchanged by any feedback category (I3)**
+- `capped` ≠ `rejected` in counters
+- *(secondary)* same alert + same feedback ⇒ identical delta
+
+> **v0.3 FIX.** v0.2 billed that last check as the flagship NFR-05 test. It is a pure function of two immutable inputs — **it cannot fail**, and it says nothing about the run-level reproducibility NFR-05 actually requires (model inference, ordering, `PYTHONHASHSEED`). The real determinism test is S9's same-seed run. Demoted accordingly.
+
+**Exit criteria.** Determinism property holds. Floor unbreakable by any sequence. Audit entry per event.
+
+**Rollback.** Revert branch. **Highest-risk step in the plan — this is the safety claim.**
+
+## S8 — Append-only audit writer
+
+**Deps:** S2 · **Owner:** delegate + Claude review · **Branch:** `feat/s8-audit` · ∥ S5
+
+**Context brief.** NFR-02/NFR-03: every detection, feedback, adjustment and config change logged with actor, timestamp, rationale; tamper-evident. The DB trigger from S2 is the enforcement; this is the typed writer over it.
+
+**Tasks.** `AuditWriter` with typed event constructors (`LOGIN`, `FEEDBACK`, `DETECTION_RUN`, `RULE_CHANGE`, `GUARDRAIL_REJECTION`, `CONFIG_CHANGE`). Query/filter by actor, type, range. CSV export.
+
+**Verify.** `pytest tests/test_audit.py` — write-then-read; `UPDATE` and `DELETE` both raise; filters correct.
+
+**Exit criteria.** Immutability proven by test, not by assertion.
+
+**Rollback.** Isolated package.
+
+---
+
+# PHASE 3 — Persistence and API
+
+## S9 — SQLite persistence + batch detection runner
+
+**Deps:** S6, S7, S8 · **Owner:** Claude · **Branch:** `feat/s9-persistence`
+
+**Context brief.** D3's core: detection is an **offline batch** that writes a real database; the API never runs detection inline. One command takes a registered dataset to a populated `alerts` table.
+
+**Tasks.** Repository layer over the S2 schema. `run_detection(dataset_id, model_version, rule_version, seed)` → ingest → signature → ML + SHAP → fusion → persist alerts + flow_data + shap → audit. Snapshot `fusion_weights` and `guardrail_config` into `detection_runs`.
+
+**Verify.** `pytest tests/test_run.py` — end-to-end run over the sample yields alert count == signature scope; re-running with the same seed produces identical scores; run row snapshots config.
+
+**Exit criteria.** A single command produces a fully populated demo DB, reproducibly.
+
+**Rollback.** DB file is disposable; regenerate.
+
+## S10a / S10b — Minimal API surface (split in v0.3)
+
+**S10a — contract.** Deps: S9, S15 · Owner: **Claude** · Branch: `feat/s10a-contract`
+Pydantic request/response models plus a **hand-authored** OpenAPI document. This is what S11 builds its typed client against.
+
+**S10b — handlers.** Deps: S10a · Owner: delegate + Claude review · Branch: `feat/s10b-handlers`
+Route implementations behind the S10a contract.
+
+> **v0.3 FIX.** v0.2 had a single S10 depending only on S9, and told S11 to start "once OpenAPI is frozen" — circular, because FastAPI generates OpenAPI *from* implemented handlers. Splitting the contract out lets S11 start for real. S10a also depends on **S15**, because `GET /api/evaluation/*` response schemas cannot be written before S15 defines the metrics.
+
+**Context brief.** Only endpoints the demo path exercises. Auth is a **role-switch stub** — real JWT/bcrypt is S18. Deliberately narrow; the other ~25 TDM endpoints are S18.
+
+**v1.0 addition.** `GET /api/alerts` must return `evidence_class` and order by `evidence_priority, combined_score DESC` (S6 invariant I5). The feedback write path — `POST /api/alerts/{id}/feedback` — invokes guardrail logic and is therefore **Claude's, not delegated**, per the plan's own anti-pattern list.
+
+**Tasks.**
+- `GET /api/alerts` (rank, filter, sort, search, paginate)
+- `GET /api/alerts/{id}` (flow + signature + ML + SHAP + explanation)
+- `POST /api/alerts/{id}/feedback`
+- `GET /api/alerts/{id}/score-adjustment`
+- `GET /api/alerts/{id}/feedback-history`
+- `GET /api/dashboard/summary`
+- `POST /api/detection/run`
+- `GET /api/audit-log`
+- `PUT /api/config/guardrails`
+- `GET /api/evaluation/*` (S15)
+- OpenAPI published.
+
+**Verify.** `pytest tests/test_api.py` — contract test per endpoint; role stub blocks analyst from `PUT /api/config/guardrails`; **p95 latency < 2s on `GET /api/alerts` and `GET /api/alerts/{id}` (NFR-04)**.
+
+**Exit criteria.** All demo-path endpoints green; OpenAPI generated; NFR-04 measured, not assumed.
+
+**Rollback.** Revert; detection core unaffected.
+
+---
+
+# PHASE 4 — Interface
+
+## S11 — Web shell, role switching, design system
+
+**Deps:** S10 (contract only — may start once OpenAPI is frozen) · **Owner:** delegate (GLM) + Claude review · **Branch:** `feat/s11-shell` · ∥ S15
+
+**Tasks.** App shell, routing, login screen, role switcher (analyst/admin/evaluator), Tailwind tokens, typed API client generated from OpenAPI, loading/error/empty states.
+
+**Verify.** `npm run build` · `npm test` component smoke tests · each role lands on its correct default view (analyst → queue, admin → system status, evaluator → scenario list).
+
+**Exit criteria.** All three shells reachable; API client typed; no `any` in the client.
+
+**Rollback.** Revert branch.
+
+## S12 — Analyst path (deep) ⭐ DEMO CORE
+
+**Deps:** S11 · **Owner:** delegate (components) + **Claude (score-adjustment + guardrail messaging)** · **Branch:** `feat/s12-analyst` · ∥ S13
+
+**Context brief.** The demo's spine, and the only path built to full depth (D6). Deduped, the analyst's 24 use cases collapse to roughly 6 real interactions.
+
+**Tasks.** Ranked queue (sort/filter/search/paginate). Alert detail with four evidence panels — flow details, signature evidence, ML prediction, combined explanation — plus empty states ("no rule matched (ML-only alert)" / "signature-only alert"). Investigation notes. Feedback form, 6 categories. **Score-adjustment visualisation: original → requested Δ → guardrail bound → actual Δ → final.** Feedback history. Dashboard summary with Recharts.
+
+**Verify.** Component tests per panel; **end-to-end: submit false-positive feedback on a critical alert → UI shows the cap → refresh → adjusted score persists.**
+
+**Exit criteria.** Full loop works and survives reload. Guardrail intervention is visible to the user, not silent.
+
+**Rollback.** Revert branch.
+
+## S13 — Admin path (thin)
+
+**Deps:** S11 · **Owner:** delegate + Claude review · **Branch:** `feat/s13-admin` · ∥ S12
+
+**Tasks.** System status (run history, service health). Trigger detection run. Guardrail configuration form with the five settings and validated ranges. Guardrail rejection log. Audit log viewer with filters + CSV export.
+
+**Verify.** Component tests; guardrail form rejects floor ≥ ceiling; audit export downloads.
+
+**Exit criteria.** An admin can trigger a run and inspect what guardrails blocked.
+
+**Rollback.** Revert branch.
+
+## S14 — Evaluator path (thin)
+
+**Deps:** S11, S15 · **Owner:** delegate + Claude review · **Branch:** `feat/s14-evaluator`
+
+**Tasks.** Scenario list + config. Detection metrics (overall, per-class including Infiltration, confusion matrix). Baseline comparison with deltas. Guardrail test results. Export.
+
+**Verify.** Component tests; metrics view renders all 7 classes; comparison renders three-arm results.
+
+**Exit criteria.** Evaluator can run a scenario and read the deltas without touching a terminal.
+
+**Rollback.** Revert branch.
+
+---
+
+# PHASE 5 — Evaluation and demo
+
+## S15 — Three-arm evaluation harness
+
+**Deps:** S9 · **Owner:** **Claude** · **Branch:** `feat/s15-evaluation` · ∥ S11
+
+**Context brief.** D9. Every headline claim is a delta against a control.
+
+| Run | Feedback | Guardrails | Purpose |
+|---|---|---|---|
+| A — control | none | on | What the system does unaided |
+| B — treatment | scripted | on | The claim being tested |
+| C — guardrail probe | same scripted | **off** | What guardrails prevented |
+
+Dataset, model version, rule version and seed are pinned identically across all three — the feedback and the guardrail flag are the only variables. Scripted feedback must cover a **subset**, so effects on untouched similar alerts are measurable.
+
+> **v0.3 FIX — the exit criterion was corrupt.** v0.2 said: *"run C shows ≥ 1 critical suppression that run B prevents (if zero, the scripted sequence is too weak — strengthen it)."* That instructs tuning the experiment until it yields the desired result, inverting D9's own rationale. An examiner asking "how did you choose the feedback sequence?" would get "so the result would appear." **Replaced by pre-registration below.**
+
+**Tasks.**
+1. **Pre-register the feedback sequence before any arm runs.** Define it deterministically from a fixed seed — e.g. the 40 highest-scoring alerts by `combined_score`, category assigned from ground truth — and write it to `evaluation_scenarios.feedback_sequence`. It must cover a **subset**, so effects on untouched similar alerts remain measurable.
+2. Runner executing all three arms with dataset, model version, rule version and seed pinned identically. The feedback and the `guardrails_active` flag are the **only** variables.
+3. Metrics: per-class precision/recall/F1/FPR/FNR; ΔFP in top-50; Δ mean reciprocal rank of true positives; critical preservation rate; guardrail cap/reject counts. **Report `signature_override` preservation separately** — v1.0's core claim is that these survive feedback (invariant I3).
+4. Baseline comparison writer; report export.
+
+**Verify.** `pytest tests/test_evaluation.py` — **re-running a scenario reproduces identical metrics (NFR-05)**; the pre-registered sequence is byte-identical across runs; run C's suppression count is recorded **as measured**.
+
+**Exit criteria.** Three arms reproducible. Deltas computed. **Run C's suppression count is reported as-measured — zero is a publishable result** meaning the guardrails did not bind on this sequence. Record it; do not re-sample. The *guarantee* that the floor binds belongs in S7's unit tests, not in the evaluation.
+
+**Rollback.** Read-only over existing runs; safe to re-run.
+
+## S16 — Demo assembly and rehearsal ⭐ GATE
+
+**Deps:** S12, S13, S14 · **Owner:** Claude · **Branch:** `feat/s16-demo`
+
+**Tasks.** Seed script producing a known-good demo DB from scratch. Written demo narrative:
+
+> login → queue → **open the top `signature_override` alert** → read the evidence panels: a precision-1.000 rule fired, *and the ML model calls this flow Benign at 0.78 confidence* → the analyst adjudicates → submit feedback → watch the guardrail refuse to decay a signature-backed alert and route it to the administrator → separately, submit a false positive on a high-scoring `ml_only` alert → watch the −30 cap and the floor-70 bind → see the queue re-rank → refresh (persistence holds) → admin views the rejection log → evaluator shows the three-arm deltas
+
+> **v1.0 CHANGE — the centrepiece moved.** v0.2's demo opened on "a fused alert" showing signature *and* ML evidence agreeing. **No such alert exists** — co-occurrence is zero (notebook `01` F5). The new centrepiece is the case that does exist and is more compelling: the signature layer caught a real brute-force attack the model confidently mislabelled, and a human decides. That is a human-in-the-loop system demonstrating its actual value, rather than two detectors nodding at each other.
+
+**Demo-data precondition.** The seed script must guarantee at least one `signature_override` alert in the queue. On the frozen fixture there are exactly 8 (`AL-0509, AL-0511, AL-0536, AL-0542, AL-0546, AL-0567, AL-0573, AL-0574`). **If S3's corrected dataset yields zero, the demo narrative breaks — stop and re-plan rather than proceeding.**
+
+Rehearse end-to-end from a clean clone. Record known limitations honestly.
+
+**Verify.** Clean clone → seed → run → full narrative executes with no manual DB fixes.
+
+**Exit criteria.** **This is the "presentable demo" gate. S17/S18 do not start until this passes.**
+
+**Rollback.** n/a — assembly only.
+
+---
+
+# PHASE 6 — Post-demo
+
+## S17 — Prefix flow-exporter module
+
+**Deps:** S16 · **Owner:** Claude · **Branch:** `feat/s17-exporter` · ∥ S18
+
+**Context brief.** D7. [GintsEngelen/CICFlowMeter](https://github.com/GintsEngelen/CICFlowMeter) — the same tool that produced the corrected dataset (D1), which eliminates train/serve skew. It is a **flow exporter, not an IDS**; the signature engine remains the IDS logic. Java + Npcap on Windows is painful — run offline over PCAP via WSL/Docker.
+
+**Tasks.** `ExporterSource` implementing `FlowSource` from S3. PCAP → CIC features → pipeline. Column-name and dtype reconciliation against `feature-columns.json`. Documented setup. **Optional:** Suricata as a third evidence stream — note this makes fusion 3-way and changes the S6 formula.
+
+**Verify.** Features from the exporter on a sample PCAP match the training schema exactly; a flow processed end-to-end produces an alert.
+
+**Exit criteria.** Live-ish flows enter the pipeline with zero downstream change. **If schema reconciliation fails, stop and report — do not silently coerce columns.**
+
+**Rollback.** `CsvReplaySource` remains default; exporter is opt-in.
+
+## S18 — Full backend (D3 complete)
+
+**Deps:** S16 · **Owner:** Claude + delegate · **Branch:** `feat/s18-backend` · ∥ S17
+
+**Tasks.** SQLite → PostgreSQL (schema was written for it in S2). Real JWT + bcrypt + RBAC replacing the S10 stub. Remaining TDM endpoints: user management, rule manager, model version management, fusion weight config, bulk feedback, exports, notifications. Re-verify append-only triggers under Postgres.
+
+**Verify.** Full API contract suite; RBAC matrix test per role per endpoint; audit immutability re-proven on Postgres.
+
+**Exit criteria.** Feature parity with the TDM's specified surface.
+
+**Rollback.** Postgres migration is reversible while SQLite artifacts are retained.
+
+---
+
+## Invariants — checked after every step
+
+1. `pytest` green; `ruff check` clean; `npm run build` succeeds.
+2. **No label leakage** — `attackType`/`groundTruth` never reach a detector.
+3. **Alert count == signature scope** — no phantom alerts.
+4. **Audit is append-only** — `UPDATE`/`DELETE` raise.
+5. **Guardrails hold** — no critical alert below floor 70 under any feedback sequence.
+6. **Determinism** — identical inputs produce identical scores (NFR-05), verified at *run* level.
+7. **Nothing outside `hitl-ids/` and `plans/` is modified** — the research record is frozen.
+8. **(v1.0)** **No `signature_override` alert ranks below any `ml_only` alert** (I5).
+9. **(v1.0)** **Frozen fixtures are never regenerated** — `tests/fixtures/legacy/` is immutable.
+10. **(v1.0)** **Signature precision ≥ 0.9** once S4b lands. A low-precision "high-confidence oracle" is a contradiction that destroys the layer's purpose.
+
+## Anti-patterns to reject
+
+- Transliterating Node to Python instead of reimplementing against frozen fixtures.
+- Delegating fusion or guardrail maths — plausible-looking wrong answers are costly and hard to spot. **This includes `POST /api/alerts/{id}/feedback`, which invokes them.**
+- Building evaluation before S4 — metrics over a 6-class model are invalid.
+- Computing SHAP on demand — blows NFR-04.
+- Conflating guardrail caps with exception trust-gate rejections in metrics.
+- Accepting a worker's self-report without reading its files. **Research is never delegated at all** — GLM fabricated 29 citations it never fetched.
+- Adding endpoints "while we're here" — S10 is deliberately narrow.
+- **(v1.0) Averaging scores from different evidence classes.** A precision-1.000 rule's 60 is not "worse than" an ML probability of 85; they are not commensurable. This error killed the weighted sum *and* CEF's own first draft.
+- **(v1.0) Tuning an experiment until it produces the desired result.** Report as measured.
+- **(v1.0) Ignoring `dashboard/src`.** Freezing it as a research record does not mean refusing to *read* it — 2,368 lines of working components and typed models are a legitimate source for S11/S12. Port structure; never modify the originals.
+
+## Plan mutation protocol
+
+Steps may be split, inserted, reordered or abandoned. Record the change and its reason in `docs/deviations.md`. **S2 is the exception:** after S9 consumes it, schema changes require a migration path, not an edit.

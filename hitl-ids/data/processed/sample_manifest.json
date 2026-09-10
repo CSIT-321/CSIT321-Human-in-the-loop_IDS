@@ -1,0 +1,38 @@
+{
+  "seed": 20260911,
+  "archive": "CSECICIDS2018_improved.zip",
+  "source_rows_considered": 63195145,
+  "decisions": {
+    "Q18_attempted": "malicious, flagged via is_attempted",
+    "Q19_portscan": "Infiltration - NMAP Portscan split out as class 'Port Scan'",
+    "Q20_datasets": "disjoint train + demo samples"
+  },
+  "demo": {
+    "rows": 5000,
+    "classes": {
+      "Benign": 4000,
+      "DoS": 200,
+      "DDoS": 200,
+      "Brute Force": 200,
+      "Botnet": 150,
+      "Port Scan": 150,
+      "Infiltration": 40,
+      "Web Attack": 60
+    },
+    "attempted": 174
+  },
+  "train": {
+    "rows": 250655,
+    "classes": {
+      "Botnet": 30000,
+      "Benign": 100000,
+      "DoS": 30000,
+      "DDoS": 30000,
+      "Port Scan": 30000,
+      "Brute Force": 30000,
+      "Web Attack": 378,
+      "Infiltration": 277
+    },
+    "attempted": 23129
+  }
+}

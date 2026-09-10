@@ -1,0 +1,40 @@
+{
+  "_comment": [
+    "Explicit overrides mapping the trained model's feature names (original CSE-CIC-IDS2018,",
+    "abbreviated style) to the corrected Engelen et al. CNS2022 release (spelled-out style).",
+    "70 of 78 features match automatically under normalisation; these 8 do not and are pinned",
+    "here by hand. Never guess these at runtime - a silent mismatch is train/serve skew.",
+    "",
+    "Note the corrected release is itself internally inconsistent: 'Total Fwd Packet' is",
+    "singular while 'Total Bwd packets' is plural with a lowercase p. That inconsistency is",
+    "why the automatic matcher misses the forward variant but catches the backward one.",
+    "",
+    "Also note 'CWE Flag Count' -> 'CWR Flag Count': the original dataset misspelled the TCP",
+    "CWR (Congestion Window Reduced) flag as CWE. The corrected release fixes it. That one IS",
+    "resolved automatically by the normaliser via its cwe->cwr expansion rule."
+  ],
+  "model_to_corrected": {
+    "Tot Fwd Pkts": "Total Fwd Packet",
+    "TotLen Fwd Pkts": "Total Length of Fwd Packet",
+    "TotLen Bwd Pkts": "Total Length of Bwd Packet",
+    "Pkt Size Avg": "Average Packet Size",
+    "Fwd Byts/b Avg": "Fwd Bytes/Bulk Avg",
+    "Fwd Pkts/b Avg": "Fwd Packet/Bulk Avg",
+    "Bwd Byts/b Avg": "Bwd Bytes/Bulk Avg",
+    "Bwd Pkts/b Avg": "Bwd Packet/Bulk Avg"
+  },
+  "new_in_corrected_release": [
+    "Fwd RST Flags",
+    "Bwd RST Flags",
+    "ICMP Code",
+    "ICMP Type",
+    "Total TCP Flow Time",
+    "Attempted Category"
+  ],
+  "_new_columns_note": [
+    "These six columns do not exist in the original dataset and are therefore absent from the",
+    "trained model's feature set. They are NOT used for inference against the existing model.",
+    "A retrained model may adopt them - but 'Attempted Category' is label metadata, not a",
+    "feature, and must never be used as a detection input (label leakage)."
+  ]
+}

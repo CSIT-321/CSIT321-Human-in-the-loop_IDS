@@ -10,3 +10,7 @@ stage-3/notebooks/*Colab*.pdf
 stage-3/notebooks/*.pdf
 dashboard/node_modules/
 dashboard/dist/
+
+# hitl-ids: agent state, never tracked
+.omc/
+hitl-ids/**/.omc/

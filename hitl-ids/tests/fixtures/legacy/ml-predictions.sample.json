@@ -1,0 +1,5978 @@
+[
+  {
+    "id": "AL-0001",
+    "predictedAttackType": "Web Attack",
+    "modelConfidence": 0.868073,
+    "baseRiskScore": 87
+  },
+  {
+    "id": "AL-0002",
+    "predictedAttackType": "Web Attack",
+    "modelConfidence": 0.77561,
+    "baseRiskScore": 78
+  },
+  {
+    "id": "AL-0003",
+    "predictedAttackType": "Web Attack",
+    "modelConfidence": 0.899159,
+    "baseRiskScore": 90
+  },
+  {
+    "id": "AL-0004",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.99868,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0005",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.934324,
+    "baseRiskScore": 93
+  },
+  {
+    "id": "AL-0006",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.998594,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0007",
+    "predictedAttackType": "Web Attack",
+    "modelConfidence": 0.836086,
+    "baseRiskScore": 84
+  },
+  {
+    "id": "AL-0008",
+    "predictedAttackType": "Web Attack",
+    "modelConfidence": 0.81915,
+    "baseRiskScore": 82
+  },
+  {
+    "id": "AL-0009",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.991745,
+    "baseRiskScore": 99
+  },
+  {
+    "id": "AL-0010",
+    "predictedAttackType": "Web Attack",
+    "modelConfidence": 0.980509,
+    "baseRiskScore": 98
+  },
+  {
+    "id": "AL-0011",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.687331,
+    "baseRiskScore": 69
+  },
+  {
+    "id": "AL-0012",
+    "predictedAttackType": "Web Attack",
+    "modelConfidence": 0.559553,
+    "baseRiskScore": 56
+  },
+  {
+    "id": "AL-0013",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.998395,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0014",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.99868,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0015",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.872699,
+    "baseRiskScore": 87
+  },
+  {
+    "id": "AL-0016",
+    "predictedAttackType": "DoS",
+    "modelConfidence": 0.894876,
+    "baseRiskScore": 89
+  },
+  {
+    "id": "AL-0017",
+    "predictedAttackType": "DoS",
+    "modelConfidence": 0.761907,
+    "baseRiskScore": 76
+  },
+  {
+    "id": "AL-0018",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.797737,
+    "baseRiskScore": 80
+  },
+  {
+    "id": "AL-0019",
+    "predictedAttackType": "Web Attack",
+    "modelConfidence": 0.899159,
+    "baseRiskScore": 90
+  },
+  {
+    "id": "AL-0020",
+    "predictedAttackType": "DoS",
+    "modelConfidence": 0.734819,
+    "baseRiskScore": 73
+  },
+  {
+    "id": "AL-0021",
+    "predictedAttackType": "Web Attack",
+    "modelConfidence": 0.962108,
+    "baseRiskScore": 96
+  },
+  {
+    "id": "AL-0022",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.998395,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0023",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.998658,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0024",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.998676,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0025",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.998552,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0026",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.922725,
+    "baseRiskScore": 92
+  },
+  {
+    "id": "AL-0027",
+    "predictedAttackType": "Web Attack",
+    "modelConfidence": 0.868073,
+    "baseRiskScore": 87
+  },
+  {
+    "id": "AL-0028",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.915289,
+    "baseRiskScore": 92
+  },
+  {
+    "id": "AL-0029",
+    "predictedAttackType": "Web Attack",
+    "modelConfidence": 0.665004,
+    "baseRiskScore": 67
+  },
+  {
+    "id": "AL-0030",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.915289,
+    "baseRiskScore": 92
+  },
+  {
+    "id": "AL-0031",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.978174,
+    "baseRiskScore": 98
+  },
+  {
+    "id": "AL-0032",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.998646,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0033",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.872699,
+    "baseRiskScore": 87
+  },
+  {
+    "id": "AL-0034",
+    "predictedAttackType": "DoS",
+    "modelConfidence": 0.645321,
+    "baseRiskScore": 65
+  },
+  {
+    "id": "AL-0035",
+    "predictedAttackType": "Web Attack",
+    "modelConfidence": 0.673201,
+    "baseRiskScore": 67
+  },
+  {
+    "id": "AL-0036",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.941039,
+    "baseRiskScore": 94
+  },
+  {
+    "id": "AL-0037",
+    "predictedAttackType": "Web Attack",
+    "modelConfidence": 0.896875,
+    "baseRiskScore": 90
+  },
+  {
+    "id": "AL-0038",
+    "predictedAttackType": "DoS",
+    "modelConfidence": 0.99853,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0039",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.918377,
+    "baseRiskScore": 92
+  },
+  {
+    "id": "AL-0040",
+    "predictedAttackType": "Web Attack",
+    "modelConfidence": 0.97138,
+    "baseRiskScore": 97
+  },
+  {
+    "id": "AL-0041",
+    "predictedAttackType": "DoS",
+    "modelConfidence": 0.701781,
+    "baseRiskScore": 70
+  },
+  {
+    "id": "AL-0042",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.998658,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0043",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.998658,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0044",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.998507,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0045",
+    "predictedAttackType": "DoS",
+    "modelConfidence": 0.696472,
+    "baseRiskScore": 70
+  },
+  {
+    "id": "AL-0046",
+    "predictedAttackType": "Web Attack",
+    "modelConfidence": 0.860721,
+    "baseRiskScore": 86
+  },
+  {
+    "id": "AL-0047",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.998701,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0048",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.929168,
+    "baseRiskScore": 93
+  },
+  {
+    "id": "AL-0049",
+    "predictedAttackType": "DoS",
+    "modelConfidence": 0.676134,
+    "baseRiskScore": 68
+  },
+  {
+    "id": "AL-0050",
+    "predictedAttackType": "DoS",
+    "modelConfidence": 0.755025,
+    "baseRiskScore": 76
+  },
+  {
+    "id": "AL-0051",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.92043,
+    "baseRiskScore": 92
+  },
+  {
+    "id": "AL-0052",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.998533,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0053",
+    "predictedAttackType": "Web Attack",
+    "modelConfidence": 0.685064,
+    "baseRiskScore": 69
+  },
+  {
+    "id": "AL-0054",
+    "predictedAttackType": "Web Attack",
+    "modelConfidence": 0.803539,
+    "baseRiskScore": 80
+  },
+  {
+    "id": "AL-0055",
+    "predictedAttackType": "DoS",
+    "modelConfidence": 0.661975,
+    "baseRiskScore": 66
+  },
+  {
+    "id": "AL-0056",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.987855,
+    "baseRiskScore": 99
+  },
+  {
+    "id": "AL-0057",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.998594,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0058",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.993192,
+    "baseRiskScore": 99
+  },
+  {
+    "id": "AL-0059",
+    "predictedAttackType": "DoS",
+    "modelConfidence": 0.663361,
+    "baseRiskScore": 66
+  },
+  {
+    "id": "AL-0060",
+    "predictedAttackType": "Web Attack",
+    "modelConfidence": 0.77601,
+    "baseRiskScore": 78
+  },
+  {
+    "id": "AL-0061",
+    "predictedAttackType": "Web Attack",
+    "modelConfidence": 0.858859,
+    "baseRiskScore": 86
+  },
+  {
+    "id": "AL-0062",
+    "predictedAttackType": "Web Attack",
+    "modelConfidence": 0.969277,
+    "baseRiskScore": 97
+  },
+  {
+    "id": "AL-0063",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.998456,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0064",
+    "predictedAttackType": "Web Attack",
+    "modelConfidence": 0.889587,
+    "baseRiskScore": 89
+  },
+  {
+    "id": "AL-0065",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.814175,
+    "baseRiskScore": 81
+  },
+  {
+    "id": "AL-0066",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.903806,
+    "baseRiskScore": 90
+  },
+  {
+    "id": "AL-0067",
+    "predictedAttackType": "Web Attack",
+    "modelConfidence": 0.896725,
+    "baseRiskScore": 90
+  },
+  {
+    "id": "AL-0068",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.73868,
+    "baseRiskScore": 74
+  },
+  {
+    "id": "AL-0069",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.881471,
+    "baseRiskScore": 88
+  },
+  {
+    "id": "AL-0070",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.998533,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0071",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.998658,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0072",
+    "predictedAttackType": "DoS",
+    "modelConfidence": 0.696472,
+    "baseRiskScore": 70
+  },
+  {
+    "id": "AL-0073",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.807225,
+    "baseRiskScore": 81
+  },
+  {
+    "id": "AL-0074",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.956052,
+    "baseRiskScore": 96
+  },
+  {
+    "id": "AL-0075",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.998594,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0076",
+    "predictedAttackType": "Web Attack",
+    "modelConfidence": 0.857321,
+    "baseRiskScore": 86
+  },
+  {
+    "id": "AL-0077",
+    "predictedAttackType": "Web Attack",
+    "modelConfidence": 0.725522,
+    "baseRiskScore": 73
+  },
+  {
+    "id": "AL-0078",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.996421,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0079",
+    "predictedAttackType": "Web Attack",
+    "modelConfidence": 0.970329,
+    "baseRiskScore": 97
+  },
+  {
+    "id": "AL-0080",
+    "predictedAttackType": "Web Attack",
+    "modelConfidence": 0.912258,
+    "baseRiskScore": 91
+  },
+  {
+    "id": "AL-0081",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.732347,
+    "baseRiskScore": 73
+  },
+  {
+    "id": "AL-0082",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.939117,
+    "baseRiskScore": 94
+  },
+  {
+    "id": "AL-0083",
+    "predictedAttackType": "Web Attack",
+    "modelConfidence": 0.812728,
+    "baseRiskScore": 81
+  },
+  {
+    "id": "AL-0084",
+    "predictedAttackType": "Web Attack",
+    "modelConfidence": 0.899159,
+    "baseRiskScore": 90
+  },
+  {
+    "id": "AL-0085",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.877877,
+    "baseRiskScore": 88
+  },
+  {
+    "id": "AL-0086",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.998578,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0087",
+    "predictedAttackType": "Web Attack",
+    "modelConfidence": 0.979183,
+    "baseRiskScore": 98
+  },
+  {
+    "id": "AL-0088",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.929169,
+    "baseRiskScore": 93
+  },
+  {
+    "id": "AL-0089",
+    "predictedAttackType": "Web Attack",
+    "modelConfidence": 0.879946,
+    "baseRiskScore": 88
+  },
+  {
+    "id": "AL-0090",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.991745,
+    "baseRiskScore": 99
+  },
+  {
+    "id": "AL-0091",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.588547,
+    "baseRiskScore": 59
+  },
+  {
+    "id": "AL-0092",
+    "predictedAttackType": "Web Attack",
+    "modelConfidence": 0.896725,
+    "baseRiskScore": 90
+  },
+  {
+    "id": "AL-0093",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.998594,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0094",
+    "predictedAttackType": "Web Attack",
+    "modelConfidence": 0.914586,
+    "baseRiskScore": 91
+  },
+  {
+    "id": "AL-0095",
+    "predictedAttackType": "Web Attack",
+    "modelConfidence": 0.860721,
+    "baseRiskScore": 86
+  },
+  {
+    "id": "AL-0096",
+    "predictedAttackType": "Web Attack",
+    "modelConfidence": 0.812728,
+    "baseRiskScore": 81
+  },
+  {
+    "id": "AL-0097",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.998594,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0098",
+    "predictedAttackType": "Web Attack",
+    "modelConfidence": 0.77601,
+    "baseRiskScore": 78
+  },
+  {
+    "id": "AL-0099",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.921084,
+    "baseRiskScore": 92
+  },
+  {
+    "id": "AL-0100",
+    "predictedAttackType": "DoS",
+    "modelConfidence": 0.639222,
+    "baseRiskScore": 64
+  },
+  {
+    "id": "AL-0101",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.998759,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0102",
+    "predictedAttackType": "Web Attack",
+    "modelConfidence": 0.518784,
+    "baseRiskScore": 52
+  },
+  {
+    "id": "AL-0103",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.983324,
+    "baseRiskScore": 98
+  },
+  {
+    "id": "AL-0104",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.916938,
+    "baseRiskScore": 92
+  },
+  {
+    "id": "AL-0105",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.98527,
+    "baseRiskScore": 99
+  },
+  {
+    "id": "AL-0106",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.90148,
+    "baseRiskScore": 90
+  },
+  {
+    "id": "AL-0107",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.803147,
+    "baseRiskScore": 80
+  },
+  {
+    "id": "AL-0108",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.814175,
+    "baseRiskScore": 81
+  },
+  {
+    "id": "AL-0109",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.92043,
+    "baseRiskScore": 92
+  },
+  {
+    "id": "AL-0110",
+    "predictedAttackType": "Web Attack",
+    "modelConfidence": 0.857321,
+    "baseRiskScore": 86
+  },
+  {
+    "id": "AL-0111",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.995729,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0112",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.540946,
+    "baseRiskScore": 54
+  },
+  {
+    "id": "AL-0113",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.998676,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0114",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.883836,
+    "baseRiskScore": 88
+  },
+  {
+    "id": "AL-0115",
+    "predictedAttackType": "DoS",
+    "modelConfidence": 0.89099,
+    "baseRiskScore": 89
+  },
+  {
+    "id": "AL-0116",
+    "predictedAttackType": "DoS",
+    "modelConfidence": 0.908547,
+    "baseRiskScore": 91
+  },
+  {
+    "id": "AL-0117",
+    "predictedAttackType": "DoS",
+    "modelConfidence": 0.943424,
+    "baseRiskScore": 94
+  },
+  {
+    "id": "AL-0118",
+    "predictedAttackType": "DoS",
+    "modelConfidence": 0.701055,
+    "baseRiskScore": 70
+  },
+  {
+    "id": "AL-0119",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.785449,
+    "baseRiskScore": 79
+  },
+  {
+    "id": "AL-0120",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.884772,
+    "baseRiskScore": 88
+  },
+  {
+    "id": "AL-0121",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.951907,
+    "baseRiskScore": 95
+  },
+  {
+    "id": "AL-0122",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.978174,
+    "baseRiskScore": 98
+  },
+  {
+    "id": "AL-0123",
+    "predictedAttackType": "DoS",
+    "modelConfidence": 0.884353,
+    "baseRiskScore": 88
+  },
+  {
+    "id": "AL-0124",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.985706,
+    "baseRiskScore": 99
+  },
+  {
+    "id": "AL-0125",
+    "predictedAttackType": "Web Attack",
+    "modelConfidence": 0.771153,
+    "baseRiskScore": 77
+  },
+  {
+    "id": "AL-0126",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.814175,
+    "baseRiskScore": 81
+  },
+  {
+    "id": "AL-0127",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.998696,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0128",
+    "predictedAttackType": "Web Attack",
+    "modelConfidence": 0.907978,
+    "baseRiskScore": 91
+  },
+  {
+    "id": "AL-0129",
+    "predictedAttackType": "Web Attack",
+    "modelConfidence": 0.546188,
+    "baseRiskScore": 55
+  },
+  {
+    "id": "AL-0130",
+    "predictedAttackType": "Web Attack",
+    "modelConfidence": 0.821583,
+    "baseRiskScore": 82
+  },
+  {
+    "id": "AL-0131",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.5311,
+    "baseRiskScore": 53
+  },
+  {
+    "id": "AL-0132",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.825526,
+    "baseRiskScore": 83
+  },
+  {
+    "id": "AL-0133",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.887384,
+    "baseRiskScore": 89
+  },
+  {
+    "id": "AL-0134",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.998658,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0135",
+    "predictedAttackType": "Web Attack",
+    "modelConfidence": 0.858859,
+    "baseRiskScore": 86
+  },
+  {
+    "id": "AL-0136",
+    "predictedAttackType": "DoS",
+    "modelConfidence": 0.884353,
+    "baseRiskScore": 88
+  },
+  {
+    "id": "AL-0137",
+    "predictedAttackType": "Web Attack",
+    "modelConfidence": 0.725779,
+    "baseRiskScore": 73
+  },
+  {
+    "id": "AL-0138",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.998383,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0139",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.944613,
+    "baseRiskScore": 94
+  },
+  {
+    "id": "AL-0140",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.998676,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0141",
+    "predictedAttackType": "Web Attack",
+    "modelConfidence": 0.910106,
+    "baseRiskScore": 91
+  },
+  {
+    "id": "AL-0142",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.998533,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0143",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.506571,
+    "baseRiskScore": 51
+  },
+  {
+    "id": "AL-0144",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.994763,
+    "baseRiskScore": 99
+  },
+  {
+    "id": "AL-0145",
+    "predictedAttackType": "DoS",
+    "modelConfidence": 0.72778,
+    "baseRiskScore": 73
+  },
+  {
+    "id": "AL-0146",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.870814,
+    "baseRiskScore": 87
+  },
+  {
+    "id": "AL-0147",
+    "predictedAttackType": "Web Attack",
+    "modelConfidence": 0.77601,
+    "baseRiskScore": 78
+  },
+  {
+    "id": "AL-0148",
+    "predictedAttackType": "Web Attack",
+    "modelConfidence": 0.673201,
+    "baseRiskScore": 67
+  },
+  {
+    "id": "AL-0149",
+    "predictedAttackType": "DoS",
+    "modelConfidence": 0.718607,
+    "baseRiskScore": 72
+  },
+  {
+    "id": "AL-0150",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.930814,
+    "baseRiskScore": 93
+  },
+  {
+    "id": "AL-0151",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.998677,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0152",
+    "predictedAttackType": "DoS",
+    "modelConfidence": 0.943424,
+    "baseRiskScore": 94
+  },
+  {
+    "id": "AL-0153",
+    "predictedAttackType": "Web Attack",
+    "modelConfidence": 0.673201,
+    "baseRiskScore": 67
+  },
+  {
+    "id": "AL-0154",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.97357,
+    "baseRiskScore": 97
+  },
+  {
+    "id": "AL-0155",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.732347,
+    "baseRiskScore": 73
+  },
+  {
+    "id": "AL-0156",
+    "predictedAttackType": "DoS",
+    "modelConfidence": 0.701055,
+    "baseRiskScore": 70
+  },
+  {
+    "id": "AL-0157",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.998658,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0158",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.998703,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0159",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.993635,
+    "baseRiskScore": 99
+  },
+  {
+    "id": "AL-0160",
+    "predictedAttackType": "Web Attack",
+    "modelConfidence": 0.926036,
+    "baseRiskScore": 93
+  },
+  {
+    "id": "AL-0161",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.978648,
+    "baseRiskScore": 98
+  },
+  {
+    "id": "AL-0162",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.922725,
+    "baseRiskScore": 92
+  },
+  {
+    "id": "AL-0163",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.929106,
+    "baseRiskScore": 93
+  },
+  {
+    "id": "AL-0164",
+    "predictedAttackType": "Web Attack",
+    "modelConfidence": 0.860721,
+    "baseRiskScore": 86
+  },
+  {
+    "id": "AL-0165",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.578605,
+    "baseRiskScore": 58
+  },
+  {
+    "id": "AL-0166",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.998658,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0167",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.797379,
+    "baseRiskScore": 80
+  },
+  {
+    "id": "AL-0168",
+    "predictedAttackType": "Web Attack",
+    "modelConfidence": 0.868073,
+    "baseRiskScore": 87
+  },
+  {
+    "id": "AL-0169",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.943467,
+    "baseRiskScore": 94
+  },
+  {
+    "id": "AL-0170",
+    "predictedAttackType": "Web Attack",
+    "modelConfidence": 0.893922,
+    "baseRiskScore": 89
+  },
+  {
+    "id": "AL-0171",
+    "predictedAttackType": "DoS",
+    "modelConfidence": 0.683228,
+    "baseRiskScore": 68
+  },
+  {
+    "id": "AL-0172",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.779792,
+    "baseRiskScore": 78
+  },
+  {
+    "id": "AL-0173",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.877877,
+    "baseRiskScore": 88
+  },
+  {
+    "id": "AL-0174",
+    "predictedAttackType": "DoS",
+    "modelConfidence": 0.691208,
+    "baseRiskScore": 69
+  },
+  {
+    "id": "AL-0175",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.998701,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0176",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.998646,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0177",
+    "predictedAttackType": "Web Attack",
+    "modelConfidence": 0.839032,
+    "baseRiskScore": 84
+  },
+  {
+    "id": "AL-0178",
+    "predictedAttackType": "DoS",
+    "modelConfidence": 0.661975,
+    "baseRiskScore": 66
+  },
+  {
+    "id": "AL-0179",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.998507,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0180",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.915289,
+    "baseRiskScore": 92
+  },
+  {
+    "id": "AL-0181",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.688767,
+    "baseRiskScore": 69
+  },
+  {
+    "id": "AL-0182",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.998594,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0183",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.712691,
+    "baseRiskScore": 71
+  },
+  {
+    "id": "AL-0184",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.825526,
+    "baseRiskScore": 83
+  },
+  {
+    "id": "AL-0185",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.943397,
+    "baseRiskScore": 94
+  },
+  {
+    "id": "AL-0186",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.999083,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0187",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.991296,
+    "baseRiskScore": 99
+  },
+  {
+    "id": "AL-0188",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.967323,
+    "baseRiskScore": 97
+  },
+  {
+    "id": "AL-0189",
+    "predictedAttackType": "Web Attack",
+    "modelConfidence": 0.856297,
+    "baseRiskScore": 86
+  },
+  {
+    "id": "AL-0190",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.992355,
+    "baseRiskScore": 99
+  },
+  {
+    "id": "AL-0191",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.923151,
+    "baseRiskScore": 92
+  },
+  {
+    "id": "AL-0192",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.998703,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0193",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.98849,
+    "baseRiskScore": 99
+  },
+  {
+    "id": "AL-0194",
+    "predictedAttackType": "Web Attack",
+    "modelConfidence": 0.868073,
+    "baseRiskScore": 87
+  },
+  {
+    "id": "AL-0195",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.725042,
+    "baseRiskScore": 73
+  },
+  {
+    "id": "AL-0196",
+    "predictedAttackType": "Web Attack",
+    "modelConfidence": 0.738098,
+    "baseRiskScore": 74
+  },
+  {
+    "id": "AL-0197",
+    "predictedAttackType": "DoS",
+    "modelConfidence": 0.701781,
+    "baseRiskScore": 70
+  },
+  {
+    "id": "AL-0198",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.998658,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0199",
+    "predictedAttackType": "Web Attack",
+    "modelConfidence": 0.979183,
+    "baseRiskScore": 98
+  },
+  {
+    "id": "AL-0200",
+    "predictedAttackType": "Web Attack",
+    "modelConfidence": 0.513759,
+    "baseRiskScore": 51
+  },
+  {
+    "id": "AL-0201",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.998594,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0202",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.998423,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0203",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.993578,
+    "baseRiskScore": 99
+  },
+  {
+    "id": "AL-0204",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.5942,
+    "baseRiskScore": 59
+  },
+  {
+    "id": "AL-0205",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.629566,
+    "baseRiskScore": 63
+  },
+  {
+    "id": "AL-0206",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.999057,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0207",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.929169,
+    "baseRiskScore": 93
+  },
+  {
+    "id": "AL-0208",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.5942,
+    "baseRiskScore": 59
+  },
+  {
+    "id": "AL-0209",
+    "predictedAttackType": "DoS",
+    "modelConfidence": 0.761602,
+    "baseRiskScore": 76
+  },
+  {
+    "id": "AL-0210",
+    "predictedAttackType": "DoS",
+    "modelConfidence": 0.629594,
+    "baseRiskScore": 63
+  },
+  {
+    "id": "AL-0211",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.986303,
+    "baseRiskScore": 99
+  },
+  {
+    "id": "AL-0212",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.998682,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0213",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.915289,
+    "baseRiskScore": 92
+  },
+  {
+    "id": "AL-0214",
+    "predictedAttackType": "DoS",
+    "modelConfidence": 0.655907,
+    "baseRiskScore": 66
+  },
+  {
+    "id": "AL-0215",
+    "predictedAttackType": "Web Attack",
+    "modelConfidence": 0.816413,
+    "baseRiskScore": 82
+  },
+  {
+    "id": "AL-0216",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.917326,
+    "baseRiskScore": 92
+  },
+  {
+    "id": "AL-0217",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.998766,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0218",
+    "predictedAttackType": "Web Attack",
+    "modelConfidence": 0.896875,
+    "baseRiskScore": 90
+  },
+  {
+    "id": "AL-0219",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.998619,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0220",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.953956,
+    "baseRiskScore": 95
+  },
+  {
+    "id": "AL-0221",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.838331,
+    "baseRiskScore": 84
+  },
+  {
+    "id": "AL-0222",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.952714,
+    "baseRiskScore": 95
+  },
+  {
+    "id": "AL-0223",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.913024,
+    "baseRiskScore": 91
+  },
+  {
+    "id": "AL-0224",
+    "predictedAttackType": "Web Attack",
+    "modelConfidence": 0.893922,
+    "baseRiskScore": 89
+  },
+  {
+    "id": "AL-0225",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.998578,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0226",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.702945,
+    "baseRiskScore": 70
+  },
+  {
+    "id": "AL-0227",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.998533,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0228",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.998533,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0229",
+    "predictedAttackType": "DoS",
+    "modelConfidence": 0.921818,
+    "baseRiskScore": 92
+  },
+  {
+    "id": "AL-0230",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.998594,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0231",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.998496,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0232",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.998646,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0233",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.648081,
+    "baseRiskScore": 65
+  },
+  {
+    "id": "AL-0234",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.915289,
+    "baseRiskScore": 92
+  },
+  {
+    "id": "AL-0235",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.998703,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0236",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.909643,
+    "baseRiskScore": 91
+  },
+  {
+    "id": "AL-0237",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.990012,
+    "baseRiskScore": 99
+  },
+  {
+    "id": "AL-0238",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.999057,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0239",
+    "predictedAttackType": "DoS",
+    "modelConfidence": 0.653746,
+    "baseRiskScore": 65
+  },
+  {
+    "id": "AL-0240",
+    "predictedAttackType": "Web Attack",
+    "modelConfidence": 0.771153,
+    "baseRiskScore": 77
+  },
+  {
+    "id": "AL-0241",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.998423,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0242",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.814175,
+    "baseRiskScore": 81
+  },
+  {
+    "id": "AL-0243",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.998646,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0244",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.998658,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0245",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.998658,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0246",
+    "predictedAttackType": "Web Attack",
+    "modelConfidence": 0.858859,
+    "baseRiskScore": 86
+  },
+  {
+    "id": "AL-0247",
+    "predictedAttackType": "DoS",
+    "modelConfidence": 0.884353,
+    "baseRiskScore": 88
+  },
+  {
+    "id": "AL-0248",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.814175,
+    "baseRiskScore": 81
+  },
+  {
+    "id": "AL-0249",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.998432,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0250",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.998594,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0251",
+    "predictedAttackType": "Web Attack",
+    "modelConfidence": 0.794768,
+    "baseRiskScore": 79
+  },
+  {
+    "id": "AL-0252",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.915289,
+    "baseRiskScore": 92
+  },
+  {
+    "id": "AL-0253",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.990824,
+    "baseRiskScore": 99
+  },
+  {
+    "id": "AL-0254",
+    "predictedAttackType": "Web Attack",
+    "modelConfidence": 0.546188,
+    "baseRiskScore": 55
+  },
+  {
+    "id": "AL-0255",
+    "predictedAttackType": "Web Attack",
+    "modelConfidence": 0.896875,
+    "baseRiskScore": 90
+  },
+  {
+    "id": "AL-0256",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.970016,
+    "baseRiskScore": 97
+  },
+  {
+    "id": "AL-0257",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.994763,
+    "baseRiskScore": 99
+  },
+  {
+    "id": "AL-0258",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.540946,
+    "baseRiskScore": 54
+  },
+  {
+    "id": "AL-0259",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.998533,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0260",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.883836,
+    "baseRiskScore": 88
+  },
+  {
+    "id": "AL-0261",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.998594,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0262",
+    "predictedAttackType": "DoS",
+    "modelConfidence": 0.948397,
+    "baseRiskScore": 95
+  },
+  {
+    "id": "AL-0263",
+    "predictedAttackType": "Web Attack",
+    "modelConfidence": 0.914586,
+    "baseRiskScore": 91
+  },
+  {
+    "id": "AL-0264",
+    "predictedAttackType": "Web Attack",
+    "modelConfidence": 0.665004,
+    "baseRiskScore": 67
+  },
+  {
+    "id": "AL-0265",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.996037,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0266",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.9911,
+    "baseRiskScore": 99
+  },
+  {
+    "id": "AL-0267",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.999338,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0268",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.99942,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0269",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.999828,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0270",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.993953,
+    "baseRiskScore": 99
+  },
+  {
+    "id": "AL-0271",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.928656,
+    "baseRiskScore": 93
+  },
+  {
+    "id": "AL-0272",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.999083,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0273",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.999665,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0274",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.999546,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0275",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.999789,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0276",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.997934,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0277",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.998283,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0278",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.998539,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0279",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.998966,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0280",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.999791,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0281",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.99932,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0282",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.999267,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0283",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.999857,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0284",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.999789,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0285",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.999479,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0286",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.999548,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0287",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.999807,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0288",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.999811,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0289",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.999789,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0290",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.999871,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0291",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.999769,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0292",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.998992,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0293",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.999738,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0294",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.994727,
+    "baseRiskScore": 99
+  },
+  {
+    "id": "AL-0295",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.998507,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0296",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.999224,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0297",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.999594,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0298",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.932995,
+    "baseRiskScore": 93
+  },
+  {
+    "id": "AL-0299",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.998966,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0300",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.999789,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0301",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.999834,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0302",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.9985,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0303",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.994725,
+    "baseRiskScore": 99
+  },
+  {
+    "id": "AL-0304",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.999689,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0305",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.999764,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0306",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.999762,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0307",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.998992,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0308",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.999262,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0309",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.996161,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0310",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.542107,
+    "baseRiskScore": 54
+  },
+  {
+    "id": "AL-0311",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.999843,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0312",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.948552,
+    "baseRiskScore": 95
+  },
+  {
+    "id": "AL-0313",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.999853,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0314",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.999787,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0315",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.86471,
+    "baseRiskScore": 86
+  },
+  {
+    "id": "AL-0316",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.999704,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0317",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.999556,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0318",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.999651,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0319",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.999626,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0320",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.999813,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0321",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.999661,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0322",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.999086,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0323",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.998992,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0324",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.999789,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0325",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.999643,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0326",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.999577,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0327",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.999782,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0328",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.999804,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0329",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.998498,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0330",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.999861,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0331",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.998992,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0332",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.99609,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0333",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.999841,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0334",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.999492,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0335",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.99977,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0336",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.998966,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0337",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.99979,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0338",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.991167,
+    "baseRiskScore": 99
+  },
+  {
+    "id": "AL-0339",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.999817,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0340",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.999701,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0341",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.994569,
+    "baseRiskScore": 99
+  },
+  {
+    "id": "AL-0342",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.935859,
+    "baseRiskScore": 94
+  },
+  {
+    "id": "AL-0343",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.999816,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0344",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.999344,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0345",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.998818,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0346",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.999822,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0347",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.998626,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0348",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.999852,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0349",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.999761,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0350",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.998369,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0351",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.999837,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0352",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.999887,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0353",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.99967,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0354",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.999795,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0355",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.996042,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0356",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.995428,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0357",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.999855,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0358",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.999803,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0359",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.999879,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0360",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.997864,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0361",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.999722,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0362",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.999783,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0363",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.994725,
+    "baseRiskScore": 99
+  },
+  {
+    "id": "AL-0364",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.990835,
+    "baseRiskScore": 99
+  },
+  {
+    "id": "AL-0365",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.999429,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0366",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.986533,
+    "baseRiskScore": 99
+  },
+  {
+    "id": "AL-0367",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.999795,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0368",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.999817,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0369",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.976665,
+    "baseRiskScore": 98
+  },
+  {
+    "id": "AL-0370",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.860204,
+    "baseRiskScore": 86
+  },
+  {
+    "id": "AL-0371",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.999788,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0372",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.904773,
+    "baseRiskScore": 90
+  },
+  {
+    "id": "AL-0373",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.994774,
+    "baseRiskScore": 99
+  },
+  {
+    "id": "AL-0374",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.995627,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0375",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.921518,
+    "baseRiskScore": 92
+  },
+  {
+    "id": "AL-0377",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.999503,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0378",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.999846,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0379",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.999789,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0380",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.919241,
+    "baseRiskScore": 92
+  },
+  {
+    "id": "AL-0381",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.936284,
+    "baseRiskScore": 94
+  },
+  {
+    "id": "AL-0382",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.999413,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0383",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.996052,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0384",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.998252,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0385",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.999789,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0386",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.993953,
+    "baseRiskScore": 99
+  },
+  {
+    "id": "AL-0387",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.999886,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0388",
+    "predictedAttackType": "DoS",
+    "modelConfidence": 0.802194,
+    "baseRiskScore": 80
+  },
+  {
+    "id": "AL-0389",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.999378,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0390",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.998592,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0391",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.914305,
+    "baseRiskScore": 91
+  },
+  {
+    "id": "AL-0392",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.999711,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0393",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.990951,
+    "baseRiskScore": 99
+  },
+  {
+    "id": "AL-0394",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.991385,
+    "baseRiskScore": 99
+  },
+  {
+    "id": "AL-0395",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.999838,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0396",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.999782,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0397",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.998996,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0398",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.998363,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0399",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.994879,
+    "baseRiskScore": 99
+  },
+  {
+    "id": "AL-0400",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.999789,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0401",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.999678,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0402",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.999783,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0403",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.999791,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0404",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.918436,
+    "baseRiskScore": 92
+  },
+  {
+    "id": "AL-0405",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.999508,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0406",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.959448,
+    "baseRiskScore": 96
+  },
+  {
+    "id": "AL-0407",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.998992,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0408",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.998966,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0409",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.997888,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0410",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.9414,
+    "baseRiskScore": 94
+  },
+  {
+    "id": "AL-0411",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.992214,
+    "baseRiskScore": 99
+  },
+  {
+    "id": "AL-0412",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.999766,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0413",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.999841,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0414",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.999057,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0415",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.984528,
+    "baseRiskScore": 98
+  },
+  {
+    "id": "AL-0416",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.998992,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0417",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.999773,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0418",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.998626,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0419",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.999869,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0420",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.999816,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0421",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.999796,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0422",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.999835,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0424",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.998981,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0425",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.999253,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0426",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.99959,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0427",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.999599,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0428",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.999767,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0429",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.99985,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0430",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.999795,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0431",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.994569,
+    "baseRiskScore": 99
+  },
+  {
+    "id": "AL-0432",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.999858,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0433",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.999855,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0434",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.999237,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0435",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.999841,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0436",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.999838,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0437",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.999819,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0438",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.999784,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0439",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.999057,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0440",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.995654,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0441",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.908849,
+    "baseRiskScore": 91
+  },
+  {
+    "id": "AL-0442",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.9998,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0443",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.997511,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0444",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.999789,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0445",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.99984,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0446",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.984625,
+    "baseRiskScore": 98
+  },
+  {
+    "id": "AL-0448",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.999645,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0449",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.993715,
+    "baseRiskScore": 99
+  },
+  {
+    "id": "AL-0450",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.936663,
+    "baseRiskScore": 94
+  },
+  {
+    "id": "AL-0451",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.999886,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0452",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.999729,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0453",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.997959,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0454",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.999767,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0455",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.999039,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0456",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.999849,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0457",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.999552,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0458",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.925852,
+    "baseRiskScore": 93
+  },
+  {
+    "id": "AL-0459",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.999853,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0460",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.999681,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0461",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.999809,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0462",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.999432,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0463",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.999216,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0464",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.999567,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0465",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.999735,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0466",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.999689,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0467",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.998629,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0468",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.996379,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0469",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.999566,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0470",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.999557,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0471",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.998647,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0472",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.999729,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0473",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.999795,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0474",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.99939,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0475",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.994735,
+    "baseRiskScore": 99
+  },
+  {
+    "id": "AL-0476",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.999802,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0477",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.999853,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0478",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.999646,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0479",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.999782,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0480",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.997919,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0481",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.998992,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0482",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.997819,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0483",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.999827,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0484",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.999861,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0485",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.999257,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0486",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.992598,
+    "baseRiskScore": 99
+  },
+  {
+    "id": "AL-0487",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.998966,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0488",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.999456,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0489",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.99809,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0490",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.989525,
+    "baseRiskScore": 99
+  },
+  {
+    "id": "AL-0491",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.998966,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0492",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.998992,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0493",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.998966,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0494",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.997598,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0495",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.998992,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0496",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.999744,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0497",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.999321,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0498",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.999647,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0499",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.999784,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0500",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.998731,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0501",
+    "predictedAttackType": "Brute Force",
+    "modelConfidence": 0.665707,
+    "baseRiskScore": 67
+  },
+  {
+    "id": "AL-0502",
+    "predictedAttackType": "Brute Force",
+    "modelConfidence": 0.665707,
+    "baseRiskScore": 67
+  },
+  {
+    "id": "AL-0503",
+    "predictedAttackType": "Brute Force",
+    "modelConfidence": 0.964904,
+    "baseRiskScore": 96
+  },
+  {
+    "id": "AL-0504",
+    "predictedAttackType": "Brute Force",
+    "modelConfidence": 0.665707,
+    "baseRiskScore": 67
+  },
+  {
+    "id": "AL-0505",
+    "predictedAttackType": "Brute Force",
+    "modelConfidence": 0.665707,
+    "baseRiskScore": 67
+  },
+  {
+    "id": "AL-0506",
+    "predictedAttackType": "DoS",
+    "modelConfidence": 0.730606,
+    "baseRiskScore": 73
+  },
+  {
+    "id": "AL-0507",
+    "predictedAttackType": "Brute Force",
+    "modelConfidence": 0.665707,
+    "baseRiskScore": 67
+  },
+  {
+    "id": "AL-0508",
+    "predictedAttackType": "Brute Force",
+    "modelConfidence": 0.980965,
+    "baseRiskScore": 98
+  },
+  {
+    "id": "AL-0509",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.783168,
+    "baseRiskScore": 78
+  },
+  {
+    "id": "AL-0510",
+    "predictedAttackType": "Brute Force",
+    "modelConfidence": 0.665707,
+    "baseRiskScore": 67
+  },
+  {
+    "id": "AL-0511",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.788737,
+    "baseRiskScore": 79
+  },
+  {
+    "id": "AL-0512",
+    "predictedAttackType": "Brute Force",
+    "modelConfidence": 0.665707,
+    "baseRiskScore": 67
+  },
+  {
+    "id": "AL-0513",
+    "predictedAttackType": "Brute Force",
+    "modelConfidence": 0.665707,
+    "baseRiskScore": 67
+  },
+  {
+    "id": "AL-0514",
+    "predictedAttackType": "Brute Force",
+    "modelConfidence": 0.980965,
+    "baseRiskScore": 98
+  },
+  {
+    "id": "AL-0515",
+    "predictedAttackType": "Brute Force",
+    "modelConfidence": 0.980965,
+    "baseRiskScore": 98
+  },
+  {
+    "id": "AL-0516",
+    "predictedAttackType": "Brute Force",
+    "modelConfidence": 0.665707,
+    "baseRiskScore": 67
+  },
+  {
+    "id": "AL-0517",
+    "predictedAttackType": "Brute Force",
+    "modelConfidence": 0.980965,
+    "baseRiskScore": 98
+  },
+  {
+    "id": "AL-0518",
+    "predictedAttackType": "Brute Force",
+    "modelConfidence": 0.980965,
+    "baseRiskScore": 98
+  },
+  {
+    "id": "AL-0519",
+    "predictedAttackType": "DoS",
+    "modelConfidence": 0.730606,
+    "baseRiskScore": 73
+  },
+  {
+    "id": "AL-0520",
+    "predictedAttackType": "Brute Force",
+    "modelConfidence": 0.980965,
+    "baseRiskScore": 98
+  },
+  {
+    "id": "AL-0521",
+    "predictedAttackType": "DoS",
+    "modelConfidence": 0.730606,
+    "baseRiskScore": 73
+  },
+  {
+    "id": "AL-0522",
+    "predictedAttackType": "Brute Force",
+    "modelConfidence": 0.980965,
+    "baseRiskScore": 98
+  },
+  {
+    "id": "AL-0523",
+    "predictedAttackType": "Brute Force",
+    "modelConfidence": 0.665707,
+    "baseRiskScore": 67
+  },
+  {
+    "id": "AL-0524",
+    "predictedAttackType": "Brute Force",
+    "modelConfidence": 0.665707,
+    "baseRiskScore": 67
+  },
+  {
+    "id": "AL-0525",
+    "predictedAttackType": "Brute Force",
+    "modelConfidence": 0.980965,
+    "baseRiskScore": 98
+  },
+  {
+    "id": "AL-0526",
+    "predictedAttackType": "Brute Force",
+    "modelConfidence": 0.665707,
+    "baseRiskScore": 67
+  },
+  {
+    "id": "AL-0527",
+    "predictedAttackType": "Brute Force",
+    "modelConfidence": 0.980965,
+    "baseRiskScore": 98
+  },
+  {
+    "id": "AL-0528",
+    "predictedAttackType": "Brute Force",
+    "modelConfidence": 0.980965,
+    "baseRiskScore": 98
+  },
+  {
+    "id": "AL-0529",
+    "predictedAttackType": "Brute Force",
+    "modelConfidence": 0.665707,
+    "baseRiskScore": 67
+  },
+  {
+    "id": "AL-0530",
+    "predictedAttackType": "Brute Force",
+    "modelConfidence": 0.533855,
+    "baseRiskScore": 53
+  },
+  {
+    "id": "AL-0531",
+    "predictedAttackType": "Brute Force",
+    "modelConfidence": 0.665707,
+    "baseRiskScore": 67
+  },
+  {
+    "id": "AL-0532",
+    "predictedAttackType": "Brute Force",
+    "modelConfidence": 0.665707,
+    "baseRiskScore": 67
+  },
+  {
+    "id": "AL-0533",
+    "predictedAttackType": "Brute Force",
+    "modelConfidence": 0.980965,
+    "baseRiskScore": 98
+  },
+  {
+    "id": "AL-0534",
+    "predictedAttackType": "Brute Force",
+    "modelConfidence": 0.980965,
+    "baseRiskScore": 98
+  },
+  {
+    "id": "AL-0535",
+    "predictedAttackType": "Brute Force",
+    "modelConfidence": 0.665707,
+    "baseRiskScore": 67
+  },
+  {
+    "id": "AL-0536",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.765276,
+    "baseRiskScore": 77
+  },
+  {
+    "id": "AL-0537",
+    "predictedAttackType": "Brute Force",
+    "modelConfidence": 0.665707,
+    "baseRiskScore": 67
+  },
+  {
+    "id": "AL-0538",
+    "predictedAttackType": "Brute Force",
+    "modelConfidence": 0.987355,
+    "baseRiskScore": 99
+  },
+  {
+    "id": "AL-0539",
+    "predictedAttackType": "Brute Force",
+    "modelConfidence": 0.665707,
+    "baseRiskScore": 67
+  },
+  {
+    "id": "AL-0540",
+    "predictedAttackType": "Brute Force",
+    "modelConfidence": 0.665707,
+    "baseRiskScore": 67
+  },
+  {
+    "id": "AL-0541",
+    "predictedAttackType": "Brute Force",
+    "modelConfidence": 0.665707,
+    "baseRiskScore": 67
+  },
+  {
+    "id": "AL-0542",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.753934,
+    "baseRiskScore": 75
+  },
+  {
+    "id": "AL-0543",
+    "predictedAttackType": "Brute Force",
+    "modelConfidence": 0.665707,
+    "baseRiskScore": 67
+  },
+  {
+    "id": "AL-0544",
+    "predictedAttackType": "Brute Force",
+    "modelConfidence": 0.980965,
+    "baseRiskScore": 98
+  },
+  {
+    "id": "AL-0545",
+    "predictedAttackType": "Brute Force",
+    "modelConfidence": 0.665707,
+    "baseRiskScore": 67
+  },
+  {
+    "id": "AL-0546",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.79929,
+    "baseRiskScore": 80
+  },
+  {
+    "id": "AL-0547",
+    "predictedAttackType": "Brute Force",
+    "modelConfidence": 0.665707,
+    "baseRiskScore": 67
+  },
+  {
+    "id": "AL-0548",
+    "predictedAttackType": "Brute Force",
+    "modelConfidence": 0.665707,
+    "baseRiskScore": 67
+  },
+  {
+    "id": "AL-0549",
+    "predictedAttackType": "Brute Force",
+    "modelConfidence": 0.665707,
+    "baseRiskScore": 67
+  },
+  {
+    "id": "AL-0550",
+    "predictedAttackType": "DoS",
+    "modelConfidence": 0.730606,
+    "baseRiskScore": 73
+  },
+  {
+    "id": "AL-0551",
+    "predictedAttackType": "Brute Force",
+    "modelConfidence": 0.665707,
+    "baseRiskScore": 67
+  },
+  {
+    "id": "AL-0552",
+    "predictedAttackType": "Brute Force",
+    "modelConfidence": 0.665707,
+    "baseRiskScore": 67
+  },
+  {
+    "id": "AL-0553",
+    "predictedAttackType": "Brute Force",
+    "modelConfidence": 0.92601,
+    "baseRiskScore": 93
+  },
+  {
+    "id": "AL-0554",
+    "predictedAttackType": "Brute Force",
+    "modelConfidence": 0.665707,
+    "baseRiskScore": 67
+  },
+  {
+    "id": "AL-0555",
+    "predictedAttackType": "Brute Force",
+    "modelConfidence": 0.665707,
+    "baseRiskScore": 67
+  },
+  {
+    "id": "AL-0556",
+    "predictedAttackType": "Brute Force",
+    "modelConfidence": 0.724791,
+    "baseRiskScore": 72
+  },
+  {
+    "id": "AL-0557",
+    "predictedAttackType": "Brute Force",
+    "modelConfidence": 0.665707,
+    "baseRiskScore": 67
+  },
+  {
+    "id": "AL-0558",
+    "predictedAttackType": "Brute Force",
+    "modelConfidence": 0.665707,
+    "baseRiskScore": 67
+  },
+  {
+    "id": "AL-0559",
+    "predictedAttackType": "Brute Force",
+    "modelConfidence": 0.980965,
+    "baseRiskScore": 98
+  },
+  {
+    "id": "AL-0560",
+    "predictedAttackType": "DoS",
+    "modelConfidence": 0.730606,
+    "baseRiskScore": 73
+  },
+  {
+    "id": "AL-0561",
+    "predictedAttackType": "Brute Force",
+    "modelConfidence": 0.980965,
+    "baseRiskScore": 98
+  },
+  {
+    "id": "AL-0562",
+    "predictedAttackType": "Brute Force",
+    "modelConfidence": 0.980965,
+    "baseRiskScore": 98
+  },
+  {
+    "id": "AL-0563",
+    "predictedAttackType": "DoS",
+    "modelConfidence": 0.730606,
+    "baseRiskScore": 73
+  },
+  {
+    "id": "AL-0564",
+    "predictedAttackType": "Brute Force",
+    "modelConfidence": 0.980965,
+    "baseRiskScore": 98
+  },
+  {
+    "id": "AL-0565",
+    "predictedAttackType": "Brute Force",
+    "modelConfidence": 0.665707,
+    "baseRiskScore": 67
+  },
+  {
+    "id": "AL-0566",
+    "predictedAttackType": "Brute Force",
+    "modelConfidence": 0.724791,
+    "baseRiskScore": 72
+  },
+  {
+    "id": "AL-0567",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.794302,
+    "baseRiskScore": 79
+  },
+  {
+    "id": "AL-0568",
+    "predictedAttackType": "Brute Force",
+    "modelConfidence": 0.665707,
+    "baseRiskScore": 67
+  },
+  {
+    "id": "AL-0569",
+    "predictedAttackType": "DoS",
+    "modelConfidence": 0.730606,
+    "baseRiskScore": 73
+  },
+  {
+    "id": "AL-0570",
+    "predictedAttackType": "Brute Force",
+    "modelConfidence": 0.665707,
+    "baseRiskScore": 67
+  },
+  {
+    "id": "AL-0571",
+    "predictedAttackType": "Brute Force",
+    "modelConfidence": 0.665707,
+    "baseRiskScore": 67
+  },
+  {
+    "id": "AL-0572",
+    "predictedAttackType": "DoS",
+    "modelConfidence": 0.730606,
+    "baseRiskScore": 73
+  },
+  {
+    "id": "AL-0573",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.765688,
+    "baseRiskScore": 77
+  },
+  {
+    "id": "AL-0574",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.777776,
+    "baseRiskScore": 78
+  },
+  {
+    "id": "AL-0575",
+    "predictedAttackType": "Brute Force",
+    "modelConfidence": 0.665707,
+    "baseRiskScore": 67
+  },
+  {
+    "id": "AL-0576",
+    "predictedAttackType": "Brute Force",
+    "modelConfidence": 0.92601,
+    "baseRiskScore": 93
+  },
+  {
+    "id": "AL-0577",
+    "predictedAttackType": "Brute Force",
+    "modelConfidence": 0.964904,
+    "baseRiskScore": 96
+  },
+  {
+    "id": "AL-0578",
+    "predictedAttackType": "Brute Force",
+    "modelConfidence": 0.665707,
+    "baseRiskScore": 67
+  },
+  {
+    "id": "AL-0579",
+    "predictedAttackType": "Brute Force",
+    "modelConfidence": 0.980965,
+    "baseRiskScore": 98
+  },
+  {
+    "id": "AL-0580",
+    "predictedAttackType": "Brute Force",
+    "modelConfidence": 0.665707,
+    "baseRiskScore": 67
+  },
+  {
+    "id": "AL-0581",
+    "predictedAttackType": "Brute Force",
+    "modelConfidence": 0.980965,
+    "baseRiskScore": 98
+  },
+  {
+    "id": "AL-0582",
+    "predictedAttackType": "Brute Force",
+    "modelConfidence": 0.665707,
+    "baseRiskScore": 67
+  },
+  {
+    "id": "AL-0583",
+    "predictedAttackType": "DoS",
+    "modelConfidence": 0.85741,
+    "baseRiskScore": 86
+  },
+  {
+    "id": "AL-0584",
+    "predictedAttackType": "Brute Force",
+    "modelConfidence": 0.665707,
+    "baseRiskScore": 67
+  },
+  {
+    "id": "AL-0585",
+    "predictedAttackType": "Botnet",
+    "modelConfidence": 0.999474,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0586",
+    "predictedAttackType": "Botnet",
+    "modelConfidence": 0.999807,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0587",
+    "predictedAttackType": "Botnet",
+    "modelConfidence": 0.999809,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0588",
+    "predictedAttackType": "Botnet",
+    "modelConfidence": 0.999645,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0589",
+    "predictedAttackType": "Botnet",
+    "modelConfidence": 0.998933,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0590",
+    "predictedAttackType": "Botnet",
+    "modelConfidence": 0.999809,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0591",
+    "predictedAttackType": "Botnet",
+    "modelConfidence": 0.999803,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0592",
+    "predictedAttackType": "Botnet",
+    "modelConfidence": 0.999815,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0593",
+    "predictedAttackType": "Botnet",
+    "modelConfidence": 0.994951,
+    "baseRiskScore": 99
+  },
+  {
+    "id": "AL-0594",
+    "predictedAttackType": "Botnet",
+    "modelConfidence": 0.99978,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0595",
+    "predictedAttackType": "Botnet",
+    "modelConfidence": 0.999792,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0596",
+    "predictedAttackType": "Botnet",
+    "modelConfidence": 0.999805,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0597",
+    "predictedAttackType": "Botnet",
+    "modelConfidence": 0.999803,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0598",
+    "predictedAttackType": "Botnet",
+    "modelConfidence": 0.999717,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0599",
+    "predictedAttackType": "Botnet",
+    "modelConfidence": 0.99963,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0600",
+    "predictedAttackType": "Botnet",
+    "modelConfidence": 0.999801,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0601",
+    "predictedAttackType": "Botnet",
+    "modelConfidence": 0.9998,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0602",
+    "predictedAttackType": "Botnet",
+    "modelConfidence": 0.999795,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0603",
+    "predictedAttackType": "Botnet",
+    "modelConfidence": 0.99974,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0604",
+    "predictedAttackType": "Botnet",
+    "modelConfidence": 0.998526,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0605",
+    "predictedAttackType": "Botnet",
+    "modelConfidence": 0.999809,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0606",
+    "predictedAttackType": "Botnet",
+    "modelConfidence": 0.999805,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0607",
+    "predictedAttackType": "Botnet",
+    "modelConfidence": 0.999756,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0608",
+    "predictedAttackType": "Botnet",
+    "modelConfidence": 0.999781,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0609",
+    "predictedAttackType": "Botnet",
+    "modelConfidence": 0.999203,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0610",
+    "predictedAttackType": "Botnet",
+    "modelConfidence": 0.999789,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0611",
+    "predictedAttackType": "Botnet",
+    "modelConfidence": 0.999053,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0612",
+    "predictedAttackType": "Botnet",
+    "modelConfidence": 0.999801,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0613",
+    "predictedAttackType": "Botnet",
+    "modelConfidence": 0.999799,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0614",
+    "predictedAttackType": "Botnet",
+    "modelConfidence": 0.999791,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0615",
+    "predictedAttackType": "Botnet",
+    "modelConfidence": 0.999825,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0616",
+    "predictedAttackType": "Botnet",
+    "modelConfidence": 0.999803,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0617",
+    "predictedAttackType": "Botnet",
+    "modelConfidence": 0.999806,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0618",
+    "predictedAttackType": "Botnet",
+    "modelConfidence": 0.999702,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0619",
+    "predictedAttackType": "Botnet",
+    "modelConfidence": 0.999809,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0620",
+    "predictedAttackType": "Botnet",
+    "modelConfidence": 0.999695,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0621",
+    "predictedAttackType": "Botnet",
+    "modelConfidence": 0.999797,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0622",
+    "predictedAttackType": "Botnet",
+    "modelConfidence": 0.998733,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0623",
+    "predictedAttackType": "Botnet",
+    "modelConfidence": 0.999789,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0624",
+    "predictedAttackType": "Botnet",
+    "modelConfidence": 0.999805,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0625",
+    "predictedAttackType": "Botnet",
+    "modelConfidence": 0.999803,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0626",
+    "predictedAttackType": "Botnet",
+    "modelConfidence": 0.999803,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0627",
+    "predictedAttackType": "Botnet",
+    "modelConfidence": 0.999774,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0628",
+    "predictedAttackType": "Botnet",
+    "modelConfidence": 0.999702,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0629",
+    "predictedAttackType": "Botnet",
+    "modelConfidence": 0.999794,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0630",
+    "predictedAttackType": "Botnet",
+    "modelConfidence": 0.999805,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0631",
+    "predictedAttackType": "Botnet",
+    "modelConfidence": 0.999809,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0632",
+    "predictedAttackType": "Botnet",
+    "modelConfidence": 0.999803,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0633",
+    "predictedAttackType": "Botnet",
+    "modelConfidence": 0.998717,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0634",
+    "predictedAttackType": "Botnet",
+    "modelConfidence": 0.999752,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0635",
+    "predictedAttackType": "Botnet",
+    "modelConfidence": 0.999709,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0636",
+    "predictedAttackType": "Botnet",
+    "modelConfidence": 0.99977,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0637",
+    "predictedAttackType": "Botnet",
+    "modelConfidence": 0.999756,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0638",
+    "predictedAttackType": "Botnet",
+    "modelConfidence": 0.99122,
+    "baseRiskScore": 99
+  },
+  {
+    "id": "AL-0639",
+    "predictedAttackType": "Botnet",
+    "modelConfidence": 0.998839,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0640",
+    "predictedAttackType": "Botnet",
+    "modelConfidence": 0.99953,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0641",
+    "predictedAttackType": "Botnet",
+    "modelConfidence": 0.998895,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0642",
+    "predictedAttackType": "Botnet",
+    "modelConfidence": 0.999807,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0643",
+    "predictedAttackType": "Botnet",
+    "modelConfidence": 0.999802,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0644",
+    "predictedAttackType": "Botnet",
+    "modelConfidence": 0.99977,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0645",
+    "predictedAttackType": "Botnet",
+    "modelConfidence": 0.999791,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0646",
+    "predictedAttackType": "Botnet",
+    "modelConfidence": 0.99951,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0647",
+    "predictedAttackType": "Botnet",
+    "modelConfidence": 0.99978,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0648",
+    "predictedAttackType": "Botnet",
+    "modelConfidence": 0.999805,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0649",
+    "predictedAttackType": "Botnet",
+    "modelConfidence": 0.999793,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0650",
+    "predictedAttackType": "Botnet",
+    "modelConfidence": 0.999807,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0651",
+    "predictedAttackType": "Botnet",
+    "modelConfidence": 0.999803,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0652",
+    "predictedAttackType": "Botnet",
+    "modelConfidence": 0.999756,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0653",
+    "predictedAttackType": "Botnet",
+    "modelConfidence": 0.999688,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0654",
+    "predictedAttackType": "Botnet",
+    "modelConfidence": 0.990242,
+    "baseRiskScore": 99
+  },
+  {
+    "id": "AL-0655",
+    "predictedAttackType": "Botnet",
+    "modelConfidence": 0.999805,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0656",
+    "predictedAttackType": "Botnet",
+    "modelConfidence": 0.999613,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0657",
+    "predictedAttackType": "Botnet",
+    "modelConfidence": 0.999553,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0658",
+    "predictedAttackType": "Botnet",
+    "modelConfidence": 0.999809,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0659",
+    "predictedAttackType": "Botnet",
+    "modelConfidence": 0.999805,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0660",
+    "predictedAttackType": "Botnet",
+    "modelConfidence": 0.999802,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0661",
+    "predictedAttackType": "Botnet",
+    "modelConfidence": 0.999802,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0662",
+    "predictedAttackType": "Botnet",
+    "modelConfidence": 0.999802,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0663",
+    "predictedAttackType": "Botnet",
+    "modelConfidence": 0.999786,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0664",
+    "predictedAttackType": "Botnet",
+    "modelConfidence": 0.999804,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0665",
+    "predictedAttackType": "Botnet",
+    "modelConfidence": 0.999669,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0666",
+    "predictedAttackType": "Botnet",
+    "modelConfidence": 0.999808,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0667",
+    "predictedAttackType": "Botnet",
+    "modelConfidence": 0.999807,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0668",
+    "predictedAttackType": "Botnet",
+    "modelConfidence": 0.999789,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0669",
+    "predictedAttackType": "DoS",
+    "modelConfidence": 0.999857,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0670",
+    "predictedAttackType": "DoS",
+    "modelConfidence": 0.99984,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0671",
+    "predictedAttackType": "DoS",
+    "modelConfidence": 0.998056,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0672",
+    "predictedAttackType": "DoS",
+    "modelConfidence": 0.999857,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0673",
+    "predictedAttackType": "DoS",
+    "modelConfidence": 0.999881,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0674",
+    "predictedAttackType": "DoS",
+    "modelConfidence": 0.9984,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0675",
+    "predictedAttackType": "DoS",
+    "modelConfidence": 0.999835,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0676",
+    "predictedAttackType": "DoS",
+    "modelConfidence": 0.998704,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0677",
+    "predictedAttackType": "DoS",
+    "modelConfidence": 0.999143,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0678",
+    "predictedAttackType": "DoS",
+    "modelConfidence": 0.999211,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0679",
+    "predictedAttackType": "DoS",
+    "modelConfidence": 0.999866,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0680",
+    "predictedAttackType": "DoS",
+    "modelConfidence": 0.990858,
+    "baseRiskScore": 99
+  },
+  {
+    "id": "AL-0681",
+    "predictedAttackType": "DoS",
+    "modelConfidence": 0.999822,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0682",
+    "predictedAttackType": "DoS",
+    "modelConfidence": 0.99985,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0683",
+    "predictedAttackType": "DoS",
+    "modelConfidence": 0.996538,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0684",
+    "predictedAttackType": "DoS",
+    "modelConfidence": 0.997538,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0685",
+    "predictedAttackType": "DoS",
+    "modelConfidence": 0.999866,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0686",
+    "predictedAttackType": "DoS",
+    "modelConfidence": 0.999848,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0687",
+    "predictedAttackType": "DoS",
+    "modelConfidence": 0.99888,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0688",
+    "predictedAttackType": "DoS",
+    "modelConfidence": 0.999852,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0689",
+    "predictedAttackType": "DoS",
+    "modelConfidence": 0.998273,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0690",
+    "predictedAttackType": "DoS",
+    "modelConfidence": 0.998745,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0691",
+    "predictedAttackType": "DoS",
+    "modelConfidence": 0.992596,
+    "baseRiskScore": 99
+  },
+  {
+    "id": "AL-0692",
+    "predictedAttackType": "DoS",
+    "modelConfidence": 0.997538,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0693",
+    "predictedAttackType": "DoS",
+    "modelConfidence": 0.973378,
+    "baseRiskScore": 97
+  },
+  {
+    "id": "AL-0694",
+    "predictedAttackType": "DoS",
+    "modelConfidence": 0.998408,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0695",
+    "predictedAttackType": "DoS",
+    "modelConfidence": 0.999879,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0696",
+    "predictedAttackType": "DoS",
+    "modelConfidence": 0.998497,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0697",
+    "predictedAttackType": "DoS",
+    "modelConfidence": 0.99986,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0698",
+    "predictedAttackType": "DoS",
+    "modelConfidence": 0.999905,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0699",
+    "predictedAttackType": "DoS",
+    "modelConfidence": 0.995547,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0700",
+    "predictedAttackType": "DoS",
+    "modelConfidence": 0.998497,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0701",
+    "predictedAttackType": "DoS",
+    "modelConfidence": 0.999795,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0702",
+    "predictedAttackType": "DoS",
+    "modelConfidence": 0.999674,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0703",
+    "predictedAttackType": "DoS",
+    "modelConfidence": 0.998273,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0704",
+    "predictedAttackType": "DoS",
+    "modelConfidence": 0.997534,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0705",
+    "predictedAttackType": "DoS",
+    "modelConfidence": 0.999865,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0706",
+    "predictedAttackType": "DoS",
+    "modelConfidence": 0.999824,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0707",
+    "predictedAttackType": "DoS",
+    "modelConfidence": 0.97725,
+    "baseRiskScore": 98
+  },
+  {
+    "id": "AL-0708",
+    "predictedAttackType": "DoS",
+    "modelConfidence": 0.997538,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0709",
+    "predictedAttackType": "DoS",
+    "modelConfidence": 0.999541,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0710",
+    "predictedAttackType": "DoS",
+    "modelConfidence": 0.997536,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0711",
+    "predictedAttackType": "DoS",
+    "modelConfidence": 0.999699,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0712",
+    "predictedAttackType": "DoS",
+    "modelConfidence": 0.996153,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0713",
+    "predictedAttackType": "DoS",
+    "modelConfidence": 0.99989,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0714",
+    "predictedAttackType": "DoS",
+    "modelConfidence": 0.999872,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0715",
+    "predictedAttackType": "DoS",
+    "modelConfidence": 0.996849,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0716",
+    "predictedAttackType": "DoS",
+    "modelConfidence": 0.9984,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0717",
+    "predictedAttackType": "DoS",
+    "modelConfidence": 0.998987,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0718",
+    "predictedAttackType": "DoS",
+    "modelConfidence": 0.999847,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0719",
+    "predictedAttackType": "DoS",
+    "modelConfidence": 0.998457,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0720",
+    "predictedAttackType": "DoS",
+    "modelConfidence": 0.997708,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0721",
+    "predictedAttackType": "DoS",
+    "modelConfidence": 0.997475,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0722",
+    "predictedAttackType": "DoS",
+    "modelConfidence": 0.997538,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0723",
+    "predictedAttackType": "DoS",
+    "modelConfidence": 0.996216,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0724",
+    "predictedAttackType": "DoS",
+    "modelConfidence": 0.997521,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0725",
+    "predictedAttackType": "DoS",
+    "modelConfidence": 0.999884,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0726",
+    "predictedAttackType": "DoS",
+    "modelConfidence": 0.996097,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0727",
+    "predictedAttackType": "DoS",
+    "modelConfidence": 0.998867,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0728",
+    "predictedAttackType": "DoS",
+    "modelConfidence": 0.998457,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0729",
+    "predictedAttackType": "DoS",
+    "modelConfidence": 0.997665,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0730",
+    "predictedAttackType": "DoS",
+    "modelConfidence": 0.999824,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0731",
+    "predictedAttackType": "DoS",
+    "modelConfidence": 0.999875,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0732",
+    "predictedAttackType": "DoS",
+    "modelConfidence": 0.999868,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0733",
+    "predictedAttackType": "DoS",
+    "modelConfidence": 0.999854,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0734",
+    "predictedAttackType": "DoS",
+    "modelConfidence": 0.999876,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0735",
+    "predictedAttackType": "DoS",
+    "modelConfidence": 0.99987,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0736",
+    "predictedAttackType": "DoS",
+    "modelConfidence": 0.992596,
+    "baseRiskScore": 99
+  },
+  {
+    "id": "AL-0737",
+    "predictedAttackType": "DoS",
+    "modelConfidence": 0.973378,
+    "baseRiskScore": 97
+  },
+  {
+    "id": "AL-0738",
+    "predictedAttackType": "DoS",
+    "modelConfidence": 0.999869,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0739",
+    "predictedAttackType": "DoS",
+    "modelConfidence": 0.998902,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0740",
+    "predictedAttackType": "DoS",
+    "modelConfidence": 0.999867,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0741",
+    "predictedAttackType": "DoS",
+    "modelConfidence": 0.999823,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0742",
+    "predictedAttackType": "DoS",
+    "modelConfidence": 0.998497,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0743",
+    "predictedAttackType": "DoS",
+    "modelConfidence": 0.999851,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0744",
+    "predictedAttackType": "DoS",
+    "modelConfidence": 0.999892,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0745",
+    "predictedAttackType": "DoS",
+    "modelConfidence": 0.999892,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0746",
+    "predictedAttackType": "DoS",
+    "modelConfidence": 0.998468,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0747",
+    "predictedAttackType": "DoS",
+    "modelConfidence": 0.997536,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0748",
+    "predictedAttackType": "DoS",
+    "modelConfidence": 0.973378,
+    "baseRiskScore": 97
+  },
+  {
+    "id": "AL-0749",
+    "predictedAttackType": "DoS",
+    "modelConfidence": 0.999885,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0750",
+    "predictedAttackType": "DoS",
+    "modelConfidence": 0.99987,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0751",
+    "predictedAttackType": "DoS",
+    "modelConfidence": 0.999892,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0752",
+    "predictedAttackType": "DDoS",
+    "modelConfidence": 0.999861,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0753",
+    "predictedAttackType": "DDoS",
+    "modelConfidence": 0.999891,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0754",
+    "predictedAttackType": "DDoS",
+    "modelConfidence": 0.999829,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0755",
+    "predictedAttackType": "DDoS",
+    "modelConfidence": 0.999883,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0756",
+    "predictedAttackType": "DDoS",
+    "modelConfidence": 0.999883,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0757",
+    "predictedAttackType": "DDoS",
+    "modelConfidence": 0.999869,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0758",
+    "predictedAttackType": "DDoS",
+    "modelConfidence": 0.999807,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0759",
+    "predictedAttackType": "DDoS",
+    "modelConfidence": 0.999897,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0760",
+    "predictedAttackType": "DDoS",
+    "modelConfidence": 0.999901,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0761",
+    "predictedAttackType": "DDoS",
+    "modelConfidence": 0.999857,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0762",
+    "predictedAttackType": "DDoS",
+    "modelConfidence": 0.999889,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0763",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.729385,
+    "baseRiskScore": 73
+  },
+  {
+    "id": "AL-0764",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.702271,
+    "baseRiskScore": 70
+  },
+  {
+    "id": "AL-0765",
+    "predictedAttackType": "DDoS",
+    "modelConfidence": 0.999889,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0766",
+    "predictedAttackType": "DDoS",
+    "modelConfidence": 0.999843,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0767",
+    "predictedAttackType": "DDoS",
+    "modelConfidence": 0.999869,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0768",
+    "predictedAttackType": "DDoS",
+    "modelConfidence": 0.999853,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0769",
+    "predictedAttackType": "DDoS",
+    "modelConfidence": 0.999865,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0770",
+    "predictedAttackType": "DDoS",
+    "modelConfidence": 0.999871,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0771",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.729385,
+    "baseRiskScore": 73
+  },
+  {
+    "id": "AL-0772",
+    "predictedAttackType": "DDoS",
+    "modelConfidence": 0.999871,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0773",
+    "predictedAttackType": "DDoS",
+    "modelConfidence": 0.999898,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0774",
+    "predictedAttackType": "DDoS",
+    "modelConfidence": 0.999869,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0775",
+    "predictedAttackType": "DDoS",
+    "modelConfidence": 0.999889,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0776",
+    "predictedAttackType": "DDoS",
+    "modelConfidence": 0.999851,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0777",
+    "predictedAttackType": "DDoS",
+    "modelConfidence": 0.999871,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0778",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.813609,
+    "baseRiskScore": 81
+  },
+  {
+    "id": "AL-0779",
+    "predictedAttackType": "DDoS",
+    "modelConfidence": 0.99986,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0780",
+    "predictedAttackType": "DDoS",
+    "modelConfidence": 0.999871,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0781",
+    "predictedAttackType": "DDoS",
+    "modelConfidence": 0.999882,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0782",
+    "predictedAttackType": "DDoS",
+    "modelConfidence": 0.999861,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0783",
+    "predictedAttackType": "DDoS",
+    "modelConfidence": 0.99986,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0784",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.729385,
+    "baseRiskScore": 73
+  },
+  {
+    "id": "AL-0785",
+    "predictedAttackType": "DDoS",
+    "modelConfidence": 0.999851,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0786",
+    "predictedAttackType": "DDoS",
+    "modelConfidence": 0.999839,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0787",
+    "predictedAttackType": "DDoS",
+    "modelConfidence": 0.999882,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0788",
+    "predictedAttackType": "DDoS",
+    "modelConfidence": 0.99987,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0789",
+    "predictedAttackType": "DDoS",
+    "modelConfidence": 0.999843,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0790",
+    "predictedAttackType": "DDoS",
+    "modelConfidence": 0.99989,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0791",
+    "predictedAttackType": "DDoS",
+    "modelConfidence": 0.999886,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0792",
+    "predictedAttackType": "DDoS",
+    "modelConfidence": 0.999872,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0793",
+    "predictedAttackType": "DDoS",
+    "modelConfidence": 0.999863,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0794",
+    "predictedAttackType": "DDoS",
+    "modelConfidence": 0.99987,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0795",
+    "predictedAttackType": "Web Attack",
+    "modelConfidence": 0.688677,
+    "baseRiskScore": 69
+  },
+  {
+    "id": "AL-0796",
+    "predictedAttackType": "DDoS",
+    "modelConfidence": 0.999845,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0797",
+    "predictedAttackType": "DDoS",
+    "modelConfidence": 0.999827,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0798",
+    "predictedAttackType": "DDoS",
+    "modelConfidence": 0.999883,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0799",
+    "predictedAttackType": "DDoS",
+    "modelConfidence": 0.999848,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0800",
+    "predictedAttackType": "DDoS",
+    "modelConfidence": 0.999866,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0801",
+    "predictedAttackType": "DDoS",
+    "modelConfidence": 0.999861,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0802",
+    "predictedAttackType": "DDoS",
+    "modelConfidence": 0.999859,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0803",
+    "predictedAttackType": "DDoS",
+    "modelConfidence": 0.999897,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0804",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.911241,
+    "baseRiskScore": 91
+  },
+  {
+    "id": "AL-0805",
+    "predictedAttackType": "DDoS",
+    "modelConfidence": 0.99983,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0806",
+    "predictedAttackType": "DDoS",
+    "modelConfidence": 0.99989,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0807",
+    "predictedAttackType": "DDoS",
+    "modelConfidence": 0.999884,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0808",
+    "predictedAttackType": "DDoS",
+    "modelConfidence": 0.999892,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0809",
+    "predictedAttackType": "DDoS",
+    "modelConfidence": 0.999873,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0810",
+    "predictedAttackType": "DDoS",
+    "modelConfidence": 0.999851,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0811",
+    "predictedAttackType": "DDoS",
+    "modelConfidence": 0.999829,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0812",
+    "predictedAttackType": "DDoS",
+    "modelConfidence": 0.999888,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0813",
+    "predictedAttackType": "DDoS",
+    "modelConfidence": 0.999896,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0814",
+    "predictedAttackType": "DDoS",
+    "modelConfidence": 0.999895,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0815",
+    "predictedAttackType": "DDoS",
+    "modelConfidence": 0.999861,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0816",
+    "predictedAttackType": "DDoS",
+    "modelConfidence": 0.99988,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0817",
+    "predictedAttackType": "DDoS",
+    "modelConfidence": 0.999849,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0818",
+    "predictedAttackType": "DDoS",
+    "modelConfidence": 0.99987,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0819",
+    "predictedAttackType": "DDoS",
+    "modelConfidence": 0.999889,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0820",
+    "predictedAttackType": "DDoS",
+    "modelConfidence": 0.999871,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0821",
+    "predictedAttackType": "DDoS",
+    "modelConfidence": 0.999872,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0822",
+    "predictedAttackType": "DDoS",
+    "modelConfidence": 0.999873,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0823",
+    "predictedAttackType": "DDoS",
+    "modelConfidence": 0.999887,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0824",
+    "predictedAttackType": "DDoS",
+    "modelConfidence": 0.999831,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0825",
+    "predictedAttackType": "DDoS",
+    "modelConfidence": 0.999835,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0826",
+    "predictedAttackType": "DDoS",
+    "modelConfidence": 0.999842,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0827",
+    "predictedAttackType": "DDoS",
+    "modelConfidence": 0.999833,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0828",
+    "predictedAttackType": "DDoS",
+    "modelConfidence": 0.999846,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0829",
+    "predictedAttackType": "DDoS",
+    "modelConfidence": 0.999892,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0830",
+    "predictedAttackType": "DDoS",
+    "modelConfidence": 0.999865,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0831",
+    "predictedAttackType": "DDoS",
+    "modelConfidence": 0.999835,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0832",
+    "predictedAttackType": "DDoS",
+    "modelConfidence": 0.999877,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0833",
+    "predictedAttackType": "DDoS",
+    "modelConfidence": 0.999873,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0834",
+    "predictedAttackType": "DDoS",
+    "modelConfidence": 0.999861,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0835",
+    "predictedAttackType": "Web Attack",
+    "modelConfidence": 0.999736,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0836",
+    "predictedAttackType": "Web Attack",
+    "modelConfidence": 0.998383,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0837",
+    "predictedAttackType": "Web Attack",
+    "modelConfidence": 0.950609,
+    "baseRiskScore": 95
+  },
+  {
+    "id": "AL-0838",
+    "predictedAttackType": "Web Attack",
+    "modelConfidence": 0.99912,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0839",
+    "predictedAttackType": "Web Attack",
+    "modelConfidence": 0.999442,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0840",
+    "predictedAttackType": "Web Attack",
+    "modelConfidence": 0.999698,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0841",
+    "predictedAttackType": "Web Attack",
+    "modelConfidence": 0.999442,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0842",
+    "predictedAttackType": "Web Attack",
+    "modelConfidence": 0.997767,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0843",
+    "predictedAttackType": "Web Attack",
+    "modelConfidence": 0.999666,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0844",
+    "predictedAttackType": "Web Attack",
+    "modelConfidence": 0.998969,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0845",
+    "predictedAttackType": "Web Attack",
+    "modelConfidence": 0.998643,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0846",
+    "predictedAttackType": "Web Attack",
+    "modelConfidence": 0.998102,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0847",
+    "predictedAttackType": "Web Attack",
+    "modelConfidence": 0.999445,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0848",
+    "predictedAttackType": "Web Attack",
+    "modelConfidence": 0.999735,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0849",
+    "predictedAttackType": "Web Attack",
+    "modelConfidence": 0.99867,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0850",
+    "predictedAttackType": "Web Attack",
+    "modelConfidence": 0.999459,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0851",
+    "predictedAttackType": "Web Attack",
+    "modelConfidence": 0.999177,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0852",
+    "predictedAttackType": "Web Attack",
+    "modelConfidence": 0.993267,
+    "baseRiskScore": 99
+  },
+  {
+    "id": "AL-0853",
+    "predictedAttackType": "Web Attack",
+    "modelConfidence": 0.999437,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0854",
+    "predictedAttackType": "Web Attack",
+    "modelConfidence": 0.998325,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0855",
+    "predictedAttackType": "Web Attack",
+    "modelConfidence": 0.99954,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0856",
+    "predictedAttackType": "Web Attack",
+    "modelConfidence": 0.999697,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0857",
+    "predictedAttackType": "Web Attack",
+    "modelConfidence": 0.998186,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0858",
+    "predictedAttackType": "Web Attack",
+    "modelConfidence": 0.999628,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0859",
+    "predictedAttackType": "Web Attack",
+    "modelConfidence": 0.999733,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0860",
+    "predictedAttackType": "Web Attack",
+    "modelConfidence": 0.99828,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0861",
+    "predictedAttackType": "Web Attack",
+    "modelConfidence": 0.999479,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0862",
+    "predictedAttackType": "Web Attack",
+    "modelConfidence": 0.999652,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0863",
+    "predictedAttackType": "Web Attack",
+    "modelConfidence": 0.999666,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0864",
+    "predictedAttackType": "Web Attack",
+    "modelConfidence": 0.999514,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0865",
+    "predictedAttackType": "Web Attack",
+    "modelConfidence": 0.998357,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0866",
+    "predictedAttackType": "Web Attack",
+    "modelConfidence": 0.999681,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0867",
+    "predictedAttackType": "Web Attack",
+    "modelConfidence": 0.998339,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0868",
+    "predictedAttackType": "Web Attack",
+    "modelConfidence": 0.996088,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0869",
+    "predictedAttackType": "Web Attack",
+    "modelConfidence": 0.997606,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0870",
+    "predictedAttackType": "Web Attack",
+    "modelConfidence": 0.9997,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0871",
+    "predictedAttackType": "Web Attack",
+    "modelConfidence": 0.998325,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0872",
+    "predictedAttackType": "Web Attack",
+    "modelConfidence": 0.999379,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0873",
+    "predictedAttackType": "Web Attack",
+    "modelConfidence": 0.999739,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0874",
+    "predictedAttackType": "Web Attack",
+    "modelConfidence": 0.998628,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0875",
+    "predictedAttackType": "Web Attack",
+    "modelConfidence": 0.999695,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0876",
+    "predictedAttackType": "Web Attack",
+    "modelConfidence": 0.998945,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0877",
+    "predictedAttackType": "Web Attack",
+    "modelConfidence": 0.999449,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0878",
+    "predictedAttackType": "Web Attack",
+    "modelConfidence": 0.99954,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0879",
+    "predictedAttackType": "Web Attack",
+    "modelConfidence": 0.999757,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0880",
+    "predictedAttackType": "Web Attack",
+    "modelConfidence": 0.998951,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0881",
+    "predictedAttackType": "Web Attack",
+    "modelConfidence": 0.999689,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0882",
+    "predictedAttackType": "Web Attack",
+    "modelConfidence": 0.99828,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0883",
+    "predictedAttackType": "Web Attack",
+    "modelConfidence": 0.999726,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0884",
+    "predictedAttackType": "Web Attack",
+    "modelConfidence": 0.999799,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0885",
+    "predictedAttackType": "Web Attack",
+    "modelConfidence": 0.999705,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0886",
+    "predictedAttackType": "Web Attack",
+    "modelConfidence": 0.999379,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0887",
+    "predictedAttackType": "Web Attack",
+    "modelConfidence": 0.999822,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0888",
+    "predictedAttackType": "Web Attack",
+    "modelConfidence": 0.999447,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0889",
+    "predictedAttackType": "Web Attack",
+    "modelConfidence": 0.999709,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0890",
+    "predictedAttackType": "Web Attack",
+    "modelConfidence": 0.994587,
+    "baseRiskScore": 99
+  },
+  {
+    "id": "AL-0891",
+    "predictedAttackType": "Web Attack",
+    "modelConfidence": 0.99954,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0892",
+    "predictedAttackType": "Web Attack",
+    "modelConfidence": 0.999451,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0893",
+    "predictedAttackType": "Web Attack",
+    "modelConfidence": 0.999821,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0894",
+    "predictedAttackType": "Web Attack",
+    "modelConfidence": 0.999726,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0895",
+    "predictedAttackType": "Web Attack",
+    "modelConfidence": 0.996276,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0896",
+    "predictedAttackType": "Web Attack",
+    "modelConfidence": 0.999714,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0897",
+    "predictedAttackType": "Web Attack",
+    "modelConfidence": 0.999801,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0898",
+    "predictedAttackType": "Web Attack",
+    "modelConfidence": 0.99888,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0899",
+    "predictedAttackType": "Web Attack",
+    "modelConfidence": 0.999787,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0900",
+    "predictedAttackType": "Web Attack",
+    "modelConfidence": 0.999591,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0901",
+    "predictedAttackType": "Web Attack",
+    "modelConfidence": 0.999686,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0902",
+    "predictedAttackType": "Web Attack",
+    "modelConfidence": 0.999713,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0903",
+    "predictedAttackType": "Web Attack",
+    "modelConfidence": 0.999785,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0904",
+    "predictedAttackType": "Web Attack",
+    "modelConfidence": 0.993557,
+    "baseRiskScore": 99
+  },
+  {
+    "id": "AL-0905",
+    "predictedAttackType": "Web Attack",
+    "modelConfidence": 0.999782,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0906",
+    "predictedAttackType": "Web Attack",
+    "modelConfidence": 0.999059,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0907",
+    "predictedAttackType": "Web Attack",
+    "modelConfidence": 0.999807,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0908",
+    "predictedAttackType": "Web Attack",
+    "modelConfidence": 0.999689,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0909",
+    "predictedAttackType": "Web Attack",
+    "modelConfidence": 0.996545,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0910",
+    "predictedAttackType": "Web Attack",
+    "modelConfidence": 0.999696,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0911",
+    "predictedAttackType": "Web Attack",
+    "modelConfidence": 0.998515,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0912",
+    "predictedAttackType": "Web Attack",
+    "modelConfidence": 0.999794,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0913",
+    "predictedAttackType": "Web Attack",
+    "modelConfidence": 0.999365,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0914",
+    "predictedAttackType": "Web Attack",
+    "modelConfidence": 0.998185,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0915",
+    "predictedAttackType": "Web Attack",
+    "modelConfidence": 0.998681,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0916",
+    "predictedAttackType": "Web Attack",
+    "modelConfidence": 0.99982,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0917",
+    "predictedAttackType": "Web Attack",
+    "modelConfidence": 0.999692,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0918",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.999739,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0919",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.999588,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0920",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.998189,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0921",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.999793,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0922",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.999769,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0923",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.999841,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0924",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.999834,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0925",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.999841,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0926",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.99893,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0927",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.999789,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0928",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.999464,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0929",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.999818,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0930",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.998251,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0931",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.999718,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0932",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.999236,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0933",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.999795,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0934",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.99975,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0935",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.999803,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0936",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.999883,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0937",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.999726,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0938",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.998663,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0939",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.999467,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0940",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.999726,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0941",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.998824,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0942",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.998763,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0943",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.998483,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0944",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.999302,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0945",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.998292,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0946",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.999855,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0947",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.998763,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0948",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.993276,
+    "baseRiskScore": 99
+  },
+  {
+    "id": "AL-0949",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.99728,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0950",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.999054,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0951",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.999861,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0952",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.999855,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0953",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.999708,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0954",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.997663,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0955",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.999744,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0956",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.999344,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0957",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.999909,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0958",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.999477,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0959",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.999568,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0960",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.997646,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0961",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.999789,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0962",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.999803,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0963",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.979167,
+    "baseRiskScore": 98
+  },
+  {
+    "id": "AL-0964",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.999184,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0965",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.749692,
+    "baseRiskScore": 75
+  },
+  {
+    "id": "AL-0966",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.999809,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0967",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.99933,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0968",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.879162,
+    "baseRiskScore": 88
+  },
+  {
+    "id": "AL-0969",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.999918,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0970",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.999221,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0971",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.999785,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0972",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.999769,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0973",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.999853,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0974",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.999522,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0975",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.998299,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0976",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.999741,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0977",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.99861,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0978",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.999662,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0979",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.999341,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0980",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.999795,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0981",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.999837,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0982",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.999429,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0983",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.999841,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0985",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.999088,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0986",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.99926,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0987",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.999673,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0988",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.999805,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0989",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.99976,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0990",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.950844,
+    "baseRiskScore": 95
+  },
+  {
+    "id": "AL-0991",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.999845,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0992",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.998693,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0993",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.999785,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0994",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.99935,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0995",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.999588,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0996",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.999798,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0997",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.99978,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0998",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.999612,
+    "baseRiskScore": 100
+  },
+  {
+    "id": "AL-0999",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.976326,
+    "baseRiskScore": 98
+  },
+  {
+    "id": "AL-1000",
+    "predictedAttackType": "Benign",
+    "modelConfidence": 0.999841,
+    "baseRiskScore": 100
+  }
+]

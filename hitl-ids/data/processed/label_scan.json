@@ -1,0 +1,528 @@
+{
+  "archive": "CSECICIDS2018_improved.zip",
+  "days": {
+    "Friday-02-03-2018.csv": {
+      "rows": 6311371,
+      "columns": 91,
+      "counts": [
+        {
+          "label": "BENIGN",
+          "attempted": "-1",
+          "n": 6168188
+        },
+        {
+          "label": "Botnet Ares",
+          "attempted": "-1",
+          "n": 142921
+        },
+        {
+          "label": "Botnet Ares - Attempted",
+          "attempted": "0",
+          "n": 258
+        },
+        {
+          "label": "Botnet Ares - Attempted",
+          "attempted": "2",
+          "n": 4
+        }
+      ],
+      "seconds": 65.3
+    },
+    "Friday-16-02-2018.csv": {
+      "rows": 7390266,
+      "columns": 91,
+      "counts": [
+        {
+          "label": "BENIGN",
+          "attempted": "-1",
+          "n": 5481500
+        },
+        {
+          "label": "DoS Hulk",
+          "attempted": "-1",
+          "n": 1803160
+        },
+        {
+          "label": "FTP-BruteForce - Attempted",
+          "attempted": "1",
+          "n": 105520
+        },
+        {
+          "label": "DoS Hulk - Attempted",
+          "attempted": "0",
+          "n": 86
+        }
+      ],
+      "seconds": 83.3
+    },
+    "Friday-23-02-2018.csv": {
+      "rows": 5976481,
+      "columns": 91,
+      "counts": [
+        {
+          "label": "BENIGN",
+          "attempted": "-1",
+          "n": 5976251
+        },
+        {
+          "label": "Web Attack - XSS",
+          "attempted": "-1",
+          "n": 73
+        },
+        {
+          "label": "Web Attack - Brute Force",
+          "attempted": "-1",
+          "n": 62
+        },
+        {
+          "label": "Web Attack - Brute Force - Attempted",
+          "attempted": "5",
+          "n": 60
+        },
+        {
+          "label": "Web Attack - SQL",
+          "attempted": "-1",
+          "n": 23
+        },
+        {
+          "label": "Web Attack - SQL - Attempted",
+          "attempted": "0",
+          "n": 5
+        },
+        {
+          "label": "Web Attack - SQL - Attempted",
+          "attempted": "2",
+          "n": 5
+        },
+        {
+          "label": "Web Attack - Brute Force - Attempted",
+          "attempted": "0",
+          "n": 1
+        },
+        {
+          "label": "Web Attack - XSS - Attempted",
+          "attempted": "2",
+          "n": 1
+        }
+      ],
+      "seconds": 52.9
+    },
+    "Thursday-01-03-2018.csv": {
+      "rows": 6551401,
+      "columns": 91,
+      "counts": [
+        {
+          "label": "BENIGN",
+          "attempted": "-1",
+          "n": 6511554
+        },
+        {
+          "label": "Infiltration - NMAP Portscan",
+          "attempted": "-1",
+          "n": 39634
+        },
+        {
+          "label": "Infiltration - Communication Victim Attacker",
+          "attempted": "-1",
+          "n": 161
+        },
+        {
+          "label": "Infiltration - Dropbox Download",
+          "attempted": "-1",
+          "n": 39
+        },
+        {
+          "label": "Infiltration - Dropbox Download - Attempted",
+          "attempted": "4",
+          "n": 13
+        }
+      ],
+      "seconds": 59.5
+    },
+    "Thursday-15-02-2018.csv": {
+      "rows": 5410102,
+      "columns": 91,
+      "counts": [
+        {
+          "label": "BENIGN",
+          "attempted": "-1",
+          "n": 5372471
+        },
+        {
+          "label": "DoS GoldenEye",
+          "attempted": "-1",
+          "n": 22560
+        },
+        {
+          "label": "DoS Slowloris",
+          "attempted": "-1",
+          "n": 8490
+        },
+        {
+          "label": "DoS GoldenEye - Attempted",
+          "attempted": "4",
+          "n": 4248
+        },
+        {
+          "label": "DoS Slowloris - Attempted",
+          "attempted": "0",
+          "n": 2280
+        },
+        {
+          "label": "DoS GoldenEye - Attempted",
+          "attempted": "6",
+          "n": 53
+        }
+      ],
+      "seconds": 45.2
+    },
+    "Thursday-22-02-2018.csv": {
+      "rows": 6071153,
+      "columns": 91,
+      "counts": [
+        {
+          "label": "BENIGN",
+          "attempted": "-1",
+          "n": 6070945
+        },
+        {
+          "label": "Web Attack - Brute Force",
+          "attempted": "-1",
+          "n": 69
+        },
+        {
+          "label": "Web Attack - Brute Force - Attempted",
+          "attempted": "5",
+          "n": 66
+        },
+        {
+          "label": "Web Attack - XSS",
+          "attempted": "-1",
+          "n": 40
+        },
+        {
+          "label": "Web Attack - SQL",
+          "attempted": "-1",
+          "n": 16
+        },
+        {
+          "label": "Web Attack - Brute Force - Attempted",
+          "attempted": "2",
+          "n": 8
+        },
+        {
+          "label": "Web Attack - SQL - Attempted",
+          "attempted": "2",
+          "n": 3
+        },
+        {
+          "label": "Web Attack - Brute Force - Attempted",
+          "attempted": "0",
+          "n": 2
+        },
+        {
+          "label": "Web Attack - XSS - Attempted",
+          "attempted": "0",
+          "n": 1
+        },
+        {
+          "label": "Web Attack - XSS - Attempted",
+          "attempted": "2",
+          "n": 1
+        },
+        {
+          "label": "Web Attack - XSS - Attempted",
+          "attempted": "3",
+          "n": 1
+        },
+        {
+          "label": "Web Attack - SQL - Attempted",
+          "attempted": "0",
+          "n": 1
+        }
+      ],
+      "seconds": 53.1
+    },
+    "Tuesday-20-02-2018.csv": {
+      "rows": 6054702,
+      "columns": 91,
+      "counts": [
+        {
+          "label": "BENIGN",
+          "attempted": "-1",
+          "n": 5764497
+        },
+        {
+          "label": "DDoS-LOIC-HTTP",
+          "attempted": "-1",
+          "n": 289328
+        },
+        {
+          "label": "DDoS-LOIC-UDP",
+          "attempted": "-1",
+          "n": 797
+        },
+        {
+          "label": "DDoS-LOIC-UDP - Attempted",
+          "attempted": "6",
+          "n": 80
+        }
+      ],
+      "seconds": 48.0
+    },
+    "Wednesday-14-02-2018.csv": {
+      "rows": 5898350,
+      "columns": 91,
+      "counts": [
+        {
+          "label": "BENIGN",
+          "attempted": "-1",
+          "n": 5610799
+        },
+        {
+          "label": "FTP-BruteForce - Attempted",
+          "attempted": "1",
+          "n": 193324
+        },
+        {
+          "label": "SSH-BruteForce",
+          "attempted": "-1",
+          "n": 94197
+        },
+        {
+          "label": "FTP-BruteForce - Attempted",
+          "attempted": "4",
+          "n": 30
+        }
+      ],
+      "seconds": 41.9
+    },
+    "Wednesday-21-02-2018.csv": {
+      "rows": 6962593,
+      "columns": 91,
+      "counts": [
+        {
+          "label": "BENIGN",
+          "attempted": "-1",
+          "n": 5878399
+        },
+        {
+          "label": "DDoS-HOIC",
+          "attempted": "-1",
+          "n": 1082293
+        },
+        {
+          "label": "DDoS-LOIC-UDP",
+          "attempted": "-1",
+          "n": 1730
+        },
+        {
+          "label": "DDoS-LOIC-UDP - Attempted",
+          "attempted": "6",
+          "n": 171
+        }
+      ],
+      "seconds": 52.7
+    },
+    "Wednesday-28-02-2018.csv": {
+      "rows": 6568726,
+      "columns": 91,
+      "counts": [
+        {
+          "label": "BENIGN",
+          "attempted": "-1",
+          "n": 6518882
+        },
+        {
+          "label": "Infiltration - NMAP Portscan",
+          "attempted": "-1",
+          "n": 49740
+        },
+        {
+          "label": "Infiltration - Dropbox Download",
+          "attempted": "-1",
+          "n": 46
+        },
+        {
+          "label": "Infiltration - Communication Victim Attacker",
+          "attempted": "-1",
+          "n": 43
+        },
+        {
+          "label": "Infiltration - Dropbox Download - Attempted",
+          "attempted": "4",
+          "n": 15
+        }
+      ],
+      "seconds": 47.7
+    }
+  },
+  "total": [
+    {
+      "label": "BENIGN",
+      "attempted": "-1",
+      "n": 59353486
+    },
+    {
+      "label": "DoS Hulk",
+      "attempted": "-1",
+      "n": 1803160
+    },
+    {
+      "label": "DDoS-HOIC",
+      "attempted": "-1",
+      "n": 1082293
+    },
+    {
+      "label": "FTP-BruteForce - Attempted",
+      "attempted": "1",
+      "n": 298844
+    },
+    {
+      "label": "DDoS-LOIC-HTTP",
+      "attempted": "-1",
+      "n": 289328
+    },
+    {
+      "label": "Botnet Ares",
+      "attempted": "-1",
+      "n": 142921
+    },
+    {
+      "label": "SSH-BruteForce",
+      "attempted": "-1",
+      "n": 94197
+    },
+    {
+      "label": "Infiltration - NMAP Portscan",
+      "attempted": "-1",
+      "n": 89374
+    },
+    {
+      "label": "DoS GoldenEye",
+      "attempted": "-1",
+      "n": 22560
+    },
+    {
+      "label": "DoS Slowloris",
+      "attempted": "-1",
+      "n": 8490
+    },
+    {
+      "label": "DoS GoldenEye - Attempted",
+      "attempted": "4",
+      "n": 4248
+    },
+    {
+      "label": "DDoS-LOIC-UDP",
+      "attempted": "-1",
+      "n": 2527
+    },
+    {
+      "label": "DoS Slowloris - Attempted",
+      "attempted": "0",
+      "n": 2280
+    },
+    {
+      "label": "Botnet Ares - Attempted",
+      "attempted": "0",
+      "n": 258
+    },
+    {
+      "label": "DDoS-LOIC-UDP - Attempted",
+      "attempted": "6",
+      "n": 251
+    },
+    {
+      "label": "Infiltration - Communication Victim Attacker",
+      "attempted": "-1",
+      "n": 204
+    },
+    {
+      "label": "Web Attack - Brute Force",
+      "attempted": "-1",
+      "n": 131
+    },
+    {
+      "label": "Web Attack - Brute Force - Attempted",
+      "attempted": "5",
+      "n": 126
+    },
+    {
+      "label": "Web Attack - XSS",
+      "attempted": "-1",
+      "n": 113
+    },
+    {
+      "label": "DoS Hulk - Attempted",
+      "attempted": "0",
+      "n": 86
+    },
+    {
+      "label": "Infiltration - Dropbox Download",
+      "attempted": "-1",
+      "n": 85
+    },
+    {
+      "label": "DoS GoldenEye - Attempted",
+      "attempted": "6",
+      "n": 53
+    },
+    {
+      "label": "Web Attack - SQL",
+      "attempted": "-1",
+      "n": 39
+    },
+    {
+      "label": "FTP-BruteForce - Attempted",
+      "attempted": "4",
+      "n": 30
+    },
+    {
+      "label": "Infiltration - Dropbox Download - Attempted",
+      "attempted": "4",
+      "n": 28
+    },
+    {
+      "label": "Web Attack - SQL - Attempted",
+      "attempted": "2",
+      "n": 8
+    },
+    {
+      "label": "Web Attack - Brute Force - Attempted",
+      "attempted": "2",
+      "n": 8
+    },
+    {
+      "label": "Web Attack - SQL - Attempted",
+      "attempted": "0",
+      "n": 6
+    },
+    {
+      "label": "Botnet Ares - Attempted",
+      "attempted": "2",
+      "n": 4
+    },
+    {
+      "label": "Web Attack - Brute Force - Attempted",
+      "attempted": "0",
+      "n": 3
+    },
+    {
+      "label": "Web Attack - XSS - Attempted",
+      "attempted": "2",
+      "n": 2
+    },
+    {
+      "label": "Web Attack - XSS - Attempted",
+      "attempted": "0",
+      "n": 1
+    },
+    {
+      "label": "Web Attack - XSS - Attempted",
+      "attempted": "3",
+      "n": 1
+    }
+  ],
+  "total_rows": 63195145
+}
