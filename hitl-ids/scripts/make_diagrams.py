@@ -195,27 +195,34 @@ def triage():
 
 
 def roadmap():
-    fig, ax = canvas(11, 2.6)
-    H = 2.6 / 11 * 10
+    fig, ax = canvas(12, 2.9)
+    H = 2.9 / 12 * 10
+    # Phase numbering is CANONICAL and matches plans/hitl-ids-demo-build.md exactly.
+    # Do not renumber here without renumbering the plan.
     phases = [
-        ("PHASE 1\nEvidence &\ndirection", GREEN, "green", "COMPLETE"),
-        ("PHASE 2\nDetection core\nin Python", ORANGE, "orange", "NEXT"),
-        ("PHASE 3\nPersistence\n+ minimal API", GREY, "grey", ""),
-        ("PHASE 4\nThree role\nUIs", GREY, "grey", ""),
-        ("PHASE 5\nEvaluation +\ndemo GATE", BLUE, "blue", ""),
-        ("PHASE 6\nExporter -\nfull backend", GREY, "grey", ""),
+        ("PHASE 0\nFoundation\nS1 - S2", ORANGE, "orange", "PARTIAL"),
+        ("PHASE 1\nData & model\nS3 - S4", GREEN, "green", "DONE"),
+        ("PHASE 2\nDetection core\nS5 S4b S6 S7 S8", ORANGE, "orange", "NEXT"),
+        ("PHASE 3\nPersistence\n+ API - S9 S10", GREY, "grey", ""),
+        ("PHASE 4\nInterface\nS11 - S14", GREY, "grey", ""),
+        ("PHASE 5\nEvaluation\n+ demo - S15 S16", BLUE, "blue", "GATE"),
+        ("PHASE 6\nPost-demo\nS17 - S18", GREY, "grey", "BLOCKED"),
     ]
-    y = 0.35
+    y = 0.45
     for i, (t, fc, ec, tag) in enumerate(phases):
-        x = 0.1 + i * 1.65
-        box(ax, x, y, 1.45, 1.05, t, fc, EDGE[ec], fs=7.2)
+        x = 0.06 + i * 1.42
+        box(ax, x, y, 1.28, 1.05, t, fc, EDGE[ec], fs=6.5)
         if tag:
-            ax.text(x + 0.725, y + 1.18, tag, ha="center", fontsize=7.5,
+            ax.text(x + 0.64, y + 1.16, tag, ha="center", fontsize=7,
                     weight="bold", color=EDGE[ec])
         if i < len(phases) - 1:
-            arrow(ax, x + 1.45, y + 0.525, x + 1.65, y + 0.525)
-    ax.text(5, H - 0.18, "Roadmap - S17/S18 do not start until the demo gate passes",
-            ha="center", fontsize=10.5, weight="bold")
+            arrow(ax, x + 1.28, y + 0.525, x + 1.42, y + 0.525)
+    ax.text(5, H - 0.12, "Roadmap - phase numbers match plans/hitl-ids-demo-build.md",
+            ha="center", fontsize=10, weight="bold")
+    ax.text(5, 0.10,
+            "Phase 0 partial: S1 scaffold incomplete, S2 not started.   "
+            "Phase 2 partial: only S4b done.   Phase 6 blocked until the S16 demo gate passes.",
+            ha="center", fontsize=6.8, style="italic", color="#555555")
     save(fig, "06_roadmap.png")
 
 

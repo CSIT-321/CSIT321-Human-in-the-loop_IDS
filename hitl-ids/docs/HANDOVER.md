@@ -4,7 +4,8 @@
 and minimal token cost. Everything a new session needs is here or one link away.
 
 **Last updated:** 2026-09-11 (rev 2) · **Branch:** `feat/corrected-dataset-and-findings` (local only)
-**Phase 1 complete** · collaborator's `origin/main` merged · **NFR-01 explainability satisfied**
+**Iteration 1 (Evidence & Direction) complete** — = plan Phase 1 + step S4b · collaborator's
+`origin/main` merged · **NFR-01 explainability satisfied**
 
 ---
 
@@ -45,7 +46,18 @@ Repo: `github.com/CSIT-321/CSIT321-Human-in-the-loop_IDS` · working tree `hitl-
 
 ## 3. Current state
 
-**Phase 1 (evidence & direction) is COMPLETE and committed.** 35 files, 209,205 insertions.
+**Iteration 1 (Evidence & Direction) is COMPLETE and committed.** 35 files, 209,205 insertions.
+
+> **Phase numbering — no ambiguity permitted.** `plans/hitl-ids-demo-build.md` is canonical:
+> Phase 0 Foundation (S1–S2) · Phase 1 Data & model (S3–S4) · Phase 2 Detection core
+> (S5, S4b, S6, S7, S8) · Phase 3 Persistence + API (S9–S10) · Phase 4 Interface (S11–S14) ·
+> Phase 5 Evaluation + demo gate (S15–S16) · Phase 6 Post-demo (S17–S18).
+>
+> The completed evidence work is **Iteration 1** — a *work iteration* spanning plan Phase 1 plus
+> S4b. It is **not** "Phase 1". Never use a bare phase number for it.
+>
+> **Actual status:** Phase 0 **PARTIAL** (S1 scaffold incomplete, **S2 not started**) ·
+> Phase 1 **DONE** · Phase 2 **only S4b done** · Phases 3–6 **not started**.
 
 ```
 hitl-ids/

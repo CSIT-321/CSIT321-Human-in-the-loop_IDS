@@ -195,21 +195,30 @@ the two claims it replaces, it is true on this data.
 
 ```mermaid
 graph TD
-    P1["PHASE 1 ✅ COMPLETE<br/>Evidence & direction"]
-    P2["PHASE 2 — NEXT<br/>Detection core in Python"]
-    P3["PHASE 3<br/>Persistence + minimal API"]
-    P4["PHASE 4<br/>Three role UIs"]
-    P5["PHASE 5<br/>Evaluation + demo gate"]
-    P6["PHASE 6<br/>Flow exporter · full backend"]
+    P0["PHASE 0 — PARTIAL<br/>Foundation · S1–S2"]
+    P1["PHASE 1 — DONE<br/>Data & model · S3–S4"]
+    P2["PHASE 2 — NEXT<br/>Detection core · S5 S4b S6 S7 S8"]
+    P3["PHASE 3<br/>Persistence + API · S9–S10"]
+    P4["PHASE 4<br/>Interface · S11–S14"]
+    P5["PHASE 5 — GATE<br/>Evaluation + demo · S15–S16"]
+    P6["PHASE 6 — BLOCKED<br/>Post-demo · S17–S18"]
 
-    P1 --> P2 --> P3 --> P4 --> P5 --> P6
+    P0 --> P1 --> P2 --> P3 --> P4 --> P5 --> P6
 
+    style P0 fill:#ffe6cc
     style P1 fill:#d5e8d4
     style P2 fill:#ffe6cc
     style P5 fill:#dae8fc
 ```
 
 </details>
+
+> ### Phase numbering — canonical
+> **`plans/hitl-ids-demo-build.md` is the single source of truth** for phase numbers.
+> An earlier draft of this report numbered them differently, which made "Phase 1 complete"
+> ambiguous. The evidence work described here is **Iteration 1 — Evidence & Direction**, a
+> *work iteration*, not a plan phase: it spans plan **Phase 1 plus step S4b**.
+> Never describe the evidence work with a bare phase number.
 
 ### Immediate next steps, in dependency order
 
