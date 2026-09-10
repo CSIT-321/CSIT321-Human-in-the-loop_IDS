@@ -3,7 +3,8 @@
 **Purpose.** Carry the full state of this project into a fresh session with zero loss of context
 and minimal token cost. Everything a new session needs is here or one link away.
 
-**Last updated:** 2026-09-11 · **Branch:** `feat/corrected-dataset-and-findings` · **Phase 1 complete**
+**Last updated:** 2026-09-11 (rev 2) · **Branch:** `feat/corrected-dataset-and-findings` (local only)
+**Phase 1 complete** · collaborator's `origin/main` merged · **NFR-01 explainability satisfied**
 
 ---
 
@@ -52,11 +53,17 @@ hitl-ids/
   data/processed/ label_scan · demo_sample(5,000) · train_sample(250,655) · manifests
   models/         8-class XGBoost + metrics + port ablation
   notebooks/      01-04, all execute with ZERO errors
-  scripts/        7 scripts, all runnable
+  packages/detection/ml/inference.py   vendored+adapted TreeSHAP inference (see sec. 9)
+  scripts/        9 scripts, all runnable
   tests/fixtures/legacy/   8 FROZEN files - never regenerate
-  docs/           HANDOVER · iteration-report · plan-changelog · feasibility-study · rule-retuning-report
+  docs/           HANDOVER · iteration-report · plan-changelog(v0.1-v1.4) ·
+                  feasibility-study · rule-retuning-report · finding-infiltration-mislabelling
+                  · img/ (6 rendered PNGs)
 plans/hitl-ids-demo-build.md    18-step build plan (S1-S18), v1.0
 ```
+
+**Also merged:** the collaborator's `stage-3/` and `stage-5/` work (their model is INVALIDATED -
+see sec. 9). Their `dashboard/` still runs but displays old 6-class data.
 
 **Start here:** [`iteration-report.md`](iteration-report.md) has the diagrams and statistics.
 [`plan-changelog.md`](plan-changelog.md) has every decision and its evidence.
@@ -87,6 +94,17 @@ Everything below is measured, verified, and reproducible from the notebooks.
 - **The 0.99 F1 is a testbed artefact.** Port-shortcut hypothesis tested by ablation and
   **rejected** (−0.0011). Cause is single-tool attack generation giving each class a constant flow
   fingerprint. **Never present as a real-world capability claim.**
+
+### Explainability (NFR-01) - SATISFIED
+`scripts/run_ml_inference.py` produces a native TreeSHAP explanation for **5,000/5,000** demo
+alerts, **5,000/5,000 additivity checks passed** (max deviation 1.13e-5, tolerance 1e-4).
+Output: `data/processed/demo_ml_predictions_shap.json` (gitignored, 16 MB, regenerable).
+
+### Rule thresholds - VALIDATED on held-out data
+Re-tested on `train_sample.csv` (250,655 rows the rules never saw, 50x the tuning set):
+combined **precision 0.9999, recall 0.1993**, 2 false positives in 30,025 hits. Not overfit.
+Tuned values: `SIG-FTP-BRUTE-FORCE` totalFwdPackets >= 1 (with TCP + port 21);
+`SIG-SSH-BRUTE-FORCE` flowPacketsPerSecond >= 10.67. **Not yet written to a rule-set file.**
 
 ### Detector relationship (the crux)
 ```
@@ -151,16 +169,19 @@ These were believed, then disproved. Re-proposing them wastes a cycle.
 |---|---|---|---|
 | ~~1~~ | ~~Held-out re-test of rule thresholds~~ | **DONE 2026-09-11** | precision **0.9999**, recall **0.1993** on 250,655 unseen rows; 2 FPs in 30,025 hits. Not overfit. |
 | 2 | **S2 — data contracts**: 12 tables, append-only `audit_log` trigger, `evidence_class` + `evidence_priority` on `alerts` | Claude | Keystone. Expensive to change after S9. |
-| 3 | S5 + S4b — signature engine and tuned rules in Python | Delegate + review | Golden-test against frozen fixtures |
-| 4 | S6 — fusion re-specification, invariants I1–I5 | **Claude only** | I5: no `signature_override` may rank below any `ml_only` |
-| 5 | S7 — feedback + guardrails | **Claude only** | The safety claim |
+| 3 | S5 + S4b — signature engine and tuned rules in Python; **write the tuned rule set to a file** | Delegate + review | Golden-test against frozen fixtures |
+| 4 | S6 — fusion re-specification | **Claude only** | **The notebook-03 CEF spec is STALE** — it was built around `signature_override`, which now has zero instances. Must be rewritten for the v1.3 trust/triage model before implementing |
+| 5 | S7 — feedback + guardrails | **Claude only** | **Port the collaborator's design** (sec. 9) to Python rather than authoring fresh |
 | 6 | S8–S9 — audit writer, SQLite, batch runner | Mixed | |
 
 Full detail per step: [`../../plans/hitl-ids-demo-build.md`](../../plans/hitl-ids-demo-build.md).
 
-**Guardrail constants** (consistent across PRD/URS/TDM): max reduction **30**, critical floor
-**70**, critical threshold **80**, exception min **3** occurrences at **60%** confidence, plus
-`infiltration_floor_75` which exists in `stage-5/core/feedback-engine.js:65-69`.
+**Guardrail constants — use the collaborator's `stage-5/config/adaptation-config.json`**, which is
+richer than the docs and now merged: max negative **-30**, **max positive +20** (the docs omit a
+positive cap entirely — without it repeated "confirm true positive" inflates without bound),
+criticalFloor **70**, infiltrationFloor **75**, reviewThreshold **70**, min **3** feedback events,
+agreement **0.67 = moderate / 0.80 = strong**, with graduated adjustments
+(FP -10/-25 · TP +8/+15 · expected activity -15).
 
 **Feedback categories — RESOLVED.** The engine (`stage-5/core/feedback-engine.js:80-112`) is
 authoritative and implements **five**, under different names from the docs:
@@ -172,9 +193,46 @@ adjustment. The docs' "six categories" miscounts by folding a queue action into 
 
 ---
 
+## 9. The collaborator's work — what to use, what to ignore
+
+A collaborator force-pushed 14 commits to `origin/main`, merged into our branch. **Their 6-class
+model and every output derived from it are INVALIDATED** — trained on the uncorrected dataset,
+cannot emit `Infiltration` or `Port Scan`. **Our 8-class model is the single source of truth.**
+Their *code*, however, is good and largely reusable.
+
+| Their asset | Status | Use |
+|---|---|---|
+| `stage-3/core/ml_inference.py` | **ADAPTED, IN USE** | Vendored to `packages/detection/ml/inference.py` |
+| `stage-3/evaluation/ml-explainability-summary.json` | **INVALIDATED** (6-class) | Superseded by `data/processed/ml-explainability-summary.json` |
+| `stage-5/config/adaptation-config.json` | **ADOPT** | The similarity + adjustment + guardrail design for S7 |
+| `stage-5/core/similarity-engine.js` | **PORT to Python** | Weighted similar-alert matching, needed by S7 and evaluation |
+| `stage-5/core/feedback-aggregation-engine.js` | **PORT to Python** | Agreement-gated aggregation |
+| `stage-5/tests/*`, `stage-3/tests/*` | **USE AS SPEC** | 1,237 lines of behavioural tests to port |
+| `dashboard/` | Component source only | Displays invalidated 6-class data |
+
+**The three adaptations already made** (marked `ADAPTED:` inline in our vendored copy):
+1. Removed their hard **78-feature assertion** — it rejected our 82-feature model outright.
+2. Extended `FORBIDDEN_PREDICTION_FIELDS` with **`Attempted Category`**, `attack_class`,
+   `is_attempted`. `Attempted Category` states whether an attack succeeded and is a leakage vector
+   introduced by the corrected release, so their guard predates it.
+3. Repointed default paths from `stage-3/` to `hitl-ids/`.
+
+**They independently confirmed two of our conclusions:** `duplicate` sits in their
+`workflowFeedbackTypes` (not scoring), and they retained `infiltrationFloor: 75`.
+
+**Coordination risk — needs a human conversation, not a code fix.** They force-push (our branch
+base `2209658` was rewritten away) and they actively develop in `stage-3/`/`stage-5/`, which our
+plan declared frozen. Our fixtures survived only because they are *copies*. Agree a boundary with
+them before the next merge.
+
+---
+
 ## 8. Open questions for the user
 
 1. ~~Push the branch?~~ **User decision: keep local.** Do not push without being asked.
 2. ~~Held-out re-test~~ **Done, reported.** Next task is S2 — data contracts.
 3. Review [`finding-infiltration-mislabelling.md`](finding-infiltration-mislabelling.md) — a
    report-ready write-up of the Infiltration finding, drafted and awaiting your edit.
+4. **Agree a file-ownership boundary with the collaborator** before the next merge (see sec. 9).
+5. When ready, our tree is intended to **supersede** their `stage-3/`/`stage-5/` on push — user
+   decision, not yet actioned. Branch is deliberately **local only**; do not push unasked.
