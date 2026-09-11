@@ -3,7 +3,8 @@
 -- Twelve of the TDM's thirteen tables; `notifications` is deferred with the full backend (S18).
 -- Column names are the TDM §7.2 names so the PostgreSQL migration is mechanical.
 -- Type mapping: BIGINT/INT AUTO_INCREMENT -> INTEGER PRIMARY KEY AUTOINCREMENT · VARCHAR, UUID
--- -> TEXT · DECIMAL -> NUMERIC · BOOLEAN -> INTEGER 0/1 · TIMESTAMP -> TEXT (ISO-8601 UTC)
+-- -> TEXT · DECIMAL -> NUMERIC · BOOLEAN -> INTEGER 0/1 · TIMESTAMP -> TEXT, fixed-width ISO-8601
+-- UTC 'YYYY-MM-DDTHH:MM:SS.ffffffZ' so text order is time order (db.format_timestamp)
 -- · JSONB -> TEXT CHECK (json_valid(...)).
 -- Departures from the TDM are marked DEVIATION and logged in docs/plan-changelog.md v1.5.
 -- Foreign keys are enforced only on connections that run PRAGMA foreign_keys = ON; use
@@ -17,7 +18,7 @@ CREATE TABLE users (
     email             TEXT    NOT NULL,
     role              TEXT    NOT NULL CHECK (role IN ('security_analyst', 'system_admin', 'evaluator')),
     status            TEXT    NOT NULL DEFAULT 'active' CHECK (status IN ('active', 'inactive')),
-    created_at        TEXT    NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now')),
+    created_at        TEXT    NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%f', 'now') || '000Z'),
     last_login        TEXT,
     require_pw_change INTEGER NOT NULL DEFAULT 0 CHECK (require_pw_change IN (0, 1)),
     one_time_pw       TEXT
@@ -32,7 +33,7 @@ CREATE TABLE datasets (
     total_records      INTEGER NOT NULL CHECK (total_records >= 0),
     class_distribution TEXT    NOT NULL CHECK (json_valid(class_distribution)),
     is_held_out        INTEGER NOT NULL DEFAULT 0 CHECK (is_held_out IN (0, 1)),
-    created_at         TEXT    NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now')),
+    created_at         TEXT    NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%f', 'now') || '000Z'),
     created_by         INTEGER REFERENCES users (id)
 );
 
@@ -45,7 +46,7 @@ CREATE TABLE signature_rules (
     conditions      TEXT    NOT NULL CHECK (json_valid(conditions) AND json_type(conditions) = 'object'),
     enabled         INTEGER NOT NULL DEFAULT 1 CHECK (enabled IN (0, 1)),
     version         TEXT    NOT NULL,
-    created_at      TEXT    NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now')),
+    created_at      TEXT    NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%f', 'now') || '000Z'),
     -- DEVIATION: the attack class a match asserts; corroboration compares it with the ML class.
     attack_category TEXT    NOT NULL CHECK (attack_category <> 'Benign'),
     -- DEVIATION: the human-checkable reason for the rule (the signature layer is the trust half).
@@ -64,7 +65,7 @@ CREATE TABLE ml_models (
     recall     NUMERIC CHECK (recall BETWEEN 0 AND 1),
     model_file TEXT    NOT NULL,
     status     TEXT    NOT NULL DEFAULT 'available' CHECK (status IN ('active', 'available', 'archived')),
-    created_at TEXT    NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now'))
+    created_at TEXT    NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%f', 'now') || '000Z')
 );
 
 CREATE TABLE detection_runs (
@@ -79,7 +80,7 @@ CREATE TABLE detection_runs (
     guardrail_config TEXT    NOT NULL CHECK (json_valid(guardrail_config) AND json_type(guardrail_config) = 'object'),
     status           TEXT    NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'running', 'completed', 'aborted')),
     alert_count      INTEGER NOT NULL DEFAULT 0 CHECK (alert_count >= 0),
-    started_at       TEXT    NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now')),
+    started_at       TEXT    NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%f', 'now') || '000Z'),
     completed_at     TEXT,
     -- DEVIATION: S9's run_detection(..., seed) must be reproducible from this row alone.
     seed             INTEGER
@@ -104,8 +105,8 @@ CREATE TABLE alerts (
     owner_id           INTEGER REFERENCES users (id),
     is_duplicate_of    INTEGER REFERENCES alerts (id) CHECK (is_duplicate_of <> id),
     is_critical        INTEGER NOT NULL DEFAULT 0 CHECK (is_critical IN (0, 1)),
-    created_at         TEXT    NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now')),
-    updated_at         TEXT    NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now')),
+    created_at         TEXT    NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%f', 'now') || '000Z'),
+    updated_at         TEXT    NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%f', 'now') || '000Z'),
     -- DEVIATION: immutable detection score; combined_score is the operational score feedback moves.
     detection_score    NUMERIC NOT NULL CHECK (detection_score BETWEEN 0 AND 100),
     -- DEVIATION (plan v1.0): load-bearing — the queue orders by these.
@@ -153,7 +154,7 @@ CREATE TABLE feedback_events (
     actual_delta     NUMERIC NOT NULL,
     guardrail_action TEXT    NOT NULL CHECK (guardrail_action IN ('applied', 'capped', 'rejected')),
     guardrail_reason TEXT,
-    created_at       TEXT    NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now')),
+    created_at       TEXT    NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%f', 'now') || '000Z'),
     amended_from_id  INTEGER REFERENCES feedback_events (id),
     CHECK (guardrail_action <> 'applied'  OR actual_delta = requested_delta),
     CHECK (guardrail_action <> 'capped'   OR actual_delta <> requested_delta),
@@ -168,7 +169,7 @@ CREATE TABLE audit_log (
     alert_id    INTEGER REFERENCES alerts (id),
     feedback_id INTEGER REFERENCES feedback_events (id),
     details     TEXT    NOT NULL CHECK (json_valid(details) AND json_type(details) = 'object'),
-    created_at  TEXT    NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now'))
+    created_at  TEXT    NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%f', 'now') || '000Z')
 );
 
 CREATE TABLE guardrail_config (
@@ -176,7 +177,7 @@ CREATE TABLE guardrail_config (
     config_key   TEXT    NOT NULL UNIQUE,
     config_value NUMERIC NOT NULL,
     description  TEXT,
-    updated_at   TEXT    NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now'))
+    updated_at   TEXT    NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%f', 'now') || '000Z')
 );
 
 CREATE TABLE evaluation_scenarios (
@@ -189,7 +190,7 @@ CREATE TABLE evaluation_scenarios (
     feedback_sequence TEXT    NOT NULL CHECK (json_valid(feedback_sequence) AND json_type(feedback_sequence) = 'array'),
     metrics_config    TEXT    NOT NULL CHECK (json_valid(metrics_config) AND json_type(metrics_config) = 'object'),
     guardrails_active INTEGER NOT NULL DEFAULT 1 CHECK (guardrails_active IN (0, 1)),
-    created_at        TEXT    NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now'))
+    created_at        TEXT    NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%f', 'now') || '000Z')
 );
 
 CREATE TABLE evaluation_runs (
@@ -201,7 +202,7 @@ CREATE TABLE evaluation_runs (
     rank_improvement NUMERIC,
     guardrail_pass   INTEGER CHECK (guardrail_pass IN (0, 1)),
     usability_data   TEXT    CHECK (json_valid(usability_data)),
-    started_at       TEXT    NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now')),
+    started_at       TEXT    NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%f', 'now') || '000Z'),
     completed_at     TEXT
 );
 

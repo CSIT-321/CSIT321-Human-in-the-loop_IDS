@@ -24,7 +24,15 @@ from datetime import UTC, datetime
 from typing import Annotated, Any, Literal
 from uuid import UUID, uuid4
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator, model_serializer, model_validator
+from pydantic import (
+    AwareDatetime,
+    BaseModel,
+    ConfigDict,
+    Field,
+    field_validator,
+    model_serializer,
+    model_validator,
+)
 from pydantic.alias_generators import to_camel
 
 # --------------------------------------------------------------------------------------------
@@ -201,7 +209,7 @@ class SignatureRule(Contract):
     conditions: dict[str, ConditionValue] = Field(min_length=1)
     enabled: bool = True
     version: str = Field(min_length=1, max_length=50)
-    created_at: datetime = Field(default_factory=utc_now)
+    created_at: AwareDatetime = Field(default_factory=utc_now)
     # DEVIATION: the class a match asserts; corroboration compares it with the ML class.
     attack_category: AttackClass
     # DEVIATION: the human-checkable reason for the rule — the signature layer is the trust half
@@ -315,8 +323,8 @@ class User(Contract):
     email: str = Field(pattern=r"^[^@\s]+@[^@\s]+$", max_length=255)
     role: Role
     status: UserStatus = "active"
-    created_at: datetime = Field(default_factory=utc_now)
-    last_login: datetime | None = None
+    created_at: AwareDatetime = Field(default_factory=utc_now)
+    last_login: AwareDatetime | None = None
     require_pw_change: bool = False
     one_time_pw: str | None = Field(default=None, repr=False)
 
@@ -332,7 +340,7 @@ class Dataset(Contract):
     total_records: int = Field(ge=0)
     class_distribution: dict[str, Any]
     is_held_out: bool = False
-    created_at: datetime = Field(default_factory=utc_now)
+    created_at: AwareDatetime = Field(default_factory=utc_now)
     created_by: int | None = None
 
 
@@ -347,7 +355,7 @@ class MlModel(Contract):
     recall: Probability | None = None
     model_file: str = Field(min_length=1, max_length=500)
     status: ModelStatus = "available"
-    created_at: datetime = Field(default_factory=utc_now)
+    created_at: AwareDatetime = Field(default_factory=utc_now)
 
 
 class DetectionRun(Contract):
@@ -363,8 +371,8 @@ class DetectionRun(Contract):
     guardrail_config: dict[str, float]
     status: DetectionRunStatus = "pending"
     alert_count: int = Field(default=0, ge=0)
-    started_at: datetime = Field(default_factory=utc_now)
-    completed_at: datetime | None = None
+    started_at: AwareDatetime = Field(default_factory=utc_now)
+    completed_at: AwareDatetime | None = None
     # DEVIATION: S9's run_detection(..., seed) must be reproducible from this row alone.
     seed: int | None = None
 
@@ -397,8 +405,8 @@ class Alert(Contract):
     owner_id: int | None = None
     is_duplicate_of: int | None = None
     is_critical: bool = False
-    created_at: datetime = Field(default_factory=utc_now)
-    updated_at: datetime = Field(default_factory=utc_now)
+    created_at: AwareDatetime = Field(default_factory=utc_now)
+    updated_at: AwareDatetime = Field(default_factory=utc_now)
     # DEVIATION: the immutable score detection produced. combined_score is the operational score
     # feedback moves; the engine measures its caps and floors against this one.
     detection_score: Score
@@ -483,7 +491,7 @@ class FeedbackEvent(Contract):
     actual_delta: float
     guardrail_action: GuardrailAction
     guardrail_reason: str | None = None
-    created_at: datetime = Field(default_factory=utc_now)
+    created_at: AwareDatetime = Field(default_factory=utc_now)
     amended_from_id: int | None = None
 
     @model_validator(mode="after")
@@ -545,7 +553,7 @@ class AuditEntry(Contract):
     alert_id: int | None = None
     feedback_id: int | None = None
     details: dict[str, Any] = Field(default_factory=dict)
-    created_at: datetime = Field(default_factory=utc_now)
+    created_at: AwareDatetime = Field(default_factory=utc_now)
 
     @model_validator(mode="after")
     def _links_present(self) -> AuditEntry:
@@ -562,7 +570,7 @@ class GuardrailConfigEntry(Contract):
     config_key: str = Field(min_length=1, max_length=100)
     config_value: float
     description: str | None = None
-    updated_at: datetime = Field(default_factory=utc_now)
+    updated_at: AwareDatetime = Field(default_factory=utc_now)
 
 
 class EvaluationScenario(Contract):
@@ -576,7 +584,7 @@ class EvaluationScenario(Contract):
     feedback_sequence: list[dict[str, Any]]
     metrics_config: dict[str, Any]
     guardrails_active: bool = True
-    created_at: datetime = Field(default_factory=utc_now)
+    created_at: AwareDatetime = Field(default_factory=utc_now)
 
 
 class EvaluationRun(Contract):
@@ -590,5 +598,5 @@ class EvaluationRun(Contract):
     rank_improvement: float | None = None
     guardrail_pass: bool | None = None
     usability_data: dict[str, Any] | None = None
-    started_at: datetime = Field(default_factory=utc_now)
-    completed_at: datetime | None = None
+    started_at: AwareDatetime = Field(default_factory=utc_now)
+    completed_at: AwareDatetime | None = None

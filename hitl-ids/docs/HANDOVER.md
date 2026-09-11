@@ -141,6 +141,8 @@ Retuned signature rules: **precision 1.000, recall 20%**, but **zero unique cove
 - `combined_score` = operational score feedback moves; `detection_score` = immutable original.
 - Ground truth is **not** in the schema; evaluation joins on `flow_data.source_record_id`.
 - `audit_log` and `feedback_events` are append-only, including against `INSERT OR REPLACE`.
+- Timestamps are fixed-width UTC text `YYYY-MM-DDTHH:MM:SS.ffffffZ` so text order is time order.
+  Encode query bounds with `db.format_timestamp`; timezone-less datetimes are refused.
 
 ---
 

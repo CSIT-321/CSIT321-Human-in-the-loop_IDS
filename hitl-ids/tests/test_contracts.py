@@ -6,8 +6,9 @@
 from __future__ import annotations
 
 import json
+import re
 import sqlite3
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import get_args
 from uuid import uuid4
@@ -492,3 +493,28 @@ def test_non_finite_values_are_refused():
         m.FlowRecord(source_record_id="AL-00001", src_ip="10.0.0.1", dst_ip="10.0.0.2",
                      src_port=1, dst_port=22, protocol="TCP", duration=0.1, packets=1, bytes=60,
                      flow_features={"Flow Bytes/s": float("inf")})
+
+
+TIMESTAMP_TEXT = re.compile(r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{6}Z$")
+
+
+def test_stored_timestamps_are_fixed_width_so_text_order_is_time_order(conn, graph):
+    # Variable-width ISO text sorts wrongly ("12:00:00.5Z" < "12:00:00Z"); audit range queries
+    # and the TDM's created_at indexes depend on text order being time order.
+    user = graph["user"].id
+    for moment in (T0 + timedelta(seconds=1), T0 + timedelta(microseconds=500_000), T0):
+        db.insert(conn, m.AuditEntry(event_type="LOGIN", actor_id=user, created_at=moment))
+    conn.execute("INSERT INTO audit_log (event_type, actor_id, details) VALUES ('LOGIN', ?, '{}')",
+                 (user,))  # takes the database default timestamp
+    stored = [row["created_at"] for row in
+              conn.execute("SELECT created_at FROM audit_log ORDER BY created_at, id")]
+    assert all(TIMESTAMP_TEXT.match(text) for text in stored), stored
+    moments = [datetime.fromisoformat(text) for text in stored]
+    assert moments == sorted(moments)
+
+
+def test_timestamps_without_a_timezone_are_refused():
+    with pytest.raises(ValidationError):
+        m.AuditEntry(event_type="DETECTION_RUN", created_at=datetime(2026, 9, 11, 12, 0))
+    with pytest.raises(ValueError, match="timezone"):
+        db.format_timestamp(datetime(2026, 9, 11, 12, 0))

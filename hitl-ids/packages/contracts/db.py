@@ -9,6 +9,7 @@ from __future__ import annotations
 import json
 import sqlite3
 import types
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any, TypeVar, Union, get_args, get_origin
 
@@ -61,8 +62,25 @@ def create_schema(conn: sqlite3.Connection) -> None:
     conn.commit()
 
 
+# Fixed width, so text order is time order. Variable-width ISO text sorts wrongly
+# ("12:00:00.5Z" < "12:00:00Z"), which would break every created_at range query and index.
+# schema.sql's column defaults produce the same shape.
+TIMESTAMP_FORMAT = "%Y-%m-%dT%H:%M:%S.%fZ"
+
+
+def format_timestamp(moment: datetime) -> str:
+    """The one timestamp encoding: UTC, microseconds, 27 characters. Use it for query bounds too."""
+    if moment.tzinfo is None:
+        raise ValueError("timestamps must be timezone-aware")
+    return moment.astimezone(UTC).strftime(TIMESTAMP_FORMAT)
+
+
 def to_row(model: m.Contract) -> dict[str, Any]:
     row = model.model_dump(mode="json")
+    for column in type(model).model_fields:
+        value = getattr(model, column)
+        if isinstance(value, datetime):
+            row[column] = format_timestamp(value)
     return {
         column: json.dumps(value, sort_keys=True) if isinstance(value, (dict, list)) else value
         for column, value in row.items()

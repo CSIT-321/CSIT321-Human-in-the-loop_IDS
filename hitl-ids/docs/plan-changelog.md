@@ -387,6 +387,22 @@ engine already has the hook: `signature_ml_disagreement_review_preserved`.
 Every class-correct FTP hit (22,797) is an attempted attack, consistent with v1.1's finding that
 FTP brute force never succeeded.
 
+### S2 fix — timestamps now sort as text
+
+Found while specifying S8. The contract stored timestamps as variable-width ISO text: Pydantic
+writes `12:00:00Z` for a whole second but `12:00:00.5Z` otherwise, and the database default wrote
+three decimals. As text, `12:00:00.5Z` sorts **before** `12:00:00Z`, so every `created_at` range
+query and the TDM's `created_at` indexes would have ordered events wrongly.
+
+| | Change |
+|---|---|
+| FIX | One encoding, `db.format_timestamp`: fixed-width UTC `YYYY-MM-DDTHH:MM:SS.ffffffZ`; the schema's column defaults emit the same shape |
+| FIX | Timestamps without a timezone are refused (`AwareDatetime`) — the encoder cannot place them on UTC honestly |
+
+Caught before S9 consumed the schema, so an edit rather than a migration. Proven by a test that
+mixes whole-second, fractional and database-default timestamps and asserts text order equals time
+order.
+
 ### Delegation record
 
 One DeepSeek worker: the engine and its golden tests. It wrote only its two files. Its JSON
