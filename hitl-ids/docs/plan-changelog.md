@@ -515,7 +515,7 @@ confirmed missed attack stays in the bottom band (`system-workflow.md` §7, item
 
 ---
 
-## v1.11 — Goal confirmed; ranking and escalation decisions Q24–Q27 (2026-09-11) ← **current**
+## v1.11 — Goal confirmed; ranking and escalation decisions Q24–Q27 (2026-09-11)
 
 **The goal, confirmed with the project lead:** feedback on past alerts **reorders future alerts** to
 raise triage efficiency, inside the guardrails — the approved thesis (URS: "re-ranks similar future
@@ -531,6 +531,41 @@ not a follow-on to S7a.
 
 Design and sources: [`ranking-and-escalation-design.md`](ranking-and-escalation-design.md).
 **Awaiting sign-off:** the severity values, the candidate set, and the queue classes.
+
+---
+
+## v1.12 — Severity chart made configuration; ranking formula selected by experiment (2026-09-11) ← **current**
+
+The project lead signed off all three items v1.11 awaited:
+- the severity values, provided they can be changed later;
+- all four candidate formulas, to be experimented on, with the history of the tests and their
+  methods kept locally;
+- the queue classes.
+
+| | Change | Evidence |
+|---|---|---|
+| DEC | **Q28: the severity chart is configuration, not code.** It lives in `config/severity-chart.json`, version `sev-1`. It is validated on load (every model class exactly once, severity 0–10). Bands are derived from CVSS v3.1. The chart version is recorded with every experiment run | `packages/detection/ranking/severity.py`. A test shows that editing the file changes the weight and band |
+| ADD | **`packages/detection/ranking/`:** formulas C0–C3, movements M1/M2, the queue classes, Tier 2 criteria E1/E3, and the selection experiment | 15 new tests, 226 in total. The experiment's scorer is pinned to `apply_guardrails` over a grid |
+| ADD | **The experiment record is kept locally.** `evaluation/ranking/history.jsonl` has one line per run. `runs/<id>/` holds `config.json`, `results.json` and `METHOD.md`. Read it in `notebooks/05_ranking_selection.ipynb` | Nothing is overwritten. Each run records the commit, the chart version and the selection rule |
+| CHG | **The selection rule went from sel-1 to sel-2 after the results were seen. This is declared, not hidden.** sel-1 ranked on precision in the top 100 first. The no-feedback control already scores 1.0 there, so all eight pairs tied and a class-change tie-break picked C1 + M2. That run, `20260911T111249Z`, is kept. sel-2 ranks by safety, then attacks demoted under analyst error, then Tier 2 precision, then mean attack position, then class changes, then simplicity | Run `20260911T111625Z` |
+| DEC | **Q29: movement M1 (one class at a time, shield 2) is selected; the formula is not** | Under M2, one wrong confirmation overrode 13 correct dismissals and put 779 benign flows into Tier 2 (in one seed). Mean Tier 2 precision is 0.74 under M2 against 1.00 under M1. sel-2 names C1, but its deciding metric traces to one family collision; see the FIX below |
+| FIX | **Withdrawn before commit: "the Elo form trusts surprises".** It was first written into this entry and the design doc to explain why C2 demoted attacks under analyst error. A trace with the new `experiment.calibrate()` shows every demotion comes from one family, `('Web Attack', 80, 'TCP', '-')`, after a *correct* dismissal of a benign flow the model scored 99.89. C1 avoided it only because its queue order never reached that flow | `notebooks/05_ranking_selection.ipynb` §7 F2 |
+| FIX | **`load_flows` parsed the ISO timestamps day-first.** Under pandas 3, `dayfirst=True` read 1 March 2018 as 3 January, which reordered the demo flows and changed the past/future split. Pandas 2 ignores the flag for ISO text, so the recorded runs (pandas 2.3.3) used the correct chronological order. Timestamps are now parsed as ISO 8601, and unparseable text raises. It came to light because notebook 05, executed on a pandas 3 kernel, did not replay the run | All 144 recorded arms replay identically under Python 3.11 / pandas 2.3.3 and under Python 3.12 / pandas 3.0.5. Test `test_timestamps_parse_as_iso_never_day_first`. New runs record their Python, pandas and numpy versions in `config.json`, and notebook 05 re-simulates recorded arms and stops if any differ |
+
+**Finding: the risk is single-verdict family learning, not the formula.**
+- One correct dismissal of an ML false positive demoted 59 true attacks out of Tier 2. Their score
+  fell from 100 to 82, which is above the Critical floor of 70, so no guardrail fired.
+- The collaborator's adopted gate was not in the experiment. It requires at least 3 learning verdicts
+  with at least 0.67 agreement (`stage-5/config/adaptation-config.json`, `aggregation`).
+- That gate, and a finer family key, come before the formula is chosen.
+- C3's results are identical to C2's.
+
+**Limit.**
+- The experiment measures the **harm** analyst error does, not an **efficiency gain**.
+- The demo sample is already ranked almost perfectly: the mean attack position is 0.0829 with no
+  feedback.
+- A stress test with a weaker or drifting detector is proposed but has not been run
+  (`ranking-and-escalation-design.md` §8).
 
 ---
 

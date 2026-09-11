@@ -1,0 +1,27 @@
+{
+  "version": "sev-1",
+  "scale": "0-10 on the CVSS v3.1 qualitative scale; weight w = severity / 10. Bands are derived, not stored.",
+  "approved": "project lead, 2026-09-11 (decision Q27)",
+  "sources": {
+    "suricata": "https://raw.githubusercontent.com/OISF/suricata/master/etc/classification.config",
+    "attack": "https://attack.mitre.org/tactics/enterprise/",
+    "cvss": "https://www.first.org/cvss/v3.1/specification-document"
+  },
+  "entries": [
+    {"attack_type": "Benign traffic", "model_class": "Benign", "attack_tactic": null, "suricata_classtypes": ["not-suspicious"], "severity": 0.0},
+    {"attack_type": "Policy violation / unwanted program", "model_class": null, "attack_tactic": null, "suricata_classtypes": ["pup-activity"], "severity": 3.0},
+    {"attack_type": "Network / port scan", "model_class": "Port Scan", "attack_tactic": "TA0043 Reconnaissance; TA0007 Discovery", "suricata_classtypes": ["network-scan", "attempted-recon"], "severity": 3.0},
+    {"attack_type": "Brute-force login (attempted)", "model_class": "Brute Force", "attack_tactic": "TA0006 Credential Access", "suricata_classtypes": ["suspicious-login", "default-login-attempt"], "severity": 5.0},
+    {"attack_type": "Crypto-mining", "model_class": null, "attack_tactic": "TA0040 Impact", "suricata_classtypes": ["coin-mining"], "severity": 5.5},
+    {"attack_type": "Denial of service", "model_class": "DoS", "attack_tactic": "TA0040 Impact", "suricata_classtypes": ["attempted-dos", "denial-of-service"], "severity": 6.5},
+    {"attack_type": "Distributed denial of service", "model_class": "DDoS", "attack_tactic": "TA0040 Impact", "suricata_classtypes": ["denial-of-service"], "severity": 7.5},
+    {"attack_type": "Web application attack", "model_class": "Web Attack", "attack_tactic": "TA0001 Initial Access", "suricata_classtypes": ["web-application-attack"], "severity": 8.0},
+    {"attack_type": "Exploit kit / shellcode", "model_class": null, "attack_tactic": "TA0002 Execution", "suricata_classtypes": ["exploit-kit", "shellcode-detect"], "severity": 8.5},
+    {"attack_type": "Credential theft (successful)", "model_class": null, "attack_tactic": "TA0006 Credential Access", "suricata_classtypes": ["credential-theft"], "severity": 8.5},
+    {"attack_type": "Privilege escalation", "model_class": null, "attack_tactic": "TA0004 Privilege Escalation", "suricata_classtypes": ["attempted-admin", "successful-admin"], "severity": 9.0},
+    {"attack_type": "Botnet / command and control", "model_class": "Botnet", "attack_tactic": "TA0011 Command and Control", "suricata_classtypes": ["trojan-activity", "command-and-control", "domain-c2"], "severity": 9.0},
+    {"attack_type": "Infiltration / lateral movement", "model_class": "Infiltration", "attack_tactic": "TA0008 Lateral Movement", "suricata_classtypes": ["targeted-activity"], "severity": 9.5},
+    {"attack_type": "Data exfiltration", "model_class": null, "attack_tactic": "TA0010 Exfiltration", "suricata_classtypes": ["successful-recon-largescale"], "severity": 9.5},
+    {"attack_type": "Destructive impact / ransomware", "model_class": null, "attack_tactic": "TA0040 Impact", "suricata_classtypes": [], "severity": 10.0}
+  ]
+}

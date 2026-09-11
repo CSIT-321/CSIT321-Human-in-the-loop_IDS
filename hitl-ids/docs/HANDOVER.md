@@ -59,14 +59,18 @@ Repo: `github.com/CSIT-321/CSIT321-Human-in-the-loop_IDS` · working tree `hitl-
 > S4b. It is **not** "Phase 1". Never use a bare phase number for it.
 >
 > **Actual status:** Phase 0 **PARTIAL** (S1 scaffold incomplete — Python slice only; **S2 DONE**, 51 tests) ·
-> Phase 1 **DONE** · Phase 2 **S5, S4b, S6, S7a, S8 done** (S7b similar-alert learning remains) · Phases 3–6 **not started**.
+> Phase 1 **DONE** · Phase 2 **S5, S4b, S6, S7a, S8 done** (S7b similar-alert learning remains; its
+> movement rule is selected, its formula is not — Q29) · Phases 3–6 **not started**.
 
 ```
 hitl-ids/
   data/raw/       CSECICIDS2018_improved.zip   10.4 GB, GITIGNORED, must be re-downloaded
   data/processed/ label_scan · demo_sample(5,000) · train_sample(250,655) · manifests
   models/         8-class XGBoost + metrics + port ablation
-  notebooks/      01-04, all execute with ZERO errors
+  notebooks/      01-05, all execute with ZERO errors (05 = ranking selection record)
+  config/severity-chart.json           Q28: editable, versioned severity chart
+  packages/detection/ranking/          severity chart loader · formulas C0-C3, M1/M2 · experiment
+  evaluation/ranking/                  history.jsonl + runs/<id>/{config,results}.json, METHOD.md
   packages/detection/ml/inference.py   vendored+adapted TreeSHAP inference (see sec. 8)
   packages/contracts/  S2: models.py · schema.sql (12 tables) · db.py (codec, QUEUE_ORDER_BY)
   tests/test_contracts.py   51 tests - run: python -m pytest   (pyproject.toml sets pythonpath)
@@ -114,6 +118,8 @@ Everything below is measured, verified, and reproducible from the notebooks.
 | Q25 | Automatic tier escalation **post-demo**; the demo shows which alerts **would** go to Tier 2 (2026-09-11) |
 | Q26 | The ranking formula is **chosen by testing** game-inspired candidates (2026-09-11) |
 | Q27 | False positives **drop a class**, scaled by an **attack-type severity chart** (2026-09-11) |
+| Q28 | The severity chart is **configuration**: `config/severity-chart.json`, versioned (`sev-1`) and validated on load; change values there, never in code (2026-09-11) |
+| Q29 | Ranking movement **M1 (one class at a time)** selected by experiment; **formula not yet selected**. First add the collaborator's agreement gate (≥ 3 learning verdicts, ≥ 0.67 agreement) and a finer family key, then rerun. History: `evaluation/ranking/`; read: `notebooks/05_ranking_selection.ipynb` (2026-09-11) |
 
 **The project goal (confirmed 2026-09-11):** analyst feedback on past alerts **reorders future
 alerts** to raise triage efficiency, inside the guardrails. S7b (similar-alert learning) is its core.
@@ -206,6 +212,17 @@ These were believed, then disproved. Re-proposing them wastes a cycle.
 - Kaggle is **not authenticated** — irrelevant now; the dataset came from the authors' own server.
 - The 10.4 GB archive and 142 MB `train_sample.csv` are gitignored. The **frozen fixture CSVs are
   force-added** because they are the reproducibility anchor.
+- **Two Python interpreters, and they disagree.**
+  - `python` may resolve to **Python 3.12 / pandas 3**, which has no `xgboost`, so one contracts
+    test skips.
+  - `C:/ProgramData/miniconda3/python.exe` is **3.11 / pandas 2**; the full suite passes there with
+    0 skipped.
+  - Jupyter's `python3` kernel runs 3.12 even when launched from miniconda's jupyter.
+  - Pandas 3 changed date parsing: always parse ISO timestamps with `format="ISO8601"`, never
+    `dayfirst` (changelog v1.12).
+- **If pytest reports `PermissionError` on its temp folder**, the session sandbox is blocking it,
+  and the code is not at fault. Run
+  `python -m pytest -p no:cacheprovider --basetemp=<scratchpad>/pytest-tmp`.
 
 ---
 
@@ -217,7 +234,7 @@ These were believed, then disproved. Re-proposing them wastes a cycle.
 | ~~2~~ | ~~S2 — data contracts~~ | **DONE 2026-09-11** | 12 tables, 51 tests, 0 skipped. Deviations in changelog v1.5 |
 | ~~3~~ | ~~S5 + S4b — signature engine and tuned rule set~~ | **DONE 2026-09-11** | Engine delegated (DeepSeek), golden-tested 1,000/1,000. Rule set written; held-out figures reproduced. Changelog v1.6 |
 | ~~4~~ | ~~S6 — fusion re-specification~~ | **DONE 2026-09-11** | `packages/detection/fusion/cef.py`; spec in its docstring. Demo: 200 corroborated, 0 override; DB queue order proven. Changelog v1.8 |
-| 5 | ~~S7a — direct feedback + guardrails~~ **DONE** (changelog v1.10) · **NEXT →** S7b — similar-alert learning. Inputs recorded before S7a: invariant I3 is S7's; "Critical" now means score ≥ 80 (Node used ≥ 90) — log the floor-trigger decision. Inputs from v1.9: floors must never *raise* a score; map `uncertain`; feedback cannot cross evidence bands — see `system-workflow.md` §7 | **Claude only** | **Port the collaborator's design** (sec. 8) to Python rather than authoring fresh |
+| 5 | ~~S7a — direct feedback + guardrails~~ **DONE** (changelog v1.10) · ranking experiment **run** (changelog v1.12; Q29: M1 selected, formula open) · **NEXT →** add the agreement gate (collaborator's `aggregation`: ≥ 3 learning verdicts, ≥ 0.67 agreement) and a finer family key to the experiment, rerun and choose the formula. Then S7b: similar-alert learning as persisted family adjustments, plus `queue_class` and the Tier 2 marker as contract additions (`ranking-and-escalation-design.md` §7). Inputs recorded before S7a: invariant I3 is S7's; "Critical" now means score ≥ 80 (Node used ≥ 90) — log the floor-trigger decision. Inputs from v1.9: floors must never *raise* a score; map `uncertain`; feedback cannot cross evidence bands — see `system-workflow.md` §7 | **Claude only** | **Port the collaborator's design** (sec. 8) to Python rather than authoring fresh |
 | 6 | ~~S8 — audit writer~~ **DONE** (delegated, changelog v1.7) · S9 — SQLite repositories + batch runner | Mixed | S9 builds on `db.insert`/`db.get` and `AuditWriter`. **S3's `FlowSource`/`CsvReplaySource` seam was never built — S9 must add it** (changelog v1.9) |
 
 Full detail per step: [`../../plans/hitl-ids-demo-build.md`](../../plans/hitl-ids-demo-build.md).
@@ -281,6 +298,11 @@ them before the next merge.
    the same day. Work continues locally; push again only when asked.
 2. ~~Held-out re-test~~ **Done, reported.** ~~S2~~ **Done.** ~~S5 + S4b~~ **Done.** ~~S8~~ **Done.** ~~S6~~ **Done.** ~~S7a~~ **Done.** Next is S7b (similar-alert learning), then S9. Open for the
    project lead: feedback cannot move an alert across evidence bands (`system-workflow.md` §7, item 4).
+   **Open (ranking):** the formula is not chosen. The first run's formula differences trace to one
+   family collision: a correct dismissal of an ML false positive demoted 59 attacks. Next: the
+   agreement gate and a finer family key, then a rerun. Separately, the demo sample cannot show an
+   efficiency gain. A stress test with a weaker or drifting detector is proposed but not run
+   (`ranking-and-escalation-design.md` §8).
 3. Review [`finding-infiltration-mislabelling.md`](finding-infiltration-mislabelling.md) — a
    report-ready write-up of the Infiltration finding, drafted and awaiting your edit.
 4. **Agree a file-ownership boundary with the collaborator** before the next merge (see sec. 8).

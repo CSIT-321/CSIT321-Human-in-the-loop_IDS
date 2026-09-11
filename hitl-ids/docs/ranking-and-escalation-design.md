@@ -198,6 +198,82 @@ acceptable flapping; ties go to the simpler formula.
 81.3–100) and each attack class is a near-constant fingerprint, so differences between formulas may
 be small. That is reported, not hidden.
 
+### Results — run `20260911T111625Z`
+
+The full record is in `evaluation/ranking/`: `history.jsonl` has one line per run, and each run
+folder holds `config.json`, `results.json` and `METHOD.md`. Read it in
+`notebooks/05_ranking_selection.ipynb`, and rerun it with `python scripts/ranking_experiment.py`.
+
+The caveat stated in advance held.
+
+- **Precision in the top 100 is saturated.** The no-feedback control already scores 1.0 at 50, 100
+  and 200, so every arm ties there. The rule above (*sel-1*, run `20260911T111249Z`) therefore fell
+  through to its class-change tie-break. Its "winner", C1 + M2, is kept in the history but not adopted.
+- ***sel-2*, written after seeing run 1**, ranks on the metrics that vary:
+  1. safety;
+  2. fewest true attacks demoted under analyst error (5 % + 15 %);
+  3. Tier 2 precision at 5 %;
+  4. mean attack position at 5 %;
+  5. class changes;
+  6. simplicity.
+
+| Formula + movement | Attacks demoted under error | Tier 2 precision @ 5 % | Tier 2 load @ 5 % | Mean attack position @ 5 % |
+|---|---|---|---|---|
+| **C1 + M1** | **0** | **1.00** | 243 | 0.0828 |
+| C1 + M2 | 0 | 0.74 | 504 | 0.1235 |
+| C0 + M1 | 78.7 | 1.00 | 223 | 0.0828 |
+| C0 + M2 | 78.7 | 0.74 | 484 | 0.1236 |
+| C2 or C3 + M1 | 118 | 1.00 | 184 | 0.0845 |
+| C2 or C3 + M2 | 118 | 0.73 | 471 | 0.2004 |
+| *control, no feedback* | — | 1.00 | 243 | 0.0829 |
+
+*These are means over 3 seeds. "Demoted" sums the 5 % and 15 % arms. No guarded arm let an alert
+fall below the Critical floor.*
+
+1. **Every demoted attack traces to one family, and a *correct* verdict caused it.** An earlier
+   version of this section explained C2's demotions by the Elo form "trusting surprises". Tracing
+   every demoted future attack with `experiment.calibrate` (notebook 05, §7 F2) contradicts that:
+   - in every C0, C2 and C3 arm, at 5 % and at 15 % error, all the demoted attacks sit in one family,
+     `('Web Attack', 80, 'TCP', '-')`;
+   - the verdict that demoted them was **correct**: the analyst rightly dismissed one benign flow
+     that the model had scored 99.89 as a Web Attack;
+   - the family key (predicted class + port + protocol + rule) grouped that false positive with 59
+     true Web Attacks in the future half. The dismissal cut their scores from 100 to 82 under C2,
+     which is below the Tier 2 threshold of 90. The Critical floor of 70 never came into play.
+2. **C1's "zero demoted" reflects coverage, not robustness.**
+   - Under C1 the analyst never reviewed that benign flow, in any seed or at any error rate. C1's
+     large confirmation steps reorder the queue so the flow is never reached in ten rounds.
+   - C2 reaches it in every seed, and C0 in some.
+   - No formula reaches it at 0 % error, which is why the effect showed up only "under analyst
+     error": mistakes reshuffle the queue deeper.
+   - **So the experiment does not separate the formulas on how they handle analyst error.**
+   - C3's results are identical to C2's.
+3. **Moving straight to the top (M2) lets one confirmation override any history.** This finding
+   survives the trace.
+   - In one seed, one wrong confirmation outweighed thirteen correct dismissals of a benign DNS
+     family and lifted all 779 of its future flows into the Tier 2 band.
+   - A second seed added 3 benign alerts, and the third none.
+   - The 5 % mean (load 504, precision 0.74) is that rare but severe failure averaged over seeds.
+   - Under M1, no single verdict can do this.
+4. **Feedback does reach future traffic, but this sample leaves almost nothing to gain.**
+   - 35–39 % of future flows belong to families learned during calibration. Finding 1 shows that
+     this same reach also carries a verdict's harm.
+   - The detectors already put nearly every attack at the top: the mean attack position is 0.0829
+     with no feedback.
+   - So the experiment cannot show an efficiency gain.
+
+**Decision Q29, revised after the trace:**
+- **Movement: M1.** Finding 3 supports it, and the demo's Tier 2 list depends on it (Q25).
+- **Formula: not selected.** sel-2 names C1 + M1, but its deciding criterion was driven by one family
+  collision (findings 1–2).
+- **A requirement for S7b comes first: a single verdict must not move a whole family.**
+  - The collaborator's adopted configuration (`stage-5/config/adaptation-config.json`, `aggregation`)
+    applies a similar-alert adjustment only after **at least 3 learning verdicts with at least 0.67
+    agreement** (0.80 counts as "strong"). This experiment learned from the first verdict.
+  - Add that gate, plus a family key fine enough to keep an ML false positive apart from the attacks
+    it resembles.
+  - Then rerun, before choosing the formula.
+
 ---
 
 ## 7. Where this plugs in
@@ -211,11 +287,30 @@ be small. That is reported, not hidden.
 | "→ Tier 2" marker and the "flagged for review" view on the dashboard | S11 – S12 |
 | Automatic routing and notifications to Tier 2 | **Post-demo** (Q25) |
 
-## 8. Decisions requested
+## 8. Decisions made, and what is still open
 
-1. **Sign off the severity chart** (§3), or adjust any value.
-2. **Approve the candidates and the experiment** (§5–§6) — or add a candidate.
-3. **Confirm the queue classes** (§5): Tier 2 candidates · corroborated · signature_override · ml_only · none.
+**Made (2026-09-11):**
+
+1. **The severity chart is signed off** (Q27). **It must stay changeable** (Q28):
+   - it lives in `config/severity-chart.json`, not in code;
+   - it is versioned (`sev-1`) and validated whenever it is loaded (every model class exactly once);
+   - every experiment run records the chart version it used.
+2. **All four candidates are approved and tested** (§6).
+   - The history of the tests and their method is kept locally in `evaluation/ranking/`.
+   - It is read in notebook 05.
+3. **The queue classes are confirmed**: Tier 2 candidates · corroborated · signature_override ·
+   ml_only · none.
+4. **M1 is selected; the formula is not** (Q29, revised — see §6 Results).
+
+**Still open:**
+
+- **The agreement gate and a finer family key**, followed by a rerun, before the formula is chosen
+  (§6 Results, finding 1).
+
+- **A stress test for the efficiency claim.** It needs a weaker or drifting detector, so that the top
+  of the queue has false positives to learn from. Not yet run.
+- **The run on the 250,655-flow training sample** planned in §6. SHAP predictions exist only for the
+  demo sample. Not yet run.
 
 ---
 
