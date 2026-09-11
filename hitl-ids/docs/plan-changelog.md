@@ -246,7 +246,7 @@ Coverage with the retuned set: `ml_only 794 · signature_only **0** · both 200 
 
 ---
 
-## v1.4 — Collaborator merge; their model invalidated, ours is truth (2026-09-11) ← **current**
+## v1.4 — Collaborator merge; their model invalidated, ours is truth (2026-09-11)
 
 A collaborator force-pushed 14 commits to `origin/main` (rewriting history past our branch base).
 Merged into `feat/corrected-dataset-and-findings`; **our frozen fixtures were unaffected**, which
@@ -284,6 +284,65 @@ hashing are preserved unchanged. Intent is that our tree eventually supersedes `
 
 **Coordination risk:** the collaborator is actively developing in `stage-3/` and `stage-5/`, which
 our plan declared frozen. That convention now conflicts with reality and needs agreeing with them.
+
+---
+
+## v1.5 — S2 data contracts landed (2026-09-11) ← **current**
+
+Plan step **S2** (keystone) implemented on branch `feat/s2-contracts`: `packages/contracts/`
+(`models.py`, `schema.sql`, `db.py`) and `tests/test_contracts.py`. **51 tests pass, 0 skipped** —
+including all **5,000 real TreeSHAP records** validating against `MlPrediction`, one of them
+persisting through `alerts.shap_attributions` losslessly.
+
+### Departures from the TDM (§7) — every one is marked `DEVIATION` inline
+
+| | Change | Rationale |
+|---|---|---|
+| ADD | `alerts.evidence_class`, `alerts.evidence_priority` | Plan v1.0 — the queue orders by them |
+| ADD | `alerts.detection_score` | The immutable score detection produced. `combined_score` becomes the operational score feedback moves. The engine measures caps and floors against the former (`detectionScore` vs `operationalPriorityScore`); without it the control-vs-treatment comparison (D9) cannot be reconstructed from the database |
+| ADD | `alerts.requires_review` | Plan S6 task list; the engine's `forceReview` (S7) |
+| ADD | `signature_rules.attack_category`, `signature_rules.rationale` | Corroboration needs the class a rule asserts; the rationale is the human-checkable "why" (v1.3 trust repositioning) |
+| CHG | `signature_rules`: `UNIQUE (rule_id)` → `UNIQUE (rule_id, version)` | A detection run must replay against the `rule_set_version` it recorded |
+| CHG | `signature_rules.rule_id` 20 → 50 chars | **Caught by a test:** the frozen legacy id `SIG-DOS-HIGH-RATE-FLOW` is 22 chars. Renaming would break traceability to the fixtures and `retune_results.json` |
+| ADD | `detection_runs.seed` | S9's `run_detection(..., seed)` must be reproducible from the row |
+| ADD | `flow_data.source_record_id` | The only join key to ground truth, which is kept **out of the schema entirely** (label leakage) |
+| CHG | `feedback_events.category` CHECK → the engine's five | Resolved in HANDOVER §7. `duplicate` is recorded in `alerts.is_duplicate_of` |
+| ADD | `feedback_events` is append-only (triggers) | The TDM's `amended_from_id` already models amendment as a new row |
+| ADD | `INSERT OR REPLACE` guard trigger on both append-only tables | SQLite REPLACE deletes the conflicting row **without firing DELETE triggers** unless `recursive_triggers` is on. The TDM's UPDATE/DELETE trigger pair alone leaves the audit log overwritable. A test proves the guard holds on a raw connection with no pragmas |
+| ADD | FKs `detection_runs.model_version`, `evaluation_scenarios.model_version` → `ml_models.version` | Every recorded model version resolves |
+| CHG | Nullability tightened on structural FKs (`alerts.run_id`, `flow_data.alert_id`, …) | An alert without a run is meaningless |
+| KEEP | `detection_runs.fusion_weights` name | Holds the fusion configuration snapshot. Weighted-sum fusion stays rejected; the name is kept for the migration |
+| DEFER | `notifications` (the 13th table) | With the full backend, S18 |
+
+### Guardrail seed
+
+TDM five (`max_feedback_reduction 30`, `critical_alert_floor 70`, `critical_alert_threshold 80`,
+`learned_exception_min_occurrences 3`, `learned_exception_min_confidence 60`) +
+`infiltration_alert_floor 75` + from `adaptation-config.json`: `max_feedback_increase 20`,
+`review_threshold 70`, `high_risk_threshold 70`, aggregation `3 / 0.67 / 0.80`. A test pins these
+to the collaborator's file. The graduated adjustments (FP −10/−25 …) are feedback maths and belong
+to S7, not `guardrail_config`.
+
+### What the contract enforces, and what it leaves to S6
+
+Enforced in Pydantic **and** again as DB `CHECK`s, so raw-SQL writers cannot bypass them:
+`evidence_class ∈ {corroborated, signature_override}` ⇔ a signature matched; `corroborated` and
+`ml_only` ⇒ a non-Benign ML class. These are necessary conditions only — how classes and
+priorities are *assigned* is S6's re-specification. The queue order is fixed as
+`db.QUEUE_ORDER_BY = evidence_priority ASC, combined_score DESC, id ASC`.
+
+Also enforced: flow features refuse every label field (`LEAKAGE_FIELDS`, pinned as a superset of
+the inference guard); an `available` SHAP explanation must carry a passed additivity check
+(NFR-01); non-finite floats are refused because JSON columns cannot store them.
+
+### Process notes
+
+- **My own verification constant was wrong.** I hand-counted 19 foreign keys; the schema has 17.
+  The test now asserts the explicit edge set rather than a count, so a mismatch names the edge.
+- **S1 remains partial.** S2 added only the `pyproject.toml` pytest/ruff slice it needed. Still
+  outstanding (delegable): Vite scaffold, `README.md`, and `ruff` itself, which is not installed.
+- **Open for S5:** legacy rule conditions key on camelCase (`flowPacketsPerSecond`) while corrected
+  flows use CIC names (`Flow Packets/s`). The tuned rule file must choose one namespace and map the other.
 
 ---
 

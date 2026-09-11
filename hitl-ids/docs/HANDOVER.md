@@ -3,7 +3,8 @@
 **Purpose.** Carry the full state of this project into a fresh session with zero loss of context
 and minimal token cost. Everything a new session needs is here or one link away.
 
-**Last updated:** 2026-09-11 (rev 2) · **Branch:** `feat/corrected-dataset-and-findings` (local only)
+**Last updated:** 2026-09-11 (rev 3) · **Branch:** `feat/s2-contracts` (local only; branched from
+`feat/corrected-dataset-and-findings`) · **S2 data contracts DONE** — changelog v1.5
 **Iteration 1 (Evidence & Direction) complete** — = plan Phase 1 + step S4b · collaborator's
 `origin/main` merged · **NFR-01 explainability satisfied**
 
@@ -56,7 +57,7 @@ Repo: `github.com/CSIT-321/CSIT321-Human-in-the-loop_IDS` · working tree `hitl-
 > The completed evidence work is **Iteration 1** — a *work iteration* spanning plan Phase 1 plus
 > S4b. It is **not** "Phase 1". Never use a bare phase number for it.
 >
-> **Actual status:** Phase 0 **PARTIAL** (S1 scaffold incomplete, **S2 not started**) ·
+> **Actual status:** Phase 0 **PARTIAL** (S1 scaffold incomplete — Python slice only; **S2 DONE**, 51 tests) ·
 > Phase 1 **DONE** · Phase 2 **only S4b done** · Phases 3–6 **not started**.
 
 ```
@@ -66,6 +67,8 @@ hitl-ids/
   models/         8-class XGBoost + metrics + port ablation
   notebooks/      01-04, all execute with ZERO errors
   packages/detection/ml/inference.py   vendored+adapted TreeSHAP inference (see sec. 8)
+  packages/contracts/  S2: models.py · schema.sql (12 tables) · db.py (codec, QUEUE_ORDER_BY)
+  tests/test_contracts.py   51 tests - run: python -m pytest   (pyproject.toml sets pythonpath)
   scripts/        9 scripts, all runnable
   tests/fixtures/legacy/   8 FROZEN files - never regenerate
   docs/           HANDOVER · iteration-report · plan-changelog(v0.1-v1.4) ·
@@ -124,6 +127,14 @@ Tuned values: `SIG-FTP-BRUTE-FORCE` totalFwdPackets >= 1 (with TCP + port 21);
 ```
 Retuned signature rules: **precision 1.000, recall 20%**, but **zero unique coverage**.
 
+### Data contracts (S2) - `packages/contracts/`
+- `schema.sql` is canonical. **After S9 consumes it, changes need a migration, not an edit.**
+- Every TDM departure is marked `DEVIATION` inline and logged in changelog **v1.5**; a test fails
+  on any unlogged column.
+- `combined_score` = operational score feedback moves; `detection_score` = immutable original.
+- Ground truth is **not** in the schema; evaluation joins on `flow_data.source_record_id`.
+- `audit_log` and `feedback_events` are append-only, including against `INSERT OR REPLACE`.
+
 ---
 
 ## 5. Reversed and rejected — do not resurrect
@@ -180,8 +191,8 @@ These were believed, then disproved. Re-proposing them wastes a cycle.
 | # | Step | Owner | Note |
 |---|---|---|---|
 | ~~1~~ | ~~Held-out re-test of rule thresholds~~ | **DONE 2026-09-11** | precision **0.9999**, recall **0.1993** on 250,655 unseen rows; 2 FPs in 30,025 hits. Not overfit. |
-| 2 | **S2 — data contracts**: 12 tables, append-only `audit_log` trigger, `evidence_class` + `evidence_priority` on `alerts` | Claude | Keystone. Expensive to change after S9. |
-| 3 | S5 + S4b — signature engine and tuned rules in Python; **write the tuned rule set to a file** | Delegate + review | Golden-test against frozen fixtures |
+| ~~2~~ | ~~S2 — data contracts~~ | **DONE 2026-09-11** | 12 tables, 51 tests, 0 skipped. Deviations in changelog v1.5 |
+| 3 | **NEXT →** S5 + S4b — signature engine and tuned rules in Python; **write the tuned rule set to a file** | Delegate + review | Golden-test against frozen fixtures. Emit `SignatureRule` / `SignatureMatch` from `packages/contracts`. **Decide first:** legacy conditions key on camelCase (`flowPacketsPerSecond`), corrected flows on CIC names (`Flow Packets/s`) — the rule file picks one namespace and maps the other |
 | 4 | S6 — fusion re-specification | **Claude only** | **The notebook-03 CEF spec is STALE** — it was built around `signature_override`, which now has zero instances. Must be rewritten for the v1.3 trust/triage model before implementing |
 | 5 | S7 — feedback + guardrails | **Claude only** | **Port the collaborator's design** (sec. 8) to Python rather than authoring fresh |
 | 6 | S8–S9 — audit writer, SQLite, batch runner | Mixed | |
@@ -242,7 +253,7 @@ them before the next merge.
 ## 9. Open questions for the user
 
 1. ~~Push the branch?~~ **User decision: keep local.** Do not push without being asked.
-2. ~~Held-out re-test~~ **Done, reported.** Next task is S2 — data contracts.
+2. ~~Held-out re-test~~ **Done, reported.** ~~S2~~ **Done.** Next task is S5 + S4b.
 3. Review [`finding-infiltration-mislabelling.md`](finding-infiltration-mislabelling.md) — a
    report-ready write-up of the Infiltration finding, drafted and awaiting your edit.
 4. **Agree a file-ownership boundary with the collaborator** before the next merge (see sec. 8).

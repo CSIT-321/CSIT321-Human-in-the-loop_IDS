@@ -1,0 +1,26 @@
+[project]
+name = "hitl-ids"
+version = "0.1.0"
+description = "Human-in-the-Loop Intrusion Detection dashboard (FYP-26-S3-13)"
+requires-python = ">=3.11"
+# S2 added only what the contracts and their tests need. S1 (delegated) completes this file:
+# fastapi, shap, and the apps/web Vite toolchain.
+dependencies = [
+    "pydantic>=2.11",
+    "numpy",
+    "pandas",
+    "xgboost",
+    "scikit-learn",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8", "ruff"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
+addopts = "-ra"
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"

@@ -1,0 +1,109 @@
+"""SQLite binding for the S2 contracts: connection settings, schema creation, row codec.
+
+The repository layer (S9) is built on ``insert``/``get``; they exist here because the storage
+encoding — JSON columns, booleans, timestamps — is part of the contract.
+"""
+
+from __future__ import annotations
+
+import json
+import sqlite3
+import types
+from pathlib import Path
+from typing import Any, TypeVar, Union, get_args, get_origin
+
+from pydantic import BaseModel
+
+from . import models as m
+
+SCHEMA_PATH = Path(__file__).with_name("schema.sql")
+
+# Queue order is part of the fusion contract (plan S6, invariant I5): evidence class first, score
+# second, id as a deterministic tiebreak. Ordering by score alone ranked the key detections #414
+# of 417 (plan-changelog v1.0 FIX).
+QUEUE_ORDER_BY = "evidence_priority ASC, combined_score DESC, id ASC"
+
+TABLE_MODELS: dict[str, type[m.Contract]] = {
+    "users": m.User,
+    "datasets": m.Dataset,
+    "signature_rules": m.SignatureRule,
+    "ml_models": m.MlModel,
+    "detection_runs": m.DetectionRun,
+    "alerts": m.Alert,
+    "flow_data": m.FlowRecord,
+    "feedback_events": m.FeedbackEvent,
+    "audit_log": m.AuditEntry,
+    "guardrail_config": m.GuardrailConfigEntry,
+    "evaluation_scenarios": m.EvaluationScenario,
+    "evaluation_runs": m.EvaluationRun,
+}
+_TABLE_OF = {model: table for table, model in TABLE_MODELS.items()}
+
+ModelT = TypeVar("ModelT", bound=m.Contract)
+
+
+def connect(path: str | Path) -> sqlite3.Connection:
+    conn = sqlite3.connect(path)
+    conn.row_factory = sqlite3.Row
+    conn.execute("PRAGMA foreign_keys = ON")
+    # Belt and braces with the no_replace triggers: REPLACE fires DELETE triggers only when on.
+    conn.execute("PRAGMA recursive_triggers = ON")
+    return conn
+
+
+def create_schema(conn: sqlite3.Connection) -> None:
+    """Create all tables on a fresh database and seed the guardrail defaults."""
+    conn.executescript(SCHEMA_PATH.read_text(encoding="utf-8"))
+    conn.executemany(
+        "INSERT INTO guardrail_config (config_key, config_value, description) VALUES (?, ?, ?)",
+        [(key, value, text) for key, (value, text) in m.GUARDRAIL_DEFAULTS.items()],
+    )
+    conn.commit()
+
+
+def to_row(model: m.Contract) -> dict[str, Any]:
+    row = model.model_dump(mode="json")
+    return {
+        column: json.dumps(value, sort_keys=True) if isinstance(value, (dict, list)) else value
+        for column, value in row.items()
+    }
+
+
+def from_row(model_cls: type[ModelT], row: sqlite3.Row | dict[str, Any]) -> ModelT:
+    data = dict(row)
+    for column in _json_fields(model_cls):
+        if isinstance(data.get(column), str):
+            data[column] = json.loads(data[column])
+    return model_cls.model_validate(data)
+
+
+def insert(conn: sqlite3.Connection, model: m.Contract) -> int:
+    """Insert one table model and return its new id. The caller owns the transaction."""
+    row = to_row(model)
+    if row.get("id") is None:
+        row.pop("id", None)
+    columns = ", ".join(row)
+    placeholders = ", ".join("?" for _ in row)
+    cursor = conn.execute(
+        f"INSERT INTO {_TABLE_OF[type(model)]} ({columns}) VALUES ({placeholders})",
+        list(row.values()),
+    )
+    return int(cursor.lastrowid)
+
+
+def get(conn: sqlite3.Connection, model_cls: type[ModelT], row_id: int) -> ModelT | None:
+    row = conn.execute(f"SELECT * FROM {_TABLE_OF[model_cls]} WHERE id = ?", (row_id,)).fetchone()
+    return None if row is None else from_row(model_cls, row)
+
+
+def _json_fields(model_cls: type[BaseModel]) -> set[str]:
+    return {name for name, field in model_cls.model_fields.items() if _is_json(field.annotation)}
+
+
+def _is_json(annotation: Any) -> bool:
+    origin = get_origin(annotation)
+    if origin in (Union, types.UnionType):
+        return any(_is_json(arg) for arg in get_args(annotation) if arg is not type(None))
+    if origin in (dict, list):
+        return True
+    return isinstance(annotation, type) and issubclass(annotation, BaseModel)
