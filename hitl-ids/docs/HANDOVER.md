@@ -81,7 +81,9 @@ plans/hitl-ids-demo-build.md    18-step build plan (S1-S18), v1.0
 **Also merged:** the collaborator's `stage-3/` and `stage-5/` work (their model is INVALIDATED -
 see sec. 9). Their `dashboard/` still runs but displays old 6-class data.
 
-**Start here:** [`iteration-2-report.md`](iteration-2-report.md) — what Iteration 2 built, with the
+**Start here:** [`system-workflow.md`](system-workflow.md) — the whole system end to end, each
+part marked built / next / planned.
+[`iteration-2-report.md`](iteration-2-report.md) — what Iteration 2 built, with the
 fusion diagrams and calculations. [`iteration-report.md`](iteration-report.md) — Iteration 1's
 evidence and direction change. Diagrams regenerate with `scripts/make_diagrams.py`.
 [`plan-changelog.md`](plan-changelog.md) has every decision and its evidence.
@@ -107,6 +109,7 @@ Everything below is measured, verified, and reproducible from the notebooks.
 | Q20 | Disjoint **train (250,655)** + **demo (5,000)** samples, seed `20260911` |
 | Q21 | Signature layer = **trust/explainability**, not coverage |
 | Q22 | Queue order = `corroborated` → `signature_override` → `ml_only` → `none`, then score (2026-09-11) |
+| Q23 | S6 combination **accepted for the demo** at current defaults; tuning deferred to realistic traffic (2026-09-11) |
 
 ### Model
 - 8 classes, macro F1 **0.9882**, weighted F1 0.9997, 82 features
@@ -206,8 +209,8 @@ These were believed, then disproved. Re-proposing them wastes a cycle.
 | ~~2~~ | ~~S2 — data contracts~~ | **DONE 2026-09-11** | 12 tables, 51 tests, 0 skipped. Deviations in changelog v1.5 |
 | ~~3~~ | ~~S5 + S4b — signature engine and tuned rule set~~ | **DONE 2026-09-11** | Engine delegated (DeepSeek), golden-tested 1,000/1,000. Rule set written; held-out figures reproduced. Changelog v1.6 |
 | ~~4~~ | ~~S6 — fusion re-specification~~ | **DONE 2026-09-11** | `packages/detection/fusion/cef.py`; spec in its docstring. Demo: 200 corroborated, 0 override; DB queue order proven. Changelog v1.8 |
-| 5 | **NEXT →** S7 — feedback + guardrails. Inputs from v1.8: invariant I3 is S7's; "Critical" now means score ≥ 80 (Node used ≥ 90) — log the floor-trigger decision | **Claude only** | **Port the collaborator's design** (sec. 8) to Python rather than authoring fresh |
-| 6 | ~~S8 — audit writer~~ **DONE** (delegated, changelog v1.7) · S9 — SQLite repositories + batch runner | Mixed | S9 builds on `db.insert`/`db.get` and `AuditWriter` |
+| 5 | **NEXT →** S7 — feedback + guardrails. Inputs from v1.8: invariant I3 is S7's; "Critical" now means score ≥ 80 (Node used ≥ 90) — log the floor-trigger decision. Inputs from v1.9: floors must never *raise* a score; map `uncertain`; feedback cannot cross evidence bands — see `system-workflow.md` §7 | **Claude only** | **Port the collaborator's design** (sec. 8) to Python rather than authoring fresh |
+| 6 | ~~S8 — audit writer~~ **DONE** (delegated, changelog v1.7) · S9 — SQLite repositories + batch runner | Mixed | S9 builds on `db.insert`/`db.get` and `AuditWriter`. **S3's `FlowSource`/`CsvReplaySource` seam was never built — S9 must add it** (changelog v1.9) |
 
 Full detail per step: [`../../plans/hitl-ids-demo-build.md`](../../plans/hitl-ids-demo-build.md).
 
@@ -219,12 +222,13 @@ agreement **0.67 = moderate / 0.80 = strong**, with graduated adjustments
 (FP -10/-25 · TP +8/+15 · expected activity -15).
 
 **Feedback categories — RESOLVED.** The engine (`stage-5/core/feedback-engine.js:80-112`) is
-authoritative and implements **five**, under different names from the docs:
-`confirm_true_positive +10` · `mark_false_positive −30` · `mark_expected_activity −30` ·
-`needs_investigation 0` (forces review) · `escalate +15` (forces review).
-**`duplicate` needs no delta.** It appears zero times in the engine or dashboard, and URS UC-SA-15
-defines it as a *queue action* (link to original, suppress from active queue), not a score
-adjustment. The docs' "six categories" miscounts by folding a queue action into the scoring set.
+authoritative and implements **five** scoring categories, under different names from the docs:
+`confirm_true_positive +10` (forces review) · `mark_false_positive −30` ·
+`mark_expected_activity −15` · `needs_investigation 0` (forces review) · `escalate +15` (forces review).
+*(Corrected in changelog v1.9 — this line previously said −30 for expected activity.)*
+**`duplicate` needs no delta.** The engine lists it with no score change, alongside `uncertain`
+(no change, forces review — map it in S7); URS UC-SA-15 defines `duplicate` as a *queue action*
+(link to original, suppress from active queue), not a score adjustment. The docs' "six categories" miscounts by folding a queue action into the scoring set.
 
 ---
 

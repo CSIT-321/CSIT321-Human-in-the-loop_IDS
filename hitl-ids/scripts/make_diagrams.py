@@ -30,9 +30,9 @@ EDGE = {"green": "#82b366", "orange": "#d79b00", "red": "#b85450",
 DPI = 160
 
 
-def box(ax, x, y, w, h, text, fc=GREY, ec="#999999", fs=8.5):
+def box(ax, x, y, w, h, text, fc=GREY, ec="#999999", fs=8.5, ls="-"):
     ax.add_patch(FancyBboxPatch((x, y), w, h, boxstyle="round,pad=0.02,rounding_size=0.04",
-                                facecolor=fc, edgecolor=ec, linewidth=1.3))
+                                facecolor=fc, edgecolor=ec, linewidth=1.3, linestyle=ls))
     ax.text(x + w / 2, y + h / 2, text, ha="center", va="center", fontsize=fs, linespacing=1.35)
 
 
@@ -482,9 +482,150 @@ def held_out():
     save(fig, "12_held_out_scoring.png")
 
 
+# --------------------------------------------------------------------------------------------
+# The full workflow (docs/system-workflow.md)
+# --------------------------------------------------------------------------------------------
+
+STATUS_FILL = {"green": GREEN, "orange": ORANGE, "grey": GREY}
+
+
+def end_to_end():
+    fig, ax = canvas(12, 7.4)
+    H = 7.4 / 12 * 10
+    ax.text(5, H - 0.22, "The full workflow - network traffic to the analyst's dashboard, and back",
+            ha="center", fontsize=11, weight="bold")
+    ax.text(5, H - 0.48, "green = built and tested     orange = next or missing     grey = planned"
+            "     dashed = post-demo", ha="center", fontsize=7.5, style="italic", color="#555555")
+    xs, w, h = [1.3, 3.45, 5.6, 7.75], 1.95, 0.9
+    for y, name in [(4.35, "1  REAL WORLD\npost-demo (S17)"), (3.0, "2  LOCAL TODAY\ndemo data"),
+                    (1.65, "3  DETECTION\nCORE"), (0.3, "4  STORE, SHOW,\nFEEDBACK")]:
+        ax.add_patch(FancyBboxPatch((0.05, y - 0.08), 9.9, 1.06,
+                                    boxstyle="round,pad=0.01,rounding_size=0.03",
+                                    facecolor="#fafafa", edgecolor="#dddddd", linewidth=1))
+        ax.text(0.62, y + 0.45, name, ha="center", va="center", fontsize=6.8, weight="bold",
+                color="#555555")
+
+    def lane(y, boxes, rightward=True):
+        for i, (text, status, dashed) in enumerate(boxes):
+            box(ax, xs[i], y, w, h, text, STATUS_FILL[status], EDGE[status], fs=6.3,
+                ls="--" if dashed else "-")
+        for i in range(3):
+            if rightward:
+                arrow(ax, xs[i] + w, y + h / 2, xs[i + 1], y + h / 2)
+            else:
+                arrow(ax, xs[i + 1], y + h / 2, xs[i] + w, y + h / 2)
+
+    lane(4.35, [("Network traffic\nhosts, servers, users", "grey", True),
+                ("Packet capture\nSPAN / TAP port, or PCAP", "grey", True),
+                ("Flow exporter\nCICFlowMeter fork (Engelen)\nthe tool that made the dataset", "grey", True),
+                ("ExporterSource\na second FlowSource\n(D7)", "grey", True)])
+    lane(3.0, [("Corrected CSE-CIC-IDS2018\n10.4 GB zip, authors' server\n63.2M labelled flows", "green", False),
+               ("scan + sample\nstreamed, seed 20260911\n5,000 demo / 250,655 train", "green", False),
+               ("FlowSource: CsvReplaySource\nreplays rows in time order\nS3 seam - NOT BUILT", "orange", False),
+               ("Flow records\none row per flow, CIC features\nlabels set aside", "green", False)])
+    lane(1.65, [("Alert\ndetection_score  (fixed)\ncombined_score  (moves)", "green", False),
+                ("Fusion  (S6)\nevidence class + score\n+ review flag + explanation", "green", False),
+                ("Signature engine (2 rules)\n+ ML model (8 classes, SHAP)\nrun side by side", "green", False),
+                ("Two views of each flow\n16 fields for the rules\n82 features for the model", "green", False)],
+         rightward=False)
+    lane(0.3, [("SQLite + batch runner (S9)\nalerts, flow_data,\ndetection_runs, audit_log", "grey", False),
+               ("API (S10) + dashboard\n(S11 - S14): queue by class,\nthen by combined_score", "grey", False),
+               ("Analyst decision\none of 5 feedback\ncategories", "grey", False),
+               ("Guardrails (S7) - NEXT\ncap, floors, I3\naudit trail (S8) built", "orange", False)])
+    arrow(ax, xs[3] + w / 2, 4.35, xs[3] + w / 2, 3.9)
+    ax.text(xs[3] + w / 2 + 0.06, 4.12, "plugs in later", fontsize=6, style="italic", color="#555555")
+    arrow(ax, xs[3] + w / 2, 3.0, xs[3] + w / 2, 2.55)
+    arrow(ax, xs[0] + w / 2, 1.65, xs[0] + w / 2, 1.2)
+    ax.plot([xs[3] + w / 2, xs[3] + w / 2, xs[0] + w / 2], [0.3, 0.1, 0.1], color="#b85450",
+            linewidth=1.4)
+    arrow(ax, xs[0] + w / 2, 0.1, xs[0] + w / 2, 0.3, color="#b85450")
+    ax.text(5.0, 0.1, "new combined_score written back  -  detection_score never changes",
+            ha="center", va="center", fontsize=6.6, style="italic", color="#b85450",
+            bbox={"boxstyle": "round,pad=0.15", "facecolor": "white", "edgecolor": "none"})
+    save(fig, "13_workflow_end_to_end.png")
+
+
+def feedback_loop():
+    fig, ax = canvas(11, 6.0)
+    H = 6.0 / 11 * 10
+    ax.text(5, H - 0.22, "S7 (next) - how analyst feedback becomes a new score, inside the "
+            "guardrails", ha="center", fontsize=10.5, weight="bold")
+    box(ax, 0.2, 3.7, 3.0, 1.3, "Analyst feedback on one alert  ->  requested change\n"
+        "confirm_true_positive   +10   (forces review)\nmark_false_positive   -30\n"
+        "mark_expected_activity   -15\nneeds_investigation   0   (forces review)\n"
+        "escalate   +15   (forces review)", ORANGE, EDGE["orange"], fs=6.7)
+    box(ax, 3.5, 3.9, 2.3, 0.9, "duplicate is a queue action,\nnot a score change:\n"
+        "alerts.is_duplicate_of", GREY, EDGE["grey"], fs=6.6)
+    box(ax, 6.1, 3.7, 3.7, 1.3, "Later - similar-alert learning (adaptation-config)\n"
+        ">= 3 similar events with >= 67% agreement\nfalse positive -10 / -25     true positive +8 / +15"
+        "\nexpected activity -15 (strong agreement only)\nthe same guardrails apply",
+        GREY, EDGE["grey"], fs=6.6, ls="--")
+    chain = [(0.2, "1  Evidence check\nsignature_override: score frozen,\nrouted to the administrator (I3)"),
+             (2.65, "2  Cap the change\nat most -30 or +20\nper feedback event"),
+             (5.1, "3  Floors\nCritical alert held at >= 70\nInfiltration held at >= 75"),
+             (7.55, "4  Outcome\napplied / capped / rejected\n+ reason + review flag")]
+    for x, text in chain:
+        box(ax, x, 2.1, 2.25, 1.0, text, ORANGE, EDGE["orange"], fs=6.8)
+    arrow(ax, 1.7, 3.7, 1.32, 3.1)
+    for (x, _), (next_x, _) in zip(chain, chain[1:]):
+        arrow(ax, x + 2.25, 2.6, next_x, 2.6)
+    for x, text, status in [
+            (0.2, "feedback_events  (S2)\nappend-only row: original,\nrequested and actual change", "green"),
+            (2.65, "alerts.combined_score  (S2)\n= the score after the guardrails\ndetection_score never changes", "green"),
+            (5.1, "audit_log  (S8)\nFEEDBACK + GUARDRAIL_* entries\nactor, time, rationale", "green"),
+            (7.55, "dashboard  (S10 - S12)\ndetection vs current score,\nguardrail badge, queue re-sorted", "grey")]:
+        box(ax, x, 0.45, 2.25, 1.0, text, STATUS_FILL[status], EDGE[status], fs=6.6)
+        arrow(ax, 8.675, 2.1, x + 1.125, 1.45)
+    ax.text(5, 0.15, "green = the tables and the writer already exist (S2, S8)     orange = S7 builds "
+            "the logic     grey = planned", ha="center", fontsize=7, style="italic", color="#555555")
+    save(fig, "14_feedback_loop.png")
+
+
+def dashboard_columns():
+    # Real demo scores and queue positions. The feedback is ILLUSTRATIVE - S7 is not built yet -
+    # and follows the adopted constants: change capped to -30..+20, Critical alerts held at 70.
+    rows = [
+        ["3", "AL-00060", "corroborated", "100.00", "100.00", "", "", "yes", ""],
+        ["201", "AL-00004", "ml_only", "100.00", "100.00", "", "", "yes", ""],
+        ["989 -> 995", "AL-00478", "ml_only", "99.89", "70.00", "-29.89",
+         "critical floor (asked -30)", "yes", "false positive"],
+        ["995 -> 996", "AL-02717", "ml_only", "88.48", "70.00", "-18.48",
+         "critical floor (asked -30)", "yes", "false positive"],
+        ["998 -> 997", "AL-03086", "none", "36.94", "46.94", "+10.00", "applied in full", "yes",
+         "confirmed attack"],
+        ["997 -> 998", "AL-00900", "none", "42.77", "42.77", "", "", "no", ""],
+    ]
+    columns = ["queue #", "alert", "evidence class", "detection score\n(fixed)",
+               "current score\n(after feedback)", "change", "guardrail", "review", "last feedback"]
+    fig, ax = plt.subplots(figsize=(12, 3.5))
+    ax.axis("off")
+    table = ax.table(cellText=rows, colLabels=columns, loc="center", cellLoc="center",
+                     colWidths=[0.09, 0.08, 0.11, 0.12, 0.13, 0.07, 0.155, 0.06, 0.115])
+    table.auto_set_font_size(False)
+    table.set_fontsize(8)
+    table.scale(1, 1.9)
+    for (row, col), cell in table.get_celld().items():
+        cell.set_edgecolor("#bbbbbb")
+        if row == 0:
+            cell.set_facecolor("#dae8fc")
+            cell.set_text_props(weight="bold")
+        elif col == 4:
+            cell.set_facecolor("#d5e8d4")
+        elif rows[row - 1][5] and col in (5, 6, 8):
+            cell.set_facecolor("#ffe6cc")
+    ax.set_title("The dashboard after feedback - two score columns (illustrative feedback on real "
+                 "demo alerts)", fontsize=10.5, weight="bold")
+    fig.text(0.5, 0.04, "Scores and queue positions are real. The three feedback events are "
+             "hypothetical and follow the adopted guardrail constants; S7 builds the real service.",
+             ha="center", fontsize=7.8, style="italic", color="#555555")
+    save(fig, "15_dashboard_columns.png")
+
+
 if __name__ == "__main__":
     # Iteration 1
     pipeline(); classes(); versions(); reversal(); triage(); roadmap()
     # Iteration 2 - needs data/processed/fusion_demo_summary.json (scripts/fusion_demo_summary.py)
     architecture(); fusion_decision(); fusion_scoring(); queue_order(); demo_fusion(); held_out()
+    # the full workflow (docs/system-workflow.md)
+    end_to_end(); feedback_loop(); dashboard_columns()
     print("\nall diagrams written to", IMG)

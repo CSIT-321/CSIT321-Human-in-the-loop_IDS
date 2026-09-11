@@ -423,7 +423,7 @@ The v1.5 timestamp fix landed before the worker started, and its tests exercise 
 
 ---
 
-## v1.8 — S6 fusion re-specified and implemented (2026-09-11) ← **current**
+## v1.8 — S6 fusion re-specified and implemented (2026-09-11)
 
 `packages/detection/fusion/cef.py` — Complementary Evidence Fusion, re-specified for the v1.3
 trust/triage model. **Not delegated**, as the plan requires. The full specification is the module
@@ -450,6 +450,35 @@ docstring.
   alert for alert.
 
 22 fusion tests pass, 1 skipped (I3 → S7). Full suite: 187 passed, 1 skipped.
+
+---
+
+## v1.9 — Full workflow documented; combination accepted for the demo; three corrections (2026-09-11) ← **current**
+
+`docs/system-workflow.md` with diagrams 13–15: the path from network traffic to the dashboard and
+back, each part marked built / next / planned.
+
+| | Change | Evidence |
+|---|---|---|
+| DEC | **Q23 (user, 2026-09-11): the signature + ML combination (S6) is accepted for the demo at its current defaults; tuning is deferred until realistic traffic** | On the demo, flagged flows score 81.3–100 and unflagged flows 0–42.77, with **no alert in between** — any critical threshold from 42.78 to 81.3 gives an identical queue, review set and severities. The parameters live in `FusionConfig` and are snapshotted into every detection run, so a later retune is configuration, not code |
+| FIX | `mark_expected_activity` is **−15** in `feedback-engine.js`, not −30 as HANDOVER §7 stated | Read from the engine source |
+| FIX | The engine also defines `duplicate` and `uncertain`, both with no score change | HANDOVER said `duplicate` appears nowhere in the engine. The decision is unchanged — `duplicate` is a queue action — but `uncertain` must be mapped in S7 |
+| GAP | S3's `FlowSource` / `CsvReplaySource` seam was never built | Plan Phase 1 was marked done on the dataset, samples and model. The S9 runner needs the seam, so it is built with S9 |
+
+### Inputs recorded for S7
+
+1. Floors must hold an alert at the floor only if it started above it — the legacy engine lifts a
+   sub-75 Infiltration alert up to 75 on negative feedback.
+2. "Critical" is now score ≥ 80 (legacy ≥ 90), widening the Critical floor's coverage — log it.
+3. Map `uncertain` (behaves as `needs_investigation`) or add it to the contract.
+4. Feedback moves a score within its evidence band, never across bands, so a confirmed missed
+   attack stays in the bottom band. The dashboard needs a review view — possibly a decision for the
+   project lead, as it shapes the demo story.
+5. A false positive among Critical alerts cannot fall below 70; clearing it is a status change,
+   not a score change.
+
+Illustrated on real demo alerts in `system-workflow.md` §5: `AL-00478` (99.89 → held at 70),
+`AL-02717` (88.48 → held at 70), `AL-03086` (36.94 → 46.94).
 
 ---
 

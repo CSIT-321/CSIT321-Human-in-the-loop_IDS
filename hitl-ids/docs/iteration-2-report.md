@@ -348,6 +348,7 @@ where each comes from and the order to rebuild them.
 
 ## Related documents
 
+- [`system-workflow.md`](system-workflow.md) — the whole system end to end, from traffic capture to the dashboard's feedback loop
 - [`iteration-report.md`](iteration-report.md) — Iteration 1: the corrected dataset and the direction change
 - [`plan-changelog.md`](plan-changelog.md) — every decision with its evidence (v1.5 – v1.8 cover this iteration)
 - [`HANDOVER.md`](HANDOVER.md) — the current state for the next session
