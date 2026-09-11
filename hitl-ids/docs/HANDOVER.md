@@ -3,9 +3,9 @@
 **Purpose.** Carry the full state of this project into a fresh session with zero loss of context
 and minimal token cost. Everything a new session needs is here or one link away.
 
-**Last updated:** 2026-09-11 (rev 5) · **Branch:** `feat/s6-fusion` (local) ·
-`feat/s2-contracts` **pushed to origin** as a view-only progress branch · **S2, S5 + S4b, S8 DONE** —
-changelog v1.7
+**Last updated:** 2026-09-11 (rev 6) · **Branch:** `feat/s6-fusion` (local) ·
+`feat/s2-contracts` **pushed to origin** as a view-only progress branch · **S2, S5 + S4b, S8, S6
+DONE** — changelog v1.8
 **Iteration 1 (Evidence & Direction) complete** — = plan Phase 1 + step S4b · collaborator's
 `origin/main` merged · **NFR-01 explainability satisfied**
 
@@ -59,7 +59,7 @@ Repo: `github.com/CSIT-321/CSIT321-Human-in-the-loop_IDS` · working tree `hitl-
 > S4b. It is **not** "Phase 1". Never use a bare phase number for it.
 >
 > **Actual status:** Phase 0 **PARTIAL** (S1 scaffold incomplete — Python slice only; **S2 DONE**, 51 tests) ·
-> Phase 1 **DONE** · Phase 2 **S5, S4b, S8 done** (S6, S7 remain) · Phases 3–6 **not started**.
+> Phase 1 **DONE** · Phase 2 **S5, S4b, S8, S6 done** (S7 remains) · Phases 3–6 **not started**.
 
 ```
 hitl-ids/
@@ -203,8 +203,8 @@ These were believed, then disproved. Re-proposing them wastes a cycle.
 | ~~1~~ | ~~Held-out re-test of rule thresholds~~ | **DONE 2026-09-11** | precision **0.9999**, recall **0.1993** on 250,655 unseen rows; 2 FPs in 30,025 hits. Not overfit. |
 | ~~2~~ | ~~S2 — data contracts~~ | **DONE 2026-09-11** | 12 tables, 51 tests, 0 skipped. Deviations in changelog v1.5 |
 | ~~3~~ | ~~S5 + S4b — signature engine and tuned rule set~~ | **DONE 2026-09-11** | Engine delegated (DeepSeek), golden-tested 1,000/1,000. Rule set written; held-out figures reproduced. Changelog v1.6 |
-| 4 | **NEXT →** S6 — fusion re-specification. Input from v1.6: a signature whose class disagrees with the model's is **not** corroboration | **Claude only** | **The notebook-03 CEF spec is STALE** — it was built around `signature_override`, which now has zero instances. Must be rewritten for the v1.3 trust/triage model before implementing |
-| 5 | S7 — feedback + guardrails | **Claude only** | **Port the collaborator's design** (sec. 8) to Python rather than authoring fresh |
+| ~~4~~ | ~~S6 — fusion re-specification~~ | **DONE 2026-09-11** | `packages/detection/fusion/cef.py`; spec in its docstring. Demo: 200 corroborated, 0 override; DB queue order proven. Changelog v1.8 |
+| 5 | **NEXT →** S7 — feedback + guardrails. Inputs from v1.8: invariant I3 is S7's; "Critical" now means score ≥ 80 (Node used ≥ 90) — log the floor-trigger decision | **Claude only** | **Port the collaborator's design** (sec. 8) to Python rather than authoring fresh |
 | 6 | ~~S8 — audit writer~~ **DONE** (delegated, changelog v1.7) · S9 — SQLite repositories + batch runner | Mixed | S9 builds on `db.insert`/`db.get` and `AuditWriter` |
 
 Full detail per step: [`../../plans/hitl-ids-demo-build.md`](../../plans/hitl-ids-demo-build.md).
@@ -264,7 +264,7 @@ them before the next merge.
 
 1. ~~Push the branch?~~ **User decision (2026-09-11):** `feat/s2-contracts` pushed to origin as a
    view-only progress branch, with the demo sample. Work continues locally; push again only when asked.
-2. ~~Held-out re-test~~ **Done, reported.** ~~S2~~ **Done.** ~~S5 + S4b~~ **Done.** ~~S8~~ **Done.** Next is S6 (Claude only).
+2. ~~Held-out re-test~~ **Done, reported.** ~~S2~~ **Done.** ~~S5 + S4b~~ **Done.** ~~S8~~ **Done.** ~~S6~~ **Done.** Next is S7 (Claude only — the plan's highest-risk step).
 3. Review [`finding-infiltration-mislabelling.md`](finding-infiltration-mislabelling.md) — a
    report-ready write-up of the Infiltration finding, drafted and awaiting your edit.
 4. **Agree a file-ownership boundary with the collaborator** before the next merge (see sec. 8).

@@ -411,7 +411,7 @@ suite — the handover's rule, and here the only option.
 
 ---
 
-## v1.7 — S8 audit writer landed; S6 queue order decided (2026-09-11) ← **current**
+## v1.7 — S8 audit writer landed; S6 queue order decided (2026-09-11)
 
 | | Change | Evidence |
 |---|---|---|
@@ -420,6 +420,36 @@ suite — the handover's rule, and here the only option.
 | CHG | The plan's S8 event list names `RULE_CHANGE`; the contract's `RULE_CREATE` / `RULE_UPDATE` are used instead | The contract is canonical |
 
 The v1.5 timestamp fix landed before the worker started, and its tests exercise exactly that edge.
+
+---
+
+## v1.8 — S6 fusion re-specified and implemented (2026-09-11) ← **current**
+
+`packages/detection/fusion/cef.py` — Complementary Evidence Fusion, re-specified for the v1.3
+trust/triage model. **Not delegated**, as the plan requires. The full specification is the module
+docstring.
+
+| | Change | Rationale |
+|---|---|---|
+| KEEP | Notebook 03's four evidence classes, its scores, `AGREEMENT_BONUS` 5, the severity scores, invariants I1, I2, I4 and I5 | They survive the v1.3 reframing; only the justification changed, from coverage to trust |
+| CHG | `corroborated` now requires the model to agree on the **class** | v1.6: a rule the model contradicts is not corroboration. That case is `signature_override` — always reviewed, and ranked above `ml_only` (I5) |
+| CHG | The model's malicious probability is `1 − P(Benign)` | The notebook used the predicted class's confidence, which understates it when probability is split between attack classes (DoS 0.50 + DDoS 0.45 is 0.95 malicious, not 0.50). The old data had no class probabilities |
+| DEC | One critical threshold, `critical_alert_threshold` (80), sets severity "Critical", `is_critical` and the review flag; High ≥ 70 and Medium ≥ 40 come from `fusion-engine.js`; flows no detector flagged are "Informational" | The three can no longer disagree. **Input for S7:** Node triggered the critical floor at ≥ 90; "Critical" now means ≥ 80, which widens the floor's coverage — S7 must log that (plan v0.3 FIX c) |
+| DEC | An unavailable model prediction forces review | Such a flow cannot be assessed. All 5,000 demo predictions are available, so this is a defensive branch |
+| DEL | The plan's S6 check "the 8 known complementary detections occupy positions 1–8" | Those detections do not exist on corrected data (v1.2). Replaced by the end-to-end demo test below |
+| DEF | I3 — feedback cannot decay `signature_override` | A feedback guardrail, so S7 enforces it. Kept in `test_fusion.py` as an explicit skip naming S7, not deleted |
+| ADD | `FusionConfig.snapshot()` is what `detection_runs.fusion_weights` stores; `from_snapshot` refuses any other scheme | A run can be replayed, and a weighted-sum configuration cannot be loaded by accident |
+
+### End to end on the demo sample (5,000 flows, the real rule engine, the real model output)
+
+- `corroborated` **200**, every one a real attack — v1.3's "caught by both: 200".
+- `signature_override` **0** — no rule is contradicted on the demo sample. The 23 FTP-rule port
+  scans (v1.6) exist only in the training sample.
+- `ml_only` = every other flow the model flags.
+- The queue the database serves (`ORDER BY db.QUEUE_ORDER_BY`) equals the Python `queue_key` order,
+  alert for alert.
+
+22 fusion tests pass, 1 skipped (I3 → S7). Full suite: 187 passed, 1 skipped.
 
 ---
 
