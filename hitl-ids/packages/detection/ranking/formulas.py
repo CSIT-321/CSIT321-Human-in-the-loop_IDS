@@ -16,6 +16,10 @@ inside the guardrails. That is how feedback reorders future alerts (the confirme
 
 Queue classes, top to bottom (decision Q24/Q25): Tier 2 candidates, corroborated,
 signature_override, ml_only, none. ``evidence_class`` never changes; movement is a separate offset.
+
+The agreement gate (``effective``, run 3): a family's learning reaches the queue only once enough of
+its verdicts agree - the collaborator's rule, adopted after run 2 showed a single verdict moving a
+whole family (changelog v1.12).
 """
 
 from __future__ import annotations
@@ -33,6 +37,10 @@ QUEUE_CLASSES = ("tier2_candidate", "corroborated", "signature_override", "ml_on
 EVIDENCE_TO_CLASS = {"corroborated": 1, "signature_override": 2, "ml_only": 3, "none": 4}
 TIER2_SEVERITY = 7.0   # E2/E3: High or above on the CVSS scale
 TIER2_SCORE = 90.0     # E3
+# The agreement gate, ported from the collaborator's adopted design: "aggregation" in
+# stage-5/config/adaptation-config.json and checkAdaptationEligibility in stage-5/core/feedback-engine.js.
+GATE_MIN_FEEDBACK = 3
+GATE_MIN_AGREEMENT = 0.67
 
 
 @dataclass(frozen=True)
@@ -57,6 +65,8 @@ class FamilyState:
     class_offset: int = 0
     dismissals_since_move: int = 0
     class_changes: int = 0
+    confirmations: int = 0
+    dismissals: int = 0
 
 
 def verdict_delta(params: RankingParams, category: str, score: float, weight: float,
@@ -88,9 +98,11 @@ def apply_verdict(state: FamilyState, params: RankingParams, category: str, scor
     state.verdicts += 1
     before = state.class_offset
     if category in CONFIRMING:
+        state.confirmations += 1
         state.dismissals_since_move = 0
         state.class_offset = -len(QUEUE_CLASSES) if params.movement == "M2" else before - 1
     else:
+        state.dismissals += 1
         state.dismissals_since_move += 1
         if state.dismissals_since_move >= params.demotion_shield:
             state.class_offset = before + 1
@@ -99,6 +111,41 @@ def apply_verdict(state: FamilyState, params: RankingParams, category: str, scor
     if state.class_offset != before:
         state.class_changes += 1
     return state
+
+
+def agreement(state: FamilyState) -> tuple[int, float]:
+    """The dominant verdict direction (+1 confirming, -1 dismissing, 0 for a tie or no verdicts)
+    and its share of the family's learning verdicts, rounded to 4 places as the collaborator's
+    chooseDominantFeedback does - so 2 of 3 is 0.6667, which fails a 0.67 gate there and here."""
+    total = state.confirmations + state.dismissals
+    if total == 0:
+        return 0, 0.0
+    if state.confirmations == state.dismissals:
+        return 0, 0.5
+    direction = 1 if state.confirmations > state.dismissals else -1
+    return direction, round(max(state.confirmations, state.dismissals) / total, 4)
+
+
+def effective(state: FamilyState, gated: bool) -> tuple[float, int]:
+    """What a family's learning contributes to the queue: (score adjustment, class offset).
+
+    Ungated, everything learned applies from the first verdict. Gated - the collaborator's
+    checkAdaptationEligibility - nothing applies until the family has at least GATE_MIN_FEEDBACK
+    learning verdicts, no tie, and a dominant direction holding at least GATE_MIN_AGREEMENT of
+    them; then only learning that points the dominant way applies, as their adjustment always
+    follows the dominant feedback. The collaborator counts by category (a false positive and
+    expected activity are different types); this counts by direction, which is the same thing for
+    the experiment's analyst, whose verdicts are only confirm or false positive. S7b must count by
+    category."""
+    if not gated:
+        return state.adjustment, state.class_offset
+    direction, share = agreement(state)
+    if (state.confirmations + state.dismissals < GATE_MIN_FEEDBACK or direction == 0
+            or share < GATE_MIN_AGREEMENT):
+        return 0.0, 0
+    adjustment = state.adjustment if state.adjustment * direction > 0 else 0.0
+    offset = state.class_offset if -state.class_offset * direction > 0 else 0  # promotion < 0
+    return adjustment, offset
 
 
 def tier2_candidate(evidence_class: str, is_critical: bool, score: float, severity: float) -> bool:

@@ -16,6 +16,7 @@ from packages.detection.ranking.experiment import (
     Arm,
     Flow,
     calibrate,
+    family_key,
     final_score,
     parse_timestamps,
     select,
@@ -24,7 +25,9 @@ from packages.detection.ranking.experiment import (
 from packages.detection.ranking.formulas import (
     FamilyState,
     RankingParams,
+    agreement,
     apply_verdict,
+    effective,
     queue_class,
     verdict_delta,
 )
@@ -171,19 +174,67 @@ def test_experiment_scorer_matches_apply_guardrails():
         assert final_score(f, adjustment, guardrails=True) == pytest.approx(expected, abs=0.011)
 
 
-def test_selection_prefers_robustness_to_analyst_error_over_stability():
-    def row(formula, movement, error_rate, demoted, tier2_precision=1.0, changes=10):
-        return {"formula": formula, "movement": movement, "guardrails": True,
-                "error_rate": error_rate, "floor_violations": 0, "attacks_demoted": demoted,
-                "tier2_precision": tier2_precision, "tier2_load": 243,
+def test_selection_requires_severity_scaling_then_robustness():
+    def row(formula, movement, key, error_rate, demoted, tier2_precision=1.0, changes=10):
+        return {"formula": formula, "movement": movement, "guardrails": True, "gated": True,
+                "family_key": key, "error_rate": error_rate, "floor_violations": 0,
+                "attacks_demoted": demoted, "tier2_precision": tier2_precision, "tier2_load": 243,
                 "mean_attack_position": 0.08, "precision_at_100": 1.0, "class_changes": changes}
-    aggregates = [row(f, mv, e, demoted=59 if f == "C0" and e else 0,
+    aggregates = [row(f, mv, key, e, demoted=59 if f == "C2" and e else 0,
                       tier2_precision=0.74 if mv == "M2" and e else 1.0,
                       changes=5 if mv == "M2" else 25)
                   for f in ("C0", "C1", "C2", "C3") for mv in ("M1", "M2")
-                  for e in (0.0, 0.05, 0.15)]
-    best = select(aggregates)[0]
-    assert (best["formula"], best["movement"]) == ("C1", "M1")
+                  for key in ("coarse", "fine") for e in (0.0, 0.05, 0.15)]
+    ranked = select(aggregates)
+    best = ranked[0]
+    assert (best["formula"], best["movement"], best["family_key"]) == ("C1", "M1", "coarse")
+    assert not any(r["meets_q27"] for r in ranked if r["formula"] == "C0")
+    assert ranked[-1]["formula"] == "C0"  # fixed steps never win, however good their numbers
+
+
+# -- the agreement gate (the collaborator's aggregation rule) ---------------------------------
+
+
+def test_gate_needs_three_agreeing_verdicts():
+    state, params = FamilyState(), RankingParams(formula="C1", movement="M1")
+    for _ in range(2):
+        apply_verdict(state, params, "mark_false_positive", 99.89, 0.8)
+    assert effective(state, gated=False) == (state.adjustment, state.class_offset)
+    assert effective(state, gated=True) == (0.0, 0)  # two verdicts: closed
+    apply_verdict(state, params, "mark_false_positive", 99.89, 0.8)
+    assert effective(state, gated=True) == (state.adjustment, state.class_offset)  # three agree
+
+
+def test_gate_uses_the_collaborators_ratio_and_refuses_ties():
+    two_of_three = FamilyState(adjustment=10.0, class_offset=-2, confirmations=2, dismissals=1)
+    assert agreement(two_of_three) == (1, 0.6667)
+    assert effective(two_of_three, gated=True) == (0.0, 0)  # 0.6667 < 0.67, as in feedback-engine.js
+    three_of_four = FamilyState(adjustment=10.0, class_offset=-2, confirmations=3, dismissals=1)
+    assert effective(three_of_four, gated=True) == (10.0, -2)
+    tie = FamilyState(adjustment=5.0, class_offset=-1, confirmations=2, dismissals=2)
+    assert effective(tie, gated=True) == (0.0, 0)
+
+
+def test_gate_applies_only_learning_that_points_the_dominant_way():
+    # run 2's M2 failure: thirteen correct dismissals, then one wrong confirmation of a benign family
+    state, params = FamilyState(), RankingParams(formula="C1", movement="M2")
+    for _ in range(13):
+        apply_verdict(state, params, "mark_false_positive", 5.0, 0.0)
+    apply_verdict(state, params, "confirm_true_positive", 5.0, 0.0)
+    assert state.class_offset < 0  # ungated, M2 sends the family to the top
+    adjustment, offset = effective(state, gated=True)
+    assert offset == 0 and adjustment <= 0  # gated, the promotion against the majority is ignored
+
+
+def test_fine_family_key_always_adds_the_destination_ip():
+    assert family_key("Web Attack", 80, "TCP", "-", "10.0.0.5", "ml_only") == (
+        "Web Attack", 80, "TCP", "-")
+    assert family_key("Benign", 53, "UDP", "-", "10.0.0.2", "none") == (
+        "Benign", 53, "UDP", "-", "10.0.0.2")
+    assert family_key("Web Attack", 80, "TCP", "-", "10.0.0.5", "ml_only", "fine") == (
+        "Web Attack", 80, "TCP", "-", "10.0.0.5")
+    with pytest.raises(ValueError):
+        family_key("DoS", 80, "TCP", "-", "10.0.0.5", "ml_only", "exact")
 
 
 def test_timestamps_parse_as_iso_never_day_first():
@@ -217,3 +268,8 @@ def test_simulation_is_reproducible_for_a_seed():
         learned = [e for e in log if e["learned"] and e["family"] == family]
         assert state.verdicts == len(learned)
         assert state.adjustment == learned[-1]["adjustment_after"]
+
+    gated = Arm("C2", "M1", True, 0.15, 7, gated=True)
+    once = simulate(flows[:60], flows[60:], gated, rounds=4, batch=5, qa_sample=2)
+    assert simulate(flows[:60], flows[60:], gated, rounds=4, batch=5, qa_sample=2) == once
+    assert once["floor_violations"] == 0 and once["gated"] is True

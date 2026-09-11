@@ -39,22 +39,29 @@ Design: `docs/ranking-and-escalation-design.md` §6. Code: `packages/detection/r
 
 1. **Data.** All 5,000 demo flows, fused by the production engine (S5 rules + S6 fusion), ordered by
    timestamp. First half = calibration (the past); second half = future (never shown to the analyst).
-2. **Families.** Predicted class + destination port + protocol + matched rule; unflagged flows add
-   the destination IP. A verdict updates its family; future members inherit the family's state.
+2. **Families.** *Coarse*: predicted class + destination port + protocol + matched rule; unflagged
+   flows add the destination IP. *Fine*: every flow adds the destination IP. A verdict updates its
+   family; future members inherit the family's state.
 3. **Simulated Tier 1 analyst.** {rounds} rounds; each round reviews the top {batch} unreviewed
    calibration alerts plus {qa_sample} randomly sampled unflagged ones (QA sampling). Verdict =
    ground truth, flipped with probability 0 %, 5 % or 15 % (analyst error).
-4. **Arms.** Formulas C0-C3 x movement M1/M2 x guardrails on/off x error rate x {n_seeds} seeds.
+4. **Arms.** Formulas C0-C3 x movement M1/M2 x guardrails on/off x agreement gate on/off x family
+   key coarse/fine x error rate x {n_seeds} seeds.
    Guardrails off removes the caps, floors, I3 and tier-loss protection; the 0-100 range remains.
+   The gate (the collaborator's aggregation rule) applies a family's learning only once it has at
+   least {min_feedback} learning verdicts, no tie, and a dominant direction holding at least
+   {min_agreement} of them - and then only the learning that points that way.
 5. **Metrics, future half only**: precision in the top 50/100/200; mean attack position (0-1, lower
    is better); last attack position; benign alerts in the top 100; Critical floor violations;
    true attacks demoted; Tier 2 load and precision; class changes during calibration.
-6. **Selection ({selection_rule}).** Among guarded arms: safety first (no floor violation at any
-   error rate; no attack demoted at 0 % error); then fewest true attacks demoted under analyst error
-   (5 % + 15 %); then highest Tier 2 precision at 5 %; then lowest mean attack position at 5 %; then
-   fewest class changes; then the simpler formula and movement.
-   *sel-1* (run 20260911T111249Z) ranked on precision in the top 100 first; the control already
-   scores 1.0 there, so it could not discriminate. sel-2 was written after seeing that run.
+6. **Selection ({selection_rule}), fixed in code before the run.** Candidates: guarded, gated arms.
+   Ranked by: the step depends on the attack type's severity (Q27 - C0 does not); safety (no floor
+   violation at any error rate, no attack demoted at 0 % error); fewest true attacks demoted under
+   analyst error (5 % + 15 %); highest Tier 2 precision at 5 %; lowest mean attack position at 5 %;
+   fewest class changes; then the simpler formula, movement and family key.
+   History: *sel-1* (run 20260911T111249Z) could not discriminate - the control already scores 1.0
+   in the top 100. *sel-2* (run 20260911T111625Z) was written after run 1, and its deciding metric
+   traced to one family collision (changelog v1.12).
 """
 
 
@@ -84,7 +91,9 @@ def main() -> int:
         + "\n", encoding="utf-8")
     (folder / "METHOD.md").write_text(METHOD.format(
         rounds=config["rounds"], batch=config["batch"], qa_sample=config["qa_sample"],
-        n_seeds=len(config["seeds"]), selection_rule=config["selection_rule"]), encoding="utf-8")
+        n_seeds=len(config["seeds"]), selection_rule=config["selection_rule"],
+        min_feedback=config["gate"]["min_feedback"], min_agreement=config["gate"]["min_agreement"]),
+        encoding="utf-8")
     winner = result["selection"][0]
     with open(OUT / "history.jsonl", "a", encoding="utf-8") as history:
         history.write(json.dumps({"run_id": run_id, "commit": config["commit"],
@@ -95,7 +104,8 @@ def main() -> int:
     print(f"run {run_id} ({config['selection_rule']}): control mean attack position "
           f"{control['mean_attack_position']}, Tier 2 load {control['tier2_load']}")
     for row in result["selection"]:
-        print(f"  {row['formula']}+{row['movement']}  safe={row['safe']}  "
+        print(f"  {row['formula']}+{row['movement']} {row['family_key']:<6} "
+              f"q27={row['meets_q27']}  safe={row['safe']}  "
               f"demoted={row['attacks_demoted_under_error']}  "
               f"tier2_precision={row['tier2_precision']}  tier2_load={row['tier2_load']}  "
               f"mean_pos={row['mean_attack_position']}  class_changes={row['class_changes']}")
