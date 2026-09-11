@@ -18,10 +18,21 @@ chosen by experiment (Q29, Q30) · collaborator's `origin/main` merged ·
 > Read `hitl-ids/docs/HANDOVER.md` in this repo, then confirm you have the state loaded by telling
 > me (a) the current phase and next step, (b) the two findings that were reversed and why, and
 > (c) what I have told you never to delegate. Do not re-derive any settled decision. Then begin
-> the next step.
+> the next step, which §7 names.
 
 The confirmation is not ceremony — if a new session cannot answer those three, it has not loaded
 the state and will re-litigate settled ground.
+
+**The next step is S15**, the three-arm evaluation harness (§7, row 7). Before building anything,
+confirm the ground you are standing on:
+
+```
+python -m pytest                      # expect 279 passed, 0 skipped
+python scripts/run_detection.py       # rebuilds data/demo.db: 5,000 flows -> 5,000 alerts, ~21 s
+```
+
+Use `C:/ProgramData/miniconda3/python.exe` for both — see §6 on the two interpreters. The database
+is gitignored, so a fresh checkout has to rebuild it; everything else S15 needs is committed.
 
 ---
 
@@ -68,24 +79,28 @@ Repo: `github.com/CSIT-321/CSIT321-Human-in-the-loop_IDS` · working tree `hitl-
 hitl-ids/
   data/raw/       CSECICIDS2018_improved.zip   10.4 GB, GITIGNORED, must be re-downloaded
   data/processed/ label_scan · demo_sample(5,000) · train_sample(250,655) · manifests
+  data/demo.db    the populated demo database, 42 MB, GITIGNORED - rebuild:
+                  python scripts/run_detection.py   (5,000 flows -> 5,000 alerts, ~21 s)
   models/         8-class XGBoost + metrics + port ablation
   notebooks/      01-06, all execute with ZERO errors (05 = ranking runs 1-2, 06 = run 3, the gate)
   config/severity-chart.json           Q28: editable, versioned severity chart
   packages/detection/ranking/          severity chart loader · formulas C0-C3, M1/M2 · experiment
   packages/detection/feedback/         S7a service.py (one verdict) · S7b learning.py (its family)
-  packages/detection/pipeline/         S9: source (the S3 seam) · predictor · store · runner
-  data/demo.db                         42 MB, GITIGNORED - rebuild: scripts/run_detection.py
   packages/detection/guardrail/        policy.py - the caps, the floors and I3
-  evaluation/ranking/                  history.jsonl + runs/<id>/{config,results}.json, METHOD.md
+  packages/detection/pipeline/         S9: source.py (the S3 seam) · predictor.py (TreeSHAP in the
+                                       run) · store.py (repositories) · runner.py (run_detection)
   packages/detection/ml/inference.py   vendored+adapted TreeSHAP inference (see sec. 8)
+  evaluation/ranking/                  history.jsonl + runs/<id>/{config,results}.json, METHOD.md
   packages/contracts/  S2: models.py · schema.sql (12 TDM tables + alert_families) · db.py (codec,
                        QUEUE_ORDER_BY - queue_priority since S7b)
-  tests/   263 tests, 0 skipped - run: python -m pytest   (pyproject.toml sets pythonpath)
-  scripts/        9 scripts, all runnable
+  tests/   279 tests in 10 files, 0 skipped - run: python -m pytest  (pyproject sets pythonpath)
   tests/fixtures/legacy/   8 FROZEN files - never regenerate
-  docs/           HANDOVER · iteration-report · plan-changelog(v0.1-v1.4) ·
+  scripts/        13 scripts, all runnable; run_detection.py builds the demo database (S9)
+  rules/rule-set-s4b-1.json            7 rules, 2 enabled (FTP + SSH brute force)
+  docs/           HANDOVER · system-workflow (start here) · plan-changelog (v0.1-v1.15) ·
+                  ranking-and-escalation-design · iteration-report · iteration-2-report ·
                   feasibility-study · rule-retuning-report · finding-infiltration-mislabelling
-                  · img/ (6 rendered PNGs)
+                  · img/ (15 rendered PNGs, regenerate: scripts/make_diagrams.py)
 plans/hitl-ids-demo-build.md    18-step build plan (S1-S18), v1.0
 ```
 
