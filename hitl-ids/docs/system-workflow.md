@@ -230,7 +230,7 @@ API endpoints behind it (S10): `GET /api/alerts` (queue order), `POST /api/alert
 | 1 | Floors must never raise a score | **Decided and built.** A floor protects an alert only if it started at or above it. The collaborator's engine lifted a 60-point Infiltration alert *up* to 75 on a "false positive"; a test proves the port does not |
 | 2 | "Critical" now means score ≥ 80 (legacy ≥ 90) | **Logged** (changelog v1.10). The Critical floor therefore protects every flagged demo alert |
 | 3 | The engine's `uncertain` category | **Folded into `needs_investigation`** — identical effect (no change, forces review) |
-| 4 | Feedback moves a score within its evidence band, never across bands, so a confirmed missed attack (`AL-03086`) stays in the bottom band | **Still open — a decision for the project lead.** The service sets its review flag, so a "flagged for review" dashboard view would surface it. Settle before S11 |
+| 4 | Feedback moves a score within its evidence band, never across bands, so a confirmed missed attack (`AL-03086`) stays in the bottom band | **Decided — Q24:** feedback moves an alert into a higher queue class; "flagged for review" becomes an additional view. The `AL-03086` case is kept here as the reference example. How far it moves is chosen by experiment — see [`ranking-and-escalation-design.md`](ranking-and-escalation-design.md) |
 | 5 | A false positive among Critical alerts cannot fall below 70 | **Confirmed by test.** Clearing it from the queue is a *status* change (`resolved` / `dismissed`), not a score change |
 
 Also settled in S7a: **I3 freezes a `signature_override` alert against every category** — the

@@ -482,7 +482,7 @@ Illustrated on real demo alerts in `system-workflow.md` §5: `AL-00478` (99.89 �
 
 ---
 
-## v1.10 — S7a landed: direct analyst feedback inside the guardrails (2026-09-11) ← **current**
+## v1.10 — S7a landed: direct analyst feedback inside the guardrails (2026-09-11)
 
 `packages/detection/guardrail/policy.py` + `packages/detection/feedback/service.py`, on branch
 `feat/s7-feedback`. **Not delegated** — feedback and guardrail logic are Claude-only, and this is the
@@ -512,6 +512,25 @@ rollback on failure; the guardrails-off arm. The worked examples in `system-work
 
 **Still open for the project lead:** feedback cannot move an alert across evidence bands, so a
 confirmed missed attack stays in the bottom band (`system-workflow.md` §7, item 4). Settle before S11.
+
+---
+
+## v1.11 — Goal confirmed; ranking and escalation decisions Q24–Q27 (2026-09-11) ← **current**
+
+**The goal, confirmed with the project lead:** feedback on past alerts **reorders future alerts** to
+raise triage efficiency, inside the guardrails — the approved thesis (URS: "re-ranks similar future
+[alerts]"; FR-B03, Must). Consequence: **S7b, similar-alert learning, is the core of the thesis**,
+not a follow-on to S7a.
+
+| ID | Decision (project lead) | Consequence |
+|---|---|---|
+| **Q24** | Feedback moves an alert into a **higher queue class**; a "flagged for review" view is an additional feature; the `AL-03086` case is documented for later | Supersedes the open question in `system-workflow.md` §7 item 4. `evidence_class` stays the detector record; movement is a separate queue class |
+| **Q25** | Automatic tier escalation is **post-demo**, but the demo shows the SOC tier model and **which alerts would go to Tier 2** | Escalation criteria E1–E3 proposed; the approved design has no tiers (UC-SA-14 "Escalate" only raises priority), so this is a logged extension |
+| **Q26** | How far a confirmed alert moves is **chosen by testing** candidate systems, informed by game ranking design | Candidates C0–C3 (fixed, severity-weighted, Elo-style, Elo + uncertainty) × class-movement variants M1/M2, and a selection experiment on held-out "future" flows |
+| **Q27** | Repeated false positives **drop a class**, by an amount set by the **attack type's severity** | A severity chart anchored on Suricata classtype priority, MITRE ATT&CK tactic and the CVSS v3.1 bands; weight `w = severity / 10` drives the formulas |
+
+Design and sources: [`ranking-and-escalation-design.md`](ranking-and-escalation-design.md).
+**Awaiting sign-off:** the severity values, the candidate set, and the queue classes.
 
 ---
 

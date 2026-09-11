@@ -110,6 +110,14 @@ Everything below is measured, verified, and reproducible from the notebooks.
 | Q21 | Signature layer = **trust/explainability**, not coverage |
 | Q22 | Queue order = `corroborated` → `signature_override` → `ml_only` → `none`, then score (2026-09-11) |
 | Q23 | S6 combination **accepted for the demo** at current defaults; tuning deferred to realistic traffic (2026-09-11) |
+| Q24 | Feedback moves an alert into a **higher queue class**; review flag is an extra feature (2026-09-11) |
+| Q25 | Automatic tier escalation **post-demo**; the demo shows which alerts **would** go to Tier 2 (2026-09-11) |
+| Q26 | The ranking formula is **chosen by testing** game-inspired candidates (2026-09-11) |
+| Q27 | False positives **drop a class**, scaled by an **attack-type severity chart** (2026-09-11) |
+
+**The project goal (confirmed 2026-09-11):** analyst feedback on past alerts **reorders future
+alerts** to raise triage efficiency, inside the guardrails. S7b (similar-alert learning) is its core.
+Design: [`ranking-and-escalation-design.md`](ranking-and-escalation-design.md).
 
 ### Model
 - 8 classes, macro F1 **0.9882**, weighted F1 0.9997, 82 features
