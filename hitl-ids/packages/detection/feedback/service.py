@@ -1,11 +1,18 @@
-"""Direct analyst feedback (plan step S7): one verdict -> guardrails -> stored, audited, re-scored.
+"""Analyst feedback (plan step S7): a verdict -> guardrails -> stored, audited, re-scored - and,
+since S7b, carried to the alerts like it.
 
-``submit_feedback(conn, alert_id=..., user_id=..., category=...)`` is one transaction: the verdict
-becomes an append-only ``feedback_events`` row, the alert's ``combined_score`` and
-``requires_review`` change, and the audit trail gains a ``FEEDBACK`` entry — plus a ``GUARDRAIL_*``
-entry whenever a guardrail intervened. Any failure rolls all of it back.
+``submit_feedback(conn, alert_id=..., user_id=..., category=...)`` is one transaction:
 
-Semantics ported from ``stage-5/core/feedback-engine.js`` (``applyDirectFeedback``):
+* the verdict becomes an append-only ``feedback_events`` row;
+* the alert's ``combined_score``, ``requires_review`` and queue band change;
+* its family's learning is recomputed and every member with no verdict of its own is re-placed
+  (``refresh_family``; the design is in ``feedback/learning.py``);
+* the audit trail gains a ``FEEDBACK`` entry, a ``GUARDRAIL_*`` entry whenever a guardrail
+  intervened, and a ``SIMILAR_ALERT_LEARNING`` entry whenever the family's learning changed.
+
+Any failure rolls all of it back.
+
+Direct feedback, ported from ``stage-5/core/feedback-engine.js`` (``applyDirectFeedback``):
 
 * A verdict does not stack. It supersedes the alert's previous verdict (``amended_from_id``), and
   the alert's current score is ``detection_score`` + the guarded change of the latest verdict.
@@ -14,22 +21,33 @@ Semantics ported from ``stage-5/core/feedback-engine.js`` (``applyDirectFeedback
   score. The engine's separate ``reviewThreshold`` (70) is not used: S6 made one threshold drive
   severity, ``is_critical`` and review.
 
-Decided in changelog v1.10: ``uncertain`` is folded into ``needs_investigation`` (identical effect —
+Decided in changelog v1.10: ``uncertain`` is folded into ``needs_investigation`` (identical effect -
 no change, forces review); ``duplicate`` is a queue action (``alerts.is_duplicate_of``), not
-feedback. Similar-alert learning — a verdict on one alert adjusting similar ones — is S7b.
+feedback.
 """
 
 from __future__ import annotations
 
 import sqlite3
+from collections import Counter
 from dataclasses import dataclass
 from datetime import datetime
-from typing import get_args
+from typing import Any, get_args
 
 from packages.contracts import db
 from packages.contracts import models as m
 from packages.detection.audit.writer import AuditWriter
+from packages.detection.feedback.learning import (
+    SCHEME,
+    LearningPolicy,
+    attack_of,
+    fusion_review,
+    learn,
+    member_placement,
+    verdict_queue_class,
+)
 from packages.detection.guardrail.policy import GuardrailPolicy, apply_guardrails
+from packages.detection.ranking.severity import SeverityChart, load_severity_chart
 
 
 @dataclass(frozen=True)
@@ -48,6 +66,34 @@ FEEDBACK_EFFECTS: dict[str, FeedbackEffect] = {
 }
 assert set(FEEDBACK_EFFECTS) == set(get_args(m.FeedbackCategory))
 
+# The effective verdict of every alert in one family - each alert's latest, as current_feedback
+# chooses it - oldest first, the order the family's learning replays them in.
+EFFECTIVE_VERDICTS = """
+    SELECT f.* FROM feedback_events f JOIN alerts a ON a.id = f.alert_id
+    WHERE a.family_key = ? AND NOT EXISTS (
+        SELECT 1 FROM feedback_events g WHERE g.alert_id = f.alert_id
+        AND (g.created_at > f.created_at OR (g.created_at = f.created_at AND g.id > f.id)))
+    ORDER BY f.created_at, f.id"""
+
+
+def _learning_state(family: m.AlertFamily) -> dict[str, Any]:
+    return family.model_dump(exclude={"id", "updated_at"})
+
+
+@dataclass(frozen=True)
+class FamilyRefresh:
+    """One recomputation of a family's learning (S7b)."""
+
+    before: m.AlertFamily | None
+    after: m.AlertFamily
+    members_moved: int
+    # the guardrails holding the scores of the family's unjudged members, counted by code
+    guardrail_interventions: dict[str, int]
+
+    @property
+    def changed(self) -> bool:
+        return self.before is None or _learning_state(self.before) != _learning_state(self.after)
+
 
 @dataclass(frozen=True)
 class FeedbackResult:
@@ -55,13 +101,22 @@ class FeedbackResult:
     alert: m.Alert
     outcome: m.GuardrailOutcome
     audit: list[m.AuditEntry]
+    learning: FamilyRefresh | None = None  # None when the verdict cannot teach a family
+
+
+def _config_rows(conn: sqlite3.Connection) -> dict[str, float]:
+    return {row["config_key"]: row["config_value"]
+            for row in conn.execute("SELECT config_key, config_value FROM guardrail_config")}
 
 
 def load_policy(conn: sqlite3.Connection, *, active: bool = True) -> GuardrailPolicy:
     """The guardrail settings as the administrator last configured them."""
-    rows = {row["config_key"]: row["config_value"]
-            for row in conn.execute("SELECT config_key, config_value FROM guardrail_config")}
-    return GuardrailPolicy.from_rows(rows, active=active)
+    return GuardrailPolicy.from_rows(_config_rows(conn), active=active)
+
+
+def load_learning_policy(conn: sqlite3.Connection) -> LearningPolicy:
+    """The agreement gate's settings as the administrator last configured them."""
+    return LearningPolicy.from_rows(_config_rows(conn))
 
 
 def current_feedback(conn: sqlite3.Connection, alert_id: int) -> m.FeedbackEvent | None:
@@ -71,17 +126,75 @@ def current_feedback(conn: sqlite3.Connection, alert_id: int) -> m.FeedbackEvent
     return None if row is None else db.from_row(m.FeedbackEvent, row)
 
 
-def fusion_review(alert: m.Alert, score: float, critical_threshold: float) -> bool:
-    """S6's review rule, re-applied to a new score."""
-    if alert.evidence_class == "signature_override" or alert.ml_predicted_class is None:
-        return True
-    return alert.evidence_class in ("corroborated", "ml_only") and score >= critical_threshold
+def refresh_family(conn: sqlite3.Connection, family_key: str, *, policy: GuardrailPolicy,
+                   learning: LearningPolicy, chart: SeverityChart,
+                   now: datetime) -> FamilyRefresh:
+    """Recompute one family's learning from its members' effective verdicts, store it, and
+    re-place every member with no verdict of its own. Idempotent; the caller owns the transaction.
+
+    Detection (S9) calls it too, so an alert that arrives after the verdicts takes its family's
+    learning."""
+    members = {row["id"]: db.from_row(m.Alert, row) for row in conn.execute(
+        "SELECT * FROM alerts WHERE family_key = ? ORDER BY id", (family_key,))}
+    if not members:
+        raise LookupError(f"no alert belongs to family {family_key}")
+    verdicts = [db.from_row(m.FeedbackEvent, row)
+                for row in conn.execute(EFFECTIVE_VERDICTS, (family_key,))]
+    attack = attack_of(next(iter(members.values())))  # the attack class is part of the key
+    weight = chart.weight(attack)
+    result = learn((verdict.category for verdict in verdicts
+                    if members[verdict.alert_id].evidence_class != "signature_override"),  # I3
+                   weight, policy, learning)
+
+    row = conn.execute("SELECT * FROM alert_families WHERE family_key = ?",
+                       (family_key,)).fetchone()
+    before = None if row is None else db.from_row(m.AlertFamily, row)
+    candidate = m.AlertFamily(
+        family_key=family_key, attack_category=attack, scheme=SCHEME,
+        severity_version=chart.version, weight=weight, feedback_counts=result.counts,
+        dominant_category=result.gate.dominant, agreement_ratio=result.gate.agreement,
+        gate_open=result.gate.open, gate_reason=result.gate.reason,
+        learned_adjustment=result.learned_adjustment, learned_offset=result.learned_offset,
+        applied_adjustment=result.applied_adjustment, applied_offset=result.applied_offset,
+        updated_at=now)
+    if before is None:
+        after = db.get(conn, m.AlertFamily, db.insert(conn, candidate))
+    elif _learning_state(before) != _learning_state(candidate):
+        values = db.to_row(candidate)
+        del values["id"]
+        assignments = ", ".join(f"{column} = ?" for column in values)
+        conn.execute(f"UPDATE alert_families SET {assignments} WHERE id = ?",
+                     [*values.values(), before.id])
+        after = db.get(conn, m.AlertFamily, before.id)
+    else:
+        after = before
+
+    judged = {verdict.alert_id for verdict in verdicts}
+    moved, interventions = 0, Counter()
+    for alert in members.values():
+        if alert.id in judged:
+            continue  # its own verdict takes priority, and S7a has placed it
+        place = member_placement(alert, after.applied_adjustment, after.applied_offset, chart,
+                                 policy)
+        if place.outcome is not None:
+            interventions.update(item.code for item in place.outcome.interventions)
+        if ((place.score, place.queue_class, place.requires_review)
+                != (alert.combined_score, alert.queue_class, alert.requires_review)):
+            conn.execute(
+                "UPDATE alerts SET combined_score = ?, queue_class = ?, queue_priority = ?, "
+                "requires_review = ?, updated_at = ? WHERE id = ?",
+                (place.score, place.queue_class, place.queue_priority, int(place.requires_review),
+                 db.format_timestamp(now), alert.id))
+            moved += 1
+    return FamilyRefresh(before, after, moved, dict(sorted(interventions.items())))
 
 
 def submit_feedback(conn: sqlite3.Connection, *, alert_id: int, user_id: int, category: str,
                     note: str | None = None, policy: GuardrailPolicy | None = None,
+                    learning: LearningPolicy | None = None, chart: SeverityChart | None = None,
                     now: datetime | None = None) -> FeedbackResult:
-    """Record one analyst verdict and re-score its alert inside the guardrails. Commits."""
+    """Record one analyst verdict, re-score its alert inside the guardrails, and carry it to the
+    alert's family. Commits."""
     if category not in FEEDBACK_EFFECTS:
         raise ValueError(f"unknown feedback category {category!r}; "
                          f"expected one of {sorted(FEEDBACK_EFFECTS)}")
@@ -90,6 +203,8 @@ def submit_feedback(conn: sqlite3.Connection, *, alert_id: int, user_id: int, ca
         raise LookupError(f"no alert with id {alert_id}")
     effect = FEEDBACK_EFFECTS[category]
     policy = policy if policy is not None else load_policy(conn)
+    learning = learning if learning is not None else load_learning_policy(conn)
+    chart = chart if chart is not None else load_severity_chart()
     now = now if now is not None else m.utc_now()
 
     outcome = apply_guardrails(alert, effect.requested_delta, policy)
@@ -103,18 +218,32 @@ def submit_feedback(conn: sqlite3.Connection, *, alert_id: int, user_id: int, ca
     requires_review = (effect.forces_review or outcome.requires_review
                        or fusion_review(alert, outcome.score_after,
                                         policy.critical_alert_threshold))
+    band = verdict_queue_class(alert, category, outcome.score_after, chart, policy)
+    # I3: a disputed rule's verdict goes to the administrator; it teaches its family nothing.
+    teaches = alert.family_key is not None and alert.evidence_class != "signature_override"
 
     with conn:  # one transaction: commits on success, rolls back on any exception
         feedback_id = db.insert(conn, event)
-        conn.execute("UPDATE alerts SET combined_score = ?, requires_review = ?, updated_at = ? "
-                     "WHERE id = ?", (outcome.score_after, int(requires_review),
-                                      db.format_timestamp(now), alert_id))
+        conn.execute("UPDATE alerts SET combined_score = ?, requires_review = ?, queue_class = ?, "
+                     "queue_priority = ?, updated_at = ? WHERE id = ?",
+                     (outcome.score_after, int(requires_review), band, m.QUEUE_PRIORITY[band],
+                      db.format_timestamp(now), alert_id))
         writer = AuditWriter(conn)
         audit = [writer.feedback(user_id, alert_id, feedback_id, category=category,
                                  rationale=note)]
         if outcome.interventions:
             audit.append(writer.guardrail(outcome, alert_id=alert_id, feedback_id=feedback_id,
                                           actor_id=user_id))
+        refresh = None
+        if teaches:
+            refresh = refresh_family(conn, alert.family_key, policy=policy, learning=learning,
+                                     chart=chart, now=now)
+            if refresh.changed:
+                audit.append(writer.similar_alert_learning(
+                    refresh.after, before=refresh.before, actor_id=user_id, alert_id=alert_id,
+                    feedback_id=feedback_id, members_moved=refresh.members_moved,
+                    guardrail_interventions=refresh.guardrail_interventions))
 
     return FeedbackResult(feedback=db.get(conn, m.FeedbackEvent, feedback_id),
-                          alert=db.get(conn, m.Alert, alert_id), outcome=outcome, audit=audit)
+                          alert=db.get(conn, m.Alert, alert_id), outcome=outcome, audit=audit,
+                          learning=refresh)

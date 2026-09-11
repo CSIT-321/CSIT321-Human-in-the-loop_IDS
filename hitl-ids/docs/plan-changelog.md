@@ -534,7 +534,7 @@ Design and sources: [`ranking-and-escalation-design.md`](ranking-and-escalation-
 
 ---
 
-## v1.12 — Severity chart made configuration; ranking formula selected by experiment (2026-09-11) ← **current**
+## v1.12 — Severity chart made configuration; ranking formula selected by experiment (2026-09-11)
 
 The project lead signed off all three items v1.11 awaited:
 - the severity values, provided they can be changed later;
@@ -566,6 +566,75 @@ The project lead signed off all three items v1.11 awaited:
   feedback.
 - A stress test with a weaker or drifting detector is proposed but has not been run
   (`ranking-and-escalation-design.md` §8).
+
+---
+
+## v1.13 — Run 3: agreement gate adopted, formula C1 (2026-09-11)
+
+The project lead approved the next step: add the collaborator's agreement gate and a finer family
+key, rerun all four formulas, and choose one.
+
+| | Change | Evidence |
+|---|---|---|
+| ADD | **The agreement gate**, in `formulas.effective`, ported from the collaborator's `checkAdaptationEligibility`. It needs at least 3 learning verdicts, no tie, and a dominant share of at least 0.67, rounded to 4 places (so 2 of 3 fails). Only learning pointing the dominant way applies. **The fine family key** adds the destination IP for every flow. Both are experiment dimensions, giving 576 arms | 4 new tests, 230 in total |
+| ADD | **sel-3 was committed before the run** (`5269732`). Candidates are guarded, gated arms, and the formula must scale by severity (Q27). They are then ranked by safety, attacks demoted under error, Tier 2 precision, mean attack position, class changes and simplicity | Run `20260911T121013Z` records that commit |
+| DEC | **Q30: the agreement gate is adopted for S7b.** Every gated arm, for every formula, movement and key, demoted 0 attacks and kept Tier 2 at load 243 and precision 1.00, the same as the control | The ungated coarse arms reproduce run 2 exactly (48 of 48 aggregates) |
+| DEC | **Q29, completed: the formula is C1.** sel-3 names it and it meets Q27. It leads C2/C3 on mean attack position by 0.0001, about a quarter of a queue position | `notebooks/06_ranking_gate.ipynb` |
+| KEEP | **Movement M1 stays, pending the project lead.** sel-3 names M2 because of class changes (13 against 25). That metric counts internal family state, including changes the gate withholds. Every metric the analyst would see is identical for M1 and M2 under the gate; they differ by construction only for unflagged families | — |
+| FIX | **Notebook 06, which this entry cites, had not been written. It now exists and executes with zero errors, and writing it corrected two findings.** (1) Under the gate the analyst never reviewed the colliding Web Attack flow, so "its gate stayed shut on a single verdict" is not what happened. A counterfactual (the ungated arms' own verdicts, scored with the gate on) shows the gate alone brings the 59 demotions and the 780 benign Tier 2 alerts to 0 in every seed. (2) The attack families that pass the gate have no flows in the future half; they are not "at score 100 in Tier 2" | `notebooks/06_ranking_gate.ipynb` F1, F3. 48 recorded gated arms replay identically under Python 3.12 / pandas 3 |
+
+**Findings.**
+- **The fine key alone removes the family collision, but not M2's Tier 2 flood.** AL-00478 goes to
+  64.150.178.87, and the 59 attacks go to 172.31.69.28.
+- **Under the gate, feedback barely touches the future queue on this data.**
+  - Only 4 of 32–34 learned families pass it (the traced arms: 5 % error, first seed).
+  - The three attack families among them have no flows in the future half, and the fourth (benign
+    DNS) is already at the bottom.
+  - C1 moves 10 benign flows down; C2 moves nothing.
+- **The gate asks for more evidence, not the right evidence.** Enough agreeing dismissals of ML false
+  positives in a coarse family would still demote the true attacks in it. The fine key is the
+  defence in depth.
+
+**Limit.** The efficiency question is still untested. The stress scenario, with a weaker or
+drifting detector, remains the next experiment.
+
+---
+
+## v1.14 — S7b landed: similar-alert learning behind the agreement gate (2026-09-12) ← **current**
+
+`packages/detection/feedback/learning.py` (pure) over a rewritten `service.py` (transactions), on
+branch `feat/s7-feedback`. **Not delegated.** 33 new tests; **263 pass, 0 skipped.** A verdict now
+moves the alerts like it — the thesis's mechanism — inside the same guardrails as S7a.
+
+Written the same day: **notebook 06**, run 3's decision record, which v1.13 cited but which did not
+exist. Executing it corrected two of v1.13's findings — see the FIX in that entry.
+
+| | Change | Rationale |
+|---|---|---|
+| KEEP | The experiment's own functions **are** the production code: `formulas.apply_verdict` with **C1 + M1**, K = 30, shield 2 (Q29), and the gate at 3 verdicts / 0.67 agreement (Q30) | What runs is what was tested. A property test over 500 random verdict sequences pins `learn()` to the experiment's gated C1 + M1 arm wherever a category is a direction |
+| ADD | **Families are persisted**: a new `alert_families` table, one row per family, holding the category counts, the gate's decision and its reason, what the family has learned, and what of it reaches the queue | Derived state, recomputed from the family's **effective** verdicts after every verdict, so it is updated in place — and every change is audited as `SIMILAR_ALERT_LEARNING` |
+| ADD | **Contract additions**, cheap before S9: `alerts.queue_class` + `queue_priority` (the band — Q24, Q25) and `alerts.family_key`. `QUEUE_ORDER_BY` now orders by `queue_priority` | The queue is the thing feedback reorders, so the band must be a column the queue can order by and an index can serve |
+| DEC | **The gate counts by category**, as `feedback-engine.js` does, not by direction as the experiment did: 2 false positives + 1 expected activity is 0.6667 and the gate stays shut | The collaborator's engine is authoritative on the gate (Q30). The experiment's simulated analyst only ever gave two categories, so the difference could not show up there |
+| DEC | **`escalate` counts as a confirmation**, where the collaborator treats it as a workflow type that teaches nothing | The ranking design's match result S = 1 (§4). Counting it as its own category would make 2 confirmations + 1 escalation fail a gate that 3 confirmations pass — an escalation would *weaken* agreement |
+| DEC | **Expected activity does not propagate**, keeping the collaborator's `enabledForFutureAdaptation: false`; enabling it needs 5 verdicts at 0.9 agreement | It is an organisation-specific exemption ("that scanner is ours"), which is why their own configuration refuses to generalise it |
+| DEC | **An alert with its own verdict is placed by that verdict** (direct takes priority, as in `adjustAlertWithFeedback`): E2 — escalate, or confirm on a type of severity ≥ 7 — marks a Tier 2 candidate; any other confirmation promotes one band (M1); a **dismissal withdraws Tier 2 candidacy** but moves the alert no lower | Leaving a dismissed corroborated Critical alert marked "→ Tier 2" would contradict the Tier 1 decision the analyst just made. Clearing it from the queue remains a status change |
+| DEC | **A `signature_override` alert neither teaches its family nor learns from it, and never leaves its band** — enforced in the contract and by a schema CHECK | I3, extended from S7a's score freeze to the band. The design already said a disputed rule goes to Tier 3, never automatically to Tier 2 |
+| DEC | **The collaborator's weighted similarity (threshold 0.7) is not ported**; the family key is exact | The experiment that chose C1, M1 and the gate grouped by exact family, and an exact family scores 1.0 under their weights — so this is the stricter rule. Porting the looser matcher would ship a grouping no experiment tested |
+| CHG | **Invariant I5 is restated.** "No `signature_override` alert ranks below any `ml_only` alert" holds at detection; with feedback a confirmed `ml_only` family can be promoted into the band above it (Q24), while a `signature_override` alert can never be demoted | Q24 (the project lead) makes the band a function of feedback, so the invariant is now about the detection-time queue plus a one-way freeze |
+| FIX | `fusion_review` moved from `service.py` to `learning.py`, so placement stays pure; it is still importable from `service` | Family placement needs S6's review rule, and `learning.py` must not import `service.py` |
+
+**Proven by test** (`tests/test_learning.py`, 27 tests, plus 6 in `test_contracts.py`): the third
+agreeing verdict opens the gate and moves the family's unjudged members, while the first two do not;
+an **amended** verdict counts once, and shutting the gate restores every member to its detection-time
+placement exactly; a member's own verdict overrides its family's; a family's learning cannot push a
+Critical member below 70 across 60 random verdicts, and no detection score ever changes; a failure
+after the members have moved rolls all of it back; `refresh_family` is idempotent; an alert
+**arriving after** the verdicts takes the family's learning — the thesis's claim, in one test; the
+guardrails-off arm applies the learning raw; and every change to a family's learning is audited.
+
+**Not done here.** The stress test for the efficiency claim and the run on the 250,655-flow training
+sample both remain (`ranking-and-escalation-design.md` §8). S7b makes the mechanism real; it does not
+re-open the question of how much it gains.
 
 ---
 

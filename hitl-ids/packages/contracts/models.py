@@ -43,6 +43,12 @@ AttackClass = Literal[
     "Benign", "Botnet", "Brute Force", "DDoS", "DoS", "Infiltration", "Port Scan", "Web Attack"
 ]
 EvidenceClass = Literal["corroborated", "signature_override", "ml_only", "none"]
+# S7b (changelog v1.14): the queue band an alert sits in now, top first (decisions Q24, Q25).
+# Detection places an alert in its evidence class's band or the Tier 2 band; feedback moves it.
+QueueClass = Literal["tier2_candidate", "corroborated", "signature_override", "ml_only", "none"]
+QUEUE_PRIORITY: dict[str, int] = {
+    "tier2_candidate": 0, "corroborated": 1, "signature_override": 2, "ml_only": 3, "none": 4,
+}
 Severity = Literal["Critical", "High", "Medium", "Low", "Informational"]
 RuleSeverity = Literal["Critical", "High", "Medium", "Low"]
 AlertStatus = Literal["new", "claimed", "in_progress", "resolved", "dismissed"]
@@ -53,6 +59,9 @@ FeedbackCategory = Literal[
     "needs_investigation",
     "escalate",
 ]
+# S7b: the verdicts similar-alert learning counts, by category as feedback-engine.js counts them.
+# escalate counts as a confirmation; needs_investigation is not counted.
+LearningCategory = Literal["confirm_true_positive", "mark_false_positive", "mark_expected_activity"]
 GuardrailAction = Literal["applied", "capped", "rejected"]
 GuardrailCode = Literal[
     "non_finite_adjustment_rejected",
@@ -78,6 +87,8 @@ AuditEventType = Literal[
     "FEEDBACK_AMEND",
     "GUARDRAIL_INTERVENTION",
     "GUARDRAIL_REJECTION",
+    # S7b: a verdict changed its family's learning (similar-alert learning).
+    "SIMILAR_ALERT_LEARNING",
     "ALERT_STATUS_CHANGE",
     "ALERT_DUPLICATE",
     "CONFIG_CHANGE",
@@ -418,6 +429,26 @@ class Alert(Contract):
     evidence_priority: int = Field(ge=0)
     # DEVIATION: raised by fusion (plan S6) or by feedback and guardrails (plan S7).
     requires_review: bool = False
+    # DEVIATION (S7b): the queue band the alert sits in now, which the queue orders by
+    # (db.QUEUE_ORDER_BY). Detection places it in its evidence class's band or the Tier 2 band;
+    # analyst feedback moves it (Q24). evidence_class never changes. Omitted, both default to the
+    # evidence class's band.
+    queue_class: QueueClass
+    queue_priority: int = Field(ge=0)
+    # DEVIATION (S7b): the alert's similar-alert family (feedback.learning.family_key). None keeps
+    # the alert out of similar-alert learning.
+    family_key: str | None = Field(default=None, min_length=2)
+
+    @model_validator(mode="before")
+    @classmethod
+    def _queue_defaults_to_the_evidence_band(cls, data: Any) -> Any:
+        if isinstance(data, dict):
+            data = dict(data)
+            if data.get("queue_class") is None:
+                data["queue_class"] = data.get("evidence_class")
+            if data.get("queue_priority") is None:
+                data["queue_priority"] = QUEUE_PRIORITY.get(data["queue_class"])
+        return data
 
     @model_validator(mode="after")
     def _evidence_matches_detectors(self) -> Alert:
@@ -435,6 +466,13 @@ class Alert(Contract):
             )
         if self.id is not None and self.is_duplicate_of == self.id:
             raise ValueError("an alert cannot be a duplicate of itself")
+        if self.queue_priority != QUEUE_PRIORITY[self.queue_class]:
+            raise ValueError(f"queue_priority {self.queue_priority} is not the priority of "
+                             f"queue_class {self.queue_class!r}")
+        # I3: a rule the model disputes stays in its own band - feedback can neither demote it
+        # nor make it a Tier 2 candidate (a disputed rule goes to the administrator first).
+        if self.evidence_class == "signature_override" and self.queue_class != "signature_override":
+            raise ValueError("a signature_override alert never leaves its queue band (I3)")
         return self
 
 
@@ -535,6 +573,40 @@ class GuardrailOutcome(Contract):
         return self
 
 
+class AlertFamily(Contract):
+    """DEVIATION (S7b): one family's similar-alert learning (``packages/detection/feedback/
+    learning.py``). Derived state, recomputed from the family's effective verdicts after every
+    verdict - so, unlike ``feedback_events``, it is updated in place, and every change is audited
+    as ``SIMILAR_ALERT_LEARNING``."""
+
+    id: int | None = None
+    family_key: str = Field(min_length=2)
+    attack_category: AttackClass | None = None
+    scheme: str = Field(min_length=1)
+    severity_version: str = Field(min_length=1)
+    weight: Probability
+    feedback_counts: dict[LearningCategory, int]
+    dominant_category: LearningCategory | None = None
+    agreement_ratio: Probability
+    gate_open: bool
+    gate_reason: str = Field(min_length=1)
+    # What the family has learned (formula C1, movement M1) ...
+    learned_adjustment: float
+    learned_offset: int
+    # ... and what of it reaches the queue: nothing while the gate is shut.
+    applied_adjustment: float
+    applied_offset: int
+    updated_at: AwareDatetime = Field(default_factory=utc_now)
+
+    @model_validator(mode="after")
+    def _a_shut_gate_applies_nothing(self) -> AlertFamily:
+        if any(count < 0 for count in self.feedback_counts.values()):
+            raise ValueError("feedback counts cannot be negative")
+        if not self.gate_open and (self.applied_adjustment or self.applied_offset):
+            raise ValueError("a family whose gate is shut applies no learning")
+        return self
+
+
 _AUDIT_REQUIRED_LINKS: dict[str, tuple[str, ...]] = {
     "LOGIN": ("actor_id",),
     "LOGOUT": ("actor_id",),
@@ -542,6 +614,7 @@ _AUDIT_REQUIRED_LINKS: dict[str, tuple[str, ...]] = {
     "FEEDBACK_AMEND": ("actor_id", "alert_id", "feedback_id"),
     "GUARDRAIL_INTERVENTION": ("alert_id", "feedback_id"),
     "GUARDRAIL_REJECTION": ("alert_id", "feedback_id"),
+    "SIMILAR_ALERT_LEARNING": ("actor_id", "alert_id", "feedback_id"),
     "ALERT_STATUS_CHANGE": ("alert_id",),
     "ALERT_DUPLICATE": ("alert_id",),
 }

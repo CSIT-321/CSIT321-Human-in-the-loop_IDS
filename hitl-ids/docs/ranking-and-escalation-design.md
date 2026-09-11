@@ -274,16 +274,80 @@ fall below the Critical floor.*
     it resembles.
   - Then rerun, before choosing the formula.
 
+### Run 3 — the agreement gate and a finer family key (`20260911T121013Z`)
+
+**What run 3 added.** Two arm dimensions:
+- the collaborator's **agreement gate**: a family's learning reaches the queue only after at least 3
+  learning verdicts, with no tie and a dominant direction holding at least 0.67 of them, and then
+  only the learning that points that way;
+- a **fine family key**, which adds the destination IP for every flow.
+
+**The selection rule, *sel-3*, was committed (`5269732`) before the run.**
+- Candidates: guarded, gated arms.
+- The formula must scale by attack severity (Q27).
+- Ranked then by safety, attacks demoted under analyst error, Tier 2 precision, mean attack position,
+  class changes and simplicity.
+
+Run 3's ungated coarse arms reproduce run 2 exactly (48 of 48 aggregates). Read the run in
+`notebooks/06_ranking_gate.ipynb`.
+
+| Guarded arms | Attacks demoted (5 % + 15 %) | Tier 2 precision @ 5 % | Tier 2 load @ 5 % | Mean attack position @ 5 % |
+|---|---|---|---|---|
+| Ungated, coarse key (= run 2) | 0 (C1) to 118 (C2/C3) | 0.73–1.00 | 184–504 | 0.0828–0.2004 |
+| Ungated, fine key | 0 for every formula | 1.00 under M1, 0.74 under M2 | 243 (M1), 504–530 (M2) | 0.0828–0.1682 |
+| **Gated, either key** | **0 for every formula** | **1.00** | **243** | **0.0828–0.0829** |
+| *Control, no feedback* | — | 1.00 | 243 | 0.0829 |
+
+1. **The gate removes both of run 2's failure modes, for every formula, movement and key.**
+   - In the gated arms the analyst never reviewed the colliding Web Attack flow, because the gated
+     queue is ordered differently. So the gated arms alone do not show the gate stopping that verdict.
+   - A counterfactual does. Scoring the ungated arms' *own* learned families with the gate on brings
+     the 59 demoted attacks and the 780 benign Tier 2 alerts to 0 in every seed (notebook 06, F1).
+   - With the gate on, the DNS family received 19 correct dismissals and 1 wrong confirmation. Its gate
+     opened in the dismissing direction (agreement 0.95), so the confirmation's promotion was withheld.
+2. **The fine key alone removes the family collision, but not M2's Tier 2 flood.** Under the fine
+   key, the benign flow AL-00478 (to 64.150.178.87) and the 59 Web Attacks (to 172.31.69.28) fall
+   into different families.
+3. **Under the gate, feedback barely touches the future queue on this data.**
+   - In the traced arms (5 % error, first seed), 4 of 34 learned families pass the gate under C1, and
+     4 of 32 under C2.
+   - The three attack families that pass (DDoS on port 80, FTP and SSH brute force) have **no flows in
+     the future half**. On a timestamp split those campaigns fall entirely in the calibration half. The
+     fourth, the benign DNS family, is already at the bottom (scores 0.00–0.03).
+   - With C1 the gate lets 10 benign flows move down; with C2 nothing moves.
+   - So here "no harm" also means "little effect". The efficiency question is still untested (§8).
+4. **The gate asks for more evidence, not the right evidence.**
+   - Enough agreeing, correct dismissals of ML false positives in the coarse Web Attack family would
+     open its gate and demote the same 59 attacks.
+   - The fine key would keep them apart whenever the false positive and the attacks go to different
+     destinations, which makes it a cheap second line of defence.
+5. **sel-3 names C1 + M2 + coarse, and how it got there matters.**
+   - **C1** leads C2 and C3 on mean attack position, 0.0828 against 0.0829, which is about a quarter
+     of a queue position. It also meets Q27. So the formula rests as much on the requirement and on
+     simplicity as on measured performance. C3 again could not be told apart from C2.
+   - **M2 over M1, and coarse over fine**, were decided by class changes (13 against 25 for C1).
+     That metric counts each family's internal state, including changes the gate withholds from the
+     queue. Every metric the analyst would see is identical for M1 and M2 under the gate.
+   - The two movement rules differ by construction only for unflagged families: M2 lifts one into
+     the Tier 2 band at the third confirmation, M1 at the fourth.
+
+**Decisions:**
+- **The agreement gate is adopted for S7b** (Q30).
+- **The formula is C1** (Q29).
+- **The movement rule M1 stands** unless the project lead chooses M2. The rule's M2 pick rests on a
+  metric the analyst never sees.
+- **The family key is coarse**, as sel-3 names; the fine key is offered as defence in depth.
+
 ---
 
 ## 7. Where this plugs in
 
 | Piece | Step |
 |---|---|
-| Family ratings and learned adjustments — the formula chosen in §6 | **S7b** (similar-alert learning) |
-| Severity chart as configuration, versioned and snapshotted into each detection run | S7b |
-| Queue class and Tier 2 candidate marker on alerts — a small contract addition, cheap before S9 | S7b / S9 |
-| The selection experiment | S7b, feeding S15's evaluation design |
+| Family ratings and learned adjustments — the formula chosen in §6 | **S7b — built** (changelog v1.14): `packages/detection/feedback/learning.py`, `alert_families` |
+| Severity chart as configuration, versioned and snapshotted into each detection run | S7b — built; every family row records the chart version it used. The per-run snapshot is S9's |
+| Queue class and Tier 2 candidate marker on alerts — a small contract addition, cheap before S9 | S7b — built: `alerts.queue_class` + `queue_priority`, which the queue now orders by |
+| The selection experiment | Done — notebooks 05 and 06; it feeds S15's evaluation design |
 | "→ Tier 2" marker and the "flagged for review" view on the dashboard | S11 – S12 |
 | Automatic routing and notifications to Tier 2 | **Post-demo** (Q25) |
 
@@ -300,12 +364,17 @@ fall below the Critical floor.*
    - It is read in notebook 05.
 3. **The queue classes are confirmed**: Tier 2 candidates · corroborated · signature_override ·
    ml_only · none.
-4. **M1 is selected; the formula is not** (Q29, revised — see §6 Results).
+4. **After run 3:**
+   - the agreement gate is adopted (Q30);
+   - the formula is C1 (Q29);
+   - movement M1 stands, pending the project lead (see §6, Run 3).
 
 **Still open:**
 
-- **The agreement gate and a finer family key**, followed by a rerun, before the formula is chosen
-  (§6 Results, finding 1).
+- **Movement M1 or M2 under the gate.** The data cannot tell them apart; they differ only for
+  unflagged families (§6, Run 3, finding 5).
+- **The fine family key as defence in depth**, against collisions the gate does not stop (§6, Run 3,
+  finding 4).
 
 - **A stress test for the efficiency claim.** It needs a weaker or drifting detector, so that the top
   of the queue has false positives to learn from. Not yet run.

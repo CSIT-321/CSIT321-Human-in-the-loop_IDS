@@ -3,11 +3,12 @@
 **Purpose.** Carry the full state of this project into a fresh session with zero loss of context
 and minimal token cost. Everything a new session needs is here or one link away.
 
-**Last updated:** 2026-09-11 (rev 6) · **Branch:** `feat/s6-fusion` (local) ·
-`feat/s2-contracts` **pushed to origin** as a view-only progress branch · **S2, S5 + S4b, S8, S6
-DONE** — changelog v1.8
-**Iteration 1 (Evidence & Direction) complete** — = plan Phase 1 + step S4b · collaborator's
-`origin/main` merged · **NFR-01 explainability satisfied**
+**Last updated:** 2026-09-12 (rev 7) · **Branch:** `feat/s7-feedback` (local) ·
+`feat/s2-contracts` and `feat/s6-fusion` **pushed to origin** as view-only progress branches ·
+**Plan Phase 2 DONE: S2, S5 + S4b, S6, S7a, S7b, S8** — changelog v1.14 · **263 tests, 0 skipped**
+**Iteration 1 (Evidence & Direction) complete** · the ranking formula and the agreement gate were
+chosen by experiment (Q29, Q30) · collaborator's `origin/main` merged ·
+**NFR-01 explainability satisfied**
 
 ---
 
@@ -58,22 +59,25 @@ Repo: `github.com/CSIT-321/CSIT321-Human-in-the-loop_IDS` · working tree `hitl-
 > The completed evidence work is **Iteration 1** — a *work iteration* spanning plan Phase 1 plus
 > S4b. It is **not** "Phase 1". Never use a bare phase number for it.
 >
-> **Actual status:** Phase 0 **PARTIAL** (S1 scaffold incomplete — Python slice only; **S2 DONE**, 51 tests) ·
-> Phase 1 **DONE** · Phase 2 **S5, S4b, S6, S7a, S8 done** (S7b similar-alert learning remains; its
-> movement rule is selected, its formula is not — Q29) · Phases 3–6 **not started**.
+> **Actual status:** Phase 0 **PARTIAL** (S1 scaffold incomplete — Python slice only; **S2 DONE**) ·
+> Phase 1 **DONE** · Phase 2 **DONE** (S5, S4b, S6, S7a, S7b, S8) · Phase 3 **next: S9** ·
+> Phases 4–6 **not started**.
 
 ```
 hitl-ids/
   data/raw/       CSECICIDS2018_improved.zip   10.4 GB, GITIGNORED, must be re-downloaded
   data/processed/ label_scan · demo_sample(5,000) · train_sample(250,655) · manifests
   models/         8-class XGBoost + metrics + port ablation
-  notebooks/      01-05, all execute with ZERO errors (05 = ranking selection record)
+  notebooks/      01-06, all execute with ZERO errors (05 = ranking runs 1-2, 06 = run 3, the gate)
   config/severity-chart.json           Q28: editable, versioned severity chart
   packages/detection/ranking/          severity chart loader · formulas C0-C3, M1/M2 · experiment
+  packages/detection/feedback/         S7a service.py (one verdict) · S7b learning.py (its family)
+  packages/detection/guardrail/        policy.py - the caps, the floors and I3
   evaluation/ranking/                  history.jsonl + runs/<id>/{config,results}.json, METHOD.md
   packages/detection/ml/inference.py   vendored+adapted TreeSHAP inference (see sec. 8)
-  packages/contracts/  S2: models.py · schema.sql (12 tables) · db.py (codec, QUEUE_ORDER_BY)
-  tests/test_contracts.py   51 tests - run: python -m pytest   (pyproject.toml sets pythonpath)
+  packages/contracts/  S2: models.py · schema.sql (12 TDM tables + alert_families) · db.py (codec,
+                       QUEUE_ORDER_BY - queue_priority since S7b)
+  tests/   263 tests, 0 skipped - run: python -m pytest   (pyproject.toml sets pythonpath)
   scripts/        9 scripts, all runnable
   tests/fixtures/legacy/   8 FROZEN files - never regenerate
   docs/           HANDOVER · iteration-report · plan-changelog(v0.1-v1.4) ·
@@ -119,7 +123,8 @@ Everything below is measured, verified, and reproducible from the notebooks.
 | Q26 | The ranking formula is **chosen by testing** game-inspired candidates (2026-09-11) |
 | Q27 | False positives **drop a class**, scaled by an **attack-type severity chart** (2026-09-11) |
 | Q28 | The severity chart is **configuration**: `config/severity-chart.json`, versioned (`sev-1`) and validated on load; change values there, never in code (2026-09-11) |
-| Q29 | Ranking movement **M1 (one class at a time)** selected by experiment; **formula not yet selected**. First add the collaborator's agreement gate (≥ 3 learning verdicts, ≥ 0.67 agreement) and a finer family key, then rerun. History: `evaluation/ranking/`; read: `notebooks/05_ranking_selection.ipynb` (2026-09-11) |
+| Q29 | Ranking **formula C1** (severity-weighted), chosen in run 3 by the pre-registered rule sel-3. **Movement M1** stands pending the project lead: sel-3's M2 pick rests on internal class changes. History: `evaluation/ranking/`; read notebooks 05 (runs 1–2) and 06 (run 3) (2026-09-11) |
+| Q30 | The collaborator's **agreement gate** is adopted for similar-alert learning: ≥ 3 learning verdicts, no tie, ≥ 0.67 agreement, and only learning in the dominant direction applies (2026-09-11) |
 
 **The project goal (confirmed 2026-09-11):** analyst feedback on past alerts **reorders future
 alerts** to raise triage efficiency, inside the guardrails. S7b (similar-alert learning) is its core.
@@ -234,8 +239,9 @@ These were believed, then disproved. Re-proposing them wastes a cycle.
 | ~~2~~ | ~~S2 — data contracts~~ | **DONE 2026-09-11** | 12 tables, 51 tests, 0 skipped. Deviations in changelog v1.5 |
 | ~~3~~ | ~~S5 + S4b — signature engine and tuned rule set~~ | **DONE 2026-09-11** | Engine delegated (DeepSeek), golden-tested 1,000/1,000. Rule set written; held-out figures reproduced. Changelog v1.6 |
 | ~~4~~ | ~~S6 — fusion re-specification~~ | **DONE 2026-09-11** | `packages/detection/fusion/cef.py`; spec in its docstring. Demo: 200 corroborated, 0 override; DB queue order proven. Changelog v1.8 |
-| 5 | ~~S7a — direct feedback + guardrails~~ **DONE** (changelog v1.10) · ranking experiment **run** (changelog v1.12; Q29: M1 selected, formula open) · **NEXT →** add the agreement gate (collaborator's `aggregation`: ≥ 3 learning verdicts, ≥ 0.67 agreement) and a finer family key to the experiment, rerun and choose the formula. Then S7b: similar-alert learning as persisted family adjustments, plus `queue_class` and the Tier 2 marker as contract additions (`ranking-and-escalation-design.md` §7). Inputs recorded before S7a: invariant I3 is S7's; "Critical" now means score ≥ 80 (Node used ≥ 90) — log the floor-trigger decision. Inputs from v1.9: floors must never *raise* a score; map `uncertain`; feedback cannot cross evidence bands — see `system-workflow.md` §7 | **Claude only** | **Port the collaborator's design** (sec. 8) to Python rather than authoring fresh |
-| 6 | ~~S8 — audit writer~~ **DONE** (delegated, changelog v1.7) · S9 — SQLite repositories + batch runner | Mixed | S9 builds on `db.insert`/`db.get` and `AuditWriter`. **S3's `FlowSource`/`CsvReplaySource` seam was never built — S9 must add it** (changelog v1.9) |
+| 5 | ~~S7a — direct feedback + guardrails~~ **DONE** (changelog v1.10) · ranking experiment **done** (changelog v1.12–v1.13; Q29 formula C1, Q30 agreement gate) · **NEXT →** S7b: similar-alert learning with the gate, formula C1 and movement M1, as persisted family adjustments. Count agreement by feedback category, as the collaborator's engine does, not by direction as the experiment does. Add plus `queue_class` and the Tier 2 marker as contract additions (`ranking-and-escalation-design.md` §7). Inputs recorded before S7a: invariant I3 is S7's; "Critical" now means score ≥ 80 (Node used ≥ 90) — log the floor-trigger decision. Inputs from v1.9: floors must never *raise* a score; map `uncertain`; feedback cannot cross evidence bands — see `system-workflow.md` §7 | **Claude only** | **Port the collaborator's design** (sec. 8) to Python rather than authoring fresh |
+| ~~5b~~ | ~~S7b — similar-alert learning~~ | **DONE 2026-09-12** | `feedback/learning.py` + a rewritten `service.py`: the coarse family key, the category-counted gate, C1 + M1 replayed over each family's effective verdicts, the `alert_families` table, and the `queue_class` contract addition. Changelog v1.14 |
+| 6 | ~~S8 — audit writer~~ **DONE** (delegated, changelog v1.7) · **NEXT →** S9 — SQLite repositories + batch runner | Mixed | S9 builds on `db.insert`/`db.get`, `AuditWriter` and `refresh_family`. **S3's `FlowSource`/`CsvReplaySource` seam was never built — S9 must add it** (changelog v1.9). S9 must also set `alerts.family_key` (`learning.family_key_of`) and each alert's detection-time band (`learning.detection_placement`) |
 
 Full detail per step: [`../../plans/hitl-ids-demo-build.md`](../../plans/hitl-ids-demo-build.md).
 
@@ -296,15 +302,20 @@ them before the next merge.
 1. ~~Push the branch?~~ **User decision (2026-09-11):** `feat/s2-contracts` pushed to origin as a
    view-only progress branch, with the demo sample. `feat/s6-fusion` (S2–S6 + docs) pushed on request
    the same day. Work continues locally; push again only when asked.
-2. ~~Held-out re-test~~ **Done, reported.** ~~S2~~ **Done.** ~~S5 + S4b~~ **Done.** ~~S8~~ **Done.** ~~S6~~ **Done.** ~~S7a~~ **Done.** Next is S7b (similar-alert learning), then S9. Open for the
-   project lead: feedback cannot move an alert across evidence bands (`system-workflow.md` §7, item 4).
-   **Open (ranking):** the formula is not chosen. The first run's formula differences trace to one
-   family collision: a correct dismissal of an ML false positive demoted 59 attacks. Next: the
-   agreement gate and a finer family key, then a rerun. Separately, the demo sample cannot show an
-   efficiency gain. A stress test with a weaker or drifting detector is proposed but not run
-   (`ranking-and-escalation-design.md` §8).
+2. ~~Held-out re-test~~ **Done, reported.** ~~S2~~ ~~S5 + S4b~~ ~~S6~~ ~~S7a~~ ~~S7b~~ ~~S8~~ —
+   **all done.** Next is **S9**. Settled since: feedback moves an alert between *queue bands* (Q24),
+   never across evidence classes, which closes the `system-workflow.md` §7 item 4 question.
+   **Open (ranking):**
+   - (a) Movement M1 or M2 under the gate. The data cannot separate them; M1 stands unless you
+     choose M2.
+   - (b) Whether to add the fine family key as defence in depth.
+   - (c) The efficiency gain is still untested. A stress test with a weaker or drifting detector is
+     proposed (`ranking-and-escalation-design.md` §8).
 3. Review [`finding-infiltration-mislabelling.md`](finding-infiltration-mislabelling.md) — a
    report-ready write-up of the Infiltration finding, drafted and awaiting your edit.
 4. **Agree a file-ownership boundary with the collaborator** before the next merge (see sec. 8).
 5. When ready, our tree is intended to **supersede** their `stage-3/`/`stage-5/` on push — user
    decision, not yet actioned. Branch is deliberately **local only**; do not push unasked.
+6. **Two S7b judgement calls, each reversible in one line** (changelog v1.14): `escalate` counts as a
+   confirmation for family learning, where the collaborator's engine treats it as teaching nothing;
+   and a dismissal withdraws an alert's "→ Tier 2" marker. Both are logged and either can flip.

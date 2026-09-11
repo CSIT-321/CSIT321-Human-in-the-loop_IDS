@@ -1,12 +1,14 @@
 -- Canonical SQLite schema for the HITL IDS demo (plan step S2).
 --
 -- Twelve of the TDM's thirteen tables; `notifications` is deferred with the full backend (S18).
+-- One table the TDM lacks, `alert_families` (S7b, similar-alert learning), is marked DEVIATION.
 -- Column names are the TDM §7.2 names so the PostgreSQL migration is mechanical.
 -- Type mapping: BIGINT/INT AUTO_INCREMENT -> INTEGER PRIMARY KEY AUTOINCREMENT · VARCHAR, UUID
 -- -> TEXT · DECIMAL -> NUMERIC · BOOLEAN -> INTEGER 0/1 · TIMESTAMP -> TEXT, fixed-width ISO-8601
 -- UTC 'YYYY-MM-DDTHH:MM:SS.ffffffZ' so text order is time order (db.format_timestamp)
 -- · JSONB -> TEXT CHECK (json_valid(...)).
--- Departures from the TDM are marked DEVIATION and logged in docs/plan-changelog.md v1.5.
+-- Departures from the TDM are marked DEVIATION and logged in docs/plan-changelog.md v1.5 (S7b's in
+-- v1.14).
 -- Foreign keys are enforced only on connections that run PRAGMA foreign_keys = ON; use
 -- packages.contracts.db.connect().
 
@@ -114,12 +116,25 @@ CREATE TABLE alerts (
     evidence_priority  INTEGER NOT NULL CHECK (evidence_priority >= 0),
     -- DEVIATION: raised by fusion (S6) or by feedback and guardrails (S7).
     requires_review    INTEGER NOT NULL DEFAULT 0 CHECK (requires_review IN (0, 1)),
+    -- DEVIATION (S7b): the queue band the alert sits in now; the queue orders by queue_priority.
+    -- Detection places the alert in its evidence class's band or the Tier 2 band, and analyst
+    -- feedback moves it (Q24). evidence_class never changes.
+    queue_class        TEXT    NOT NULL CHECK (queue_class IN ('tier2_candidate', 'corroborated', 'signature_override', 'ml_only', 'none')),
+    queue_priority     INTEGER NOT NULL,
+    -- DEVIATION (S7b): the similar-alert family; NULL keeps the alert out of similar-alert learning.
+    family_key         TEXT    CHECK (json_valid(family_key) AND json_type(family_key) = 'array'),
     -- Evidence class must agree with which detectors fired. Repeated from the Pydantic model so
     -- raw-SQL writers cannot bypass it.
     CHECK ((evidence_class IN ('corroborated', 'signature_override'))
            = (COALESCE(json_array_length(signature_rules), 0) > 0)),
     CHECK (evidence_class NOT IN ('corroborated', 'ml_only')
-           OR (ml_predicted_class IS NOT NULL AND ml_predicted_class <> 'Benign'))
+           OR (ml_predicted_class IS NOT NULL AND ml_predicted_class <> 'Benign')),
+    -- The priority is the band's; repeated from the Pydantic model, like the checks above.
+    CHECK (queue_priority = CASE queue_class WHEN 'tier2_candidate' THEN 0 WHEN 'corroborated' THEN 1
+                                             WHEN 'signature_override' THEN 2 WHEN 'ml_only' THEN 3
+                                             ELSE 4 END),
+    -- I3: a rule the model disputes never leaves its band.
+    CHECK (evidence_class <> 'signature_override' OR queue_class = 'signature_override')
 );
 
 CREATE TABLE flow_data (
@@ -160,6 +175,30 @@ CREATE TABLE feedback_events (
     CHECK (guardrail_action <> 'capped'   OR actual_delta <> requested_delta),
     CHECK (guardrail_action <> 'rejected' OR actual_delta = 0),
     CHECK (guardrail_action = 'applied'   OR guardrail_reason IS NOT NULL)
+);
+
+-- DEVIATION (S7b): similar-alert learning, one row per family (docs/plan-changelog.md v1.14); the
+-- TDM has no such table. Derived state: packages/detection/feedback/service.py recomputes a row
+-- from the family's effective verdicts after every verdict, so rows are updated in place, and each
+-- change is also written to audit_log as SIMILAR_ALERT_LEARNING.
+CREATE TABLE alert_families (
+    id                 INTEGER PRIMARY KEY AUTOINCREMENT,
+    family_key         TEXT    NOT NULL UNIQUE CHECK (json_valid(family_key) AND json_type(family_key) = 'array'),
+    attack_category    TEXT,
+    scheme             TEXT    NOT NULL,
+    severity_version   TEXT    NOT NULL,
+    weight             NUMERIC NOT NULL CHECK (weight BETWEEN 0 AND 1),
+    feedback_counts    TEXT    NOT NULL CHECK (json_valid(feedback_counts) AND json_type(feedback_counts) = 'object'),
+    dominant_category  TEXT    CHECK (dominant_category IN ('confirm_true_positive', 'mark_false_positive', 'mark_expected_activity')),
+    agreement_ratio    NUMERIC NOT NULL CHECK (agreement_ratio BETWEEN 0 AND 1),
+    gate_open          INTEGER NOT NULL CHECK (gate_open IN (0, 1)),
+    gate_reason        TEXT    NOT NULL,
+    learned_adjustment NUMERIC NOT NULL,
+    learned_offset     INTEGER NOT NULL,
+    applied_adjustment NUMERIC NOT NULL,
+    applied_offset     INTEGER NOT NULL,
+    updated_at         TEXT    NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%f', 'now') || '000Z'),
+    CHECK (gate_open = 1 OR (applied_adjustment = 0 AND applied_offset = 0))
 );
 
 CREATE TABLE audit_log (
@@ -213,8 +252,10 @@ CREATE INDEX idx_alerts_severity   ON alerts (severity);
 CREATE INDEX idx_alerts_created    ON alerts (created_at);
 CREATE INDEX idx_alerts_owner      ON alerts (owner_id);
 CREATE INDEX idx_alerts_run        ON alerts (run_id);
--- DEVIATION: serves QUEUE_ORDER_BY in packages/contracts/db.py.
-CREATE INDEX idx_alerts_queue      ON alerts (evidence_priority, combined_score DESC);
+-- DEVIATION: serves QUEUE_ORDER_BY in packages/contracts/db.py (queue_priority since S7b).
+CREATE INDEX idx_alerts_queue      ON alerts (queue_priority, combined_score DESC);
+-- DEVIATION (S7b): a verdict re-places its family's members.
+CREATE INDEX idx_alerts_family     ON alerts (family_key);
 CREATE INDEX idx_feedback_alert    ON feedback_events (alert_id);
 CREATE INDEX idx_feedback_user     ON feedback_events (user_id);
 CREATE INDEX idx_audit_created     ON audit_log (created_at DESC);

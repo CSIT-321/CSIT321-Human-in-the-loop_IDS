@@ -135,7 +135,7 @@ feedback, which is what the evaluation (S15) compares.
 
 ---
 
-## 5. Lane 4 — Feedback and guardrails *(S7a built; similar-alert learning, S7b, next)*
+## 5. Lane 4 — Feedback and guardrails *(S7a and S7b both built)*
 
 ![Feedback loop](img/14_feedback_loop.png)
 
@@ -180,9 +180,15 @@ not a score change.
 | `alerts.detection_score` | Unchanged — always | Built (S2) |
 | `audit_log` | `FEEDBACK` and `GUARDRAIL_*` entries with actor, time and rationale | Writer built (S8) |
 
-**Later — similar-alert learning.** Once three or more analysts give the same verdict on similar
-alerts with at least 67% agreement, the collaborator's design adjusts the similar alerts too
-(false positive −10 / −25, true positive +8 / +15). The same guardrails apply.
+**Similar-alert learning — built (S7b).** A verdict also moves the alerts like it: its **family** is
+the alerts sharing its attack class, destination port, protocol and matched rule, and a flow no
+detector flagged also keys on its destination. Nothing reaches the queue until the family has
+**three or more learning verdicts, no tie, and at least 67% agreement** on one category — the
+collaborator's gate — and then only the learning that points the agreed way. The step is weighted by
+the attack type's severity (formula C1: up `+30w`, down `−30(1 − w)`), a family moves **one band at a
+time** (M1), and every member passes the same guardrails. An alert with a verdict of its own is
+placed by that verdict, not by its family. Details: `ranking-and-escalation-design.md`, changelog
+v1.14.
 
 ### Worked examples on real demo alerts *(the first and third are reproduced exactly by `tests/test_guardrail.py`)*
 
@@ -247,8 +253,8 @@ administrator. **Guardrails can be switched off** for the evaluation's third arm
 | Order | Step | Delivers |
 |---|---|---|
 | ~~1~~ | ~~S7a direct feedback + guardrails~~ | **Done** — §5, changelog v1.10 |
-| 1 | **S7b** similar-alert learning *(Claude only)* | One verdict adjusting similar alerts, inside the same guardrails |
-| 2 | **S9** batch runner + the S3 `FlowSource` seam | One command: dataset → stored, scored alerts |
+| ~~2~~ | ~~**S7b** similar-alert learning~~ | **Done** — §5, changelog v1.14: families, the agreement gate, C1 + M1, and the `queue_class` band |
+| 1 | **S9** batch runner + the S3 `FlowSource` seam | One command: dataset → stored, scored alerts |
 | 3 | **S15** evaluation design | The three seeded runs: no feedback · feedback · guardrails off |
 | 4 | **S10a / S10b** API | The endpoints in §6 |
 | 5 | **S11 – S14** interface | The analyst queue with both score columns; admin and evaluator views |

@@ -18,7 +18,7 @@ from __future__ import annotations
 import csv
 import json
 import sqlite3
-from collections.abc import Iterable
+from collections.abc import Iterable, Mapping
 from datetime import datetime
 from pathlib import Path
 from typing import Any
@@ -90,6 +90,22 @@ class AuditWriter:
         return self.record(m.AuditEntry(
             event_type=event_type, actor_id=actor_id, alert_id=alert_id, feedback_id=feedback_id,
             details={"outcome": outcome.model_dump(mode="json")}))
+
+    def similar_alert_learning(self, family: m.AlertFamily, *, before: m.AlertFamily | None,
+                               actor_id: int, alert_id: int, feedback_id: int,
+                               members_moved: int,
+                               guardrail_interventions: Mapping[str, int]) -> m.AuditEntry:
+        """A verdict changed its family's learning (S7b): the family's state before and after, and
+        how many members it moved, so every family-driven score change is reconstructable."""
+        def state(row: m.AlertFamily | None) -> dict[str, Any] | None:
+            return None if row is None else row.model_dump(
+                mode="json", exclude={"id", "family_key", "updated_at"})
+        return self.record(m.AuditEntry(
+            event_type="SIMILAR_ALERT_LEARNING", actor_id=actor_id, alert_id=alert_id,
+            feedback_id=feedback_id,
+            details={"family_key": family.family_key, "before": state(before),
+                     "after": state(family), "members_moved": members_moved,
+                     "guardrail_interventions": dict(sorted(guardrail_interventions.items()))}))
 
     def rule_change(self, rule: m.SignatureRule, *, actor_id: int, created: bool,
                     rationale: str | None = None) -> m.AuditEntry:

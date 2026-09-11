@@ -55,13 +55,21 @@ TDM_COLUMNS = {
                         "rank_improvement", "guardrail_pass", "usability_data", "started_at",
                         "completed_at"},
 }
-# Every column added to a TDM table. Each is logged in docs/plan-changelog.md v1.5; an
-# unlogged addition fails test_columns_are_tdm_names_plus_logged_deviations.
+# Every column added to a TDM table, and every table the TDM lacks. Each is logged in
+# docs/plan-changelog.md (v1.5; S7b's in v1.14); an unlogged addition fails
+# test_columns_are_tdm_names_plus_logged_deviations.
 DEVIATION_COLUMNS = {
     "signature_rules": {"attack_category", "rationale"},
     "detection_runs": {"seed"},
-    "alerts": {"detection_score", "evidence_class", "evidence_priority", "requires_review"},
+    "alerts": {"detection_score", "evidence_class", "evidence_priority", "requires_review",
+               "queue_class", "queue_priority", "family_key"},
     "flow_data": {"source_record_id"},
+}
+DEVIATION_TABLES = {
+    "alert_families": {"id", "family_key", "attack_category", "scheme", "severity_version",
+                       "weight", "feedback_counts", "dominant_category", "agreement_ratio",
+                       "gate_open", "gate_reason", "learned_adjustment", "learned_offset",
+                       "applied_adjustment", "applied_offset", "updated_at"},
 }
 ENGINE_FEEDBACK_CATEGORIES = {"confirm_true_positive", "mark_false_positive",
                               "mark_expected_activity", "needs_investigation", "escalate"}
@@ -70,6 +78,7 @@ APPEND_ONLY = [("audit_log", "audit"), ("feedback_events", "feedback")]
 T0 = datetime(2026, 9, 11, 12, 0, tzinfo=UTC)
 MODEL_VERSION = "xgb-8class-20260911"
 RULE_SET_VERSION = "s4b-1"
+FAMILY_KEY = '["Brute Force",22,"tcp","SIG-SSH-BRUTE-FORCE"]'
 
 
 # --------------------------------------------------------------------------------------------
@@ -168,7 +177,7 @@ def graph(conn: sqlite3.Connection) -> dict[str, m.Contract]:
         fusion_weights={"scheme": "evidence_class"},
         guardrail_config={key: value for key, (value, _) in m.GUARDRAIL_DEFAULTS.items()},
         status="completed", alert_count=1, started_at=T0, completed_at=T0, seed=20260911))
-    alert = put("alert", make_alert(dataset, run))
+    alert = put("alert", make_alert(dataset, run, family_key=FAMILY_KEY))
     put("flow", m.FlowRecord(
         alert_id=alert, source_record_id="AL-00001", src_ip="172.31.69.25",
         dst_ip="18.221.219.4", src_port=51514, dst_port=22, protocol="TCP", duration=0.42,
@@ -190,6 +199,12 @@ def graph(conn: sqlite3.Connection) -> dict[str, m.Contract]:
     put("evaluation", m.EvaluationRun(
         scenario_id=scenario, status="completed", metrics={"fpr": 0.01}, fpr_reduction=12.5,
         rank_improvement=3.0, guardrail_pass=True, started_at=T0, completed_at=T0))
+    put("family", m.AlertFamily(
+        family_key=FAMILY_KEY, attack_category="Brute Force", scheme="s7b-c1-m1-category-gate",
+        severity_version="sev-1", weight=0.5, feedback_counts={"mark_false_positive": 1},
+        dominant_category="mark_false_positive", agreement_ratio=1.0, gate_open=False,
+        gate_reason="not enough learning verdicts: 1 of 3 required", learned_adjustment=-15.0,
+        learned_offset=0, applied_adjustment=0.0, applied_offset=0, updated_at=T0))
     conn.commit()
     return rows
 
@@ -217,13 +232,15 @@ def is_unique(conn: sqlite3.Connection, table: str, column: str) -> bool:
 # --------------------------------------------------------------------------------------------
 
 
-def test_schema_is_the_twelve_table_demo_subset(conn):
-    assert table_names(conn) == set(TDM_COLUMNS)
+def test_schema_is_the_twelve_table_demo_subset_plus_logged_tables(conn):
+    assert table_names(conn) == set(TDM_COLUMNS) | set(DEVIATION_TABLES)
 
 
 def test_columns_are_tdm_names_plus_logged_deviations(conn):
     for table, tdm in TDM_COLUMNS.items():
         assert set(columns(conn, table)) == tdm | DEVIATION_COLUMNS.get(table, set()), table
+    for table, logged in DEVIATION_TABLES.items():
+        assert set(columns(conn, table)) == logged, table
 
 
 def test_every_table_model_matches_its_columns(conn):
@@ -312,7 +329,8 @@ def test_guardrail_defaults_agree_with_adaptation_config():
 
 
 @pytest.mark.parametrize("key", ["user", "dataset", "rule", "model", "run", "alert", "flow",
-                                 "feedback", "audit", "guardrail", "scenario", "evaluation"])
+                                 "feedback", "audit", "guardrail", "scenario", "evaluation",
+                                 "family"])
 def test_table_model_round_trips_through_sqlite(conn, graph, key):
     model = graph[key]
     assert db.get(conn, type(model), model.id) == model
@@ -405,15 +423,54 @@ def test_amendment_is_a_new_feedback_row(conn, graph):
 # --------------------------------------------------------------------------------------------
 
 
-def test_queue_orders_by_evidence_priority_then_score(conn, graph):
+def test_queue_orders_by_queue_band_then_score(conn, graph):
     dataset, run = graph["dataset"].id, graph["run"].id
-    for priority, score in [(2, 99), (1, 40), (3, 100), (1, 95)]:
-        db.insert(conn, make_alert(dataset, run, evidence_priority=priority,
-                                   combined_score=score, detection_score=score))
-    order = [(row["evidence_priority"], row["combined_score"]) for row in conn.execute(
-        f"SELECT evidence_priority, combined_score FROM alerts ORDER BY {db.QUEUE_ORDER_BY}")]
-    # The score-100 alert is last: score only orders within an evidence priority (invariant I5).
-    assert order == [(1, 95), (1, 92), (1, 40), (2, 99), (3, 100)]
+    for band, score in [("signature_override", 99), ("tier2_candidate", 40), ("ml_only", 100),
+                        ("tier2_candidate", 95)]:
+        db.insert(conn, make_alert(dataset, run, queue_class=band, combined_score=score,
+                                   detection_score=score))
+    order = [(row["queue_priority"], row["combined_score"]) for row in conn.execute(
+        f"SELECT queue_priority, combined_score FROM alerts ORDER BY {db.QUEUE_ORDER_BY}")]
+    # The score-100 alert is last: score only orders within a queue band (invariant I5).
+    assert order == [(0, 95), (0, 40), (1, 92), (2, 99), (3, 100)]
+
+
+def test_queue_band_defaults_to_the_evidence_band():
+    assert (make_alert().queue_class, make_alert().queue_priority) == ("corroborated", 1)
+    model_only = make_alert(signature_rules=None, evidence_class="ml_only", evidence_priority=2)
+    assert (model_only.queue_class, model_only.queue_priority) == ("ml_only", 3)
+    assert list(m.QUEUE_PRIORITY) == list(get_args(m.QueueClass))
+
+
+def test_queue_priority_must_be_its_bands():
+    with pytest.raises(ValidationError, match="queue_priority"):
+        make_alert(queue_class="tier2_candidate", queue_priority=1)
+
+
+def test_signature_override_never_leaves_its_band():
+    with pytest.raises(ValidationError, match="I3"):
+        make_alert(evidence_class="signature_override", ml_predicted_class="DoS",
+                   queue_class="tier2_candidate")
+
+
+def test_database_enforces_the_queue_band(conn, graph):
+    with pytest.raises(sqlite3.IntegrityError, match="CHECK"):  # the priority no longer matches
+        conn.execute("UPDATE alerts SET queue_class = 'tier2_candidate' WHERE id = ?",
+                     (graph["alert"].id,))
+    override = db.insert(conn, make_alert(graph["dataset"].id, graph["run"].id,
+                                          evidence_class="signature_override",
+                                          ml_predicted_class="DoS"))
+    with pytest.raises(sqlite3.IntegrityError, match="CHECK"):  # I3
+        conn.execute("UPDATE alerts SET queue_class = 'tier2_candidate', queue_priority = 0 "
+                     "WHERE id = ?", (override,))
+
+
+def test_a_family_whose_gate_is_shut_applies_nothing():
+    with pytest.raises(ValidationError, match="shut"):
+        m.AlertFamily(family_key=FAMILY_KEY, scheme="s7b", severity_version="sev-1", weight=0.5,
+                      feedback_counts={"mark_false_positive": 1}, agreement_ratio=1.0,
+                      gate_open=False, gate_reason="1 of 3", learned_adjustment=-15.0,
+                      learned_offset=0, applied_adjustment=-15.0, applied_offset=0)
 
 
 def test_alert_evidence_class_must_agree_with_detectors():

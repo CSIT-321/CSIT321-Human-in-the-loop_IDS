@@ -36,7 +36,8 @@ Specification
     severity                none -> Informational; otherwise Critical >= critical_threshold,
                             High >= 70, Medium >= 40, else Low (bands from stage-4 fusion-engine.js)
     evidence_priority       corroborated 0 . signature_override 1 . ml_only 2 . none 3   (Q22)
-    queue                   ORDER BY evidence_priority, combined_score DESC (db.QUEUE_ORDER_BY)
+    queue                   ORDER BY evidence band, then combined_score DESC - db.QUEUE_ORDER_BY,
+                            whose queue_priority is this band until S7b moves the alert
 
 Invariants, tested in tests/test_fusion.py:
     I1  a signature match never leaves the score below sig * 100
@@ -187,8 +188,9 @@ def fuse(matches: Sequence[m.SignatureMatch], prediction: m.MlPrediction | None,
 
 
 def queue_key(alert: FusionDecision | m.Alert) -> tuple[int, float]:
-    """Python mirror of ``db.QUEUE_ORDER_BY``. A stable sort keeps input order for ties, as
-    ``id ASC`` does for alerts inserted in that order."""
+    """Python mirror of ``db.QUEUE_ORDER_BY`` for alerts still in their evidence band - neither the
+    Tier 2 criteria nor feedback has moved them (S7b). A stable sort keeps input order for ties,
+    as ``id ASC`` does for alerts inserted in that order."""
     return (alert.evidence_priority, -alert.combined_score)
 
 

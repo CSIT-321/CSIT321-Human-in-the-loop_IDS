@@ -19,10 +19,11 @@ from . import models as m
 
 SCHEMA_PATH = Path(__file__).with_name("schema.sql")
 
-# Queue order is part of the fusion contract (plan S6, invariant I5): evidence class first, score
+# Queue order is part of the fusion contract (plan S6, invariant I5): queue band first, score
 # second, id as a deterministic tiebreak. Ordering by score alone ranked the key detections #414
-# of 417 (plan-changelog v1.0 FIX).
-QUEUE_ORDER_BY = "evidence_priority ASC, combined_score DESC, id ASC"
+# of 417 (plan-changelog v1.0 FIX). Since S7b the band is queue_priority: the evidence class's band
+# until the Tier 2 criteria or analyst feedback move the alert (changelog v1.14).
+QUEUE_ORDER_BY = "queue_priority ASC, combined_score DESC, id ASC"
 
 TABLE_MODELS: dict[str, type[m.Contract]] = {
     "users": m.User,
@@ -33,6 +34,7 @@ TABLE_MODELS: dict[str, type[m.Contract]] = {
     "alerts": m.Alert,
     "flow_data": m.FlowRecord,
     "feedback_events": m.FeedbackEvent,
+    "alert_families": m.AlertFamily,
     "audit_log": m.AuditEntry,
     "guardrail_config": m.GuardrailConfigEntry,
     "evaluation_scenarios": m.EvaluationScenario,
