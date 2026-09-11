@@ -1,0 +1,55 @@
+{
+  "flows": 5000,
+  "calibration": 2500,
+  "future": 2500,
+  "calibration_attacks": 600,
+  "future_attacks": 400,
+  "severity_chart": "sev-1",
+  "seeds": [
+    20260911,
+    20260912,
+    20260913
+  ],
+  "error_rates": [
+    0.0,
+    0.05,
+    0.15
+  ],
+  "rounds": 10,
+  "batch": 25,
+  "qa_sample": 5,
+  "selection_rule": "sel-3",
+  "family_keys": [
+    "coarse",
+    "fine"
+  ],
+  "gate": {
+    "min_feedback": 3,
+    "min_agreement": 0.67,
+    "source": "stage-5/config/adaptation-config.json, aggregation"
+  },
+  "params": {
+    "formula": "C2",
+    "movement": "M1",
+    "k": 30.0,
+    "max_reduction": 30.0,
+    "max_increase": 20.0,
+    "demotion_shield": 2,
+    "uncertainty_floor": 0.4
+  },
+  "evidence_to_class": {
+    "corroborated": 1,
+    "signature_override": 2,
+    "ml_only": 3,
+    "none": 4
+  },
+  "run_id": "20260911T121013Z",
+  "started": "2026-09-11T12:10:13.689381Z",
+  "commit": "5269732",
+  "severity_chart_file": "config/severity-chart.json",
+  "environment": {
+    "python": "3.11.11",
+    "pandas": "2.3.3",
+    "numpy": "2.3.5"
+  }
+}
