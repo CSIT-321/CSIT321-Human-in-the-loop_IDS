@@ -61,6 +61,9 @@ GuardrailCode = Literal[
     "critical_alert_floor",
     "infiltration_alert_floor",
     "signature_ml_disagreement_review_preserved",
+    # S7 (changelog v1.10): invariant I3, and the 0-100 bound when guardrails are switched off.
+    "signature_override_feedback_immune",
+    "score_range_clamped",
 ]
 Role = Literal["security_analyst", "system_admin", "evaluator"]
 UserStatus = Literal["active", "inactive"]

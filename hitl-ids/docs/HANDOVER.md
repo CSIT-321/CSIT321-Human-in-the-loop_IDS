@@ -59,7 +59,7 @@ Repo: `github.com/CSIT-321/CSIT321-Human-in-the-loop_IDS` · working tree `hitl-
 > S4b. It is **not** "Phase 1". Never use a bare phase number for it.
 >
 > **Actual status:** Phase 0 **PARTIAL** (S1 scaffold incomplete — Python slice only; **S2 DONE**, 51 tests) ·
-> Phase 1 **DONE** · Phase 2 **S5, S4b, S8, S6 done** (S7 remains) · Phases 3–6 **not started**.
+> Phase 1 **DONE** · Phase 2 **S5, S4b, S6, S7a, S8 done** (S7b similar-alert learning remains) · Phases 3–6 **not started**.
 
 ```
 hitl-ids/
@@ -209,7 +209,7 @@ These were believed, then disproved. Re-proposing them wastes a cycle.
 | ~~2~~ | ~~S2 — data contracts~~ | **DONE 2026-09-11** | 12 tables, 51 tests, 0 skipped. Deviations in changelog v1.5 |
 | ~~3~~ | ~~S5 + S4b — signature engine and tuned rule set~~ | **DONE 2026-09-11** | Engine delegated (DeepSeek), golden-tested 1,000/1,000. Rule set written; held-out figures reproduced. Changelog v1.6 |
 | ~~4~~ | ~~S6 — fusion re-specification~~ | **DONE 2026-09-11** | `packages/detection/fusion/cef.py`; spec in its docstring. Demo: 200 corroborated, 0 override; DB queue order proven. Changelog v1.8 |
-| 5 | **NEXT →** S7 — feedback + guardrails. Inputs from v1.8: invariant I3 is S7's; "Critical" now means score ≥ 80 (Node used ≥ 90) — log the floor-trigger decision. Inputs from v1.9: floors must never *raise* a score; map `uncertain`; feedback cannot cross evidence bands — see `system-workflow.md` §7 | **Claude only** | **Port the collaborator's design** (sec. 8) to Python rather than authoring fresh |
+| 5 | ~~S7a — direct feedback + guardrails~~ **DONE** (changelog v1.10) · **NEXT →** S7b — similar-alert learning. Inputs recorded before S7a: invariant I3 is S7's; "Critical" now means score ≥ 80 (Node used ≥ 90) — log the floor-trigger decision. Inputs from v1.9: floors must never *raise* a score; map `uncertain`; feedback cannot cross evidence bands — see `system-workflow.md` §7 | **Claude only** | **Port the collaborator's design** (sec. 8) to Python rather than authoring fresh |
 | 6 | ~~S8 — audit writer~~ **DONE** (delegated, changelog v1.7) · S9 — SQLite repositories + batch runner | Mixed | S9 builds on `db.insert`/`db.get` and `AuditWriter`. **S3's `FlowSource`/`CsvReplaySource` seam was never built — S9 must add it** (changelog v1.9) |
 
 Full detail per step: [`../../plans/hitl-ids-demo-build.md`](../../plans/hitl-ids-demo-build.md).
@@ -269,8 +269,10 @@ them before the next merge.
 ## 9. Open questions for the user
 
 1. ~~Push the branch?~~ **User decision (2026-09-11):** `feat/s2-contracts` pushed to origin as a
-   view-only progress branch, with the demo sample. Work continues locally; push again only when asked.
-2. ~~Held-out re-test~~ **Done, reported.** ~~S2~~ **Done.** ~~S5 + S4b~~ **Done.** ~~S8~~ **Done.** ~~S6~~ **Done.** Next is S7 (Claude only — the plan's highest-risk step).
+   view-only progress branch, with the demo sample. `feat/s6-fusion` (S2–S6 + docs) pushed on request
+   the same day. Work continues locally; push again only when asked.
+2. ~~Held-out re-test~~ **Done, reported.** ~~S2~~ **Done.** ~~S5 + S4b~~ **Done.** ~~S8~~ **Done.** ~~S6~~ **Done.** ~~S7a~~ **Done.** Next is S7b (similar-alert learning), then S9. Open for the
+   project lead: feedback cannot move an alert across evidence bands (`system-workflow.md` §7, item 4).
 3. Review [`finding-infiltration-mislabelling.md`](finding-infiltration-mislabelling.md) — a
    report-ready write-up of the Infiltration finding, drafted and awaiting your edit.
 4. **Agree a file-ownership boundary with the collaborator** before the next merge (see sec. 8).

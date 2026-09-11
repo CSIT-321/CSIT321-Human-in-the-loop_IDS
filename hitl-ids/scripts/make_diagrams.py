@@ -531,7 +531,7 @@ def end_to_end():
     lane(0.3, [("SQLite + batch runner (S9)\nalerts, flow_data,\ndetection_runs, audit_log", "grey", False),
                ("API (S10) + dashboard\n(S11 - S14): queue by class,\nthen by combined_score", "grey", False),
                ("Analyst decision\none of 5 feedback\ncategories", "grey", False),
-               ("Guardrails (S7) - NEXT\ncap, floors, I3\naudit trail (S8) built", "orange", False)])
+               ("Guardrails (S7a) - BUILT\ncap, floors, I3 + audit (S8)\nsimilar-alert learning next", "green", False)])
     arrow(ax, xs[3] + w / 2, 4.35, xs[3] + w / 2, 3.9)
     ax.text(xs[3] + w / 2 + 0.06, 4.12, "plugs in later", fontsize=6, style="italic", color="#555555")
     arrow(ax, xs[3] + w / 2, 3.0, xs[3] + w / 2, 2.55)
@@ -548,12 +548,12 @@ def end_to_end():
 def feedback_loop():
     fig, ax = canvas(11, 6.0)
     H = 6.0 / 11 * 10
-    ax.text(5, H - 0.22, "S7 (next) - how analyst feedback becomes a new score, inside the "
-            "guardrails", ha="center", fontsize=10.5, weight="bold")
+    ax.text(5, H - 0.22, "S7 - how analyst feedback becomes a new score, inside the "
+            "guardrails (S7a built)", ha="center", fontsize=10.5, weight="bold")
     box(ax, 0.2, 3.7, 3.0, 1.3, "Analyst feedback on one alert  ->  requested change\n"
         "confirm_true_positive   +10   (forces review)\nmark_false_positive   -30\n"
         "mark_expected_activity   -15\nneeds_investigation   0   (forces review)\n"
-        "escalate   +15   (forces review)", ORANGE, EDGE["orange"], fs=6.7)
+        "escalate   +15   (forces review)", GREEN, EDGE["green"], fs=6.7)
     box(ax, 3.5, 3.9, 2.3, 0.9, "duplicate is a queue action,\nnot a score change:\n"
         "alerts.is_duplicate_of", GREY, EDGE["grey"], fs=6.6)
     box(ax, 6.1, 3.7, 3.7, 1.3, "Later - similar-alert learning (adaptation-config)\n"
@@ -565,7 +565,7 @@ def feedback_loop():
              (5.1, "3  Floors\nCritical alert held at >= 70\nInfiltration held at >= 75"),
              (7.55, "4  Outcome\napplied / capped / rejected\n+ reason + review flag")]
     for x, text in chain:
-        box(ax, x, 2.1, 2.25, 1.0, text, ORANGE, EDGE["orange"], fs=6.8)
+        box(ax, x, 2.1, 2.25, 1.0, text, GREEN, EDGE["green"], fs=6.8)
     arrow(ax, 1.7, 3.7, 1.32, 3.1)
     for (x, _), (next_x, _) in zip(chain, chain[1:]):
         arrow(ax, x + 2.25, 2.6, next_x, 2.6)
@@ -576,8 +576,8 @@ def feedback_loop():
             (7.55, "dashboard  (S10 - S12)\ndetection vs current score,\nguardrail badge, queue re-sorted", "grey")]:
         box(ax, x, 0.45, 2.25, 1.0, text, STATUS_FILL[status], EDGE[status], fs=6.6)
         arrow(ax, 8.675, 2.1, x + 1.125, 1.45)
-    ax.text(5, 0.15, "green = the tables and the writer already exist (S2, S8)     orange = S7 builds "
-            "the logic     grey = planned", ha="center", fontsize=7, style="italic", color="#555555")
+    ax.text(5, 0.15, "green = built and tested (S2, S7a, S8)     grey = planned     "
+            "dashed = S7b, next", ha="center", fontsize=7, style="italic", color="#555555")
     save(fig, "14_feedback_loop.png")
 
 
@@ -615,8 +615,8 @@ def dashboard_columns():
             cell.set_facecolor("#ffe6cc")
     ax.set_title("The dashboard after feedback - two score columns (illustrative feedback on real "
                  "demo alerts)", fontsize=10.5, weight="bold")
-    fig.text(0.5, 0.04, "Scores and queue positions are real. The three feedback events are "
-             "hypothetical and follow the adopted guardrail constants; S7 builds the real service.",
+    fig.text(0.5, 0.04, "Scores and queue positions are real. The feedback events are examples; "
+             "the S7 service reproduces the first and third exactly (tests/test_guardrail.py).",
              ha="center", fontsize=7.8, style="italic", color="#555555")
     save(fig, "15_dashboard_columns.png")
 

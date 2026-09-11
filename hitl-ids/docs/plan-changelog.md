@@ -453,7 +453,7 @@ docstring.
 
 ---
 
-## v1.9 — Full workflow documented; combination accepted for the demo; three corrections (2026-09-11) ← **current**
+## v1.9 — Full workflow documented; combination accepted for the demo; three corrections (2026-09-11)
 
 `docs/system-workflow.md` with diagrams 13–15: the path from network traffic to the dashboard and
 back, each part marked built / next / planned.
@@ -479,6 +479,39 @@ back, each part marked built / next / planned.
 
 Illustrated on real demo alerts in `system-workflow.md` §5: `AL-00478` (99.89 → held at 70),
 `AL-02717` (88.48 → held at 70), `AL-03086` (36.94 → 46.94).
+
+---
+
+## v1.10 — S7a landed: direct analyst feedback inside the guardrails (2026-09-11) ← **current**
+
+`packages/detection/guardrail/policy.py` + `packages/detection/feedback/service.py`, on branch
+`feat/s7-feedback`. **Not delegated** — feedback and guardrail logic are Claude-only, and this is the
+plan's highest-risk step. 23 new tests in `tests/test_guardrail.py`, and the fusion suite's I3
+placeholder is now a real test. **211 tests pass, 0 skipped.**
+
+| | Change | Rationale |
+|---|---|---|
+| KEEP | The engine's values: requested change +10 / −30 / −15 / 0 / +15 per category; cap −30 / +20; Critical floor 70 (a Critical alert, or a Critical-severity matching rule); Infiltration floor 75 | `stage-5/core/feedback-engine.js` is authoritative (HANDOVER §7) |
+| KEEP | **Verdicts do not stack.** The current score is `detection_score` + the guarded change of the latest verdict; each verdict supersedes the previous one (`amended_from_id`) | The engine's semantics (`resolveEffectiveFeedbackEvents`; its test "Detection Score remains immutable after repeated adaptation"). A score can never drift further than one capped change |
+| CHG | **Floors never raise a score** — a floor protects an alert only if it started at or above the floor | The engine lifted a 60-point Infiltration alert *up* to 75 on a "false positive" verdict |
+| CHG | **I3 freezes `signature_override` against every category.** A non-zero change is rejected and logged as `GUARDRAIL_REJECTION` for the administrator | The plan's S7 test wording: "unchanged by any feedback category". The engine only preserved the review flag |
+| DEC | "Critical" = score ≥ 80 (from S6), so the Critical floor protects every flagged demo alert — wider than the engine's ≥ 90 | Logged as plan v0.3 FIX (c) requires |
+| DEC | `uncertain` is folded into `needs_investigation`; `duplicate` stays a queue action | Identical effect: no change, forces review |
+| DEC | The review flag is the category's own flag, a guardrail's, or S6's review rule applied to the new score. The engine's separate `reviewThreshold` (70) is not used | Keeps S6's single-threshold rule |
+| ADD | Guardrails can be switched off (`GuardrailPolicy(active=False)`) for the evaluation's third arm (D9); only the 0–100 range still binds | D9 — the only way to demonstrate the guardrails rather than assert them |
+| ADD | Guardrail settings load from `guardrail_config`, so an administrator's change takes effect (NFR-08) | Proven by test |
+| ADD | `submit_feedback` is one transaction — `feedback_events` row, alert re-score, `FEEDBACK` + `GUARDRAIL_*` audit entries; any failure writes nothing | Proven by test |
+| ADD | Two contract codes: `signature_override_feedback_immune`, `score_range_clamped` | Python literal only; the schema is unchanged |
+| DEF | Similar-alert learning (similarity + aggregation) → **S7b**. The engine's revert events are not ported | Direct feedback is what the demo path needs first |
+
+**Proven by test:** the TDM worked example (92, −40 → capped −30 → Critical floor → 70, actual −22);
+the collaborator's JS guardrail tests, ported; a Critical alert never falls below 70 across a grid of
+scores and requested changes; I3 across every category, on real fusion output; non-stacking;
+rollback on failure; the guardrails-off arm. The worked examples in `system-workflow.md` §5
+(`AL-00478` 99.89 → 70, `AL-03086` 36.94 → 46.94) are now reproduced by the real service.
+
+**Still open for the project lead:** feedback cannot move an alert across evidence bands, so a
+confirmed missed attack stays in the bottom band (`system-workflow.md` §7, item 4). Settle before S11.
 
 ---
 

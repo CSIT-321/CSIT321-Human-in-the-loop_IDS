@@ -22,7 +22,8 @@ them (S10–S14).
 | Combination into evidence class + score + review flag + explanation (S6) | **Built** |
 | Storing alerts via a one-command batch run (S9) | Planned — needs S7 first |
 | Replaying flows through a `FlowSource` interface (S3) | **Missing** — see §3 |
-| Feedback + guardrails (S7) | **Next** |
+| Feedback + guardrails — direct verdicts (S7a) | **Built** (changelog v1.10) |
+| Similar-alert learning (S7b) | Next |
 | API and dashboard (S10–S14) | Planned |
 
 **Does the combination need more tuning?** Not for the demo, and on this data tuning would change
@@ -134,14 +135,19 @@ feedback, which is what the evaluation (S15) compares.
 
 ---
 
-## 5. Lane 4 — Feedback and guardrails *(S7 — next)*
+## 5. Lane 4 — Feedback and guardrails *(S7a built; similar-alert learning, S7b, next)*
 
 ![Feedback loop](img/14_feedback_loop.png)
 
 The analyst's verdict on an alert becomes a new `combined_score` — but only through the guardrails,
-whose job is to stop feedback from ever silencing a genuine threat. This is the design S7 ports
-from the collaborator's engine (`stage-5/core/feedback-engine.js`); the tables it writes to and the
-audit writer already exist.
+whose job is to stop feedback from ever silencing a genuine threat. It is built as
+`packages/detection/feedback/service.py` over `packages/detection/guardrail/policy.py`, ported from
+the collaborator's engine (`stage-5/core/feedback-engine.js`), and one call does everything below
+in a single transaction.
+
+**Verdicts do not stack.** Each new verdict on an alert supersedes the previous one, and the
+current score is always `detection_score` + the guarded change of the latest verdict — so a score
+can never drift further than one capped change from what the detectors said.
 
 ### What the analyst can say
 
@@ -178,7 +184,7 @@ not a score change.
 alerts with at least 67% agreement, the collaborator's design adjusts the similar alerts too
 (false positive −10 / −25, true positive +8 / +15). The same guardrails apply.
 
-### Worked examples on real demo alerts *(illustrative — S7 is not built)*
+### Worked examples on real demo alerts *(the first and third are reproduced exactly by `tests/test_guardrail.py`)*
 
 | Alert | What it is | Verdict | Calculation | Result |
 |---|---|---|---|---|
@@ -217,24 +223,20 @@ API endpoints behind it (S10): `GET /api/alerts` (queue order), `POST /api/alert
 
 ---
 
-## 7. Decisions S7 must make — surfaced now
+## 7. The S7 decisions — how they were settled
 
-These follow from the design above and are recorded so they are decided deliberately:
+| # | Question | Outcome |
+|---|---|---|
+| 1 | Floors must never raise a score | **Decided and built.** A floor protects an alert only if it started at or above it. The collaborator's engine lifted a 60-point Infiltration alert *up* to 75 on a "false positive"; a test proves the port does not |
+| 2 | "Critical" now means score ≥ 80 (legacy ≥ 90) | **Logged** (changelog v1.10). The Critical floor therefore protects every flagged demo alert |
+| 3 | The engine's `uncertain` category | **Folded into `needs_investigation`** — identical effect (no change, forces review) |
+| 4 | Feedback moves a score within its evidence band, never across bands, so a confirmed missed attack (`AL-03086`) stays in the bottom band | **Still open — a decision for the project lead.** The service sets its review flag, so a "flagged for review" dashboard view would surface it. Settle before S11 |
+| 5 | A false positive among Critical alerts cannot fall below 70 | **Confirmed by test.** Clearing it from the queue is a *status* change (`resolved` / `dismissed`), not a score change |
 
-1. **Floors must never raise a score.** The collaborator's engine lifts any Infiltration alert
-   below 75 *up* to 75 on negative feedback, even one that started at 60. The port should hold an
-   alert at the floor only if it started above it.
-2. **"Critical" now means a score of 80 or more** (the legacy engine used 90). The Critical floor
-   therefore protects more alerts — a deliberate widening to log.
-3. **`uncertain`.** The engine also defines `uncertain` (no change, forces review), which the data
-   contract does not list. It behaves exactly like `needs_investigation`; map it, or add it.
-4. **Feedback moves a score within its evidence band, never across bands.** The queue orders by
-   evidence class first, so a confirmed missed attack (`AL-03086`) stays in the bottom band however
-   high its score goes. The dashboard needs a "flagged for review" view so such an alert is not
-   buried. **This one affects the demo story — it may be a decision for the project lead.**
-5. **A false positive among Critical alerts cannot fall below 70.** That is the safety guarantee
-   working. Clearing it from the queue is a *status* change (`resolved` / `dismissed`), not a score
-   change — the score is the system's memory of how dangerous the flow looked.
+Also settled in S7a: **I3 freezes a `signature_override` alert against every category** — the
+plan's own test wording — and the feedback is logged as a `GUARDRAIL_REJECTION` for the
+administrator. **Guardrails can be switched off** for the evaluation's third arm (D9); only the
+0–100 range still binds.
 
 ---
 
@@ -244,7 +246,8 @@ These follow from the design above and are recorded so they are decided delibera
 
 | Order | Step | Delivers |
 |---|---|---|
-| 1 | **S7** feedback + guardrails *(Claude only)* | §5 — the safety claim |
+| ~~1~~ | ~~S7a direct feedback + guardrails~~ | **Done** — §5, changelog v1.10 |
+| 1 | **S7b** similar-alert learning *(Claude only)* | One verdict adjusting similar alerts, inside the same guardrails |
 | 2 | **S9** batch runner + the S3 `FlowSource` seam | One command: dataset → stored, scored alerts |
 | 3 | **S15** evaluation design | The three seeded runs: no feedback · feedback · guardrails off |
 | 4 | **S10a / S10b** API | The endpoints in §6 |

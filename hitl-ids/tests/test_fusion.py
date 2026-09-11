@@ -19,7 +19,9 @@ import pytest
 
 from packages.contracts import db
 from packages.contracts import models as m
+from packages.detection.feedback.service import FEEDBACK_EFFECTS
 from packages.detection.fusion.cef import EVIDENCE_PRIORITY, FusionConfig, fuse, queue_key
+from packages.detection.guardrail.policy import apply_guardrails
 from packages.detection.signature.engine import match_all
 from packages.detection.signature.observable import OBSERVABLE_FIELDS, project_frame
 from packages.detection.signature.rule_set import load_rule_set
@@ -159,9 +161,16 @@ def test_i2_signature_override_is_always_reviewed():
     assert overrides and all(d.requires_review for d in overrides)
 
 
-@pytest.mark.skip(reason="I3 - feedback cannot decay signature_override - is S7's guardrail")
 def test_i3_feedback_cannot_decay_signature_override():
-    """Placeholder so the invariant list stays complete; tests/test_guardrail.py (S7) owns it."""
+    """I3 is enforced by S7's guardrails; checked here on real fusion output so the list is whole."""
+    overrides = [fuse(matches, pred) for matches, pred in grid()]
+    overrides = [d for d in overrides if d.evidence_class == "signature_override"]
+    assert overrides
+    for decision in overrides:
+        alert = decision.to_alert(dataset_id=1, run_id=1, created_at=T0)
+        for category, effect in FEEDBACK_EFFECTS.items():
+            outcome = apply_guardrails(alert, effect.requested_delta)
+            assert outcome.score_after == alert.detection_score, category
 
 
 def test_i4_fusion_is_a_pure_function_of_its_inputs():
