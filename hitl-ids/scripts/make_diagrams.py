@@ -17,7 +17,8 @@ from pathlib import Path
 import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
-from matplotlib.patches import FancyBboxPatch, FancyArrowPatch
+import numpy as np
+from matplotlib.patches import FancyArrowPatch, FancyBboxPatch, Patch, Polygon
 
 HERE = Path(__file__).resolve().parent
 IMG = HERE.parent / "docs" / "img"
@@ -200,9 +201,9 @@ def roadmap():
     # Phase numbering is CANONICAL and matches plans/hitl-ids-demo-build.md exactly.
     # Do not renumber here without renumbering the plan.
     phases = [
-        ("PHASE 0\nFoundation\nS1 - S2", ORANGE, "orange", "PARTIAL"),
+        ("PHASE 0\nFoundation\nS2 done, S1 partial", ORANGE, "orange", "PARTIAL"),
         ("PHASE 1\nData & model\nS3 - S4", GREEN, "green", "DONE"),
-        ("PHASE 2\nDetection core\nS5 S4b S6 S7 S8", ORANGE, "orange", "NEXT"),
+        ("PHASE 2\nDetection core\nS5 S4b S6 S8 done", ORANGE, "orange", "S7 NEXT"),
         ("PHASE 3\nPersistence\n+ API - S9 S10", GREY, "grey", ""),
         ("PHASE 4\nInterface\nS11 - S14", GREY, "grey", ""),
         ("PHASE 5\nEvaluation\n+ demo - S15 S16", BLUE, "blue", "GATE"),
@@ -220,12 +221,270 @@ def roadmap():
     ax.text(5, H - 0.12, "Roadmap - phase numbers match plans/hitl-ids-demo-build.md",
             ha="center", fontsize=10, weight="bold")
     ax.text(5, 0.10,
-            "Phase 0 partial: S1 scaffold incomplete, S2 not started.   "
-            "Phase 2 partial: only S4b done.   Phase 6 blocked until the S16 demo gate passes.",
+            "Phase 0: S2 contracts done, S1 scaffold partial.   Phase 2: S5, S4b, S6, S8 done - "
+            "S7 next.   Phase 6 blocked until the S16 demo gate passes.",
             ha="center", fontsize=6.8, style="italic", color="#555555")
     save(fig, "06_roadmap.png")
 
 
+# --------------------------------------------------------------------------------------------
+# Iteration 2 - the detection core (S2, S5 + S4b, S6, S8). These figures read the tracked
+# summaries data/processed/fusion_demo_summary.json and rule_set_validation.json.
+# --------------------------------------------------------------------------------------------
+
+EVIDENCE_COLOURS = {  # evidence class -> (edge, fill)
+    "corroborated": ("#82b366", GREEN), "signature_override": ("#b85450", RED),
+    "ml_only": ("#d79b00", ORANGE), "none": ("#999999", GREY),
+}
+
+
+def load(name):
+    return json.load(open(PROC / name, encoding="utf-8"))
+
+
+def diamond(ax, cx, cy, w, h, text, fs=7.6):
+    ax.add_patch(Polygon([(cx, cy + h / 2), (cx + w / 2, cy), (cx, cy - h / 2), (cx - w / 2, cy)],
+                         closed=True, facecolor=BLUE, edgecolor=EDGE["blue"], linewidth=1.3))
+    ax.text(cx, cy, text, ha="center", va="center", fontsize=fs, linespacing=1.25)
+
+
+def tag(ax, x, y, text, color="#444444"):
+    ax.text(x, y, text, ha="center", va="center", fontsize=7.5, weight="bold", color=color,
+            bbox={"boxstyle": "round,pad=0.15", "facecolor": "white", "edgecolor": "none"})
+
+
+def architecture():
+    fig, ax = canvas(11, 5.5)
+    H = 5.5 / 11 * 10
+    ax.text(5, H - 0.28, "Detection core after Iteration 2 - what exists and what is next",
+            ha="center", fontsize=10.5, weight="bold")
+    ax.text(5, H - 0.58, "green = built and tested     orange = next (Claude only)     "
+            "grey = planned", ha="center", fontsize=7.5, style="italic", color="#555555")
+    # detection path
+    box(ax, 0.2, 3.35, 2.3, 0.85, "signature/  (S5 + S4b)\nengine.py - delegated, golden-tested"
+        "\nrule-set-s4b-1.json: 2 live rules", GREEN, EDGE["green"], fs=6.8)
+    box(ax, 0.2, 2.25, 2.3, 0.85, "ml/inference.py  (Iteration 1)\n8-class XGBoost\n"
+        "native TreeSHAP, additivity-checked", GREEN, EDGE["green"], fs=6.8)
+    box(ax, 3.1, 2.8, 2.4, 0.85, "fusion/cef.py  (S6)\nevidence class - score - review\n"
+        "explanation - queue order", GREEN, EDGE["green"], fs=6.8)
+    box(ax, 6.1, 2.8, 1.8, 0.85, "S9  persistence\n+ batch runner", GREY, EDGE["grey"], fs=6.8)
+    box(ax, 8.2, 2.8, 1.6, 0.85, "S10 - S14\nAPI + analyst UI", GREY, EDGE["grey"], fs=6.8)
+    arrow(ax, 2.5, 3.775, 3.1, 3.4)
+    arrow(ax, 2.5, 2.675, 3.1, 3.05)
+    arrow(ax, 5.5, 3.225, 6.1, 3.225)
+    arrow(ax, 7.9, 3.225, 8.2, 3.225)
+    # human path
+    box(ax, 0.2, 1.05, 2.3, 0.8, "analyst feedback\n(from the S11 - S12 UI)", GREY, EDGE["grey"],
+        fs=6.8)
+    box(ax, 3.1, 1.05, 2.4, 0.8, "S7  feedback + guardrails\nNEXT - the safety claim", ORANGE,
+        EDGE["orange"], fs=6.8)
+    box(ax, 6.1, 1.05, 3.7, 0.8, "audit/writer.py  (S8) - delegated\nappend-only trail - typed "
+        "events - query - CSV export", GREEN, EDGE["green"], fs=6.8)
+    arrow(ax, 2.5, 1.45, 3.1, 1.45)
+    arrow(ax, 5.5, 1.45, 6.1, 1.45)
+    arrow(ax, 4.3, 2.8, 4.3, 1.85)
+    ax.text(4.42, 2.32, "fused scores", fontsize=6.5, style="italic", color="#555555")
+    # foundation
+    box(ax, 0.2, 0.12, 9.6, 0.62, "packages/contracts  (S2)   -   models.py   -   schema.sql: "
+        "12 tables, append-only triggers   -   db.py codec   -   QUEUE_ORDER_BY",
+        BLUE, EDGE["blue"], fs=7.2)
+    save(fig, "07_architecture.png")
+
+
+def fusion_decision():
+    fig, ax = canvas(11, 6.3)
+    H = 6.3 / 11 * 10
+    ax.text(5, H - 0.3, "S6 - how one flow's evidence is combined  (Complementary Evidence "
+            "Fusion, trust model)", ha="center", fontsize=10.5, weight="bold")
+    box(ax, 0.3, 4.25, 4.3, 0.85, "Signature engine  (S5 - 2 live rules)\n"
+        "sig = max severity score of the matching rules\n"
+        "Low 0.40 - Medium 0.60 - High 0.80 - Critical 0.95", GREEN, EDGE["green"], fs=7.2)
+    box(ax, 5.4, 4.25, 4.3, 0.85, "ML model  (8-class XGBoost + TreeSHAP)\n"
+        "ml = 1 - P(Benign)      predicted class = argmax\n"
+        "prediction unavailable -> review is forced", GREEN, EDGE["green"], fs=7.2)
+    arrow(ax, 2.45, 4.25, 4.95, 3.88)
+    arrow(ax, 7.55, 4.25, 5.05, 3.88)
+    diamond(ax, 5.0, 3.45, 2.3, 0.8, "Did any\nrule match?")
+    diamond(ax, 2.45, 2.35, 3.0, 0.9, "Does the model predict\na class a matching\nrule asserts?",
+            fs=7.2)
+    diamond(ax, 7.55, 2.35, 2.6, 0.85, "Does the model\npredict an attack?", fs=7.2)
+    arrow(ax, 3.85, 3.45, 2.45, 2.80)
+    tag(ax, 3.2, 3.25, "yes")
+    arrow(ax, 6.15, 3.45, 7.55, 2.775)
+    tag(ax, 6.8, 3.25, "no")
+    leaves = [
+        (0.1, "corroborated", "CORROBORATED  -  priority 0\nscore = min(100, max(sig, ml) x 100 + 5)"
+                              "\nreview when score >= 80\nrule and model agree on the class"),
+        (2.5, "signature_override", "SIGNATURE_OVERRIDE  -  priority 1\nscore = sig x 100\n"
+                                    "review ALWAYS  (I2)\nthe model disputes the rule's class"),
+        (5.2, "ml_only", "ML_ONLY  -  priority 2\nscore = ml x 100\nreview when score >= 80\n"
+                         "no checkable reason"),
+        (7.6, "none", "NONE  -  priority 3\nscore = ml x 100\nseverity Informational\n"
+                      "no detector flagged the flow"),
+    ]
+    for x, evidence, text in leaves:
+        edge, fill = EVIDENCE_COLOURS[evidence]
+        box(ax, x, 0.45, 2.3, 1.15, text, fill, edge, fs=6.6)
+    arrow(ax, 2.45, 1.9, 1.25, 1.6)
+    tag(ax, 1.65, 1.82, "yes")
+    arrow(ax, 2.45, 1.9, 3.65, 1.6)
+    tag(ax, 3.25, 1.82, "no")
+    arrow(ax, 7.55, 1.925, 6.35, 1.6)
+    tag(ax, 6.75, 1.82, "yes")
+    arrow(ax, 7.55, 1.925, 8.75, 1.6)
+    tag(ax, 8.35, 1.82, "no")
+    ax.text(5, 0.17, "Queue: ORDER BY evidence_priority, combined_score DESC (Q22).   One critical "
+            "threshold - 80, the guardrails' critical_alert_threshold - sets severity Critical, "
+            "is_critical and review together.", ha="center", fontsize=6.8, style="italic",
+            color="#555555")
+    save(fig, "08_fusion_decision.png")
+
+
+def fusion_scoring():
+    summary = load("fusion_demo_summary.json")
+    live = summary["live_rules"]
+    sig = max(rule["severity_score"] for rule in live)
+    severities = sorted({rule["severity"] for rule in live})
+    which = "as both live rules are" if len(severities) == 1 else "the most severe live rule"
+    x = np.linspace(0, 1, 401)
+    fig, ax = plt.subplots(figsize=(10, 5))
+    for low, high, colour, name in [(0, 40, "#f2f2f2", "Low"), (40, 70, "#fff2cc", "Medium"),
+                                    (70, 80, "#ffe6cc", "High"), (80, 100, "#f8cecc", "Critical")]:
+        ax.axhspan(low, high, color=colour, alpha=0.7, zorder=0)
+        ax.text(1.01, (low + high) / 2, name, transform=ax.get_yaxis_transform(), va="center",
+                fontsize=8, color="#555555")
+    ax.plot(x, np.minimum(100, np.maximum(sig * 100, 100 * x) + 5), color="#82b366", lw=2.6,
+            label="corroborated = min(100, max(sig, ml) x 100 + 5)")
+    ax.plot(x, np.full_like(x, sig * 100), color="#b85450", lw=2.2, ls="--",
+            label=f"signature_override = sig x 100 = {sig * 100:g}  (the model's view is not used)")
+    ax.plot(x, 100 * x, color="#d79b00", lw=2.2, label="ml_only and none = ml x 100")
+    ax.axhline(80, color="#b85450", lw=1, ls=":")
+    ax.text(0.01, 81.3, "critical threshold 80 - review, severity Critical and is_critical",
+            fontsize=7.8, color="#b85450")
+    ax.annotate(f"I1: a rule match never scores below\nsig x 100 = {sig * 100:g}",
+                xy=(0.3, sig * 100), xytext=(0.04, 22), fontsize=8,
+                arrowprops={"arrowstyle": "->", "color": "#555555"})
+    offsets = {"corroborated": (-150, -22), "ml_only": (-150, -46), "none": (8, 8),
+               "signature_override": (8, 8)}
+    for evidence, ex in summary["examples"].items():
+        if ex and ex["ml_probability"] is not None:
+            edge, _ = EVIDENCE_COLOURS[evidence]
+            point = (ex["ml_probability"], ex["combined_score"])
+            ax.scatter(*point, s=60, color=edge, edgecolor="black", zorder=5)
+            ax.annotate(f"{ex['alert_id']}  {evidence}  ({ex['combined_score']:g})", point,
+                        xytext=offsets[evidence], textcoords="offset points", fontsize=7.5,
+                        arrowprops={"arrowstyle": "-", "color": edge})
+    ax.set_xlim(0, 1)
+    ax.set_ylim(0, 102)
+    ax.set_xlabel("model's malicious probability   ml = 1 - P(Benign)", fontsize=9)
+    ax.set_ylabel("combined score (0-100)", fontsize=9)
+    ax.set_title(f"S6 - the calculation per evidence class, for a {'/'.join(severities)} rule "
+                 f"(sig = {sig:.2f}, {which})", fontsize=10.5, weight="bold")
+    ax.legend(loc="lower right", fontsize=7.8, framealpha=0.95)
+    ax.spines[["top", "right"]].set_visible(False)
+    plt.tight_layout()
+    save(fig, "09_fusion_scoring.png")
+
+
+def queue_order():
+    summary = load("fusion_demo_summary.json")
+    fig, ax = plt.subplots(figsize=(11, 3.1))
+    for band in summary["queue_bands"]:
+        evidence, first, last = band["evidence_class"], band["first"], band["last"]
+        count = last - first + 1
+        review = summary["classes"][evidence]["requires_review"]
+        edge, fill = EVIDENCE_COLOURS[evidence]
+        ax.barh(0, count, left=first - 1, color=fill, edgecolor=edge, linewidth=1.3)
+        if review:  # review-flagged alerts score highest, so they lead their band
+            ax.barh(0, min(review, count), left=first - 1, color="none", edgecolor=edge,
+                    hatch="////", linewidth=0)
+        text = f"{evidence}\npositions {first:,} - {last:,}\n{count:,} alerts, {review:,} for review"
+        if count >= 600:
+            ax.text(first - 1 + count / 2, 0, text, ha="center", va="center", fontsize=8)
+        else:
+            ax.annotate(text, (first - 1 + count / 2, 0.4),
+                        xytext=(first - 1 + count / 2 + 250, 0.8), fontsize=8,
+                        arrowprops={"arrowstyle": "-", "color": edge})
+    ax.set_xlim(0, summary["rows"])
+    ax.set_ylim(-0.6, 1.5)
+    ax.set_yticks([])
+    ax.set_xlabel("queue position   (1 = the first alert the analyst sees)", fontsize=9)
+    ax.set_title("The analyst's queue - all 5,000 demo flows, evidence class first, score second "
+                 "(Q22)", fontsize=10.5, weight="bold")
+    ax.legend(handles=[Patch(facecolor="white", edgecolor="#555555", hatch="////",
+                             label="requires_review")], loc="lower right", fontsize=8)
+    ax.spines[["top", "right", "left"]].set_visible(False)
+    plt.tight_layout()
+    save(fig, "10_queue_order.png")
+
+
+def demo_fusion():
+    summary = load("fusion_demo_summary.json")
+    names = list(summary["classes"])
+    stats = [summary["classes"][name] for name in names]
+    position, width = np.arange(len(names)), 0.38
+    fig, ax = plt.subplots(figsize=(10, 3.9))
+    malicious = ax.bar(position - width / 2, [s["truly_malicious"] for s in stats], width,
+                       color="#f4b183", edgecolor="#c55a11", label="truly malicious")
+    benign = ax.bar(position + width / 2, [s["truly_benign"] for s in stats], width,
+                    color="#cfe2f3", edgecolor="#6c8ebf", label="truly benign")
+    for bars in (malicious, benign):
+        ax.bar_label(bars, labels=[f"{int(bar.get_height()):,}" for bar in bars], padding=2,
+                     fontsize=8.5, weight="bold")
+    ax.set_yscale("symlog", linthresh=10)
+    ax.set_ylim(0, max(max(s["truly_malicious"], s["truly_benign"]) for s in stats) * 5)
+    ax.set_xticks(position, [f"{name}\n{s['alerts']:,} alerts - {s['requires_review']:,} for review"
+                             for name, s in zip(names, stats)], fontsize=8.3)
+    ax.set_ylabel("flows (symlog scale)", fontsize=9)
+    ax.set_title("End to end on the demo sample - what each evidence class holds "
+                 "(ground truth joined after fusion)", fontsize=10.5, weight="bold")
+    ax.legend(fontsize=8.5, loc="upper left")
+    ax.spines[["top", "right"]].set_visible(False)
+    plt.tight_layout()
+    save(fig, "11_demo_fusion.png")
+
+
+def held_out():
+    held = load("rule_set_validation.json")["held_out"]
+    wrong = held["misattributed"]
+    labels = ["class-correct\nhits"] + [f"{row['rule_id'].removeprefix('SIG-')} rule on\n"
+                                         f"{row['true_class']} flows" for row in wrong]
+    values = [held["class_correct"]] + [row["flows"] for row in wrong]
+    colours = ["#82b366"] + ["#b85450" if row["true_class"] == "Benign" else "#d79b00"
+                             for row in wrong]
+    fig, (left, right) = plt.subplots(1, 2, figsize=(11, 3.6),
+                                      gridspec_kw={"width_ratios": [1.6, 1]})
+    bars = left.barh(labels, values, color=colours, edgecolor="white", linewidth=1.3)
+    left.bar_label(bars, labels=[f"{value:,}" for value in values], padding=3, fontsize=9,
+                   weight="bold")
+    left.set_xscale("log")
+    left.invert_yaxis()
+    left.set_xlim(1, held["hits"] * 6)
+    left.set_title(f"{held['hits']:,} rule hits on {held['rows']:,} held-out flows", fontsize=10,
+                   weight="bold")
+    left.tick_params(labelsize=8.5)
+    left.spines[["top", "right"]].set_visible(False)
+    right.axis("off")
+    table = right.table(
+        cellText=[["any attack\n(first reported)", f"{held['precision_malicious']:.4f}",
+                   f"{held['recall_malicious']:.4f}"],
+                  ["class-correct\n(rule's own class)", f"{held['precision_class']:.4f}",
+                   f"{held['recall_class']:.4f}"]],
+        colLabels=["scoring", "precision", "recall"], colWidths=[0.5, 0.25, 0.25],
+        loc="center", cellLoc="center")
+    table.auto_set_font_size(False)
+    table.set_fontsize(9)
+    table.scale(1, 2.6)
+    right.set_title("the same hits, scored two ways", fontsize=10, weight="bold")
+    plt.suptitle("S4b held-out validation - the production engine on flows the rules never saw",
+                 fontsize=11, weight="bold")
+    plt.tight_layout(rect=[0, 0, 1, 0.93])
+    save(fig, "12_held_out_scoring.png")
+
+
 if __name__ == "__main__":
+    # Iteration 1
     pipeline(); classes(); versions(); reversal(); triage(); roadmap()
+    # Iteration 2 - needs data/processed/fusion_demo_summary.json (scripts/fusion_demo_summary.py)
+    architecture(); fusion_decision(); fusion_scoring(); queue_order(); demo_fusion(); held_out()
     print("\nall diagrams written to", IMG)

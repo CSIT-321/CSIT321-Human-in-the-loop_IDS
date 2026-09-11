@@ -3,6 +3,10 @@
 **Branch:** `feat/corrected-dataset-and-findings` · **Period:** 2026-09-10 → 2026-09-11
 **Status:** phase complete · 35 files, 209,205 insertions
 
+> **Iteration 2 is complete — see [`iteration-2-report.md`](iteration-2-report.md)** for the data
+> contracts, the signature engine, the audit trail and the new fusion (combination) logic, with its
+> diagrams and calculations. This report remains the record of Iteration 1.
+
 This iteration did not build product features. It established **what is actually true** about the
 data and the detectors, and in doing so reversed two of the project's central claims. That was the
 right use of the time: every claim reversed here would otherwise have been reversed later, after
@@ -229,11 +233,11 @@ graph TD
 | # | Step | Why now | Owner |
 |---|---|---|---|
 | ~~1~~ | ~~Held-out re-test of rule thresholds~~ | **DONE** — precision 0.9999 / recall 0.1993 on 250,655 unseen rows. FTP recall even improved (0.730 → 0.760) | Claude |
-| 2 | **S2 — data contracts** (12 tables, append-only audit) | Keystone; everything after depends on it, and it is expensive to change after persistence lands | Claude |
-| 3 | **S5/S4b — signature engine + tuned rules in Python** | Golden-tested against frozen fixtures | Delegate + review |
-| 4 | **S6 — fusion re-specification** | Evidence classes + queue ordering + invariants I1–I5 | Claude only |
-| 5 | **S7 — feedback + guardrails** | The safety claim; never delegated | Claude only |
-| 6 | S8–S9 — audit writer, SQLite, batch runner | | Mixed |
+| ~~2~~ | ~~S2 — data contracts~~ | **DONE in Iteration 2** | Claude |
+| ~~3~~ | ~~S5/S4b — signature engine + tuned rules in Python~~ | **DONE in Iteration 2** — golden-tested on all 1,000 legacy flows | Delegate + review |
+| ~~4~~ | ~~S6 — fusion re-specification~~ | **DONE in Iteration 2** — see [`iteration-2-report.md`](iteration-2-report.md) §4 | Claude only |
+| 5 | **S7 — feedback + guardrails** — NEXT | The safety claim; never delegated | Claude only |
+| 6 | ~~S8 — audit writer~~ **DONE** · S9 — SQLite, batch runner | | Mixed |
 
 ### Carried risks
 

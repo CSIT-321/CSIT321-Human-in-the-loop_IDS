@@ -81,7 +81,9 @@ plans/hitl-ids-demo-build.md    18-step build plan (S1-S18), v1.0
 **Also merged:** the collaborator's `stage-3/` and `stage-5/` work (their model is INVALIDATED -
 see sec. 9). Their `dashboard/` still runs but displays old 6-class data.
 
-**Start here:** [`iteration-report.md`](iteration-report.md) has the diagrams and statistics.
+**Start here:** [`iteration-2-report.md`](iteration-2-report.md) — what Iteration 2 built, with the
+fusion diagrams and calculations. [`iteration-report.md`](iteration-report.md) — Iteration 1's
+evidence and direction change. Diagrams regenerate with `scripts/make_diagrams.py`.
 [`plan-changelog.md`](plan-changelog.md) has every decision and its evidence.
 
 ---

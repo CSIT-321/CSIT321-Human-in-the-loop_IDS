@@ -1,0 +1,145 @@
+{
+  "rows": 5000,
+  "rule_set": "rules/rule-set-s4b-1.json",
+  "live_rules": [
+    {
+      "rule_id": "SIG-FTP-BRUTE-FORCE",
+      "severity": "Medium",
+      "attack_category": "Brute Force",
+      "severity_score": 0.6
+    },
+    {
+      "rule_id": "SIG-SSH-BRUTE-FORCE",
+      "severity": "Medium",
+      "attack_category": "Brute Force",
+      "severity_score": 0.6
+    }
+  ],
+  "fusion_config": {
+    "scheme": "cef-trust-v1.8",
+    "evidence_priority": {
+      "corroborated": 0,
+      "signature_override": 1,
+      "ml_only": 2,
+      "none": 3
+    },
+    "agreement_bonus": 5.0,
+    "critical_threshold": 80.0,
+    "severity_scores": {
+      "Low": 0.4,
+      "Medium": 0.6,
+      "High": 0.8,
+      "Critical": 0.95
+    }
+  },
+  "requires_review": 996,
+  "critical": 996,
+  "classes": {
+    "corroborated": {
+      "alerts": 200,
+      "requires_review": 200,
+      "truly_malicious": 200,
+      "truly_benign": 0,
+      "severity": {
+        "Critical": 200
+      },
+      "score": {
+        "min": 100.0,
+        "median": 100.0,
+        "max": 100.0
+      }
+    },
+    "signature_override": {
+      "alerts": 0,
+      "requires_review": 0,
+      "truly_malicious": 0,
+      "truly_benign": 0,
+      "severity": {},
+      "score": null
+    },
+    "ml_only": {
+      "alerts": 796,
+      "requires_review": 796,
+      "truly_malicious": 794,
+      "truly_benign": 2,
+      "severity": {
+        "Critical": 796
+      },
+      "score": {
+        "min": 81.3,
+        "median": 100.0,
+        "max": 100.0
+      }
+    },
+    "none": {
+      "alerts": 4004,
+      "requires_review": 0,
+      "truly_malicious": 6,
+      "truly_benign": 3998,
+      "severity": {
+        "Informational": 4004
+      },
+      "score": {
+        "min": 0.0,
+        "median": 0.0,
+        "max": 42.77
+      }
+    }
+  },
+  "queue_bands": [
+    {
+      "evidence_class": "corroborated",
+      "first": 1,
+      "last": 200
+    },
+    {
+      "evidence_class": "ml_only",
+      "first": 201,
+      "last": 996
+    },
+    {
+      "evidence_class": "none",
+      "first": 997,
+      "last": 5000
+    }
+  ],
+  "examples": {
+    "corroborated": {
+      "alert_id": "AL-00060",
+      "combined_score": 100.0,
+      "severity": "Critical",
+      "signature_severity": 0.6,
+      "ml_probability": 0.99999854,
+      "ml_predicted_class": "Brute Force",
+      "attack_category": "Brute Force",
+      "explanation": "A signature rule and the model agree on Brute Force. The rule's conditions below can be checked against the flow. Rule SIG-SSH-BRUTE-FORCE [Brute Force, Medium]: Protocol is TCP (observed TCP); Destination port is 22 (observed 22); Flow packets per second is at least 10.667 (observed 120.318); Total forward packets is at least 10 (observed 23); Flow duration is at most 5,000,000 microseconds (observed 382,320). Model: Brute Force (confidence 1.000; malicious probability 1.000). Strongest model evidence for Brute Force: Dst Port = 22 (+5.562), Fwd Seg Size Min = 32 (+0.958), Flow IAT Min = 3 (+0.749).",
+      "evidence_class": "corroborated",
+      "requires_review": true
+    },
+    "signature_override": null,
+    "ml_only": {
+      "alert_id": "AL-00004",
+      "combined_score": 100.0,
+      "severity": "Critical",
+      "signature_severity": null,
+      "ml_probability": 0.9999995,
+      "ml_predicted_class": "DoS",
+      "attack_category": "DoS",
+      "explanation": "Only the model flagged this flow (DoS). No rule gives a checkable reason, so review the model's evidence. Model: DoS (confidence 1.000; malicious probability 1.000). Strongest model evidence for DoS: Fwd Seg Size Min = 32 (+4.326), Bwd Packet Length Std = 418.145 (+1.368), FWD Init Win Bytes = 26,883 (+1.113).",
+      "evidence_class": "ml_only",
+      "requires_review": true
+    },
+    "none": {
+      "alert_id": "AL-00900",
+      "combined_score": 42.77,
+      "severity": "Informational",
+      "signature_severity": null,
+      "ml_probability": 0.42766792,
+      "ml_predicted_class": "Benign",
+      "attack_category": null,
+      "explanation": "No detector flagged this flow. Model: Benign (confidence 0.572; malicious probability 0.428). Strongest model evidence for Benign: Dst Port = 443 (+0.599), Total Length of Fwd Packet = 508 (+0.538), FWD Init Win Bytes = 8,192 (+0.337).",
+      "evidence_class": "none",
+      "requires_review": false
+    }
+  }
+}
