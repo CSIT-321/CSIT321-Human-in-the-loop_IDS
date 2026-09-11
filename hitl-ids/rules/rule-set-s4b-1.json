@@ -1,0 +1,169 @@
+{
+  "version": "s4b-1",
+  "view": "observable (packages/detection/signature/observable.py)",
+  "matching": "all clauses ANDed; scalar = equality, oneOf = membership, min/max inclusive",
+  "source": {
+    "rules": "tests/fixtures/legacy/flow-signatures.json",
+    "tuning": "data/processed/retune_results.json"
+  },
+  "rules": [
+    {
+      "rule_id": "SIG-FTP-BRUTE-FORCE",
+      "name": "FTP Brute Force Flow Pattern",
+      "severity": "Medium",
+      "conditions": {
+        "protocol": "TCP",
+        "destinationPort": 21,
+        "flowPacketsPerSecond": {
+          "min": 10.0
+        },
+        "totalFwdPackets": {
+          "min": 1.0
+        },
+        "flowDuration": {
+          "max": 5000000.0
+        }
+      },
+      "enabled": true,
+      "version": "s4b-1",
+      "attack_category": "Brute Force",
+      "rationale": "FTP control traffic commonly uses TCP port 21. Brute-force-like flows may show repeated short TCP connections with elevated packet rate. This is a flow-level heuristic and does not inspect FTP login payloads."
+    },
+    {
+      "rule_id": "SIG-SSH-BRUTE-FORCE",
+      "name": "SSH Brute Force Flow Pattern",
+      "severity": "Medium",
+      "conditions": {
+        "protocol": "TCP",
+        "destinationPort": 22,
+        "flowPacketsPerSecond": {
+          "min": 10.66689
+        },
+        "totalFwdPackets": {
+          "min": 10.0
+        },
+        "flowDuration": {
+          "max": 5000000.0
+        }
+      },
+      "enabled": true,
+      "version": "s4b-1",
+      "attack_category": "Brute Force",
+      "rationale": "SSH control traffic commonly uses TCP port 22. SSH brute-force attempts often create repeated short TCP flows against SSH port 22. This is a flow-level heuristic and cannot inspect SSH authentication results."
+    },
+    {
+      "rule_id": "SIG-DOS-HIGH-RATE-FLOW",
+      "name": "High Rate DoS Flow Pattern",
+      "severity": "High",
+      "conditions": {
+        "protocol": "TCP",
+        "flowPacketsPerSecond": {
+          "min": 650.0,
+          "max": 899.0
+        },
+        "totalFwdPackets": {
+          "min": 80.0
+        },
+        "totalBwdPackets": {
+          "max": 10.0
+        }
+      },
+      "enabled": false,
+      "version": "s4b-1",
+      "attack_category": "DoS",
+      "rationale": "DoS-like flows may show high packet rate from one direction. Limited backward packet count can indicate poor response balance during a high-rate flow. This threshold is a prototype heuristic and should be calibrated with feature distribution analysis."
+    },
+    {
+      "rule_id": "SIG-DDOS-HIGH-RATE-FLOW",
+      "name": "Distributed High Rate Flow Pattern",
+      "severity": "High",
+      "conditions": {
+        "protocol": "TCP",
+        "flowPacketsPerSecond": {
+          "min": 900.0
+        },
+        "totalFwdPackets": {
+          "min": 120.0
+        },
+        "totalBwdPackets": {
+          "max": 8.0
+        }
+      },
+      "enabled": false,
+      "version": "s4b-1",
+      "attack_category": "DDoS",
+      "rationale": "DDoS-like flows may show very high packet rate and strong forward traffic volume. Low backward packet count can indicate response imbalance under high-rate traffic. This is a single-flow heuristic and does not prove distributed source behavior by itself."
+    },
+    {
+      "rule_id": "SIG-BOTNET-BEACON-FLOW",
+      "name": "Botnet Beacon-Like Flow Pattern",
+      "severity": "High",
+      "conditions": {
+        "flowDuration": {
+          "min": 10000000.0
+        },
+        "flowPacketsPerSecond": {
+          "min": 20.0,
+          "max": 120.0
+        },
+        "totalFwdPackets": {
+          "min": 20.0
+        },
+        "totalBwdPackets": {
+          "max": 15.0
+        }
+      },
+      "enabled": false,
+      "version": "s4b-1",
+      "attack_category": "Botnet",
+      "rationale": "Botnet communication can appear as longer-lived beacon-like flows. Moderate packet rate and forward packet count can indicate repeated command-and-control style communication. This heuristic does not use destination reputation or host history."
+    },
+    {
+      "rule_id": "SIG-WEB-ATTACK-FLOW",
+      "name": "Suspicious Web Flow Pattern",
+      "severity": "High",
+      "conditions": {
+        "protocol": "TCP",
+        "destinationPort": {
+          "oneOf": [
+            80,
+            443
+          ]
+        },
+        "packetLengthMean": {
+          "min": 300.0
+        },
+        "fwdPacketLengthMean": {
+          "min": 250.0
+        },
+        "flowDuration": {
+          "max": 5000000.0
+        }
+      },
+      "enabled": false,
+      "version": "s4b-1",
+      "attack_category": "Web Attack",
+      "rationale": "Web attack traffic commonly uses HTTP or HTTPS destination ports. Larger packet length means can indicate request-heavy or payload-heavy web flows. This flow-level heuristic cannot inspect URLs, request parameters, SQL strings, or XSS payloads."
+    },
+    {
+      "rule_id": "SIG-INFILTRATION-LONG-FLOW",
+      "name": "Long Duration Infiltration-Like Flow Pattern",
+      "severity": "Critical",
+      "conditions": {
+        "flowDuration": {
+          "min": 20000000.0
+        },
+        "totalBwdPackets": {
+          "min": 20.0
+        },
+        "flowBytesPerSecond": {
+          "min": 10000.0
+        }
+      },
+      "enabled": false,
+      "version": "s4b-1",
+      "attack_category": "Infiltration",
+      "rationale": "Infiltration-like flows may involve longer duration network activity. Sustained bytes per second and backward packets can indicate interactive or data-transfer behavior. This heuristic is weak without host context, payload inspection, or post-compromise behavior analysis."
+    }
+  ]
+}

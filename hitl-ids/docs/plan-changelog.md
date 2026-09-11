@@ -287,7 +287,7 @@ our plan declared frozen. That convention now conflicts with reality and needs a
 
 ---
 
-## v1.5 — S2 data contracts landed (2026-09-11) ← **current**
+## v1.5 — S2 data contracts landed (2026-09-11)
 
 Plan step **S2** (keystone) implemented on branch `feat/s2-contracts`: `packages/contracts/`
 (`models.py`, `schema.sql`, `db.py`) and `tests/test_contracts.py`. **51 tests pass, 0 skipped** —
@@ -343,6 +343,55 @@ the inference guard); an `available` SHAP explanation must carry a passed additi
   outstanding (delegable): Vite scaffold, `README.md`, and `ruff` itself, which is not installed.
 - **Open for S5:** legacy rule conditions key on camelCase (`flowPacketsPerSecond`) while corrected
   flows use CIC names (`Flow Packets/s`). The tuned rule file must choose one namespace and map the other.
+
+---
+
+## v1.6 — S5 + S4b landed: engine ported, rule set written, held-out figures reproduced (2026-09-11) ← **current**
+
+Branch `feat/s5-signature`. `feat/s2-contracts` was pushed to `origin` as a view-only progress
+branch for collaborators, carrying the 5,000-row demo sample and `data/README.md`.
+
+| | Change | Evidence |
+|---|---|---|
+| ADD | `packages/detection/signature/engine.py` — Python port of `stage-2/core/signature-engine.js`. **Delegated** to a DeepSeek worker; accepted on reading its code and re-running every test | Golden test: all **1,000** legacy records reproduce the JS verdict, rule id and readable conditions exactly |
+| ADD | `observable.py` — the single projection from corrected-release columns to the 16 camelCase fields rules test | Identical on all 5,000 demo rows to `demo_detection_input.csv`, the view S4b was tuned on |
+| DEC | Rules stay in the observable (camelCase) namespace. Closes the open question in v1.5 | The thresholds were tuned and validated there; translating them to CIC names would re-open verified figures |
+| ADD | `rules/rule-set-s4b-1.json`, written by `scripts/write_rule_set.py` | FTP and SSH enabled with their **full** retuned conditions; the other five retired (`enabled: false`), not deleted. The SSH threshold is exactly **10.66689** — the handover's 10.67 was rounded |
+| ADD | `scripts/validate_rule_set.py` — the held-out re-test, now committed and run through the production engine | The original held-out run was ad hoc and never committed |
+| CHG | The engine returns **every** match (`match_all`); the JS engine kept only the first | `match_all(...)[0]` equals the JS verdict; the contract stores a list |
+| KEEP | Four deliberate divergences from the JS, marked `DIVERGENCE` in `engine.py` | Each makes text or non-finite values fail a threshold instead of silently passing it |
+
+### Held-out figures: reproduced, with the scoring made explicit
+
+Through the production engine on `train_sample.csv` (250,655 rows): **30,025 hits**, exactly the
+handover's count. Two scorings are now reported side by side:
+
+| Scoring | Precision | Recall | Wrong |
+|---|---:|---:|---:|
+| **Malicious-correct** — the flow is any attack (the handover's figures) | **0.9999** | **0.1993** | 2 |
+| **Class-correct** — the flow's class is the rule's class (v1.3's definition) | **0.9992** | **0.1991** | 25 |
+
+| Rule | True class of the misattributed flows | Flows |
+|---|---|---:|
+| `SIG-FTP-BRUTE-FORCE` | Port Scan | 23 |
+| `SIG-SSH-BRUTE-FORCE` | Benign | 2 |
+
+The handover's figures stand; they were measured under the any-attack scoring without saying so.
+
+**Finding — an input for S6.** The FTP rule's tuned clause (`totalFwdPackets ≥ 1`) is loose enough
+that NMAP probes of TCP/21 satisfy it. Those flows are attacks, so this is not a false alarm, but
+it is a wrong *label* — and the signature layer's value is a checkable reason (v1.3). S6 must not
+count a signature whose class disagrees with the model's as corroboration. The collaborator's
+engine already has the hook: `signature_ml_disagreement_review_preserved`.
+
+Every class-correct FTP hit (22,797) is an attempted attack, consistent with v1.1's finding that
+FTP brute force never succeeded.
+
+### Delegation record
+
+One DeepSeek worker: the engine and its golden tests. It wrote only its two files. Its JSON
+self-report could not be parsed, so acceptance rested entirely on reading its code and running the
+suite — the handover's rule, and here the only option.
 
 ---
 

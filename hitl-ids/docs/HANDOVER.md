@@ -3,8 +3,9 @@
 **Purpose.** Carry the full state of this project into a fresh session with zero loss of context
 and minimal token cost. Everything a new session needs is here or one link away.
 
-**Last updated:** 2026-09-11 (rev 3) · **Branch:** `feat/s2-contracts` (local only; branched from
-`feat/corrected-dataset-and-findings`) · **S2 data contracts DONE** — changelog v1.5
+**Last updated:** 2026-09-11 (rev 4) · **Branch:** `feat/s5-signature` (local) ·
+`feat/s2-contracts` **pushed to origin** as a view-only progress branch · **S2, S5 + S4b DONE** —
+changelog v1.6
 **Iteration 1 (Evidence & Direction) complete** — = plan Phase 1 + step S4b · collaborator's
 `origin/main` merged · **NFR-01 explainability satisfied**
 
@@ -58,7 +59,7 @@ Repo: `github.com/CSIT-321/CSIT321-Human-in-the-loop_IDS` · working tree `hitl-
 > S4b. It is **not** "Phase 1". Never use a bare phase number for it.
 >
 > **Actual status:** Phase 0 **PARTIAL** (S1 scaffold incomplete — Python slice only; **S2 DONE**, 51 tests) ·
-> Phase 1 **DONE** · Phase 2 **only S4b done** · Phases 3–6 **not started**.
+> Phase 1 **DONE** · Phase 2 **S5 + S4b done** (S6, S7, S8 remain) · Phases 3–6 **not started**.
 
 ```
 hitl-ids/
@@ -116,10 +117,16 @@ alerts, **5,000/5,000 additivity checks passed** (max deviation 1.13e-5, toleran
 Output: `data/processed/demo_ml_predictions_shap.json` (gitignored, 16 MB, regenerable).
 
 ### Rule thresholds - VALIDATED on held-out data
-Re-tested on `train_sample.csv` (250,655 rows the rules never saw, 50x the tuning set):
-combined **precision 0.9999, recall 0.1993**, 2 false positives in 30,025 hits. Not overfit.
-Tuned values: `SIG-FTP-BRUTE-FORCE` totalFwdPackets >= 1 (with TCP + port 21);
-`SIG-SSH-BRUTE-FORCE` flowPacketsPerSecond >= 10.67. **Not yet written to a rule-set file.**
+Re-tested on `train_sample.csv` (250,655 rows the rules never saw, 50x the tuning set), now
+reproducible via `scripts/validate_rule_set.py` through the production engine. 30,025 hits. Not overfit.
+- **Any-attack scoring** (a hit is right if the flow is an attack): precision **0.9999**, recall
+  **0.1993**, 2 false positives — the figures originally reported.
+- **Class-correct scoring** (the flow's class is the rule's class): precision **0.9992**, recall
+  **0.1991** — 23 NMAP probes of TCP/21 are labelled FTP brute force. Always say which scoring.
+
+Rule set: `rules/rule-set-s4b-1.json`. FTP = TCP + port 21 + `totalFwdPackets ≥ 1` + its other
+original clauses; SSH = `flowPacketsPerSecond ≥ 10.66689` + its other clauses. Five rules retired.
+Rules use the camelCase **observable view** (`packages/detection/signature/observable.py`).
 
 ### Detector relationship (the crux)
 ```
@@ -192,8 +199,8 @@ These were believed, then disproved. Re-proposing them wastes a cycle.
 |---|---|---|---|
 | ~~1~~ | ~~Held-out re-test of rule thresholds~~ | **DONE 2026-09-11** | precision **0.9999**, recall **0.1993** on 250,655 unseen rows; 2 FPs in 30,025 hits. Not overfit. |
 | ~~2~~ | ~~S2 — data contracts~~ | **DONE 2026-09-11** | 12 tables, 51 tests, 0 skipped. Deviations in changelog v1.5 |
-| 3 | **NEXT →** S5 + S4b — signature engine and tuned rules in Python; **write the tuned rule set to a file** | Delegate + review | Golden-test against frozen fixtures. Emit `SignatureRule` / `SignatureMatch` from `packages/contracts`. **Decide first:** legacy conditions key on camelCase (`flowPacketsPerSecond`), corrected flows on CIC names (`Flow Packets/s`) — the rule file picks one namespace and maps the other |
-| 4 | S6 — fusion re-specification | **Claude only** | **The notebook-03 CEF spec is STALE** — it was built around `signature_override`, which now has zero instances. Must be rewritten for the v1.3 trust/triage model before implementing |
+| ~~3~~ | ~~S5 + S4b — signature engine and tuned rule set~~ | **DONE 2026-09-11** | Engine delegated (DeepSeek), golden-tested 1,000/1,000. Rule set written; held-out figures reproduced. Changelog v1.6 |
+| 4 | **NEXT →** S6 — fusion re-specification. Input from v1.6: a signature whose class disagrees with the model's is **not** corroboration | **Claude only** | **The notebook-03 CEF spec is STALE** — it was built around `signature_override`, which now has zero instances. Must be rewritten for the v1.3 trust/triage model before implementing |
 | 5 | S7 — feedback + guardrails | **Claude only** | **Port the collaborator's design** (sec. 8) to Python rather than authoring fresh |
 | 6 | S8–S9 — audit writer, SQLite, batch runner | Mixed | |
 
@@ -252,8 +259,9 @@ them before the next merge.
 
 ## 9. Open questions for the user
 
-1. ~~Push the branch?~~ **User decision: keep local.** Do not push without being asked.
-2. ~~Held-out re-test~~ **Done, reported.** ~~S2~~ **Done.** Next task is S5 + S4b.
+1. ~~Push the branch?~~ **User decision (2026-09-11):** `feat/s2-contracts` pushed to origin as a
+   view-only progress branch, with the demo sample. Work continues locally; push again only when asked.
+2. ~~Held-out re-test~~ **Done, reported.** ~~S2~~ **Done.** ~~S5 + S4b~~ **Done.** Next is S6 (Claude only); S8 may run in parallel (delegate).
 3. Review [`finding-infiltration-mislabelling.md`](finding-infiltration-mislabelling.md) — a
    report-ready write-up of the Infiltration finding, drafted and awaiting your edit.
 4. **Agree a file-ownership boundary with the collaborator** before the next merge (see sec. 8).

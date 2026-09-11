@@ -1,0 +1,68 @@
+{
+  "rule_set": "rules/rule-set-s4b-1.json",
+  "demo": {
+    "sample": "demo_sample.csv",
+    "rows": 5000,
+    "malicious": 1000,
+    "hits": 200,
+    "class_correct": 200,
+    "benign_hits": 0,
+    "misattributed": [],
+    "precision_class": 1.0,
+    "recall_class": 0.2,
+    "precision_malicious": 1.0,
+    "recall_malicious": 0.2,
+    "per_rule": {
+      "SIG-FTP-BRUTE-FORCE": {
+        "fired": 146,
+        "class_correct": 146,
+        "precision": 1.0,
+        "recall_of_class": 0.73
+      },
+      "SIG-SSH-BRUTE-FORCE": {
+        "fired": 54,
+        "class_correct": 54,
+        "precision": 1.0,
+        "recall_of_class": 0.27
+      }
+    }
+  },
+  "held_out": {
+    "sample": "train_sample.csv",
+    "rows": 250655,
+    "malicious": 150655,
+    "hits": 30025,
+    "class_correct": 30000,
+    "benign_hits": 2,
+    "misattributed": [
+      {
+        "rule_id": "SIG-FTP-BRUTE-FORCE",
+        "true_class": "Port Scan",
+        "flows": 23
+      },
+      {
+        "rule_id": "SIG-SSH-BRUTE-FORCE",
+        "true_class": "Benign",
+        "flows": 2
+      }
+    ],
+    "precision_class": 0.999167,
+    "recall_class": 0.19913,
+    "precision_malicious": 0.999933,
+    "recall_malicious": 0.199283,
+    "per_rule": {
+      "SIG-FTP-BRUTE-FORCE": {
+        "fired": 22820,
+        "class_correct": 22797,
+        "precision": 0.998992,
+        "recall_of_class": 0.7599
+      },
+      "SIG-SSH-BRUTE-FORCE": {
+        "fired": 7205,
+        "class_correct": 7203,
+        "precision": 0.999722,
+        "recall_of_class": 0.2401
+      }
+    }
+  }
+}
