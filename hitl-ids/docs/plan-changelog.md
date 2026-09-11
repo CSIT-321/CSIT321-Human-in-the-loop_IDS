@@ -346,7 +346,7 @@ the inference guard); an `available` SHAP explanation must carry a passed additi
 
 ---
 
-## v1.6 — S5 + S4b landed: engine ported, rule set written, held-out figures reproduced (2026-09-11) ← **current**
+## v1.6 — S5 + S4b landed: engine ported, rule set written, held-out figures reproduced (2026-09-11)
 
 Branch `feat/s5-signature`. `feat/s2-contracts` was pushed to `origin` as a view-only progress
 branch for collaborators, carrying the 5,000-row demo sample and `data/README.md`.
@@ -408,6 +408,18 @@ order.
 One DeepSeek worker: the engine and its golden tests. It wrote only its two files. Its JSON
 self-report could not be parsed, so acceptance rested entirely on reading its code and running the
 suite — the handover's rule, and here the only option.
+
+---
+
+## v1.7 — S8 audit writer landed; S6 queue order decided (2026-09-11) ← **current**
+
+| | Change | Evidence |
+|---|---|---|
+| ADD | `packages/detection/audit/writer.py` — the typed, append-only `AuditWriter` (plan S8). **Delegated** to a DeepSeek worker in an isolated git worktree, then accepted on reading its code and running the suite | 45 new tests: every typed constructor round-trips; raw `UPDATE`/`DELETE` refused by the triggers; `since`/`until` edges proven at whole-second and fractional timestamps; injection-shaped filter values are bound, not formatted. 162 pass in the worktree |
+| DEC | **Q22 (user, 2026-09-11): the queue order is `corroborated` → `signature_override` → `ml_only` → `none`** | Keeps notebook 03's order, which v1.3 reframed but never revised. The certain, rule-and-model-agree attacks are cleared first and fast; `ml_only` alerts carry review flags and SHAP explanations. "ml_only first" and "two lanes" were considered and declined |
+| CHG | The plan's S8 event list names `RULE_CHANGE`; the contract's `RULE_CREATE` / `RULE_UPDATE` are used instead | The contract is canonical |
+
+The v1.5 timestamp fix landed before the worker started, and its tests exercise exactly that edge.
 
 ---
 

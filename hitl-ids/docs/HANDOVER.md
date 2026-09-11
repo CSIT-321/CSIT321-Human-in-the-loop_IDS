@@ -3,9 +3,9 @@
 **Purpose.** Carry the full state of this project into a fresh session with zero loss of context
 and minimal token cost. Everything a new session needs is here or one link away.
 
-**Last updated:** 2026-09-11 (rev 4) · **Branch:** `feat/s5-signature` (local) ·
-`feat/s2-contracts` **pushed to origin** as a view-only progress branch · **S2, S5 + S4b DONE** —
-changelog v1.6
+**Last updated:** 2026-09-11 (rev 5) · **Branch:** `feat/s6-fusion` (local) ·
+`feat/s2-contracts` **pushed to origin** as a view-only progress branch · **S2, S5 + S4b, S8 DONE** —
+changelog v1.7
 **Iteration 1 (Evidence & Direction) complete** — = plan Phase 1 + step S4b · collaborator's
 `origin/main` merged · **NFR-01 explainability satisfied**
 
@@ -59,7 +59,7 @@ Repo: `github.com/CSIT-321/CSIT321-Human-in-the-loop_IDS` · working tree `hitl-
 > S4b. It is **not** "Phase 1". Never use a bare phase number for it.
 >
 > **Actual status:** Phase 0 **PARTIAL** (S1 scaffold incomplete — Python slice only; **S2 DONE**, 51 tests) ·
-> Phase 1 **DONE** · Phase 2 **S5 + S4b done** (S6, S7, S8 remain) · Phases 3–6 **not started**.
+> Phase 1 **DONE** · Phase 2 **S5, S4b, S8 done** (S6, S7 remain) · Phases 3–6 **not started**.
 
 ```
 hitl-ids/
@@ -104,6 +104,7 @@ Everything below is measured, verified, and reproducible from the notebooks.
 | Q19 | **Port Scan** is an 8th class, split out of Infiltration |
 | Q20 | Disjoint **train (250,655)** + **demo (5,000)** samples, seed `20260911` |
 | Q21 | Signature layer = **trust/explainability**, not coverage |
+| Q22 | Queue order = `corroborated` → `signature_override` → `ml_only` → `none`, then score (2026-09-11) |
 
 ### Model
 - 8 classes, macro F1 **0.9882**, weighted F1 0.9997, 82 features
@@ -204,7 +205,7 @@ These were believed, then disproved. Re-proposing them wastes a cycle.
 | ~~3~~ | ~~S5 + S4b — signature engine and tuned rule set~~ | **DONE 2026-09-11** | Engine delegated (DeepSeek), golden-tested 1,000/1,000. Rule set written; held-out figures reproduced. Changelog v1.6 |
 | 4 | **NEXT →** S6 — fusion re-specification. Input from v1.6: a signature whose class disagrees with the model's is **not** corroboration | **Claude only** | **The notebook-03 CEF spec is STALE** — it was built around `signature_override`, which now has zero instances. Must be rewritten for the v1.3 trust/triage model before implementing |
 | 5 | S7 — feedback + guardrails | **Claude only** | **Port the collaborator's design** (sec. 8) to Python rather than authoring fresh |
-| 6 | S8–S9 — audit writer, SQLite, batch runner | Mixed | |
+| 6 | ~~S8 — audit writer~~ **DONE** (delegated, changelog v1.7) · S9 — SQLite repositories + batch runner | Mixed | S9 builds on `db.insert`/`db.get` and `AuditWriter` |
 
 Full detail per step: [`../../plans/hitl-ids-demo-build.md`](../../plans/hitl-ids-demo-build.md).
 
@@ -263,7 +264,7 @@ them before the next merge.
 
 1. ~~Push the branch?~~ **User decision (2026-09-11):** `feat/s2-contracts` pushed to origin as a
    view-only progress branch, with the demo sample. Work continues locally; push again only when asked.
-2. ~~Held-out re-test~~ **Done, reported.** ~~S2~~ **Done.** ~~S5 + S4b~~ **Done.** Next is S6 (Claude only); S8 may run in parallel (delegate).
+2. ~~Held-out re-test~~ **Done, reported.** ~~S2~~ **Done.** ~~S5 + S4b~~ **Done.** ~~S8~~ **Done.** Next is S6 (Claude only).
 3. Review [`finding-infiltration-mislabelling.md`](finding-infiltration-mislabelling.md) — a
    report-ready write-up of the Infiltration finding, drafted and awaiting your edit.
 4. **Agree a file-ownership boundary with the collaborator** before the next merge (see sec. 8).
