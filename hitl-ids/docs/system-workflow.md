@@ -254,8 +254,8 @@ administrator. **Guardrails can be switched off** for the evaluation's third arm
 |---|---|---|
 | ~~1~~ | ~~S7a direct feedback + guardrails~~ | **Done** — §5, changelog v1.10 |
 | ~~2~~ | ~~**S7b** similar-alert learning~~ | **Done** — §5, changelog v1.14: families, the agreement gate, C1 + M1, and the `queue_class` band |
-| 1 | **S9** batch runner + the S3 `FlowSource` seam | One command: dataset → stored, scored alerts |
-| 3 | **S15** evaluation design | The three seeded runs: no feedback · feedback · guardrails off |
+| ~~3~~ | ~~**S9** batch runner + the S3 `FlowSource` seam~~ | **Done** — `python scripts/run_detection.py`: 5,000 flows → 5,000 stored alerts in 21 s (changelog v1.15) |
+| 1 | **S15** evaluation design | The three seeded runs: no feedback · feedback · guardrails off |
 | 4 | **S10a / S10b** API | The endpoints in §6 |
 | 5 | **S11 – S14** interface | The analyst queue with both score columns; admin and evaluator views |
 | 6 | **S16** demo gate | End-to-end demonstration |

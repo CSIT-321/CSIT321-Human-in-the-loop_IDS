@@ -53,7 +53,13 @@ evaluation only. They must never reach a detector.**
 | `processed/demo_ml_input.csv` | no | `run_ml_inference.py` |
 | `processed/demo_ml_predictions_shap.json` | no (16 MB, regenerable) | `run_ml_inference.py` |
 | `processed/ml-explainability-summary.json` | yes | `run_ml_inference.py` |
+| `demo.db` | no (42 MB, regenerable) | `run_detection.py` — the populated demo database: 5,000 alerts with their flows, SHAP and queue bands (S9) |
 
 Order from a fresh clone: download the zip → `scan_labels.py` → `build_samples.py` →
-`build_demo_detection.py` → `run_ml_inference.py`. `train_model.py` rebuilds the model from
-`train_sample.csv`; the committed model in `../models/` is the one every reported figure used.
+`build_demo_detection.py` → `run_ml_inference.py` → `run_detection.py` (the demo database).
+`train_model.py` rebuilds the model from `train_sample.csv`; the committed model in `../models/` is
+the one every reported figure used.
+
+`run_detection.py` recomputes predictions and TreeSHAP itself, so it does not need
+`demo_ml_predictions_shap.json`; pass `--replay <that file>` to reuse an earlier run's predictions on
+a machine without xgboost.

@@ -600,7 +600,7 @@ drifting detector, remains the next experiment.
 
 ---
 
-## v1.14 — S7b landed: similar-alert learning behind the agreement gate (2026-09-12) ← **current**
+## v1.14 — S7b landed: similar-alert learning behind the agreement gate (2026-09-12)
 
 `packages/detection/feedback/learning.py` (pure) over a rewritten `service.py` (transactions), on
 branch `feat/s7-feedback`. **Not delegated.** 33 new tests; **263 pass, 0 skipped.** A verdict now
@@ -635,6 +635,48 @@ guardrails-off arm applies the learning raw; and every change to a family's lear
 **Not done here.** The stress test for the efficiency claim and the run on the 250,655-flow training
 sample both remain (`ranking-and-escalation-design.md` §8). S7b makes the mechanism real; it does not
 re-open the question of how much it gains.
+
+---
+
+## v1.15 — S9 landed: the batch detection run writes a real database (2026-09-12) ← **current**
+
+`packages/detection/pipeline/` and `scripts/run_detection.py`. 16 new tests; **279 pass, 0 skipped.**
+One command now takes the sample to a populated database:
+
+```
+python scripts/run_detection.py        # 5,000 flows -> 5,000 alerts, 21 s, 42 MB
+```
+
+| | Change | Rationale |
+|---|---|---|
+| ADD | **The ingest seam S3 never built** (the gap logged in v1.9): `FlowSource`, with `CsvReplaySource` replaying the corrected release **in timestamp order** — the order a sensor delivers (D7) | The demo behaves like a feed without pretending to be one, and S17's flow exporter becomes a second implementation of the same protocol rather than a rewrite |
+| ADD | **`Predictor`**: `XgboostPredictor` computes predictions **and native TreeSHAP inside the run** (D8); `ReplayPredictor` reuses an earlier run's predictions, for a machine without xgboost or a test without a model. The summary records which one ran | Computing SHAP on demand would blow NFR-04's ~2 s budget; precomputing it in a side script left the claim outside the pipeline |
+| ADD | **The repository layer** (`store.py`): registrations idempotent on the natural key, the queue read in `QUEUE_ORDER_BY` order, and `alert_by_source_record` — the only join from an alert back to ground truth | S10 and S15 need exactly these reads; an ORM would add a layer over contracts that already describe every row |
+| ADD | **`run_detection`** is **one transaction**: a failed run stores nothing, so the summary describes what is in the database | A half-populated demo database that looks complete is worse than no database |
+| DEC | **Every flow becomes an alert**, including the 4,004 no detector flagged | They are the queue's bottom band and the evaluation's denominator; dropping them would quietly turn recall into precision |
+| DEC | **Non-finite CIC values are handled in two places, deliberately.** The model sees `Infinity` exactly as it did in training; `flow_data` stores an explicit `None`, because the contracts refuse non-finite floats; the observable view still reads such a field as 0, as the tuned rules require | The alternative — cleaning at ingest — would change what the model sees and silently invalidate the committed predictions |
+| DEC | A run **asserts that S6's score and review flag equal S7b's detection placement** and fails loudly if they ever diverge | Two code paths now compute where an alert sits; an assertion is cheaper than a mismatch discovered on a dashboard |
+| FIX | `db.QUEUE_ORDER_BY`'s columns are unqualified, which is ambiguous in a query that JOINs `flow_data`. Noted at the constant; `store.queue` selects from `alerts` alone | Found while writing the verification query for this entry, not in production code |
+
+**Measured on the committed demo sample** (`data/demo.db`, gitignored and regenerable):
+
+| | |
+|---|---|
+| Flows → alerts | 5,000 → 5,000, 0 predictions unavailable |
+| Evidence | `corroborated` 200 · `ml_only` 796 · `none` 4,004 · `signature_override` 0 |
+| Queue bands | `tier2_candidate` 644 · `ml_only` 352 · `none` 4,004 |
+| The run's own predictions vs the committed `demo_ml_predictions_shap.json` | **5,000/5,000** identical predicted class and TreeSHAP margin |
+| Additivity checks passed (NFR-01, now in the pipeline) | **5,000/5,000** |
+| NFR-05 at run level | a second run over the same sample differs in **no** scored field, for any of the 5,000 alerts |
+
+The 796 `ml_only` alerts are v1.3's 794 model-only malicious flows plus the two known benign false
+positives, and `signature_override` stays 0 as it has on corrected data throughout.
+
+**The demo's opening move is now in the database.** `AL-00060` (corroborated, 100) and `AL-00478`
+(model-only, 99.89 — the benign flow the model calls a Web Attack) both arrive as **Tier 2
+candidates**; `AL-02717` (88.48) sits in the `ml_only` band; `AL-03086`, the attempted Web Attack both
+detectors missed, sits at 36.94 in the bottom band. Dismissing `AL-00478` and confirming `AL-03086` is
+exactly the story S7a and S7b were built to tell.
 
 ---
 

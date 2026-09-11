@@ -3,9 +3,10 @@
 **Purpose.** Carry the full state of this project into a fresh session with zero loss of context
 and minimal token cost. Everything a new session needs is here or one link away.
 
-**Last updated:** 2026-09-12 (rev 7) · **Branch:** `feat/s7-feedback` (local) ·
+**Last updated:** 2026-09-12 (rev 8) · **Branch:** `feat/s7-feedback` (local) ·
 `feat/s2-contracts` and `feat/s6-fusion` **pushed to origin** as view-only progress branches ·
-**Plan Phase 2 DONE: S2, S5 + S4b, S6, S7a, S7b, S8** — changelog v1.14 · **263 tests, 0 skipped**
+**Phase 2 DONE (S2, S5 + S4b, S6, S7a, S7b, S8) · Phase 3: S9 DONE** — changelog v1.15 ·
+**279 tests, 0 skipped** · `python scripts/run_detection.py` builds the demo database
 **Iteration 1 (Evidence & Direction) complete** · the ranking formula and the agreement gate were
 chosen by experiment (Q29, Q30) · collaborator's `origin/main` merged ·
 **NFR-01 explainability satisfied**
@@ -60,8 +61,8 @@ Repo: `github.com/CSIT-321/CSIT321-Human-in-the-loop_IDS` · working tree `hitl-
 > S4b. It is **not** "Phase 1". Never use a bare phase number for it.
 >
 > **Actual status:** Phase 0 **PARTIAL** (S1 scaffold incomplete — Python slice only; **S2 DONE**) ·
-> Phase 1 **DONE** · Phase 2 **DONE** (S5, S4b, S6, S7a, S7b, S8) · Phase 3 **next: S9** ·
-> Phases 4–6 **not started**.
+> Phase 1 **DONE** · Phase 2 **DONE** (S5, S4b, S6, S7a, S7b, S8) · Phase 3 **S9 DONE**, S10a/S10b
+> remain · **next: S15** (the evaluation, which S10a's schemas depend on) · Phases 4, 6 not started.
 
 ```
 hitl-ids/
@@ -72,6 +73,8 @@ hitl-ids/
   config/severity-chart.json           Q28: editable, versioned severity chart
   packages/detection/ranking/          severity chart loader · formulas C0-C3, M1/M2 · experiment
   packages/detection/feedback/         S7a service.py (one verdict) · S7b learning.py (its family)
+  packages/detection/pipeline/         S9: source (the S3 seam) · predictor · store · runner
+  data/demo.db                         42 MB, GITIGNORED - rebuild: scripts/run_detection.py
   packages/detection/guardrail/        policy.py - the caps, the floors and I3
   evaluation/ranking/                  history.jsonl + runs/<id>/{config,results}.json, METHOD.md
   packages/detection/ml/inference.py   vendored+adapted TreeSHAP inference (see sec. 8)
@@ -241,7 +244,8 @@ These were believed, then disproved. Re-proposing them wastes a cycle.
 | ~~4~~ | ~~S6 — fusion re-specification~~ | **DONE 2026-09-11** | `packages/detection/fusion/cef.py`; spec in its docstring. Demo: 200 corroborated, 0 override; DB queue order proven. Changelog v1.8 |
 | 5 | ~~S7a — direct feedback + guardrails~~ **DONE** (changelog v1.10) · ranking experiment **done** (changelog v1.12–v1.13; Q29 formula C1, Q30 agreement gate) · **NEXT →** S7b: similar-alert learning with the gate, formula C1 and movement M1, as persisted family adjustments. Count agreement by feedback category, as the collaborator's engine does, not by direction as the experiment does. Add plus `queue_class` and the Tier 2 marker as contract additions (`ranking-and-escalation-design.md` §7). Inputs recorded before S7a: invariant I3 is S7's; "Critical" now means score ≥ 80 (Node used ≥ 90) — log the floor-trigger decision. Inputs from v1.9: floors must never *raise* a score; map `uncertain`; feedback cannot cross evidence bands — see `system-workflow.md` §7 | **Claude only** | **Port the collaborator's design** (sec. 8) to Python rather than authoring fresh |
 | ~~5b~~ | ~~S7b — similar-alert learning~~ | **DONE 2026-09-12** | `feedback/learning.py` + a rewritten `service.py`: the coarse family key, the category-counted gate, C1 + M1 replayed over each family's effective verdicts, the `alert_families` table, and the `queue_class` contract addition. Changelog v1.14 |
-| 6 | ~~S8 — audit writer~~ **DONE** (delegated, changelog v1.7) · **NEXT →** S9 — SQLite repositories + batch runner | Mixed | S9 builds on `db.insert`/`db.get`, `AuditWriter` and `refresh_family`. **S3's `FlowSource`/`CsvReplaySource` seam was never built — S9 must add it** (changelog v1.9). S9 must also set `alerts.family_key` (`learning.family_key_of`) and each alert's detection-time band (`learning.detection_placement`) |
+| ~~6~~ | ~~S8 — audit writer~~ · ~~S9 — SQLite persistence + batch detection runner~~ | **DONE 2026-09-12** | `packages/detection/pipeline/`: the S3 ingest seam, the predictor protocol (TreeSHAP in the run, D8), the repository layer and `run_detection`. 5,000 flows → 5,000 alerts in 21 s, reproducible field-for-field. Changelog v1.15 |
+| 7 | **NEXT →** S15 — the three-arm evaluation harness: control (no feedback) · treatment (scripted feedback) · guardrails off | **Claude only** | There is now a database to evaluate against. Join ground truth **only** on `flow_data.source_record_id`, never through a detector. S10a's response schemas depend on S15's metrics (plan v0.3 FIX), so S15 comes before the API. The efficiency question the ranking experiment could not answer (`ranking-and-escalation-design.md` §8) belongs here |
 
 Full detail per step: [`../../plans/hitl-ids-demo-build.md`](../../plans/hitl-ids-demo-build.md).
 

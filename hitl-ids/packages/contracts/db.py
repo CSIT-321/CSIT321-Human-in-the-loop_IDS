@@ -23,6 +23,8 @@ SCHEMA_PATH = Path(__file__).with_name("schema.sql")
 # second, id as a deterministic tiebreak. Ordering by score alone ranked the key detections #414
 # of 417 (plan-changelog v1.0 FIX). Since S7b the band is queue_priority: the evidence class's band
 # until the Tier 2 criteria or analyst feedback move the alert (changelog v1.14).
+# The column names are unqualified, so this drops into any query over alerts alone (as
+# pipeline.store.queue does). A query that JOINs a table with its own `id` must alias and qualify.
 QUEUE_ORDER_BY = "queue_priority ASC, combined_score DESC, id ASC"
 
 TABLE_MODELS: dict[str, type[m.Contract]] = {
