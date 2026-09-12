@@ -3,7 +3,8 @@
 **Purpose.** Carry the full state of this project into a fresh session with zero loss of context
 and minimal token cost. Everything a new session needs is here or one link away.
 
-**Last updated:** 2026-09-12 (rev 11) · **Branch:** `feat/s7-feedback` (local) ·
+**Last updated:** 2026-09-12 (rev 12) · **Branch:** `feat/demo-build` (local; renamed from
+`feat/s7-feedback`, which no longer described what it carries) ·
 `feat/s2-contracts` and `feat/s6-fusion` **pushed to origin** as view-only progress branches ·
 **Phase 2 DONE (S2, S5 + S4b, S6, S7a, S7b, S8) · Phase 3: S9 DONE · Phase 5: S15 DONE** —
 changelog v1.19 · **376 tests, 0 skipped** · `python scripts/run_detection.py` builds the demo
@@ -92,9 +93,9 @@ Repo: `github.com/CSIT-321/CSIT321-Human-in-the-loop_IDS` · working tree `hitl-
 > S4b. It is **not** "Phase 1". Never use a bare phase number for it.
 >
 > **Actual status:** Phase 0 **PARTIAL** (S1 scaffold incomplete — Python slice only; **S2 DONE**) ·
-> Phase 1 **DONE** · Phase 2 **DONE** (S5, S4b, S6, S7a, S7b, S8) · Phase 3 **S9 DONE**, S10a/S10b
-> remain · Phase 5 **S15 DONE**, S16 (the demo gate) remains · **next: S10a** ·
-> Phases 4, 6 not started.
+> Phase 1 **DONE** · Phase 2 **DONE** (S5, S4b, S6, S7a, S7b, S8) · Phase 3 **DONE** (S9, S10a,
+> S10b) · Phase 5 **S15 DONE**, S16 (the demo gate) remains · **next: S11** ·
+> Phase 4 not started (S11 scaffolding only) · Phase 6 not started.
 
 ```
 hitl-ids/
