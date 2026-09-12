@@ -26,3 +26,6 @@ hitl-ids/data/processed/demo_ml_predictions_shap.json
 hitl-ids/data/*.db
 hitl-ids/data/*.db-journal
 .pytest_cache/
+
+# Generated deliverable - rebuild with: python scripts/build_user_manual.py
+hitl-ids/docs/~$*.docx

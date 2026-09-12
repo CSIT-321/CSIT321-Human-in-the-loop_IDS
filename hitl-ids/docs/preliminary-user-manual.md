@@ -3,9 +3,14 @@
 **FYP-26-S3-13 — Human-in-the-Loop Intrusion Detection Dashboard**
 CSIT321 Project · School of Computing and Information Technology
 
-> **Working draft.** This file is the source for the submitted document. Paste the sections and the
-> images from [`img/wireframes/`](img/wireframes/) into the Word template, which supplies the cover
-> page, the assessor and supervisor names, and the team table.
+> **This file is the source; the submitted document is generated from it.** Edit the text here,
+> then rebuild:
+>
+> `python scripts/build_user_manual.py`  ->  `docs/FYP-26-S3-13_PrelimUserManual.docx`
+>
+> Do not edit the `.docx` directly - the two would fork, and this project has already spent a
+> session repairing documents that drifted apart. The cover page still needs the assessor,
+> supervisor, topic code and team rows filled in; they appear as bracketed placeholders.
 
 ---
 
