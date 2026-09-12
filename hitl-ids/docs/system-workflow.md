@@ -49,7 +49,7 @@ flowchart TB
         N["Network traffic"] --> PC["Packet capture<br/>SPAN / TAP / PCAP"] --> EX["Flow exporter<br/>CICFlowMeter fork"] --> ES["ExporterSource"]
     end
     subgraph LT["2 · Local today"]
-        Z["Corrected CSE-CIC-IDS2018<br/>10.4 GB zip"] --> SM["scan + sample<br/>5,000 demo / 250,655 train"] --> CR["CsvReplaySource<br/>(S3 — not built)"] --> FR["Flow records<br/>CIC features, labels aside"]
+        Z["Corrected CSE-CIC-IDS2018<br/>10.4 GB zip"] --> SM["scan + sample<br/>5,000 demo / 250,655 train"] --> CR["CsvReplaySource<br/>(S3 — built with S9)"] --> FR["Flow records<br/>CIC features, labels aside"]
     end
     ES --> FR
     subgraph DC["3 · Detection core — built"]
@@ -255,10 +255,14 @@ administrator. **Guardrails can be switched off** for the evaluation's third arm
 | ~~1~~ | ~~S7a direct feedback + guardrails~~ | **Done** — §5, changelog v1.10 |
 | ~~2~~ | ~~**S7b** similar-alert learning~~ | **Done** — §5, changelog v1.14: families, the agreement gate, C1 + M1, and the `queue_class` band |
 | ~~3~~ | ~~**S9** batch runner + the S3 `FlowSource` seam~~ | **Done** — `python scripts/run_detection.py`: 5,000 flows → 5,000 stored alerts in 21 s (changelog v1.15) |
-| 1 | **S15** evaluation design | The three seeded runs: no feedback · feedback · guardrails off |
-| 4 | **S10a / S10b** API | The endpoints in §6 |
-| 5 | **S11 – S14** interface | The analyst queue with both score columns; admin and evaluator views |
-| 6 | **S16** demo gate | End-to-end demonstration |
+| ~~4~~ | ~~**S15** three-arm evaluation~~ | **Done** — changelog v1.16. Control · treatment · guardrails-off, pre-registered and reproducible. **Read [`evaluation-report.md`](evaluation-report.md) before quoting any feedback number**: S7b reached 198 untouched true positives and leaked onto none, but promoted a benign alert to rank 1 and precision@50 fell 1.000 → 0.980 |
+| 1 | **S10a / S10b** API | The endpoints in §6. S10a is the contract S11 builds against |
+| 2 | **S11 – S14** interface | The analyst queue with both score columns; admin and evaluator views |
+| 3 | **S16** demo gate | End-to-end demonstration. **The narrative was rewritten in plan v1.1** — the old one opened on a `signature_override` alert, and none exist |
+
+**Canonical order lives in [`../../plans/hitl-ids-demo-build.md`](../../plans/hitl-ids-demo-build.md)**
+(*Step status*), not here. `tests/test_plan_sync.py` fails if this repository's documents disagree
+about what is done.
 
 ---
 
@@ -268,7 +272,8 @@ administrator. **Guardrails can be switched off** for the evaluation's third arm
 |---|---|---|
 | `mark_expected_activity` change | HANDOVER said −30 | **−15**, read from `feedback-engine.js` |
 | `duplicate` / `uncertain` in the engine | HANDOVER said `duplicate` appears nowhere | Both are present, each with no score change. The decision stands: `duplicate` is a queue action |
-| The `FlowSource` seam | Assumed done with plan Phase 1 | Not built; moved into S9 |
+| The `FlowSource` seam | Assumed done with plan Phase 1 | Not built; moved into S9 — **now built** (v1.15) |
+| Which document says what to build next | The handover, in practice | **The plan** (`Step status`). The handover points at it; a test enforces that they agree (v1.17) |
 
 ---
 
@@ -277,5 +282,8 @@ administrator. **Guardrails can be switched off** for the evaluation's third arm
 - [`iteration-2-report.md`](iteration-2-report.md) — the fusion logic in full: formulas, charts, worked examples
 - [`iteration-report.md`](iteration-report.md) — Iteration 1: the corrected dataset and why the design changed
 - [`plan-changelog.md`](plan-changelog.md) — every decision with its evidence (Q23 in v1.9)
+- [`evaluation-report.md`](evaluation-report.md) — S15's three-arm result, including the parts that went the wrong way
+- [`deviations.md`](deviations.md) — the register of what differs from the approved documents and from the plan's original steps
+- [`../../plans/hitl-ids-demo-build.md`](../../plans/hitl-ids-demo-build.md) — **canonical for what to build next**
 - [`HANDOVER.md`](HANDOVER.md) — current state for the next session
 - [`../data/README.md`](../data/README.md) — the data and how to rebuild it

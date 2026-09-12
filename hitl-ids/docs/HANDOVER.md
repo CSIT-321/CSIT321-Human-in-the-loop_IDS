@@ -3,36 +3,56 @@
 **Purpose.** Carry the full state of this project into a fresh session with zero loss of context
 and minimal token cost. Everything a new session needs is here or one link away.
 
-**Last updated:** 2026-09-12 (rev 8) · **Branch:** `feat/s7-feedback` (local) ·
+**Last updated:** 2026-09-12 (rev 10) · **Branch:** `feat/s7-feedback` (local) ·
 `feat/s2-contracts` and `feat/s6-fusion` **pushed to origin** as view-only progress branches ·
-**Phase 2 DONE (S2, S5 + S4b, S6, S7a, S7b, S8) · Phase 3: S9 DONE** — changelog v1.15 ·
-**279 tests, 0 skipped** · `python scripts/run_detection.py` builds the demo database
+**Phase 2 DONE (S2, S5 + S4b, S6, S7a, S7b, S8) · Phase 3: S9 DONE · Phase 5: S15 DONE** —
+changelog v1.18 · **342 tests, 0 skipped** · `python scripts/run_detection.py` builds the demo
+database · `python scripts/run_evaluation.py` runs the three-arm evaluation
 **Iteration 1 (Evidence & Direction) complete** · the ranking formula and the agreement gate were
 chosen by experiment (Q29, Q30) · collaborator's `origin/main` merged ·
-**NFR-01 explainability satisfied**
+**NFR-01 explainability satisfied** · **NFR-05 proven at evaluation level**
 
 ---
 
 ## 0. Paste this to start the next session
 
-> Read `hitl-ids/docs/HANDOVER.md` in this repo, then confirm you have the state loaded by telling
-> me (a) the current phase and next step, (b) the two findings that were reversed and why, and
-> (c) what I have told you never to delegate. Do not re-derive any settled decision. Then begin
-> the next step, which §7 names.
+> Read `hitl-ids/docs/HANDOVER.md` **and the *Step status* table in
+> `plans/hitl-ids-demo-build.md`**, then confirm you have the state loaded by telling me (a) the
+> current phase and the next step **as the plan's status table names it**, (b) the two findings that
+> were reversed and why, and (c) what I have told you never to delegate. Do not re-derive any
+> settled decision. Then begin that step, reading **its section in the plan** before you write
+> anything.
 
 The confirmation is not ceremony — if a new session cannot answer those three, it has not loaded
 the state and will re-litigate settled ground.
 
-**The next step is S15**, the three-arm evaluation harness (§7, row 7). Before building anything,
-confirm the ground you are standing on:
+> **Read the plan's step section before implementing, not just this file.** This handover is an
+> *entry point*; `plans/hitl-ids-demo-build.md` is **canonical** for what a step contains, and it
+> carries the context brief a delegated worker is given. Working from §7 alone is how the plan went
+> eleven changelog versions without an update, while still instructing a reader to retire the
+> project's most productive signature rule. `tests/test_plan_sync.py` now fails if the two
+> documents disagree about what is done — but a test cannot tell you to *read* the step, so read it.
+
+**The next step is S10b** — the plan's *Step status* table is the authority, and it marks S10b
+`NEXT`. S10a's contract and `apps/api/openapi.json` are the target to implement against. Read
+[`the plan's S10a/S10b section`](../../plans/hitl-ids-demo-build.md) before writing anything — it
+says what a delegated worker gets and what is withheld. Then confirm the ground you are standing
+on:
 
 ```
-python -m pytest                      # expect 279 passed, 0 skipped
+python -m pytest                      # expect 342 passed, 0 skipped
 python scripts/run_detection.py       # rebuilds data/demo.db: 5,000 flows -> 5,000 alerts, ~21 s
+python scripts/run_evaluation.py      # the three arms over that database, ~3 s
+python scripts/build_openapi.py --check   # the committed API contract is in step with the models
 ```
 
-Use `C:/ProgramData/miniconda3/python.exe` for both — see §6 on the two interpreters. The database
-is gitignored, so a fresh checkout has to rebuild it; everything else S15 needs is committed.
+Use `C:/ProgramData/miniconda3/python.exe` for all three — see §6 on the two interpreters. The
+databases are gitignored, so a fresh checkout has to rebuild them; everything else is committed.
+
+**Read [`evaluation-report.md`](evaluation-report.md) before quoting any number about feedback.**
+S15 did not find the result the project wanted, and the honest version is the one to present:
+similar-alert learning works and does not leak, but on this sample it *lowered* precision, because
+the control queue was already perfect and the mechanism promoted a false positive to rank 1.
 
 ---
 
@@ -73,7 +93,8 @@ Repo: `github.com/CSIT-321/CSIT321-Human-in-the-loop_IDS` · working tree `hitl-
 >
 > **Actual status:** Phase 0 **PARTIAL** (S1 scaffold incomplete — Python slice only; **S2 DONE**) ·
 > Phase 1 **DONE** · Phase 2 **DONE** (S5, S4b, S6, S7a, S7b, S8) · Phase 3 **S9 DONE**, S10a/S10b
-> remain · **next: S15** (the evaluation, which S10a's schemas depend on) · Phases 4, 6 not started.
+> remain · Phase 5 **S15 DONE**, S16 (the demo gate) remains · **next: S10a** ·
+> Phases 4, 6 not started.
 
 ```
 hitl-ids/
@@ -90,18 +111,31 @@ hitl-ids/
   packages/detection/pipeline/         S9: source.py (the S3 seam) · predictor.py (TreeSHAP in the
                                        run) · store.py (repositories) · runner.py (run_detection)
   packages/detection/ml/inference.py   vendored+adapted TreeSHAP inference (see sec. 8)
+  packages/evaluation/                 S15: truth.py (the one ground-truth join) · scenario.py (the
+                                       pre-registered sequence) · metrics.py · harness.py (3 arms)
+  apps/api/contract/                   S10a: common · alerts · operations · openapi. NO FastAPI
+                                       import - pure Pydantic, so S11 can start before S10b
+  apps/api/openapi.json                S10a published: 13 operations, 37 schemas. COMMITTED;
+                                       rebuild/verify: python scripts/build_openapi.py [--check]
   evaluation/ranking/                  history.jsonl + runs/<id>/{config,results}.json, METHOD.md
+  evaluation/three-arm/                S15's record, same layout + METHOD.md
   packages/contracts/  S2: models.py · schema.sql (12 TDM tables + alert_families) · db.py (codec,
                        QUEUE_ORDER_BY - queue_priority since S7b)
-  tests/   279 tests in 10 files, 0 skipped - run: python -m pytest  (pyproject sets pythonpath)
+  tests/   342 tests in 13 files, 0 skipped - run: python -m pytest  (pyproject sets pythonpath)
+           test_plan_sync.py fails if the plan, this file and the changelog disagree
   tests/fixtures/legacy/   8 FROZEN files - never regenerate
-  scripts/        13 scripts, all runnable; run_detection.py builds the demo database (S9)
+  scripts/        15 scripts, all runnable; run_detection.py builds the demo database (S9),
+                  run_evaluation.py runs the three arms (S15), build_openapi.py publishes
+                  the API contract (S10a)
   rules/rule-set-s4b-1.json            7 rules, 2 enabled (FTP + SSH brute force)
-  docs/           HANDOVER · system-workflow (start here) · plan-changelog (v0.1-v1.15) ·
-                  ranking-and-escalation-design · iteration-report · iteration-2-report ·
+  docs/           HANDOVER · system-workflow (start here) · plan-changelog (v0.1-v1.16) ·
+                  ranking-and-escalation-design · evaluation-report (S15, read before quoting
+                  any feedback number) · deviations (the register the plan mandates) ·
+                  iteration-report · iteration-2-report ·
                   feasibility-study · rule-retuning-report · finding-infiltration-mislabelling
                   · img/ (15 rendered PNGs, regenerate: scripts/make_diagrams.py)
-plans/hitl-ids-demo-build.md    18-step build plan (S1-S18), v1.0
+plans/hitl-ids-demo-build.md    18-step build plan (S1-S18), v1.1 - CANONICAL for the next step;
+                                its *Step status* table is the authority, not this file's §7
 ```
 
 **Also merged:** the collaborator's `stage-3/` and `stage-5/` work (their model is INVALIDATED -
@@ -220,6 +254,19 @@ These were believed, then disproved. Re-proposing them wastes a cycle.
 - **Read the files a worker wrote.** Never trust its returned `result`; one agent returned only
   "Standing by." while its 28 findings sat in a 1.47 MB transcript.
 
+**Documents**
+- **The plan is canonical for what to build; this file is only the entry point.** They drifted for
+  eleven changelog versions because every session read §7 here and never opened
+  `plans/hitl-ids-demo-build.md`. The plan meanwhile instructed a reader to retire
+  `SIG-FTP-BRUTE-FORCE` — one of the two rules that survive — and to rehearse a demo whose own
+  stop-condition had fired. **Update the plan's *Step status* table in the same commit that finishes
+  a step**; `tests/test_plan_sync.py` fails when the documents disagree.
+- **Four files, four jobs.** Plan = what to build next. `plan-changelog.md` = why we changed our
+  minds, with evidence. `deviations.md` = the flat register of what differs from the approved
+  documents and the plan's original steps. This file = current state for a new session.
+- A delegated worker is handed **a step section from the plan**. That is the real reason the plan
+  cannot be allowed to go stale.
+
 **Verification**
 - **Verification code needs the same scrutiny as the thing it verifies.** A delegated worker was
   wrongly rejected on a coverage figure because the *verification* dropped each rule's other
@@ -260,7 +307,10 @@ These were believed, then disproved. Re-proposing them wastes a cycle.
 | 5 | ~~S7a — direct feedback + guardrails~~ **DONE** (changelog v1.10) · ranking experiment **done** (changelog v1.12–v1.13; Q29 formula C1, Q30 agreement gate) · **NEXT →** S7b: similar-alert learning with the gate, formula C1 and movement M1, as persisted family adjustments. Count agreement by feedback category, as the collaborator's engine does, not by direction as the experiment does. Add plus `queue_class` and the Tier 2 marker as contract additions (`ranking-and-escalation-design.md` §7). Inputs recorded before S7a: invariant I3 is S7's; "Critical" now means score ≥ 80 (Node used ≥ 90) — log the floor-trigger decision. Inputs from v1.9: floors must never *raise* a score; map `uncertain`; feedback cannot cross evidence bands — see `system-workflow.md` §7 | **Claude only** | **Port the collaborator's design** (sec. 8) to Python rather than authoring fresh |
 | ~~5b~~ | ~~S7b — similar-alert learning~~ | **DONE 2026-09-12** | `feedback/learning.py` + a rewritten `service.py`: the coarse family key, the category-counted gate, C1 + M1 replayed over each family's effective verdicts, the `alert_families` table, and the `queue_class` contract addition. Changelog v1.14 |
 | ~~6~~ | ~~S8 — audit writer~~ · ~~S9 — SQLite persistence + batch detection runner~~ | **DONE 2026-09-12** | `packages/detection/pipeline/`: the S3 ingest seam, the predictor protocol (TreeSHAP in the run, D8), the repository layer and `run_detection`. 5,000 flows → 5,000 alerts in 21 s, reproducible field-for-field. Changelog v1.15 |
-| 7 | **NEXT →** S15 — the three-arm evaluation harness: control (no feedback) · treatment (scripted feedback) · guardrails off | **Claude only** | There is now a database to evaluate against. Join ground truth **only** on `flow_data.source_record_id`, never through a detector. S10a's response schemas depend on S15's metrics (plan v0.3 FIX), so S15 comes before the API. The efficiency question the ranking experiment could not answer (`ranking-and-escalation-design.md` §8) belongs here |
+| ~~7~~ | ~~S15 — the three-arm evaluation harness~~ | **DONE 2026-09-12** | `packages/evaluation/` + `scripts/run_evaluation.py`; 25 tests. Arms are byte copies of one detection database, so dataset/model/rules/seed are pinned by construction. Pre-registration `s15-preregistration-1`, 40 verdicts. **Detection identical across all three arms.** S7b reached 198 untouched true positives and leaked onto 0 alerts outside judged families — **but promoted a benign alert from rank 639 to rank 1**, and precision fell (P@50 1.000 → 0.980) because the control was already perfect. Arm C = arm B exactly: the sequence had no dismissals, so no guardrail could bind. Changelog v1.16, report `evaluation-report.md` |
+| ~~8~~ | ~~S10a — the API contract~~ | **DONE 2026-09-12** | `apps/api/contract/` + `scripts/build_openapi.py`; 26 tests. 13 operations, 37 schemas, published to `apps/api/openapi.json`. Pure Pydantic — no FastAPI import — so S11 can start now. Reading the plan first caught a stale v1.0 instruction to order the queue by `evidence_priority`, which would have made feedback appear to do nothing. Changelog v1.18 |
+| 9 | **NEXT →** S10b — the route handlers behind S10a's contract | **delegate + Claude review** | The worker gets `apps/api/openapi.json`, the contract models and `store.py`'s reads. **`POST /alerts/{id}/feedback` is withheld** — it invokes the guardrails. NFR-04 (p95 < 2s) is measured here |
+| 10 | S11 — web shell, role switching, typed client | delegate + Claude review | Depends on S10a only, which is done: **this can start in parallel with S10b** |
 
 Full detail per step: [`../../plans/hitl-ids-demo-build.md`](../../plans/hitl-ids-demo-build.md).
 
@@ -321,15 +371,33 @@ them before the next merge.
 1. ~~Push the branch?~~ **User decision (2026-09-11):** `feat/s2-contracts` pushed to origin as a
    view-only progress branch, with the demo sample. `feat/s6-fusion` (S2–S6 + docs) pushed on request
    the same day. Work continues locally; push again only when asked.
-2. ~~Held-out re-test~~ **Done, reported.** ~~S2~~ ~~S5 + S4b~~ ~~S6~~ ~~S7a~~ ~~S7b~~ ~~S8~~ —
-   **all done.** Next is **S9**. Settled since: feedback moves an alert between *queue bands* (Q24),
-   never across evidence classes, which closes the `system-workflow.md` §7 item 4 question.
+2. ~~Held-out re-test~~ **Done, reported.** ~~S2~~ ~~S5 + S4b~~ ~~S6~~ ~~S7a~~ ~~S7b~~ ~~S8~~
+   ~~S9~~ ~~S15~~ — **all done.** Next is **S10a**. Settled since: feedback moves an alert between
+   *queue bands* (Q24), never across evidence classes, which closes the `system-workflow.md` §7
+   item 4 question.
    **Open (ranking):**
    - (a) Movement M1 or M2 under the gate. The data cannot separate them; M1 stands unless you
-     choose M2.
-   - (b) Whether to add the fine family key as defence in depth.
-   - (c) The efficiency gain is still untested. A stress test with a weaker or drifting detector is
-     proposed (`ranking-and-escalation-design.md` §8).
+     choose M2. S15 adds one datum: under M1 the class offset **accumulates** one band per
+     confirmation and clamps at −5, so five verdicts in a family move its members the full
+     distance — M1 and M2 converge once a family is judged five times.
+   - (b) Whether to add the fine family key as defence in depth. **S15 gives this a concrete
+     cost:** the coarse key promoted a benign alert from rank 639 to **rank 1** because its family
+     was dominated by confirmed Web Attacks (`evaluation-report.md`, finding 2).
+   - (c) The efficiency gain is still untested, and S15 confirmed why: the control queue is already
+     perfect (precision 1.000 to k=200, 2 false positives in 996 flagged alerts), so feedback can
+     only break it. The stress test with a weaker or drifting detector
+     (`ranking-and-escalation-design.md` §8) remains the only way to answer it. **Not run — it
+     needs your go-ahead**, and must be reported as a separate, clearly-labelled experiment.
+
+7. **Two decisions S15 surfaced** (`evaluation-report.md` §6), neither taken:
+   - (a) **Arm C has no power as pre-registered.** The oracle analyst over a near-perfect detector
+     produced no dismissals, and every guardrail that could bind protects against *downward*
+     pressure — so "guardrails off" changed nothing. A second pre-registered rule drawing from the
+     queue's false positives would give arm C something to measure. Changing the existing rule
+     after seeing the result is what plan v0.3 forbids, so this is yours to call.
+   - (b) **The queue bands reuse the evidence-class names.** Five `ml_only` alerts now sit in the
+     band named `signature_override` with their evidence class unchanged. Rename the bands, or
+     accept the collision knowingly before the viva.
 3. Review [`finding-infiltration-mislabelling.md`](finding-infiltration-mislabelling.md) — a
    report-ready write-up of the Infiltration finding, drafted and awaiting your edit.
 4. **Agree a file-ownership boundary with the collaborator** before the next merge (see sec. 8).

@@ -638,7 +638,7 @@ re-open the question of how much it gains.
 
 ---
 
-## v1.15 — S9 landed: the batch detection run writes a real database (2026-09-12) ← **current**
+## v1.15 — S9 landed: the batch detection run writes a real database (2026-09-12)
 
 `packages/detection/pipeline/` and `scripts/run_detection.py`. 16 new tests; **279 pass, 0 skipped.**
 One command now takes the sample to a populated database:
@@ -677,6 +677,156 @@ positives, and `signature_override` stays 0 as it has on corrected data througho
 candidates**; `AL-02717` (88.48) sits in the `ml_only` band; `AL-03086`, the attempted Web Attack both
 detectors missed, sits at 36.94 in the bottom band. Dismissing `AL-00478` and confirming `AL-03086` is
 exactly the story S7a and S7b were built to tell.
+
+---
+
+## v1.16 — S15 landed: the three-arm evaluation, and what it actually showed (2026-09-12)
+
+`packages/evaluation/` and `scripts/run_evaluation.py`. 25 new tests; **304 pass, 0 skipped.**
+Report: [`evaluation-report.md`](evaluation-report.md) · method:
+[`../evaluation/three-arm/METHOD.md`](../evaluation/three-arm/METHOD.md) · run `20260912T032022Z`.
+
+```
+python scripts/run_evaluation.py       # three arms over data/demo.db, ~3 s
+```
+
+| | Change | Rationale |
+|---|---|---|
+| ADD | **The arms are byte copies of one detection database**, not three detection runs | Dataset, model, rule set and seed are then identical *by construction*; re-running detection would put the pipeline's determinism between the arms and the comparison, making any difference ambiguous |
+| ADD | **Pre-registration `s15-preregistration-1`** (v0.3's replacement for the corrupt exit criterion): flagged alerts in queue order, ≤ 5 per family, families of ≥ 8, 40 verdicts, category from ground truth | The rule is fixed before any arm runs and recorded with its SHA-256 digest, so "how did you choose the feedback sequence?" has an answer that is not "so the result would appear" |
+| ADD | **Ground truth reaches the evaluation by one join only** (`flow_data.source_record_id`), and `GroundTruth` refuses a record it lacks rather than defaulting to benign | A silent default would count every unmatched alert as a false positive and quietly deflate precision |
+| ADD | Metrics: per-class P/R/F1/FPR/FNR, precision@k, MRR, movement split by **judged / untouched family member / unrelated**, and safety | The middle group is the only place S7b's claim is visible; the third is where leakage would show |
+| DEC | **`score_range_clamped` is not a guardrail failure.** Clamping a confirmation on an alert already at 100 is the score range working | Counting it as a breach reported a safety failure on every healthy run — caught by re-checking the checker before believing the first result |
+| DEC | **`adjusted` (score or band changed) is reported separately from `rank_changed`** | Rank is relative: one promotion re-ranks everything beneath it. Conflating the two made 151 untouched alerts look as though learning had leaked onto them, when 0 were adjusted |
+| ADD | `queue.saturation` is a first-class metric | 975/996 flagged alerts sit at exactly 100.0; without that number the other metrics are unreadable |
+
+**Measured, run `20260912T032022Z`** — detection metrics **identical in all three arms**, so feedback
+reordered the queue and did not touch the detector:
+
+| | A — control | B — treatment | C — guardrails off |
+|---|---|---|---|
+| Precision @10 / @50 | 1.000 / 1.000 | 0.900 / 0.980 | 0.900 / 0.980 |
+| False positives in top 50 | 0 | 1 | 1 |
+| Critical floor breaches · true positives suppressed | 0 · 0 | 0 · 0 | **0 · 0** |
+
+**The four findings that matter.**
+
+1. **S7b works and does not leak.** 8/8 families opened their gate at agreement 1.000; of 805
+   untouched family members, 205 were adjusted and **198 true positives promoted**; of 4,155 alerts
+   outside any judged family, **0 were adjusted**.
+2. **It promoted two false positives, one to rank 1.** Alert 11 — benign, classified `Web Attack` —
+   rose from rank 639 to **rank 1** on five `escalate` verdicts given to *other* members of its
+   family. Intrinsic to a coarse family key, not a bug. The design's cost, now measured.
+3. **Arm C is inert, and the rule is why.** An oracle analyst over a near-perfect detector yields
+   **no dismissals**, and every guardrail that could bind (−30 cap, floors 70 and 75) protects
+   against *downward* pressure. Recorded as measured per the v0.3 exit criterion — but it means
+   *this sequence could not test the guardrails*, not *the guardrails are unnecessary*.
+4. **The score is saturated.** 975/996 flagged alerts at exactly 100.0, 13 distinct scores among 996;
+   only 1 of 40 judged alerts changed score. Order inside the top band falls to the `id ASC`
+   tie-break, not to the analyst. **The 0.99 F1 testbed artefact now has a third consequence**: it
+   leaves the feedback loop nothing to correct, which is why precision could only fall.
+
+**Two nomenclature/parameter notes, both reversible.** Five judged `ml_only` alerts now sit in the
+queue band *named* `signature_override` while their evidence class is unchanged — the bands reuse the
+evidence-class names, and a viva question is easy to ask there. And `max_per_family = 5` happens to be
+exactly the number of confirmations that saturates M1's accumulating class offset at its −5 clamp, so
+every judged family's members jumped the full distance rather than one band. Both are logged rather
+than quietly re-tuned.
+
+**Open, for the project lead** (detail in the report's §6): the efficiency stress test with a weaker
+or drifting detector (`ranking-and-escalation-design.md` §8) is still the only way to answer the
+efficiency question; a second pre-registered rule covering the dismissal direction is needed before
+arm C has any power. Neither is adopted here — changing a rule after seeing a result is exactly what
+v0.3 forbids.
+
+---
+
+## v1.17 — The plan was eleven versions stale; the lifecycle documents are resynchronised (2026-09-12)
+
+**Found by the user, not by us.** Asked where we were in the plan "aside from the S values", we
+opened `plans/hitl-ids-demo-build.md` for the first time since **2026-09-11 00:12** — before S2
+landed. Every step from v1.5 to v1.16 was driven from `HANDOVER.md` §7 while the plan itself went
+untouched. The user's diagnosis was exact: *"this lapse … tells me you dont refer to the plan module
+for next step implementation and is actually based off the handover purely."*
+
+**Why it matters more than tidiness.** A delegated worker is handed a **step section from the plan**.
+Three of those sections would have produced confidently wrong work:
+
+| | The plan said | Reality | Consequence for a worker |
+|---|---|---|---|
+| S4b | **Retire `SIG-FTP-BRUTE-FORCE`**; set SSH's threshold to **20** | FTP is one of only **two enabled rules**; SSH's re-derived threshold is **10.66689** | Would have disabled the project's most productive rule and mis-set the other |
+| S6 | Exit criterion: "the 8 known complementary detections occupy review-queue positions 1–8" | `signature_only = 0` — no such alert exists | An exit criterion that can never pass; work would stall or be faked |
+| S16 | Open the demo on the top `signature_override` alert, with the precondition *"if the corrected dataset yields zero, stop and re-plan"* | The corrected dataset yields **exactly zero** | **The plan's own stop-condition had already fired and nobody had noticed** |
+
+| | Change | Rationale |
+|---|---|---|
+| ADD | **`docs/deviations.md` created.** Mandated by D10 and the mutation protocol, cited by S3, S4b, S6 and S7 — **seven dangling references, never written**. Back-filled from v0.1–v1.16: 9 document deviations, 8 plan mutations, 12 component deviations, 6 rejected options, 5 withdrawn claims | The changelog absorbed its job, which is why a *withdrawn* claim could sit in the plan unnoticed — a narrative records the change, a register records the resulting state |
+| ADD | **Plan v1.1** with a `PLAN-STATUS` table — the plan previously had **no status marker of any kind** and could not answer "where are we" | The question the user asked had no answer in the canonical document |
+| CHG | Plan preamble rewritten: the **"detectors are complementary"** claim and **"zero co-occurrence"** both corrected inline | Both were withdrawn in v1.2; the plan asserted them for fourteen versions |
+| CHG | **S4b's rule list corrected**, S6's unsatisfiable exit criterion withdrawn, **S16's demo narrative rewritten** around `AL-00478` and `AL-03086`, S7 recorded as split into S7a/S7b, S12's "6 categories" corrected to 5 + `duplicate` as a queue action, "7 classes" → 8 throughout, Suricata marked **rejected** rather than optional | Each is a place a worker would have been misled |
+| ADD | **`tests/test_plan_sync.py` (12 tests)** — fails when the plan's status table disagrees with HANDOVER §7, when there is not exactly one `NEXT` step, when a `DONE` step cites no changelog version, when the handover's header or test count is stale, or when the plan re-asserts a withdrawn claim | Modelled on `test_contracts.py::test_columns_are_tdm_names_plus_logged_deviations`, which already fails on an unlogged schema column. **This class of drift is now a test failure, not a discovery** |
+| DEC | **The plan is canonical for what to build next; HANDOVER is the entry point.** The start-of-session prompt now sends the reader to the plan's status table and to the step's own section | Working from §7 alone is what produced this entry |
+
+**The test earned its keep immediately**: it failed on the first run against a line in our *own*
+S16 rewrite that still read as an assertion of the retired fixture ids. Fixed the prose, not the test.
+
+**Also updated.** `system-workflow.md` §8 (S15 done, next is S10a, canonical order delegated to the
+plan) and its stale "S3 — not built" node; `ranking-and-escalation-design.md` §8, where S15 answers
+four previously-open questions — family learning reaches untouched alerts (198), does not leak (0),
+costs two promoted false positives (one to rank 1), and M1 converges with M2 after five
+confirmations — and adds the dismissal-direction sequence as newly open.
+
+**Not changed:** no code outside `tests/`, no contract, no measured figure. This entry is
+documentation-only; `python -m pytest` and `python scripts/run_evaluation.py` produce exactly what
+v1.16 recorded.
+
+---
+
+## v1.18 — S10a landed: the API contract, and the first thing the new process caught (2026-09-12) ← **current**
+
+`apps/api/contract/` + `scripts/build_openapi.py`. 26 new tests; **342 pass, 0 skipped.**
+Published: `apps/api/openapi.json` — **13 operations over 12 paths, 37 schemas**, committed so S11
+can generate its client from a checkout without running Python.
+
+```
+python scripts/build_openapi.py           # publish
+python scripts/build_openapi.py --check   # fail if the committed document is stale
+```
+
+**The process introduced in v1.17 paid for itself immediately.** Reading the plan's S10a section
+before writing code — rather than working from HANDOVER §7 — surfaced a stale instruction *inside the
+step being implemented*:
+
+> v1.0: "`GET /api/alerts` must return `evidence_class` and **order by `evidence_priority,
+> combined_score DESC`**"
+
+That predates S7b. The contract order is `db.QUEUE_ORDER_BY` = `queue_priority ASC, combined_score
+DESC, id ASC`. **Ordering by `evidence_priority` would have produced an API in which feedback
+appears to do nothing** — an alert promoted between queue bands would not move, because the sort key
+never changes. The demo's whole point would have been invisible, and the bug would have looked like
+a UI problem three steps later. Corrected in plan v1.1; logged as `deviations.md` C13.
+
+| | Change | Rationale |
+|---|---|---|
+| ADD | **`apps/api/contract/`** — `common` (envelopes, roles, paging, query models) · `alerts` (queue, four evidence panels, the feedback loop) · `operations` (dashboard, runs, audit, guardrails, evaluation) · `openapi` (the document) | S10a is the contract, not the service |
+| DEC | **Nothing imports FastAPI.** The contract is pure Pydantic | It can be written, reviewed and tested before `fastapi` is installed, and S11 can start while S10b is still being written — which is the entire reason v0.3 split S10 |
+| DEC | **Paths hand-authored, schemas generated** from the models | The plan says "hand-authored" because FastAPI generates OpenAPI *from* handlers. But hand-typing the schemas would be a second copy of the models, free to drift — exactly the failure v1.17 was written about. Paths are decisions; schemas are consequences |
+| DEC | **`alertRef` (UUID) is the public identity; row ids are never exposed** | They leak row counts, and S18's Postgres migration is free to renumber them |
+| DEC | **Both score columns in every queue row** (`detectionScore` immutable, `combinedScore` operational) | The dashboard's second score column is the demo's point; one number cannot show it |
+| DEC | **The feedback response carries the whole adjustment chain**, not the final score | `original → requested Δ → guardrail bound → actual Δ → final`. A response with only the new score makes the guardrails invisible, and they are the safety claim. A rejected adjustment is a 200 with `action: rejected` — the verdict was recorded and the score was protected; that is not an error |
+| DEC | **camelCase on the wire, snake_case in Python** | The consumer is a generated TypeScript client, and this repository already uses camelCase at every JavaScript boundary (`ProducerContract`, the observable view) |
+| ADD | **A leakage test over the whole contract**: no wire model may expose `attackClass`, `groundTruth`, `isAttempted` or a label. `attackCategory` (what the system *assigned*) is allowed; `attackClass` (what the capture *was*) is not | The API is the first component that could leak the answers. `sourceRecordId` is exposed deliberately — an identifier, not an answer |
+| ADD | `duplicate` is **absent** from the feedback categories, and a test says so | The approved documents' "six categories" folds a queue action into the scoring set (`deviations.md` A6) |
+| ADD | **Evaluation deltas are typed to allow negatives**, with the schema description saying they must be rendered as measured | S15 measured precision@50 falling 1.000 → 0.980. A contract that could only express improvement would be a contract that lies |
+
+**Two real gaps the contract tests caught while being written**, neither of which was a test
+artefact: `AuditQuery` was declared but **never wired into `/api/audit-log`**, which therefore
+offered no filters at all though S13's log viewer needs them; and query-parameter models were being
+emitted as component schemas nothing referenced. Query models are now flattened into `parameters`
+and excluded from components, where a client generator expects them.
+
+**Not done here, deliberately:** NFR-04's p95 < 2s. It is measured in S10b, where code first runs;
+asserting a latency budget against a document would be theatre.
 
 ---
 

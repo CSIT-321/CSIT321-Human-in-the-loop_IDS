@@ -377,9 +377,34 @@ Run 3's ungated coarse arms reproduce run 2 exactly (48 of 48 aggregates). Read 
   finding 4).
 
 - **A stress test for the efficiency claim.** It needs a weaker or drifting detector, so that the top
-  of the queue has false positives to learn from. Not yet run.
+  of the queue has false positives to learn from. **Still not run — and S15 has now confirmed why it
+  is necessary rather than merely desirable** (changelog v1.16,
+  [`evaluation-report.md`](evaluation-report.md)): on the demo sample the control queue is already
+  perfect (precision 1.000 to k=200; 2 false positives among 996 flagged alerts), so feedback has
+  nothing to correct and can only make the ordering worse. The harness takes any detection database,
+  so this is a run rather than a build. **It must be pre-registered and reported as a separate,
+  clearly-labelled experiment** — folding it into the headline would be the v0.2 exit criterion
+  returning by the back door.
+- **A dismissal-direction sequence.** S15's pre-registered rule produced **40 confirmations and no
+  dismissals**, because an oracle analyst over a near-perfect detector has nothing to dismiss. Every
+  guardrail that could bind (the −30 cap, the floors at 70 and 75) protects against *downward*
+  pressure, so the guardrails-off arm was inert. Needs a second pre-registered rule drawing from the
+  queue's false positives. Not adopted — the project lead's call.
 - **The run on the 250,655-flow training sample** planned in §6. SHAP predictions exist only for the
   demo sample. Not yet run.
+
+**Answered by S15 (2026-09-12), so no longer open:**
+
+- **Does family learning reach alerts nobody judged?** Yes — 198 untouched true positives promoted
+  across 8 families, all gates opening at agreement 1.000.
+- **Does it leak past the family?** No — of 4,155 alerts outside any judged family, **0** had a
+  score or band changed.
+- **What does it cost?** Two false positives were promoted with their families, **one from rank 639
+  to rank 1**. That is the coarse family key's price, and it is the strongest evidence yet for
+  finding 4's fine-key proposal above.
+- **Does M1 differ from M2 in practice?** Under the gate, M1's class offset **accumulates** one band
+  per confirmation and clamps at −5 — so after five confirmations in a family the two movements
+  converge. M1 and M2 differ only for lightly-judged families.
 
 ---
 

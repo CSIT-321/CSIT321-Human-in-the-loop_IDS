@@ -25,3 +25,4 @@ hitl-ids/data/processed/demo_ml_predictions_shap.json
 # regenerable demo database - rebuild with scripts/run_detection.py (S9)
 hitl-ids/data/*.db
 hitl-ids/data/*.db-journal
+.pytest_cache/
