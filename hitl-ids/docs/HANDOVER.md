@@ -131,6 +131,8 @@ hitl-ids/
   docs/           HANDOVER · system-workflow (start here) · plan-changelog (v0.1-v1.16) ·
                   ranking-and-escalation-design · evaluation-report (S15, read before quoting
                   any feedback number) · deviations (the register the plan mandates) ·
+                  preliminary-user-manual (+ img/wireframes/: 16 generated screens,
+                  rebuild with scripts/make_wireframes.py) ·
                   iteration-report · iteration-2-report ·
                   feasibility-study · rule-retuning-report · finding-infiltration-mislabelling
                   · img/ (15 rendered PNGs, regenerate: scripts/make_diagrams.py)
