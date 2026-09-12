@@ -3,10 +3,10 @@
 **Purpose.** Carry the full state of this project into a fresh session with zero loss of context
 and minimal token cost. Everything a new session needs is here or one link away.
 
-**Last updated:** 2026-09-12 (rev 10) · **Branch:** `feat/s7-feedback` (local) ·
+**Last updated:** 2026-09-12 (rev 11) · **Branch:** `feat/s7-feedback` (local) ·
 `feat/s2-contracts` and `feat/s6-fusion` **pushed to origin** as view-only progress branches ·
 **Phase 2 DONE (S2, S5 + S4b, S6, S7a, S7b, S8) · Phase 3: S9 DONE · Phase 5: S15 DONE** —
-changelog v1.18 · **342 tests, 0 skipped** · `python scripts/run_detection.py` builds the demo
+changelog v1.19 · **376 tests, 0 skipped** · `python scripts/run_detection.py` builds the demo
 database · `python scripts/run_evaluation.py` runs the three-arm evaluation
 **Iteration 1 (Evidence & Direction) complete** · the ranking formula and the agreement gate were
 chosen by experiment (Q29, Q30) · collaborator's `origin/main` merged ·
@@ -33,14 +33,14 @@ the state and will re-litigate settled ground.
 > project's most productive signature rule. `tests/test_plan_sync.py` now fails if the two
 > documents disagree about what is done — but a test cannot tell you to *read* the step, so read it.
 
-**The next step is S10b** — the plan's *Step status* table is the authority, and it marks S10b
-`NEXT`. S10a's contract and `apps/api/openapi.json` are the target to implement against. Read
-[`the plan's S10a/S10b section`](../../plans/hitl-ids-demo-build.md) before writing anything — it
-says what a delegated worker gets and what is withheld. Then confirm the ground you are standing
-on:
+**The next step is S11** — the plan's *Step status* table is the authority, and it marks S11
+`NEXT`: the web shell, role switching, and a typed client generated from `apps/api/openapi.json`.
+**The backend is complete and serving**; S11 is the first step whose output a person can actually
+look at. Read the plan's S11 section before writing anything. Then confirm the ground you are
+standing on:
 
 ```
-python -m pytest                      # expect 342 passed, 0 skipped
+python -m pytest                      # expect 376 passed, 0 skipped
 python scripts/run_detection.py       # rebuilds data/demo.db: 5,000 flows -> 5,000 alerts, ~21 s
 python scripts/run_evaluation.py      # the three arms over that database, ~3 s
 python scripts/build_openapi.py --check   # the committed API contract is in step with the models
@@ -121,7 +121,7 @@ hitl-ids/
   evaluation/three-arm/                S15's record, same layout + METHOD.md
   packages/contracts/  S2: models.py · schema.sql (12 TDM tables + alert_families) · db.py (codec,
                        QUEUE_ORDER_BY - queue_priority since S7b)
-  tests/   342 tests in 13 files, 0 skipped - run: python -m pytest  (pyproject sets pythonpath)
+  tests/   376 tests in 15 files, 0 skipped - run: python -m pytest  (pyproject sets pythonpath)
            test_plan_sync.py fails if the plan, this file and the changelog disagree
   tests/fixtures/legacy/   8 FROZEN files - never regenerate
   scripts/        15 scripts, all runnable; run_detection.py builds the demo database (S9),
@@ -310,7 +310,8 @@ These were believed, then disproved. Re-proposing them wastes a cycle.
 | ~~7~~ | ~~S15 — the three-arm evaluation harness~~ | **DONE 2026-09-12** | `packages/evaluation/` + `scripts/run_evaluation.py`; 25 tests. Arms are byte copies of one detection database, so dataset/model/rules/seed are pinned by construction. Pre-registration `s15-preregistration-1`, 40 verdicts. **Detection identical across all three arms.** S7b reached 198 untouched true positives and leaked onto 0 alerts outside judged families — **but promoted a benign alert from rank 639 to rank 1**, and precision fell (P@50 1.000 → 0.980) because the control was already perfect. Arm C = arm B exactly: the sequence had no dismissals, so no guardrail could bind. Changelog v1.16, report `evaluation-report.md` |
 | ~~8~~ | ~~S10a — the API contract~~ | **DONE 2026-09-12** | `apps/api/contract/` + `scripts/build_openapi.py`; 26 tests. 13 operations, 37 schemas, published to `apps/api/openapi.json`. Pure Pydantic — no FastAPI import — so S11 can start now. Reading the plan first caught a stale v1.0 instruction to order the queue by `evidence_priority`, which would have made feedback appear to do nothing. Changelog v1.18 |
 | 9 | **NEXT →** S10b — the route handlers behind S10a's contract | **delegate + Claude review** | The worker gets `apps/api/openapi.json`, the contract models and `store.py`'s reads. **`POST /alerts/{id}/feedback` is withheld** — it invokes the guardrails. NFR-04 (p95 < 2s) is measured here |
-| 10 | S11 — web shell, role switching, typed client | delegate + Claude review | Depends on S10a only, which is done: **this can start in parallel with S10b** |
+| ~~10~~ | ~~S10b — the route handlers~~ | **DONE 2026-09-12** | `apps/api/{deps,mappers,routes,main}.py`; 34 tests. Every contracted operation implemented; `uvicorn apps.api.main:app` serves the 5,000-alert database. **NFR-04 measured for real: queue p95 19.3 ms, detail p95 6.2 ms** against a 2,000 ms budget. Three bugs caught by running it — changelog v1.19. Not delegated: the write path and the shared mappers could not be split cleanly |
+| 11 | **NEXT →** S11 — web shell, role switching, design system, typed client | delegate + Claude review | Generate the client from `apps/api/openapi.json`. **The first step a person can see.** Then S12 (analyst path — the demo core), S13, S14, and the S16 gate |
 
 Full detail per step: [`../../plans/hitl-ids-demo-build.md`](../../plans/hitl-ids-demo-build.md).
 

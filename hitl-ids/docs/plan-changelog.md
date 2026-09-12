@@ -782,7 +782,7 @@ v1.16 recorded.
 
 ---
 
-## v1.18 — S10a landed: the API contract, and the first thing the new process caught (2026-09-12) ← **current**
+## v1.18 — S10a landed: the API contract, and the first thing the new process caught (2026-09-12)
 
 `apps/api/contract/` + `scripts/build_openapi.py`. 26 new tests; **342 pass, 0 skipped.**
 Published: `apps/api/openapi.json` — **13 operations over 12 paths, 37 schemas**, committed so S11
@@ -827,6 +827,60 @@ and excluded from components, where a client generator expects them.
 
 **Not done here, deliberately:** NFR-04's p95 < 2s. It is measured in S10b, where code first runs;
 asserting a latency budget against a document would be theatre.
+
+---
+
+## v1.19 — S10b landed: the system is reachable over HTTP (2026-09-12) ← **current**
+
+`apps/api/{deps,mappers,routes,main}.py` plus the repository reads on `pipeline/store.py`.
+34 new tests; **376 pass, 0 skipped.**
+
+```
+python -m uvicorn apps.api.main:app --reload     # http://localhost:8000/docs
+```
+
+**NFR-04 measured on the real 5,000-alert database**, not on the test fixture:
+
+| | p50 | p95 | budget |
+|---|---|---|---|
+| `GET /api/alerts` (50) | 15.6 ms | **19.3 ms** | 2,000 ms |
+| `GET /api/alerts` (deep page, offset 4,900) | 14.8 ms | 20.5 ms | 2,000 ms |
+| `GET /api/alerts/{ref}` | 5.3 ms | **6.2 ms** | 2,000 ms |
+| `GET /api/dashboard/summary` | 94.0 ms | 99.1 ms | — |
+
+| | Change | Rationale |
+|---|---|---|
+| ADD | **Repository reads on `store.py`**: `queue_page` (filtered, paged, with a total), `alert_by_ref`, `flows_for_alerts`, `family_by_key`, `feedback_for_alert`, `has_feedback`, `audit_page`, `dashboard_counts`, `latest_run` | `store.py`'s own docstring already promised these to S10 and S15. Two queries per page, never one per row — which is what keeps the deep page as fast as the first |
+| DEC | **A blocked adjustment is a 200, not a 4xx.** The refusal travels in `action: rejected` with the guardrail's explanation | The verdict *was* recorded and the score *was* protected — that is the system working. A 4xx would tell the analyst their action failed |
+| DEC | **An unknown filter or sort key raises**, rather than being ignored | A filter silently dropped returns a plausible wrong answer, which is worse than an error |
+| DEC | **The role check is named `demo_role_stub`** and applied only where a role genuinely gates an action | Sprinkling it everywhere would imply an access-control model the demo does not have. An unrecognised role is refused, never downgraded to analyst |
+| DEC | **`POST /detection/run` reports the existing run** rather than launching one | Detection is an offline batch (D3); a 21-second job inside an HTTP request is not a design, it is a timeout |
+| ADD | `GET /api/health` names the database being served | In a demo, "which database am I looking at" is the first question when something looks wrong |
+
+**Three bugs, every one found by running the thing rather than by reading it.**
+
+1. **`alertsMovedByFeedback` reported 644 movements on a database with zero verdicts.** It compared
+   `queue_class != evidence_class`, but *detection itself* places alerts in the `tier2_candidate`
+   band. Now: the score has left its detection score, or a verdict exists, or the alert's family has
+   an open gate applying an adjustment. Reads **0** on a clean database and **845** on arm B — which
+   matches S15's movement figures exactly (40 judged + 805 family members).
+2. **A guardrail sentence stated the wrong number.** *"This alert is Critical, so its score was held
+   at the floor of **29.89**"* — the floor is **70**. `feedback_events` stores only the code, and the
+   configured value was being inferred from the delta. Now looked up from `guardrail_config`. That
+   sentence is the demo's centrepiece, so it has a regression test.
+3. **A test asserted the result it wanted.** `membersMoved >= 1` once the gate opened — but the
+   fixture's family is already at the top band and at score 100, so nothing *can* move. The
+   saturation S15 measured, reappearing. The test now checks what is observable: the gate opens on
+   the third verdict, and an unjudged member's family panel carries the applied adjustment and says
+   why.
+
+**Delegation reconsidered, and declined.** The plan allowed a delegate for the handlers with
+`POST /alerts/{id}/feedback` withheld. In the event the write path, the mappers and the repository
+reads were too entangled to split cleanly, and two of the three bugs above were in the shared part.
+Delegating would have cost more review than it saved. Recorded rather than quietly ignored.
+
+**Also:** `tests/conftest.py` now owns the synthetic capture that `test_evaluation` and `test_api`
+share, instead of one importing from the other.
 
 ---
 

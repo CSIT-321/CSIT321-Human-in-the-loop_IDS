@@ -134,8 +134,8 @@ changelog's current version. Status is one of `DONE` · `PARTIAL` · `NEXT` · `
 | S9 | SQLite persistence + batch runner | DONE | v1.15 |
 | S15 | Three-arm evaluation harness | DONE | v1.16 |
 | S10a | API contract | DONE | v1.18 |
-| S10b | API handlers | NEXT | — |
-| S11 | Web shell, role switching, design system | TODO | — |
+| S10b | API handlers | DONE | v1.19 |
+| S11 | Web shell, role switching, design system | NEXT | — |
 | S12 | Analyst path (deep) ⭐ DEMO CORE | TODO | — |
 | S13 | Admin path (thin) | TODO | — |
 | S14 | Evaluator path (thin) | TODO | — |
@@ -407,8 +407,20 @@ Pydantic request/response models plus a **hand-authored** OpenAPI document. This
 > wired to `/api/audit-log`, which therefore had no filters at all though S13 needs them; and
 > query-parameter models were being emitted as unreferenced component schemas.
 
-**S10b — handlers. ← NEXT.** Deps: S10a · Owner: delegate + Claude review · Branch: `feat/s10b-handlers`
+**S10b — handlers. ✅ DONE (changelog v1.19).** Deps: S10a · Owner: **Claude** · Branch: `feat/s10b-handlers`
 Route implementations behind the S10a contract.
+
+> **Landed 2026-09-12.** `apps/api/{deps,mappers,routes,main}.py`, 34 tests. Every contracted
+> operation implemented; `uvicorn apps.api.main:app` serves the 5,000-alert demo database.
+>
+> **NFR-04 measured at real scale, not on the fixture**: `GET /api/alerts` p95 **19.3 ms**,
+> `GET /api/alerts/{ref}` p95 **6.2 ms**, against a 2,000 ms budget. Deep paging (offset 4,900)
+> does not degrade — `queue_page` issues two queries per page, never one per row.
+>
+> **Not delegated after all.** The plan allowed a delegate for the handlers with the feedback path
+> withheld. In the event the write path, the mappers and the repository reads were too entangled to
+> split cleanly, and two of the three bugs found were in exactly the shared part. Delegation would
+> have cost more review than it saved.
 
 > **What a delegated worker gets**: `apps/api/openapi.json`, the contract models, and
 > `packages/detection/pipeline/store.py`, which already has the reads (`queue`, `counts_by`,
