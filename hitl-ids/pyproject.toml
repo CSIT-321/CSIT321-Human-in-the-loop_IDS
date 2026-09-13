@@ -11,10 +11,21 @@ dependencies = [
     "pandas",
     "xgboost",
     "scikit-learn",
+    # The demo API (apps/api): `python -m uvicorn apps.api.main:app`, run from this folder.
+    # Tested on FastAPI 0.136 (Starlette 0.48). Older FastAPI with Starlette 1.x fails at import with
+    # "Router.__init__() got an unexpected keyword argument 'on_startup'".
+    "fastapi>=0.136",
+    "uvicorn>=0.37",
 ]
 
+# Only these two folders are importable code; data/, models/, rules/, notebooks/ and the rest are not.
+# Without this, `pip install -e .` stops with "Multiple top-level packages discovered in a flat-layout".
+[tool.setuptools.packages.find]
+include = ["apps*", "packages*"]
+
 [project.optional-dependencies]
-dev = ["pytest>=8", "ruff"]
+# httpx backs FastAPI's TestClient in tests/test_api*.py.
+dev = ["pytest>=8", "ruff", "httpx"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

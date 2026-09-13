@@ -36,6 +36,56 @@ class QueueBandCount(ApiModel):
     requires_review: int = Field(ge=0)
 
 
+class TopValue(ApiModel):
+    """One value and how often it occurs, e.g. an IP address or a destination port."""
+
+    value: str
+    count: int = Field(ge=0)
+    flagged: int = Field(ge=0, description="Of these, alerts a detector flagged (band is not none)")
+
+
+class TimeBucket(ApiModel):
+    bucket: str = Field(description="Capture-local hour, e.g. 2018-02-14 12:00")
+    count: int = Field(ge=0)
+    flagged: int = Field(ge=0)
+
+
+class DashboardBreakdowns(ApiModel):
+    """``GET /api/dashboard/breakdowns`` — top talkers, verdict and status mix, guardrail actions,
+    and flow volume by capture hour (console rebuild B4).
+
+    These are **recorded** flows: the histogram shows when the traffic was captured, not a live rate.
+    """
+
+    generated_at: datetime
+    top_source_ips: list[TopValue] = Field(default_factory=list)
+    top_destination_ips: list[TopValue] = Field(default_factory=list)
+    top_destination_ports: list[TopValue] = Field(default_factory=list)
+    verdict_mix: dict[str, int] = Field(default_factory=dict,
+                                        description="Verdicts currently in force, by category")
+    status_mix: dict[str, int] = Field(default_factory=dict)
+    guardrail_interventions: dict[str, int] = Field(default_factory=dict,
+                                                    description="Interventions by guardrail code")
+    flow_time_histogram: list[TimeBucket] = Field(default_factory=list)
+
+
+class EntityIp(ApiModel):
+    """``GET /api/entities/ip/{ip}`` — what the recorded flows say about one address (B5)."""
+
+    ip: str
+    alerts: int = Field(ge=0)
+    as_source: int = Field(ge=0)
+    as_destination: int = Field(ge=0)
+    flagged: int = Field(ge=0)
+    first_seen: str | None = Field(default=None, description="Earliest capture time")
+    last_seen: str | None = Field(default=None, description="Latest capture time")
+    by_queue_class: dict[str, int] = Field(default_factory=dict)
+    by_attack_category: dict[str, int] = Field(default_factory=dict)
+    verdict_mix: dict[str, int] = Field(default_factory=dict)
+    top_peers: list[TopValue] = Field(default_factory=list)
+    top_destination_ports: list[TopValue] = Field(default_factory=list)
+
+
 class DashboardSummary(ApiModel):
     """``GET /api/dashboard/summary`` — the analyst's landing view."""
 
@@ -237,6 +287,21 @@ class EvaluationScenarioOut(ApiModel):
     sequence_digest: str | None = None
     sequence_length: int = Field(default=0, ge=0)
     created_at: datetime
+
+
+class EvaluationRunOut(ApiModel):
+    """``GET /api/evaluation/runs`` — one committed three-arm run, so the evaluator can find it.
+
+    Added at S14: the runs live in `evaluation/three-arm/runs/`, not in any database, so without a
+    listing the evaluator would need a run id typed from a terminal.
+    """
+
+    run_id: str
+    commit: str | None = None
+    sequence_length: int = Field(ge=0)
+    arms: list[str] = Field(default_factory=list, description="Arm names, in run order")
+    detection_metrics_identical_across_arms: bool
+    preregistration: dict[str, Any] = Field(default_factory=dict)
 
 
 class EvaluationComparison(ApiModel):

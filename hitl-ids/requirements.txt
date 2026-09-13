@@ -1,0 +1,25 @@
+# The exact library versions the project is tested with, on Python 3.11.
+#
+#   C:\ProgramData\miniconda3\python.exe -m venv .venv     (any Python 3.11 works)
+#   .venv\Scripts\activate
+#   python -m pip install -r requirements.txt
+#
+# pyproject.toml states the minimum versions; this file pins the set every test, the demo database
+# and the trained model (models/xgboost_ids_model.json, trained with XGBoost 3.2) were produced with.
+# The last line installs this folder's code (apps/, packages/) in editable mode.
+
+pydantic==2.11.9
+numpy==2.3.5
+pandas==2.3.3
+xgboost==3.2.0
+scikit-learn==1.7.1
+fastapi==0.136.0
+starlette==1.6.0
+uvicorn==0.37.0
+
+# development and tests
+pytest>=8
+httpx==0.28.1
+ruff
+
+-e .

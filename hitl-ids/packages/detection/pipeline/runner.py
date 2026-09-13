@@ -158,4 +158,6 @@ def open_database(path: str, *, create: bool = True) -> sqlite3.Connection:
     conn = db.connect(path)
     if not exists:
         db.create_schema(conn)
+    else:
+        db.migrate(conn)  # an existing database is brought up to the current schema, never rebuilt
     return conn

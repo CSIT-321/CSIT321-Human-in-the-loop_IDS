@@ -17,16 +17,23 @@ analyst their action failed, when it was heard and bounded. The refusal travels 
 
 from __future__ import annotations
 
+import ipaddress
 import json
 import sqlite3
 from pathlib import Path
-from typing import Annotated, Any
+from typing import Annotated, Any, Literal
 
 from fastapi import APIRouter, Depends, Query, status
 
 from apps.api.contract import alerts as ca
 from apps.api.contract import operations as co
-from apps.api.contract.common import DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE, Page, PageInfo
+from apps.api.contract.common import (
+    DEFAULT_PAGE_SIZE,
+    FLOW_TIME_PATTERN,
+    MAX_PAGE_SIZE,
+    Page,
+    PageInfo,
+)
 from apps.api.deps import ApiError, demo_role_stub, get_connection, not_found, require_role
 from apps.api.mappers import (
     alert_summary,
@@ -38,11 +45,13 @@ from apps.api.mappers import (
     flow_panel,
     guardrail_setting,
     ml_panel,
+    note_out,
     score_adjustment,
     signature_panel,
 )
 from packages.contracts import db
 from packages.contracts import models as m
+from packages.detection import triage
 from packages.detection.feedback.service import current_feedback, submit_feedback
 from packages.detection.pipeline import store
 
@@ -91,21 +100,59 @@ def list_alerts(
     max_score: float | None = Query(None, alias="maxScore"),
     search: str | None = Query(None, max_length=200),
     run_id: int | None = Query(None, alias="runId"),
+    verdict: list[m.FeedbackCategory] | None = Query(None),
+    owner: Literal["me", "unassigned"] | None = Query(None),
+    flow_from: str | None = Query(None, alias="flowFrom", pattern=FLOW_TIME_PATTERN),
+    flow_to: str | None = Query(None, alias="flowTo", pattern=FLOW_TIME_PATTERN),
 ) -> dict[str, Any]:
     """The ranked queue, in the contract's order unless an inspection sort overrides it."""
+    owner_id: int | None = None
+    if owner == "me":
+        # A role that has never acted has no demo user, so it owns nothing; -1 matches no row.
+        owner_id = _existing_user(conn, role) or -1
     try:
         rows, total = store.queue_page(
             conn, limit=limit, offset=offset, sort=sort, direction=direction,
             queue_class=queue_class, evidence_class=evidence_class, severity=severity,
             status=status_filter, attack_category=attack_category,
             requires_review=requires_review, min_score=min_score, max_score=max_score,
-            search=search, run_id=run_id)
+            search=search, run_id=run_id, verdict=verdict, owner_id=owner_id,
+            unassigned=owner == "unassigned", flow_from=flow_from,
+            flow_to=None if flow_to is None
+            else (f"{flow_to} 23:59:59.999999" if len(flow_to) == 10 else flow_to))
     except ValueError as error:  # an unknown sort key or filter: refused, never ignored
         raise ApiError(400, "VALIDATION_FAILED", str(error)) from error
 
-    judged = store.has_feedback(conn, [alert.id for alert, _ in rows])
-    items = [alert_summary(alert, flow, has_feedback=alert.id in judged) for alert, flow in rows]
+    items = _summaries(conn, rows)
     return _page(items, total, limit, offset)
+
+
+def _summaries(conn: sqlite3.Connection,
+               rows: list[tuple[m.Alert, m.FlowRecord]]) -> list[ca.AlertSummary]:
+    """Queue rows with their verdict flag, owner and family size — three queries for a whole page."""
+    judged = store.has_feedback(conn, [a.id for a, _ in rows if a.id is not None])
+    owners = store.users_by_id(conn, [a.owner_id for a, _ in rows if a.owner_id is not None])
+    sizes = store.family_sizes(conn, [a.family_key for a, _ in rows])
+    return [
+        alert_summary(alert, flow, has_feedback=alert.id in judged,
+                      owner=owners.get(alert.owner_id) if alert.owner_id is not None else None,
+                      family_size=sizes.get(alert.family_key, 0) if alert.family_key else 0)
+        for alert, flow in rows]
+
+
+def _summary(conn: sqlite3.Connection, alert: m.Alert,
+             flow: m.FlowRecord | None = None) -> ca.AlertSummary:
+    flow = flow if flow is not None else store.flow_for_alert(conn, int(alert.id or 0))
+    if flow is None:
+        raise not_found("flow for alert", alert.alert_ref)
+    return _summaries(conn, [(alert, flow)])[0]
+
+
+def _existing_user(conn: sqlite3.Connection, role: str) -> int | None:
+    """The role's demo user if it has acted before — a read never creates one."""
+    row = conn.execute("SELECT id FROM users WHERE role = ? ORDER BY id LIMIT 1",
+                       (role,)).fetchone()
+    return None if row is None else int(row["id"])
 
 
 def _load_alert(conn: sqlite3.Connection, alert_ref: str) -> m.Alert:
@@ -130,7 +177,7 @@ def get_alert(alertRef: str, conn: Conn, role: Role) -> ca.AlertDetail:  # noqa:
     family = store.family_by_key(conn, alert.family_key)
 
     return ca.AlertDetail(
-        alert=alert_summary(alert, flow, has_feedback=bool(events)),
+        alert=_summary(conn, alert, flow),
         flow=flow_panel(flow),
         signature=signature_panel(alert),
         ml=ml_panel(alert, model_version=run.model_version if run else None),
@@ -182,7 +229,7 @@ def post_feedback(alertRef: str, body: ca.FeedbackRequest, conn: Conn,  # noqa: 
     users = store.users_by_id(conn, [user_id])
     learning = result.learning
     return ca.FeedbackResponse(
-        alert=alert_summary(result.alert, flow, has_feedback=True),
+        alert=_summary(conn, result.alert, flow),
         feedback=feedback_record(result.feedback, result.alert, users.get(user_id),
                                  guardrail_values(conn)),
         family=ca.FamilyEffect(
@@ -219,6 +266,92 @@ def get_feedback_history(alertRef: str, conn: Conn, role: Role) -> ca.FeedbackHi
 # --------------------------------------------------------------------------------------------
 # Dashboard, runs, audit, guardrails
 # --------------------------------------------------------------------------------------------
+
+
+# --------------------------------------------------------------------------------------------
+# Triage — status, owner, notes (console rebuild B1, B2). Workflow, not judgement: none of these
+# moves a score or invokes a guardrail. Gated to the roles that work alerts.
+# --------------------------------------------------------------------------------------------
+
+TriageRoles = Depends(require_role("security_analyst", "system_admin"))
+
+
+@router.post("/api/alerts/{alertRef}/status", response_model=ca.TriageResponse,
+             tags=["alerts", "triage"], operation_id="changeAlertStatus",
+             dependencies=[TriageRoles])
+def post_status(alertRef: str, body: ca.StatusChangeRequest, conn: Conn,  # noqa: N803
+                role: Role) -> ca.TriageResponse:
+    alert = _load_alert(conn, alertRef)
+    actor_id = _acting_user(conn, role)
+    try:
+        result = triage.change_status(conn, alert_id=int(alert.id or 0), actor_id=actor_id,
+                                      to_status=body.status, reason=body.reason)
+    except triage.TransitionRefused as error:
+        raise ApiError(409, "CONFLICT", str(error),
+                       {"status": alert.status, "requested": body.status}) from error
+    return ca.TriageResponse(alert=_summary(conn, result.alert),
+                             audit_event_id=result.audit.id or 0)
+
+
+@router.post("/api/alerts/{alertRef}/assign", response_model=ca.TriageResponse,
+             tags=["alerts", "triage"], operation_id="assignAlert", dependencies=[TriageRoles])
+def post_assign(alertRef: str, body: ca.AssignRequest, conn: Conn,  # noqa: N803
+                role: Role) -> ca.TriageResponse:
+    alert = _load_alert(conn, alertRef)
+    actor_id = _acting_user(conn, role)
+    try:
+        result = triage.assign(conn, alert_id=int(alert.id or 0), actor_id=actor_id,
+                               owner_id=actor_id if body.owner == "me" else None,
+                               reason=body.reason)
+    except triage.TransitionRefused as error:
+        raise ApiError(409, "CONFLICT", str(error), {"status": alert.status}) from error
+    return ca.TriageResponse(alert=_summary(conn, result.alert),
+                             audit_event_id=result.audit.id or 0)
+
+
+@router.get("/api/alerts/{alertRef}/notes", response_model=ca.AlertNotes,
+            tags=["alerts", "triage"], operation_id="listAlertNotes")
+def get_notes(alertRef: str, conn: Conn, role: Role) -> ca.AlertNotes:  # noqa: N803
+    alert = _load_alert(conn, alertRef)
+    notes = triage.notes_for_alert(conn, int(alert.id or 0))
+    users = store.users_by_id(conn, [note.user_id for note in notes])
+    return ca.AlertNotes(alert_ref=alert.alert_ref,
+                         notes=[note_out(note, users.get(note.user_id)) for note in notes])
+
+
+@router.post("/api/alerts/{alertRef}/notes", response_model=ca.NoteOut,
+             tags=["alerts", "triage"], operation_id="addAlertNote", dependencies=[TriageRoles])
+def post_note(alertRef: str, body: ca.NoteRequest, conn: Conn,  # noqa: N803
+              role: Role) -> ca.NoteOut:
+    alert = _load_alert(conn, alertRef)
+    user_id = _acting_user(conn, role)
+    try:
+        note = triage.add_note(conn, alert_id=int(alert.id or 0), user_id=user_id,
+                               body=body.body)
+    except ValueError as error:
+        raise ApiError(400, "VALIDATION_FAILED", str(error)) from error
+    return note_out(note, store.users_by_id(conn, [user_id]).get(user_id))
+
+
+@router.get("/api/dashboard/breakdowns", response_model=co.DashboardBreakdowns,
+            tags=["dashboard"], operation_id="getDashboardBreakdowns")
+def dashboard_breakdowns(conn: Conn, role: Role,
+                         limit: int = Query(10, ge=1, le=50)) -> co.DashboardBreakdowns:
+    return co.DashboardBreakdowns(generated_at=m.utc_now(), **store.breakdowns(conn, limit=limit))
+
+
+@router.get("/api/entities/ip/{ip}", response_model=co.EntityIp, tags=["entities"],
+            operation_id="getIpEntity")
+def get_ip_entity(ip: str, conn: Conn, role: Role,
+                  limit: int = Query(10, ge=1, le=50)) -> co.EntityIp:
+    try:
+        ipaddress.ip_address(ip)
+    except ValueError as error:
+        raise ApiError(400, "VALIDATION_FAILED", f"{ip!r} is not an IP address") from error
+    data = store.entity_ip(conn, ip, limit=limit)
+    if data is None:
+        raise not_found("alert involving IP", ip)
+    return co.EntityIp(**data)
 
 
 @router.get("/api/dashboard/summary", response_model=co.DashboardSummary, tags=["dashboard"],
@@ -363,6 +496,30 @@ def _results(run_id: str) -> dict[str, Any]:
     if not path.exists():
         raise not_found("evaluation run", run_id)
     return json.loads(path.read_text(encoding="utf-8"))
+
+
+@router.get("/api/evaluation/runs", response_model=Page[co.EvaluationRunOut],
+            tags=["evaluation"], operation_id="listEvaluationRuns")
+def list_evaluation_runs(role: Role) -> dict[str, Any]:
+    """Every committed run with a results record, newest first (run ids are UTC timestamps).
+
+    No paging parameters: the contract declares none, and runs are a handful of committed records.
+    """
+    run_dirs = (sorted((path for path in EVALUATION_RUNS.iterdir()
+                        if (path / "results.json").is_file()), reverse=True)
+                if EVALUATION_RUNS.is_dir() else [])
+    limit, offset = max(len(run_dirs), 1), 0
+    items = []
+    for path in run_dirs:
+        results = json.loads((path / "results.json").read_text(encoding="utf-8"))
+        items.append(co.EvaluationRunOut(
+            run_id=results.get("run_id", path.name), commit=results.get("commit"),
+            sequence_length=results.get("sequence_length", 0),
+            arms=[arm["arm"] for arm in results.get("arms", [])],
+            detection_metrics_identical_across_arms=results[
+                "detection_metrics_identical_across_arms"],
+            preregistration=results.get("preregistration", {})))
+    return _page(items, len(run_dirs), limit, offset)
 
 
 @router.get("/api/evaluation/runs/{runId}", response_model=co.EvaluationComparison,

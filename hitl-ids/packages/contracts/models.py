@@ -545,6 +545,17 @@ class FeedbackEvent(Contract):
         return self
 
 
+class AlertNote(Contract):
+    """An analyst's note on an alert (console rebuild, B2). Append-only, like verdicts: a correction
+    is a new note, so the thread stays the record of what was known when."""
+
+    id: int | None = None
+    alert_id: int
+    user_id: int
+    body: str = Field(min_length=1, max_length=2000)
+    created_at: AwareDatetime = Field(default_factory=utc_now)
+
+
 class GuardrailIntervention(Contract):
     code: GuardrailCode
     configured_value: float

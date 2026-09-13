@@ -3,12 +3,16 @@
 **Purpose.** Carry the full state of this project into a fresh session with zero loss of context
 and minimal token cost. Everything a new session needs is here or one link away.
 
-**Last updated:** 2026-09-12 (rev 12) · **Branch:** `feat/demo-build` (local; renamed from
+**Last updated:** 2026-09-13 (rev 15) · **Branch:** `feat/demo-build` (local; renamed from
 `feat/s7-feedback`, which no longer described what it carries) ·
 `feat/s2-contracts` and `feat/s6-fusion` **pushed to origin** as view-only progress branches ·
-**Phase 2 DONE (S2, S5 + S4b, S6, S7a, S7b, S8) · Phase 3: S9 DONE · Phase 5: S15 DONE** —
-changelog v1.19 · **376 tests, 0 skipped** · `python scripts/run_detection.py` builds the demo
-database · `python scripts/run_evaluation.py` runs the three-arm evaluation
+**Phases 2–5 DONE · the S16 demo gate PASSED** (S12, S13, S14, S16 in changelog v1.21) ·
+**Console rebuild in progress** (user request, `docs/console-rebuild-proposal.md`): R1 triage backend
+DONE, **R2 design system NEXT** —
+changelog v1.22 · **411 tests, 0 skipped** (Python) + **103 web tests** (`apps/web`, `npm test`) +
+the browser narrative (`npm run e2e`) ·
+`python scripts/run_detection.py` builds the demo database · `python scripts/run_evaluation.py`
+runs the three-arm evaluation · `cd apps/web && npm run dev` serves the console
 **Iteration 1 (Evidence & Direction) complete** · the ranking formula and the agreement gate were
 chosen by experiment (Q29, Q30) · collaborator's `origin/main` merged ·
 **NFR-01 explainability satisfied** · **NFR-05 proven at evaluation level**
@@ -34,15 +38,18 @@ the state and will re-litigate settled ground.
 > project's most productive signature rule. `tests/test_plan_sync.py` now fails if the two
 > documents disagree about what is done — but a test cannot tell you to *read* the step, so read it.
 
-**The next step is S11** — the plan's *Step status* table is the authority, and it marks S11
-`NEXT`: the web shell, role switching, and a typed client generated from `apps/api/openapi.json`.
-**The backend is complete and serving**; S11 is the first step whose output a person can actually
-look at. Read the plan's S11 section before writing anything. Then confirm the ground you are
-standing on:
+**The demo gate (S16) has passed; the next step is S17** — the plan's *Step status* table is the
+authority, and it marks S17 `NEXT`: the prefix flow exporter. **S18 (the full backend) is equally
+unblocked** and may run in parallel; S17 is marked `NEXT` only because it comes first in the graph —
+confirm the order with the user before starting either. To present the demo, follow
+[`demo-script.md`](demo-script.md). Read the plan's S16 landed note and the S17 section before writing
+anything. Then confirm the ground you are standing on:
 
 ```
-python -m pytest                      # expect 376 passed, 0 skipped
+python -m pytest                      # expect 385 passed, 0 skipped
 python scripts/run_detection.py       # rebuilds data/demo.db: 5,000 flows -> 5,000 alerts, ~21 s
+python scripts/rehearse_demo.py       # the S16 narrative through the API on a copy: 41 checks
+cd apps/web && npm test && npm run e2e && cd ../..   # 103 web tests; the narrative in a browser
 python scripts/run_evaluation.py      # the three arms over that database, ~3 s
 python scripts/build_openapi.py --check   # the committed API contract is in step with the models
 ```
@@ -94,8 +101,8 @@ Repo: `github.com/CSIT-321/CSIT321-Human-in-the-loop_IDS` · working tree `hitl-
 >
 > **Actual status:** Phase 0 **PARTIAL** (S1 scaffold incomplete — Python slice only; **S2 DONE**) ·
 > Phase 1 **DONE** · Phase 2 **DONE** (S5, S4b, S6, S7a, S7b, S8) · Phase 3 **DONE** (S9, S10a,
-> S10b) · Phase 5 **S15 DONE**, S16 (the demo gate) remains · **next: S11** ·
-> Phase 4 not started (S11 scaffolding only) · Phase 6 not started.
+> S10b) · Phase 4 **complete** (S11–S14) · Phase 5 **complete** (S15, and the S16 demo gate passed) ·
+> Phase 6 not started — **next: S17**, with S18 equally unblocked.
 
 ```
 hitl-ids/
@@ -256,6 +263,18 @@ These were believed, then disproved. Re-proposing them wastes a cycle.
   for read/write/transform work.
 - **Read the files a worker wrote.** Never trust its returned `result`; one agent returned only
   "Standing by." while its 28 findings sat in a 1.47 MB transcript.
+- **Workers stall silently.** In v1.21 a GLM worker and a DeepSeek worker both stopped making tool calls
+  for 11+ minutes with no error. Wrap every worker in `timeout 1500`, run at most two at once, and check
+  progress in its transcript (`~/.claude/projects/<cwd-slug>/*.jsonl`), not its output file — the output
+  is only written at the end. **Stopping the shell does not stop the `claude` child** on Windows: find
+  it by command line (`claude-glm` / `claude-deepseek` settings path) and kill it by process id.
+- **GLM's main query logs `unrecognized_model`**; prefer DeepSeek for code workers until that is resolved.
+
+**Verification that finds what tests miss**
+- **Run the browser end-to-end test** (`npm run e2e`) after any API or page change. In v1.21 it found a
+  SQLite cross-thread 500 that 381 passing Python tests, `TestClient` and `curl` all missed, because only
+  a browser fires an alert's three reads at once.
+- **Rehearse on copies, never on `data/demo.db`.** Verdicts and the audit trail are permanent.
 
 **Documents**
 - **The plan is canonical for what to build; this file is only the entry point.** They drifted for
@@ -314,7 +333,10 @@ These were believed, then disproved. Re-proposing them wastes a cycle.
 | ~~8~~ | ~~S10a — the API contract~~ | **DONE 2026-09-12** | `apps/api/contract/` + `scripts/build_openapi.py`; 26 tests. 13 operations, 37 schemas, published to `apps/api/openapi.json`. Pure Pydantic — no FastAPI import — so S11 can start now. Reading the plan first caught a stale v1.0 instruction to order the queue by `evidence_priority`, which would have made feedback appear to do nothing. Changelog v1.18 |
 | 9 | **NEXT →** S10b — the route handlers behind S10a's contract | **delegate + Claude review** | The worker gets `apps/api/openapi.json`, the contract models and `store.py`'s reads. **`POST /alerts/{id}/feedback` is withheld** — it invokes the guardrails. NFR-04 (p95 < 2s) is measured here |
 | ~~10~~ | ~~S10b — the route handlers~~ | **DONE 2026-09-12** | `apps/api/{deps,mappers,routes,main}.py`; 34 tests. Every contracted operation implemented; `uvicorn apps.api.main:app` serves the 5,000-alert database. **NFR-04 measured for real: queue p95 19.3 ms, detail p95 6.2 ms** against a 2,000 ms budget. Three bugs caught by running it — changelog v1.19. Not delegated: the write path and the shared mappers could not be split cleanly |
-| 11 | **NEXT →** S11 — web shell, role switching, design system, typed client | delegate + Claude review | Generate the client from `apps/api/openapi.json`. **The first step a person can see.** Then S12 (analyst path — the demo core), S13, S14, and the S16 gate |
+| ~~11~~ | ~~S11 — web shell, role switching, design system, typed client~~ | **DONE 2026-09-13** | `apps/web/`: client generated from `openapi.json` (`npm run check:api` guards it), design tokens in Tailwind, three role shells with per-role nav, stub role switch labelled on screen. 30 web tests. Architecture by Claude, components by a DeepSeek worker, reviewed file by file. Changelog v1.20 |
+| ~~12~~ | ~~S12 — analyst path · S13 — admin path · S14 — evaluator path~~ | **DONE 2026-09-13** | Components by DeepSeek workers, reviewed file by file; the verdict form, the score-adjustment chain and the guardrail messaging by Claude. Contract additions: `sourceRecordId` + search, `GET /api/evaluation/runs`. Changelog v1.21 |
+| ~~13~~ | ~~S16 — demo assembly and rehearsal (the gate)~~ | **DONE 2026-09-13** | Narrative corrected to the `Port Scan / 445` family (deviations E6). `rehearse_demo.py` 41/41 on a copy and on a freshly seeded database; `npm run e2e` passed in Chromium. Three defects found by the browser run, all fixed with tests. Script: `docs/demo-script.md`. Changelog v1.21 |
+| 14 | **NEXT →** S17 — prefix flow exporter (post-demo) | Claude | S18 (full backend) is equally unblocked and may run in parallel; confirm the order with the user first. Read the plan's S17 section: schema reconciliation against `feature-columns.json` must stop and report, never silently coerce |
 
 Full detail per step: [`../../plans/hitl-ids-demo-build.md`](../../plans/hitl-ids-demo-build.md).
 

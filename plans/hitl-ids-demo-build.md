@@ -135,12 +135,12 @@ changelog's current version. Status is one of `DONE` · `PARTIAL` · `NEXT` · `
 | S15 | Three-arm evaluation harness | DONE | v1.16 |
 | S10a | API contract | DONE | v1.18 |
 | S10b | API handlers | DONE | v1.19 |
-| S11 | Web shell, role switching, design system | NEXT | — |
-| S12 | Analyst path (deep) ⭐ DEMO CORE | TODO | — |
-| S13 | Admin path (thin) | TODO | — |
-| S14 | Evaluator path (thin) | TODO | — |
-| S16 | Demo assembly and rehearsal ⭐ GATE | TODO | — |
-| S17 | Prefix flow-exporter module | TODO | — |
+| S11 | Web shell, role switching, design system | DONE | v1.20 |
+| S12 | Analyst path (deep) ⭐ DEMO CORE | DONE | v1.21 |
+| S13 | Admin path (thin) | DONE | v1.21 |
+| S14 | Evaluator path (thin) | DONE | v1.21 |
+| S16 | Demo assembly and rehearsal ⭐ GATE | DONE | v1.21 |
+| S17 | Prefix flow-exporter module | NEXT | — |
 | S18 | Full backend (D3 complete) | TODO | — |
 
 <!-- PLAN-STATUS:END -->
@@ -148,8 +148,10 @@ changelog's current version. Status is one of `DONE` · `PARTIAL` · `NEXT` · `
 **Where that leaves us, in plain terms.** Every part of the system that runs *before a human sees
 anything* is built and tested: flows in, rules and model score them, fusion ranks them, an analyst
 verdict reshapes the queue inside guardrails, all of it persisted, audited, reproducible and now
-measured against a control. **Nothing a human can see is built** — there is no API and no UI. The
-remaining seven steps to the demo gate are the entire user-facing half of the project.
+measured against a control. Since then the API (S10a, S10b), the console (S11–S14) and the demo gate
+(S16) have landed: **the presentable demo exists**, and its narrative is asserted end to end through
+the API and through a browser. What remains is post-demo: the flow exporter (S17) and the full
+backend (S18), which may run in parallel.
 
 **S1 is PARTIAL, deliberately.** The Python slice (`packages/`, `tests/`, `scripts/`, `config/`) is
 real and complete; `apps/api/` and `apps/web/` do not exist yet and are created by S10 and S11.
@@ -476,6 +478,15 @@ Route implementations behind the S10a contract.
 
 **Deps:** S10 (contract only — may start once OpenAPI is frozen) · **Owner:** delegate (GLM) + Claude review · **Branch:** `feat/s11-shell` · ∥ S15
 
+> **✅ DONE (changelog v1.20), 2026-09-13.** `apps/web/` — client generated from
+> `apps/api/openapi.json` (openapi-typescript + openapi-fetch; `npm run check:api` fails if stale),
+> a dark palette as Tailwind tokens, three role shells landing as verified below, per-role
+> navigation, a stub role switch labelled on screen, and `ApiView` for the three
+> states. 30 Vitest tests; `npm run build` clean; no `any` in `src/`. Pages S12–S14 build are mounted as
+> placeholders naming their step. **For S12:** the analyst lands on `/analyst/queue`, and the
+> evaluator's scenario list is empty on `data/demo.db` because the arms live in their own databases —
+> S14 decides which database the evaluator reads.
+
 **Tasks.** App shell, routing, login screen, role switcher (analyst/admin/evaluator), Tailwind tokens, typed API client generated from OpenAPI, loading/error/empty states.
 
 **Verify.** `npm run build` · `npm test` component smoke tests · each role lands on its correct default view (analyst → queue, admin → system status, evaluator → scenario list).
@@ -578,7 +589,16 @@ Dataset, model version, rule version and seed are pinned identically across all 
 
 **Tasks.** Seed script producing a known-good demo DB from scratch. Written demo narrative:
 
-> login → queue → **open `AL-00478`** (`ml_only`, 99.89, a Tier 2 candidate) → read the evidence panels: no rule matched, the model calls it a **Web Attack**, and TreeSHAP shows which features drove that → **ground truth says benign** → the analyst dismisses it as a false positive → watch the −30 cap apply and the queue re-rank → open `AL-03086` (36.94, bottom band), the attempted Web Attack **both detectors missed**, and confirm it → watch it climb → show that four *similar* alerts nobody touched moved with it (S7b) → refresh (persistence holds) → admin views the guardrail log → evaluator shows the three-arm deltas, **including the one that went the wrong way**
+> login → queue → **open `AL-00478`** (`ml_only`, 99.89, a Tier 2 candidate, rank 639) → read the evidence panels: no rule matched, the model calls it a **Web Attack**, and TreeSHAP shows which features drove that → **ground truth says benign** → the analyst dismisses it as a false positive → the Critical floor caps −30 at 70 and says so, the Tier 2 marker is withdrawn, it drops to rank 996 → refresh (persistence holds) → open `AL-03086` (36.94, bottom band), the attempted Web Attack **both detectors missed**, and confirm it → +10 applied, it leaves the bottom band → confirm three members of the **`Port Scan / 445`** family → the gate opens and the **two members nobody judged move into the Tier 2 band** (S7b) → admin views the guardrail log → evaluator shows the three-arm deltas, **including the one that went the wrong way**
+>
+> **v1.21 CHANGE — the S7b step moved to a family that exists.** v1.1 had the analyst confirm
+> `AL-03086` and then "show that four similar alerts nobody touched moved with it". Rehearsing it
+> against a database copy showed `AL-03086`'s family has **one member** (the Benign family key includes
+> the destination address), so the step could not be performed. `Port Scan / 445` is the replacement:
+> five members, all Port Scans by ground truth, two of which move. The narrative is asserted end to end
+> by `scripts/rehearse_demo.py` (API) and `apps/web/e2e/demo.spec.ts` (browser); the click-by-click
+> script is [`docs/demo-script.md`](../hitl-ids/docs/demo-script.md). Logged as
+> [`deviations.md`](../hitl-ids/docs/deviations.md) E6.
 
 > **v1.1 CHANGE — the centrepiece moved a second time, because v1.0's own stop-condition fired.**
 > v0.2 opened on a *fused* alert with both detectors agreeing; v1.0 replaced it with the top
@@ -605,6 +625,16 @@ Presenting only the favourable deltas would fail the same scrutiny the v0.3 FIX 
 prevent. See [`evaluation-report.md`](../hitl-ids/docs/evaluation-report.md).
 
 Rehearse end-to-end from a clean clone. Record known limitations honestly.
+
+> **✅ GATE PASSED (changelog v1.21), 2026-09-13.** The narrative executes end to end with no manual
+> database fixes, verified three ways: `scripts/rehearse_demo.py` (41 checks through the real API,
+> ground truth included) on a copy of `data/demo.db` **and** on a database freshly seeded by
+> `scripts/run_detection.py`; and `apps/web/e2e/demo.spec.ts` in a real browser against a disposable
+> copy (`npm run e2e`, 1 passed, ~45 s). The browser run found three defects every sequential test
+> had missed — a SQLite cross-thread 500 on the centrepiece alert, a score-adjustment chain that hid
+> the Tier 2 withdrawal, and a guardrail log with no sentence — all fixed with regression tests. The
+> click-by-click script is [`docs/demo-script.md`](../hitl-ids/docs/demo-script.md). **Not literally a
+> clean clone:** the gate ran from the working tree, because the work is not yet committed.
 
 **Verify.** Clean clone → seed → run → full narrative executes with no manual DB fixes.
 

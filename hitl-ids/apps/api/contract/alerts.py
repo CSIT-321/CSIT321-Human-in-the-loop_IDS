@@ -21,6 +21,7 @@ the project's safety claim.
 from __future__ import annotations
 
 from datetime import datetime
+from typing import Literal
 from uuid import UUID
 
 from pydantic import Field
@@ -70,6 +71,16 @@ class AlertSummary(ApiModel):
     dst_ip: str
     dst_port: int = Field(ge=0, le=65535)
     protocol: str
+    source_record_id: str = Field(
+        description="The flow's id in its source dataset (e.g. AL-00478): the short, stable name "
+                    "an analyst reads aloud in a demo. An identifier, not a label (S12)")
+    flow_time: str | None = Field(
+        default=None, description="When the flow was captured, as the dataset recorded it "
+                                  "(capture-local, no timezone)")
+    owner: Actor | None = Field(default=None, description="Who is working the alert; null when "
+                                                         "nobody owns it")
+    family_size: int = Field(default=0, ge=0, description="Alerts in this alert's family, itself "
+                                                         "included; 0 when it has no family")
 
 
 # --------------------------------------------------------------------------------------------
@@ -278,3 +289,57 @@ class FeedbackHistory(ApiModel):
     events: list[FeedbackRecord] = Field(default_factory=list)
     effective: FeedbackRecord | None = Field(
         default=None, description="The verdict currently in force; feedback does not stack")
+
+
+# --------------------------------------------------------------------------------------------
+# Triage — status, owner and notes (console rebuild B1, B2). Workflow, not judgement: none of these
+# moves a score, touches a family or invokes a guardrail.
+# --------------------------------------------------------------------------------------------
+
+
+class StatusChangeRequest(ApiModel):
+    """``POST /api/alerts/{alertRef}/status``.
+
+    Working an alert (`claimed`, `in_progress`) makes the caller its owner when it has none;
+    returning it to `new` releases it; a closed alert (`resolved`, `dismissed`) can only be reopened
+    to `in_progress`. A refused transition is a 409.
+    """
+
+    status: m.AlertStatus
+    reason: str | None = Field(default=None, max_length=500)
+
+
+class AssignRequest(ApiModel):
+    """``POST /api/alerts/{alertRef}/assign``.
+
+    `me` assigns the caller's demo user (the auth stub: there is one demo user per role); `null`
+    unassigns. Assigning a `new` alert claims it; unassigning a `claimed` alert releases it.
+    """
+
+    owner: Literal["me"] | None
+    reason: str | None = Field(default=None, max_length=500)
+
+
+class TriageResponse(ApiModel):
+    alert: AlertSummary
+    audit_event_id: int = Field(ge=0, description="The ALERT_STATUS_CHANGE entry this wrote")
+
+
+class NoteRequest(ApiModel):
+    """``POST /api/alerts/{alertRef}/notes``. Append-only: a correction is a new note."""
+
+    body: str = Field(min_length=1, max_length=2000)
+
+
+class NoteOut(ApiModel):
+    note_id: int
+    author: Actor
+    body: str
+    created_at: datetime
+
+
+class AlertNotes(ApiModel):
+    """``GET /api/alerts/{alertRef}/notes`` — the whole thread, oldest first."""
+
+    alert_ref: UUID
+    notes: list[NoteOut] = Field(default_factory=list)

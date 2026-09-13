@@ -830,7 +830,7 @@ asserting a latency budget against a document would be theatre.
 
 ---
 
-## v1.19 — S10b landed: the system is reachable over HTTP (2026-09-12) ← **current**
+## v1.19 — S10b landed: the system is reachable over HTTP (2026-09-12)
 
 `apps/api/{deps,mappers,routes,main}.py` plus the repository reads on `pipeline/store.py`.
 34 new tests; **376 pass, 0 skipped.**
@@ -881,6 +881,148 @@ Delegating would have cost more review than it saved. Recorded rather than quiet
 
 **Also:** `tests/conftest.py` now owns the synthetic capture that `test_evaluation` and `test_api`
 share, instead of one importing from the other.
+
+---
+
+## v1.20 — S11 landed: the first thing a person can look at (2026-09-13)
+
+`apps/web/`: React 19 + Vite 8 + Tailwind 4 + react-router 7, and a client generated from
+`apps/api/openapi.json` by openapi-typescript + openapi-fetch. **30 web tests** (Vitest) beside the
+Python suite's 376, which is unchanged.
+
+```
+cd apps/web && npm install && npm run dev      # http://localhost:5173, /api proxied to :8000
+npm run build · npm test · npm run check:api   # check:api fails if the client is stale
+```
+
+| | Change | Rationale |
+|---|---|---|
+| ADD | **Typed client generated, never written.** `src/api/schema.d.ts` comes from the S10a contract; `unwrap()` returns the typed body or throws one `ApiError` | A hand-written client is a second copy of the contract. No `any` anywhere in `src/` (exit criterion) |
+| ADD | **Design tokens** (`src/index.css` `@theme`): one dark console palette under semantic names | Components use `bg-surface`, `text-muted`, never raw hex, so the palette changes in one place |
+| ADD | **Three role shells**, each landing where the plan's S11 verification names: analyst → queue, admin → system status, evaluator → scenario list. Routes S12–S14 fill are mounted as placeholders that name their step | Every shell reachable and every nav link resolves now, without pretending an unbuilt screen is finished |
+| DEC | **Navigation is per role** | An analyst should never see an admin link; switching role visibly changes what the console offers. Documents are updated from the product, not the reverse (user instruction, 2026-09-13), so no deviation is logged |
+| DEC | **The role switch is labelled as a stub on screen** ("Demo build · role switch stub"), and the session survives a reload (sessionStorage) | D3: `X-Demo-Role` is trusted as sent. Survival matters because S12's end-to-end check is *refresh, and the adjusted score persists* |
+| DEC | **The role header is held in the client module, set synchronously by the session**, not read from React state | A child's first fetch runs before its parent's effects; reading state would send the previous role on the first request after a switch |
+| FIX | **`ErrorBody.detail` loosened to optional in the client only** | openapi-typescript marks a defaulted field required, and every response *does* serialise its defaults — except the error envelope, which `deps.py` renders with `exclude_none`. The one place the generated type was untrue |
+
+**A skeleton already existed, and was superseded.** Commit `161b056` had added four config-only files
+under `apps/web/` (`package.json`, `index.html`, `tsconfig.json`, `vite.config.ts`, no `src/`), pinned
+to React 18 / react-router-dom 6 / Vite 6 / Vitest 2. The plan and this handover still said `apps/web/`
+did not exist, so they were overwritten without being read first — caught afterwards in `git status`,
+and compared line by line. The intent was identical (same proxy, same Tailwind plugin, same test
+setup path); the stack moved to current majors, the client script became `gen:api` writing
+`schema.d.ts` plus a `check:api` guard, and the one stricter setting that had been lost,
+`verbatimModuleSyntax`, was restored. The originals remain in git.
+
+**Delegation, as the plan intended this time.** Claude wrote the architecture — tokens, roles, session,
+guards, client, fetch hook, route table, test harness — and a DeepSeek worker built the components and
+their tests from a written brief (54 turns). Its files were read, not trusted. The worker **correctly
+refused to edit the protected files** when the build failed on the `ErrorBody.detail` typing above,
+and reported the exact cause and both candidate fixes; the defect was Claude's. One review change: its
+fixtures invented model and rule-set versions, replaced with the project's real ones.
+
+**Checked against the live API**, not only fixtures: the dashboard preview's endpoint returns the real
+5,000-alert summary through the Vite proxy. `GET /api/evaluation/scenarios` returns **no items on
+`data/demo.db`** — the three arms live in their own database copies (S15) — so the evaluator's landing
+view shows its empty state on the demo database. S14 must choose which database the evaluator reads.
+**Not done:** a visual check in a browser (the browser automation extension was not connected).
+
+---
+
+## v1.21 — S12, S13, S14 and the S16 gate: the demo is presentable (2026-09-13)
+
+The three role paths are built, and the demo narrative executes end to end — through the API and in a
+real browser — with no manual database fixes. **385 Python tests, 0 skipped · 103 web tests · build
+clean · `check:api` clean.**
+
+```
+python scripts/rehearse_demo.py        # 41 checks through the real API, on a throwaway copy
+cd apps/web && npm run e2e             # the same narrative in Chromium, on its own copy (~45 s)
+```
+
+### What landed
+
+| | Change | Rationale |
+|---|---|---|
+| ADD | **S12 analyst path**: ranked queue (filters, sort, paging, all in the URL), alert detail with the four evidence panels and the family panel, the verdict form, the score-adjustment chain, verdict history, Investigations, Feedback Impact, dashboard charts | The demo core. The verdict form, the chain and the guardrail messaging are Claude's (never delegated); the rest was a DeepSeek worker, reviewed file by file |
+| ADD | **S13 admin path**: system status, the guardrail form (floor below threshold, positive caps, a required reason, only changed fields sent), the guardrail log, the audit trail with filters and CSV export | "Check again" reports the latest run; it does not pretend to start one (D3) |
+| ADD | **S14 evaluator path**: evaluation runs and pre-registration, the three-arm comparison with every delta **as measured**, who moved, what the guardrails prevented, per-class metrics with the testbed caution | The honesty requirement of plan S16: the banner says precision fell before the reader meets the table |
+| ADD | **`sourceRecordId` on every queue row, and search that matches it** | The narrative names `AL-00478`; the public `alertRef` is a UUID no analyst can read aloud or find |
+| ADD | **`GET /api/evaluation/runs`** | The three-arm results are committed files, not rows; without a listing the evaluator needed a terminal. Not "an endpoint while we're here": S14 could not be built without it |
+| ADD | **`scripts/rehearse_demo.py`, `scripts/serve_rehearsal.py`, `apps/web/e2e/demo.spec.ts`, `docs/demo-script.md`** | The S16 seed-and-rehearse tooling. Every run works on a **copy**: verdicts are permanent, so rehearsing on `data/demo.db` would hand the next audience a queue that has already been judged |
+| DEC | **The S16 narrative's S7b step moved to the `Port Scan / 445` family** | `AL-03086`'s family has one member; three confirmations in `Port Scan / 445` move its two unjudged members into the Tier 2 band. Every claim checked against ground truth. `deviations.md` E6 |
+
+### Defects found — four of them only by running the real thing
+
+1. **The chain hid the Tier 2 withdrawal.** `score_adjustment` used the *evidence class* as the "before"
+   band, so a dismissed Tier 2 candidate read "Model only → Model only (unchanged)", and an unjudged
+   alert read as if it had moved. Now detection's own placement (`detection_placement`, the pure
+   function S9 stores at ingest). Found by simulating the narrative before writing it.
+2. **A SQLite cross-thread 500 on the demo's centrepiece.** FastAPI enters the connection dependency and
+   runs the handler on different threadpool workers; opening an alert fires three reads at once, and
+   SQLite refused a connection used off its creating thread. Every sequential test, `TestClient` run and
+   `curl` passed; **the browser e2e run caught it**. `db.connect(check_same_thread=...)`, `False` for the
+   per-request API connection only. Two regression tests: a deterministic cross-thread use, and 24
+   concurrent reads of one alert.
+3. **The guardrail log had no sentence.** The audit record stores the intervention's code and configured
+   value, never the sentence the analyst saw, so the administrator's log showed a dash. The API now adds
+   the explanation when it serves the log, built from the **stored** configured value — a later change
+   to a setting cannot rewrite what the log says happened — without modifying the record.
+4. **Imports inside a request handler** (introduced with fix 1) moved to module level: a first import can
+   race between threads under exactly the concurrency of defect 2.
+
+### Delegation — the record
+
+| Step | Worker | Outcome |
+|---|---|---|
+| S12 | DeepSeek | 100 turns. Clean work; review found nothing to change in the pages. One test raced a second request under load (fixed: `findBy`) |
+| S13 | GLM | **Stalled** after reading ten files, no output for 11 minutes. Stopped, relaunched on DeepSeek with a 25-minute `timeout`: 112 turns, clean |
+| S14 | DeepSeek | **Stalled** on first launch (running beside two other workers); relaunched after S12 finished: 77 turns. Review found one factual error — a caption saying a rule-only alert "can be demoted by feedback", which I3 forbids — corrected |
+
+The briefs gave each worker exact files, real data values and a rule against editing shared files. Two
+workers correctly **refused** to edit shared files and reported the needed change instead. **Stopping a
+worker's shell does not stop its `claude` child process** on Windows: the orphans had to be found and
+killed by process id.
+
+### Verification
+
+| Check | Result |
+|---|---|
+| `python -m pytest` | **385 passed, 0 skipped** |
+| `npm run build` · `npm test` · `npm run check:api` | clean · **103 passed** (15 files) · in step |
+| `rehearse_demo.py` on a copy of `data/demo.db` | 41/41 |
+| `rehearse_demo.py` on a database freshly seeded by `run_detection.py` | 41/41 |
+| `npm run e2e` (Chromium, real API, disposable copy) | **1 passed**, ~45 s |
+
+**Honest limits.** The gate ran from the working tree, not a literal clean clone — the work is not yet
+committed. `AL-03086` climbs one rank (998 → 997) while leaving the bottom band. The production bundle
+triggers Vite's chunk-size warning (Recharts). `features/admin/partialBody.ts` holds one documented cast,
+because openapi-typescript marks defaulted request fields required.
+
+---
+
+## v1.22 — Console rebuild R1: the triage backend (2026-09-13) ← **current**
+
+The user asked for a full redesign of the console, modelled on real SOC/IDS workflows
+(`docs/console-rebuild-proposal.md`, `docs/research/soc-console-research.md`). R1 adds the backend that
+workflow needs. **411 Python tests · 103 web tests · typecheck and `check:api` clean · rehearsal holds.**
+
+### What landed
+
+| | Change | Rationale |
+|---|---|---|
+| ADD | **Schema migrations** — `db.MIGRATIONS`, `db.migrate`, `PRAGMA user_version`; applied by `create_schema`, `open_database` and the API's connection | `schema.sql` is consumed; a demo database built earlier must upgrade in place, not be rebuilt |
+| ADD | **`alert_notes` table** (migration 1), append-only by trigger, like `audit_log` and `feedback_events` | Every SOC console keeps an analyst notes thread; a correction is a new note. Not a TDM table — logged here, registered in `test_contracts.py` |
+| ADD | **`POST /api/alerts/{ref}/status`, `POST /api/alerts/{ref}/assign`** (`packages/detection/triage.py`) | Owner and status are two of the four triage controls. Uses the existing `status`/`owner_id` columns; audited as `ALERT_STATUS_CHANGE`; a refused transition is a 409 |
+| ADD | **`GET/POST /api/alerts/{ref}/notes`** | B2 |
+| ADD | **`GET /api/dashboard/breakdowns`, `GET /api/entities/ip/{ip}`** | B4, B5: top talkers, verdict and status mix, guardrail codes, capture-time histogram; per-IP view |
+| ADD | **Queue: `verdict`, `owner`, `flowFrom`/`flowTo` filters; `flowTime`, `owner`, `familySize` on rows** | B6 |
+| DEC | **Status is workflow, not judgement** | A status or owner change never moves a score, touches a family or invokes a guardrail; only verdicts do |
+| DEC | **Flow time is the dataset's capture time** (`flow_features.Timestamp`, capture-local text) | `created_at` is the detection run's time and identical for every alert; the histogram shows when traffic happened, not a live rate |
+
+**Honest limits.** `ruff` is not installed in the Python 3.11 environment, so lint was not run. The API
+applies migration 1 to `data/demo.db` the first time it serves that file — a schema upgrade, not a data
+change.
 
 ---
 

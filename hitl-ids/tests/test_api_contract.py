@@ -51,6 +51,14 @@ REQUIRED_OPERATIONS = {
     ("/api/config/guardrails", "get"),
     ("/api/config/guardrails", "put"),
     ("/api/evaluation/scenarios", "get"),
+    ("/api/evaluation/runs", "get"),  # S14: the runs are files, so the evaluator needs a listing
+    # Console rebuild: triage (B1, B2), breakdowns (B4), entity view (B5).
+    ("/api/alerts/{alertRef}/status", "post"),
+    ("/api/alerts/{alertRef}/assign", "post"),
+    ("/api/alerts/{alertRef}/notes", "get"),
+    ("/api/alerts/{alertRef}/notes", "post"),
+    ("/api/dashboard/breakdowns", "get"),
+    ("/api/entities/ip/{ip}", "get"),
     ("/api/evaluation/runs/{runId}", "get"),
     ("/api/evaluation/runs/{runId}/detection", "get"),
 }

@@ -72,7 +72,15 @@ def get_connection(request: Request) -> Iterator[sqlite3.Connection]:
         raise ApiError(
             503, "DATABASE_MISSING",
             f"No detection database at {path}. Build it with: python scripts/run_detection.py")
-    connection = db.connect(str(path))
+    # FastAPI runs this generator and the handler in its threadpool, on whichever worker threads are
+    # free — so under concurrent requests (a browser opening an alert fires three reads at once) the
+    # connection is created on one thread and used on another. SQLite's default same-thread check then
+    # fails the request with a 500. Safe to lift: the connection belongs to one request and is never
+    # used by two threads at once. Found by the browser end-to-end run, not by sequential tests.
+    connection = db.connect(str(path), check_same_thread=False)
+    # A demo database built before a migration existed is upgraded on first use. Cheap when current:
+    # one PRAGMA read.
+    db.migrate(connection)
     try:
         yield connection
     finally:

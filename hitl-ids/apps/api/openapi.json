@@ -102,6 +102,29 @@
         "title": "AlertDetail",
         "type": "object"
       },
+      "AlertNotes": {
+        "additionalProperties": false,
+        "description": "``GET /api/alerts/{alertRef}/notes`` — the whole thread, oldest first.",
+        "properties": {
+          "alertRef": {
+            "format": "uuid",
+            "title": "Alertref",
+            "type": "string"
+          },
+          "notes": {
+            "items": {
+              "$ref": "#/components/schemas/NoteOut"
+            },
+            "title": "Notes",
+            "type": "array"
+          }
+        },
+        "required": [
+          "alertRef"
+        ],
+        "title": "AlertNotes",
+        "type": "object"
+      },
       "AlertSummary": {
         "additionalProperties": false,
         "description": "One row of the analyst queue.\n\nEverything here is what a triage decision needs at a glance. Anything requiring a second\nthought belongs in the detail response, not in a 50-row list.",
@@ -181,6 +204,26 @@
             "title": "Evidenceclass",
             "type": "string"
           },
+          "familySize": {
+            "default": 0,
+            "description": "Alerts in this alert's family, itself included; 0 when it has no family",
+            "minimum": 0,
+            "title": "Familysize",
+            "type": "integer"
+          },
+          "flowTime": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "When the flow was captured, as the dataset recorded it (capture-local, no timezone)",
+            "title": "Flowtime"
+          },
           "hasFeedback": {
             "description": "Whether any analyst verdict has been recorded",
             "title": "Hasfeedback",
@@ -197,6 +240,18 @@
             },
             "title": "Matchedruleids",
             "type": "array"
+          },
+          "owner": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Actor"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "Who is working the alert; null when nobody owns it"
           },
           "protocol": {
             "title": "Protocol",
@@ -233,6 +288,11 @@
               "Informational"
             ],
             "title": "Severity",
+            "type": "string"
+          },
+          "sourceRecordId": {
+            "description": "The flow's id in its source dataset (e.g. AL-00478): the short, stable name an analyst reads aloud in a demo. An identifier, not a label (S12)",
+            "title": "Sourcerecordid",
             "type": "string"
           },
           "srcIp": {
@@ -274,7 +334,8 @@
           "srcIp",
           "dstIp",
           "dstPort",
-          "protocol"
+          "protocol",
+          "sourceRecordId"
         ],
         "title": "AlertSummary",
         "type": "object"
@@ -364,6 +425,42 @@
           "guardrailPass"
         ],
         "title": "ArmResultOut",
+        "type": "object"
+      },
+      "AssignRequest": {
+        "additionalProperties": false,
+        "description": "``POST /api/alerts/{alertRef}/assign``.\n\n`me` assigns the caller's demo user (the auth stub: there is one demo user per role); `null`\nunassigns. Assigning a `new` alert claims it; unassigning a `claimed` alert releases it.",
+        "properties": {
+          "owner": {
+            "anyOf": [
+              {
+                "const": "me",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Owner"
+          },
+          "reason": {
+            "anyOf": [
+              {
+                "maxLength": 500,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Reason"
+          }
+        },
+        "required": [
+          "owner"
+        ],
+        "title": "AssignRequest",
         "type": "object"
       },
       "AuditEntryOut": {
@@ -494,6 +591,73 @@
           "fnr"
         ],
         "title": "ClassMetrics",
+        "type": "object"
+      },
+      "DashboardBreakdowns": {
+        "additionalProperties": false,
+        "description": "``GET /api/dashboard/breakdowns`` — top talkers, verdict and status mix, guardrail actions,\nand flow volume by capture hour (console rebuild B4).\n\nThese are **recorded** flows: the histogram shows when the traffic was captured, not a live rate.",
+        "properties": {
+          "flowTimeHistogram": {
+            "items": {
+              "$ref": "#/components/schemas/TimeBucket"
+            },
+            "title": "Flowtimehistogram",
+            "type": "array"
+          },
+          "generatedAt": {
+            "format": "date-time",
+            "title": "Generatedat",
+            "type": "string"
+          },
+          "guardrailInterventions": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "description": "Interventions by guardrail code",
+            "title": "Guardrailinterventions",
+            "type": "object"
+          },
+          "statusMix": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "title": "Statusmix",
+            "type": "object"
+          },
+          "topDestinationIps": {
+            "items": {
+              "$ref": "#/components/schemas/TopValue"
+            },
+            "title": "Topdestinationips",
+            "type": "array"
+          },
+          "topDestinationPorts": {
+            "items": {
+              "$ref": "#/components/schemas/TopValue"
+            },
+            "title": "Topdestinationports",
+            "type": "array"
+          },
+          "topSourceIps": {
+            "items": {
+              "$ref": "#/components/schemas/TopValue"
+            },
+            "title": "Topsourceips",
+            "type": "array"
+          },
+          "verdictMix": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "description": "Verdicts currently in force, by category",
+            "title": "Verdictmix",
+            "type": "object"
+          }
+        },
+        "required": [
+          "generatedAt"
+        ],
+        "title": "DashboardBreakdowns",
         "type": "object"
       },
       "DashboardSummary": {
@@ -738,6 +902,106 @@
         "title": "DetectionRunSummary",
         "type": "object"
       },
+      "EntityIp": {
+        "additionalProperties": false,
+        "description": "``GET /api/entities/ip/{ip}`` — what the recorded flows say about one address (B5).",
+        "properties": {
+          "alerts": {
+            "minimum": 0,
+            "title": "Alerts",
+            "type": "integer"
+          },
+          "asDestination": {
+            "minimum": 0,
+            "title": "Asdestination",
+            "type": "integer"
+          },
+          "asSource": {
+            "minimum": 0,
+            "title": "Assource",
+            "type": "integer"
+          },
+          "byAttackCategory": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "title": "Byattackcategory",
+            "type": "object"
+          },
+          "byQueueClass": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "title": "Byqueueclass",
+            "type": "object"
+          },
+          "firstSeen": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "Earliest capture time",
+            "title": "Firstseen"
+          },
+          "flagged": {
+            "minimum": 0,
+            "title": "Flagged",
+            "type": "integer"
+          },
+          "ip": {
+            "title": "Ip",
+            "type": "string"
+          },
+          "lastSeen": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "Latest capture time",
+            "title": "Lastseen"
+          },
+          "topDestinationPorts": {
+            "items": {
+              "$ref": "#/components/schemas/TopValue"
+            },
+            "title": "Topdestinationports",
+            "type": "array"
+          },
+          "topPeers": {
+            "items": {
+              "$ref": "#/components/schemas/TopValue"
+            },
+            "title": "Toppeers",
+            "type": "array"
+          },
+          "verdictMix": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "title": "Verdictmix",
+            "type": "object"
+          }
+        },
+        "required": [
+          "ip",
+          "alerts",
+          "asSource",
+          "asDestination",
+          "flagged"
+        ],
+        "title": "EntityIp",
+        "type": "object"
+      },
       "ErrorBody": {
         "additionalProperties": false,
         "description": "The body of every non-2xx response. One shape, so a client has one error path.",
@@ -937,6 +1201,57 @@
           "signatureOverride"
         ],
         "title": "EvaluationDetectionMetrics",
+        "type": "object"
+      },
+      "EvaluationRunOut": {
+        "additionalProperties": false,
+        "description": "``GET /api/evaluation/runs`` — one committed three-arm run, so the evaluator can find it.\n\nAdded at S14: the runs live in `evaluation/three-arm/runs/`, not in any database, so without a\nlisting the evaluator would need a run id typed from a terminal.",
+        "properties": {
+          "arms": {
+            "description": "Arm names, in run order",
+            "items": {
+              "type": "string"
+            },
+            "title": "Arms",
+            "type": "array"
+          },
+          "commit": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Commit"
+          },
+          "detectionMetricsIdenticalAcrossArms": {
+            "title": "Detectionmetricsidenticalacrossarms",
+            "type": "boolean"
+          },
+          "preregistration": {
+            "additionalProperties": true,
+            "title": "Preregistration",
+            "type": "object"
+          },
+          "runId": {
+            "title": "Runid",
+            "type": "string"
+          },
+          "sequenceLength": {
+            "minimum": 0,
+            "title": "Sequencelength",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "runId",
+          "sequenceLength",
+          "detectionMetricsIdenticalAcrossArms"
+        ],
+        "title": "EvaluationRunOut",
         "type": "object"
       },
       "EvaluationScenarioOut": {
@@ -1893,6 +2208,52 @@
         "title": "MovementGroup",
         "type": "object"
       },
+      "NoteOut": {
+        "additionalProperties": false,
+        "properties": {
+          "author": {
+            "$ref": "#/components/schemas/Actor"
+          },
+          "body": {
+            "title": "Body",
+            "type": "string"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "title": "Createdat",
+            "type": "string"
+          },
+          "noteId": {
+            "title": "Noteid",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "noteId",
+          "author",
+          "body",
+          "createdAt"
+        ],
+        "title": "NoteOut",
+        "type": "object"
+      },
+      "NoteRequest": {
+        "additionalProperties": false,
+        "description": "``POST /api/alerts/{alertRef}/notes``. Append-only: a correction is a new note.",
+        "properties": {
+          "body": {
+            "maxLength": 2000,
+            "minLength": 1,
+            "title": "Body",
+            "type": "string"
+          }
+        },
+        "required": [
+          "body"
+        ],
+        "title": "NoteRequest",
+        "type": "object"
+      },
       "PageInfo": {
         "additionalProperties": false,
         "description": "Where in the queue this page sits.\n\nOffset paging, deliberately: the queue is a ranked list an analyst works down, so a cursor\nwould buy nothing and cost the ability to jump to a position.",
@@ -2341,6 +2702,116 @@
         },
         "title": "SignaturePanel",
         "type": "object"
+      },
+      "StatusChangeRequest": {
+        "additionalProperties": false,
+        "description": "``POST /api/alerts/{alertRef}/status``.\n\nWorking an alert (`claimed`, `in_progress`) makes the caller its owner when it has none;\nreturning it to `new` releases it; a closed alert (`resolved`, `dismissed`) can only be reopened\nto `in_progress`. A refused transition is a 409.",
+        "properties": {
+          "reason": {
+            "anyOf": [
+              {
+                "maxLength": 500,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Reason"
+          },
+          "status": {
+            "enum": [
+              "new",
+              "claimed",
+              "in_progress",
+              "resolved",
+              "dismissed"
+            ],
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "status"
+        ],
+        "title": "StatusChangeRequest",
+        "type": "object"
+      },
+      "TimeBucket": {
+        "additionalProperties": false,
+        "properties": {
+          "bucket": {
+            "description": "Capture-local hour, e.g. 2018-02-14 12:00",
+            "title": "Bucket",
+            "type": "string"
+          },
+          "count": {
+            "minimum": 0,
+            "title": "Count",
+            "type": "integer"
+          },
+          "flagged": {
+            "minimum": 0,
+            "title": "Flagged",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "bucket",
+          "count",
+          "flagged"
+        ],
+        "title": "TimeBucket",
+        "type": "object"
+      },
+      "TopValue": {
+        "additionalProperties": false,
+        "description": "One value and how often it occurs, e.g. an IP address or a destination port.",
+        "properties": {
+          "count": {
+            "minimum": 0,
+            "title": "Count",
+            "type": "integer"
+          },
+          "flagged": {
+            "description": "Of these, alerts a detector flagged (band is not none)",
+            "minimum": 0,
+            "title": "Flagged",
+            "type": "integer"
+          },
+          "value": {
+            "title": "Value",
+            "type": "string"
+          }
+        },
+        "required": [
+          "value",
+          "count",
+          "flagged"
+        ],
+        "title": "TopValue",
+        "type": "object"
+      },
+      "TriageResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "alert": {
+            "$ref": "#/components/schemas/AlertSummary"
+          },
+          "auditEventId": {
+            "description": "The ALERT_STATUS_CHANGE entry this wrote",
+            "minimum": 0,
+            "title": "Auditeventid",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "alert",
+          "auditEventId"
+        ],
+        "title": "TriageResponse",
+        "type": "object"
       }
     }
   },
@@ -2670,6 +3141,98 @@
               "description": "Restrict to one detection run",
               "title": "Runid"
             }
+          },
+          {
+            "description": "Filter by the verdict currently in force",
+            "in": "query",
+            "name": "verdict",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "items": {
+                    "enum": [
+                      "confirm_true_positive",
+                      "mark_false_positive",
+                      "mark_expected_activity",
+                      "needs_investigation",
+                      "escalate"
+                    ],
+                    "type": "string"
+                  },
+                  "type": "array"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "description": "Filter by the verdict currently in force",
+              "title": "Verdict"
+            }
+          },
+          {
+            "description": "`me`: owned by the caller's demo user; `unassigned`: no owner",
+            "in": "query",
+            "name": "owner",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "me",
+                    "unassigned"
+                  ],
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "description": "`me`: owned by the caller's demo user; `unassigned`: no owner",
+              "title": "Owner"
+            }
+          },
+          {
+            "description": "Earliest flow capture time, capture-local, e.g. 2018-02-14 12:00",
+            "in": "query",
+            "name": "flowFrom",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "pattern": "^\\d{4}-\\d{2}-\\d{2}( \\d{2}(:\\d{2}(:\\d{2}(\\.\\d{1,6})?)?)?)?$",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "description": "Earliest flow capture time, capture-local, e.g. 2018-02-14 12:00",
+              "title": "Flowfrom"
+            }
+          },
+          {
+            "description": "Latest flow capture time; a date alone means the end of that day",
+            "in": "query",
+            "name": "flowTo",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "pattern": "^\\d{4}-\\d{2}-\\d{2}( \\d{2}(:\\d{2}(:\\d{2}(\\.\\d{1,6})?)?)?)?$",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "description": "Latest flow capture time; a date alone means the end of that day",
+              "title": "Flowto"
+            }
           }
         ],
         "responses": {
@@ -2771,6 +3334,105 @@
         "tags": [
           "alerts"
         ]
+      }
+    },
+    "/api/alerts/{alertRef}/assign": {
+      "post": {
+        "operationId": "assignAlert",
+        "parameters": [
+          {
+            "description": "Role-switch stub (S18 replaces this with a real principal)",
+            "in": "header",
+            "name": "X-Demo-Role",
+            "required": false,
+            "schema": {
+              "enum": [
+                "security_analyst",
+                "system_admin",
+                "evaluator"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "description": "The alert's public UUID",
+            "in": "path",
+            "name": "alertRef",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AssignRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TriageResponse"
+                }
+              }
+            },
+            "description": "The alert after the change"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Validation failed"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Role not permitted"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          }
+        },
+        "summary": "Assign an alert to the caller, or unassign it",
+        "tags": [
+          "alerts",
+          "triage"
+        ],
+        "x-required-role": "security_analyst | system_admin"
       }
     },
     "/api/alerts/{alertRef}/feedback": {
@@ -2921,6 +3583,152 @@
         ]
       }
     },
+    "/api/alerts/{alertRef}/notes": {
+      "get": {
+        "operationId": "listAlertNotes",
+        "parameters": [
+          {
+            "description": "Role-switch stub (S18 replaces this with a real principal)",
+            "in": "header",
+            "name": "X-Demo-Role",
+            "required": false,
+            "schema": {
+              "enum": [
+                "security_analyst",
+                "system_admin",
+                "evaluator"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "description": "The alert's public UUID",
+            "in": "path",
+            "name": "alertRef",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AlertNotes"
+                }
+              }
+            },
+            "description": "The thread"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not found"
+          }
+        },
+        "summary": "The alert's notes thread, oldest first",
+        "tags": [
+          "alerts",
+          "triage"
+        ]
+      },
+      "post": {
+        "description": "Append-only: a correction is a new note.",
+        "operationId": "addAlertNote",
+        "parameters": [
+          {
+            "description": "Role-switch stub (S18 replaces this with a real principal)",
+            "in": "header",
+            "name": "X-Demo-Role",
+            "required": false,
+            "schema": {
+              "enum": [
+                "security_analyst",
+                "system_admin",
+                "evaluator"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "description": "The alert's public UUID",
+            "in": "path",
+            "name": "alertRef",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NoteRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NoteOut"
+                }
+              }
+            },
+            "description": "The stored note"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Validation failed"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Role not permitted"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not found"
+          }
+        },
+        "summary": "Add a note to the alert",
+        "tags": [
+          "alerts",
+          "triage"
+        ],
+        "x-required-role": "security_analyst | system_admin"
+      }
+    },
     "/api/alerts/{alertRef}/score-adjustment": {
       "get": {
         "operationId": "getScoreAdjustment",
@@ -2977,6 +3785,106 @@
           "alerts",
           "feedback"
         ]
+      }
+    },
+    "/api/alerts/{alertRef}/status": {
+      "post": {
+        "description": "Workflow, not judgement: never moves a score or invokes a guardrail. Working an alert makes the caller its owner when it has none. A refused transition is a 409. Writes an ALERT_STATUS_CHANGE audit entry.",
+        "operationId": "changeAlertStatus",
+        "parameters": [
+          {
+            "description": "Role-switch stub (S18 replaces this with a real principal)",
+            "in": "header",
+            "name": "X-Demo-Role",
+            "required": false,
+            "schema": {
+              "enum": [
+                "security_analyst",
+                "system_admin",
+                "evaluator"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "description": "The alert's public UUID",
+            "in": "path",
+            "name": "alertRef",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StatusChangeRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TriageResponse"
+                }
+              }
+            },
+            "description": "The alert after the change"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Validation failed"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Role not permitted"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          }
+        },
+        "summary": "Claim, work, resolve, dismiss, release or reopen an alert",
+        "tags": [
+          "alerts",
+          "triage"
+        ],
+        "x-required-role": "security_analyst | system_admin"
       }
     },
     "/api/audit-log": {
@@ -3274,6 +4182,66 @@
         "x-required-role": "system_admin"
       }
     },
+    "/api/dashboard/breakdowns": {
+      "get": {
+        "description": "Recorded flows: the histogram is capture time, not a live rate.",
+        "operationId": "getDashboardBreakdowns",
+        "parameters": [
+          {
+            "description": "Role-switch stub (S18 replaces this with a real principal)",
+            "in": "header",
+            "name": "X-Demo-Role",
+            "required": false,
+            "schema": {
+              "enum": [
+                "security_analyst",
+                "system_admin",
+                "evaluator"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "description": "How many top values to return per list",
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 10,
+              "maximum": 50,
+              "minimum": 1,
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DashboardBreakdowns"
+                }
+              }
+            },
+            "description": "Breakdowns"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Validation failed"
+          }
+        },
+        "summary": "Top talkers, verdict and status mix, guardrail actions, capture-time histogram",
+        "tags": [
+          "dashboard"
+        ]
+      }
+    },
     "/api/dashboard/summary": {
       "get": {
         "operationId": "getDashboardSummary",
@@ -3388,6 +4356,137 @@
           "detection"
         ],
         "x-required-role": "system_admin"
+      }
+    },
+    "/api/entities/ip/{ip}": {
+      "get": {
+        "operationId": "getIpEntity",
+        "parameters": [
+          {
+            "description": "Role-switch stub (S18 replaces this with a real principal)",
+            "in": "header",
+            "name": "X-Demo-Role",
+            "required": false,
+            "schema": {
+              "enum": [
+                "security_analyst",
+                "system_admin",
+                "evaluator"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "description": "An IPv4 or IPv6 address",
+            "in": "path",
+            "name": "ip",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "How many top values to return per list",
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 10,
+              "maximum": 50,
+              "minimum": 1,
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EntityIp"
+                }
+              }
+            },
+            "description": "The address's alerts, peers and ports"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Validation failed"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not found"
+          }
+        },
+        "summary": "Everything the recorded flows say about one IP address",
+        "tags": [
+          "entities"
+        ]
+      }
+    },
+    "/api/evaluation/runs": {
+      "get": {
+        "description": "Read from evaluation/three-arm/runs/, not from a database: each arm runs against its own database copy.",
+        "operationId": "listEvaluationRuns",
+        "parameters": [
+          {
+            "description": "Role-switch stub (S18 replaces this with a real principal)",
+            "in": "header",
+            "name": "X-Demo-Role",
+            "required": false,
+            "schema": {
+              "enum": [
+                "security_analyst",
+                "system_admin",
+                "evaluator"
+              ],
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "items": {
+                      "items": {
+                        "$ref": "#/components/schemas/EvaluationRunOut"
+                      },
+                      "type": "array"
+                    },
+                    "page": {
+                      "$ref": "#/components/schemas/PageInfo"
+                    }
+                  },
+                  "required": [
+                    "items",
+                    "page"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "A page of runs"
+          }
+        },
+        "summary": "Committed three-arm evaluation runs, newest first",
+        "tags": [
+          "evaluation"
+        ]
       }
     },
     "/api/evaluation/runs/{runId}": {

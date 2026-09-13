@@ -91,6 +91,16 @@ class AuditWriter:
             event_type=event_type, actor_id=actor_id, alert_id=alert_id, feedback_id=feedback_id,
             details={"outcome": outcome.model_dump(mode="json")}))
 
+    def status_change(self, actor_id: int | None, alert_id: int, *, action: str,
+                      from_status: m.AlertStatus, to_status: m.AlertStatus,
+                      from_owner: int | None, to_owner: int | None,
+                      rationale: str | None = None) -> m.AuditEntry:
+        """A triage action on one alert — its status, its owner, or both (console rebuild B1)."""
+        return self.record(m.AuditEntry(
+            event_type="ALERT_STATUS_CHANGE", actor_id=actor_id, alert_id=alert_id,
+            details=_details(rationale, action=action, from_status=from_status,
+                             to_status=to_status, from_owner=from_owner, to_owner=to_owner)))
+
     def similar_alert_learning(self, family: m.AlertFamily, *, before: m.AlertFamily | None,
                                actor_id: int, alert_id: int, feedback_id: int,
                                members_moved: int,

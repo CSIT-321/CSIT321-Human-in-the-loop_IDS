@@ -36,6 +36,7 @@ TABLE_MODELS: dict[str, type[m.Contract]] = {
     "alerts": m.Alert,
     "flow_data": m.FlowRecord,
     "feedback_events": m.FeedbackEvent,
+    "alert_notes": m.AlertNote,
     "alert_families": m.AlertFamily,
     "audit_log": m.AuditEntry,
     "guardrail_config": m.GuardrailConfigEntry,
@@ -47,8 +48,14 @@ _TABLE_OF = {model: table for table, model in TABLE_MODELS.items()}
 ModelT = TypeVar("ModelT", bound=m.Contract)
 
 
-def connect(path: str | Path) -> sqlite3.Connection:
-    conn = sqlite3.connect(path)
+def connect(path: str | Path, *, check_same_thread: bool = True) -> sqlite3.Connection:
+    """Open a database with the contract's pragmas.
+
+    ``check_same_thread=False`` is for a caller that guarantees one user at a time but not one
+    thread: the API opens a connection per request, and FastAPI may enter the dependency, run the
+    handler and close the connection on three different worker threads.
+    """
+    conn = sqlite3.connect(path, check_same_thread=check_same_thread)
     conn.row_factory = sqlite3.Row
     conn.execute("PRAGMA foreign_keys = ON")
     # Belt and braces with the no_replace triggers: REPLACE fires DELETE triggers only when on.
@@ -57,13 +64,60 @@ def connect(path: str | Path) -> sqlite3.Connection:
 
 
 def create_schema(conn: sqlite3.Connection) -> None:
-    """Create all tables on a fresh database and seed the guardrail defaults."""
+    """Create all tables on a fresh database, seed the guardrail defaults, apply every migration."""
     conn.executescript(SCHEMA_PATH.read_text(encoding="utf-8"))
     conn.executemany(
         "INSERT INTO guardrail_config (config_key, config_value, description) VALUES (?, ?, ?)",
         [(key, value, text) for key, (value, text) in m.GUARDRAIL_DEFAULTS.items()],
     )
     conn.commit()
+    migrate(conn)
+
+
+#: Schema changes after S9 consumed schema.sql are migrations, never edits to it (plan S2). Each
+#: entry is (version, description, SQL); `PRAGMA user_version` records the last one applied. A fresh
+#: database runs schema.sql and then every migration, so both paths end at the same schema. Every
+#: statement is IF NOT EXISTS, so two connections racing to apply one migration both succeed.
+MIGRATIONS: tuple[tuple[int, str, str], ...] = (
+    (1, "alert_notes: the append-only analyst notes thread (console rebuild B2)", """
+CREATE TABLE IF NOT EXISTS alert_notes (
+    id         INTEGER PRIMARY KEY AUTOINCREMENT,
+    alert_id   INTEGER NOT NULL REFERENCES alerts (id),
+    user_id    INTEGER NOT NULL REFERENCES users (id),
+    body       TEXT    NOT NULL CHECK (length(body) BETWEEN 1 AND 2000),
+    created_at TEXT    NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%f', 'now') || '000Z')
+);
+CREATE INDEX IF NOT EXISTS idx_notes_alert ON alert_notes (alert_id);
+CREATE TRIGGER IF NOT EXISTS trg_notes_no_update BEFORE UPDATE ON alert_notes
+BEGIN SELECT RAISE(ABORT, 'alert_notes is append-only: add a new note'); END;
+CREATE TRIGGER IF NOT EXISTS trg_notes_no_delete BEFORE DELETE ON alert_notes
+BEGIN SELECT RAISE(ABORT, 'alert_notes is append-only: add a new note'); END;
+CREATE TRIGGER IF NOT EXISTS trg_notes_no_replace BEFORE INSERT ON alert_notes
+WHEN NEW.id IS NOT NULL AND EXISTS (SELECT 1 FROM alert_notes WHERE id = NEW.id)
+BEGIN SELECT RAISE(ABORT, 'alert_notes is append-only: add a new note'); END;
+"""),
+)
+SCHEMA_VERSION = MIGRATIONS[-1][0]
+
+
+def migrate(conn: sqlite3.Connection) -> list[int]:
+    """Apply every migration newer than the database's ``user_version``, in order. Idempotent.
+
+    Returns the versions applied, so a caller (or a test) can tell a no-op from an upgrade.
+    """
+    current = int(conn.execute("PRAGMA user_version").fetchone()[0])
+    applied: list[int] = []
+    for version, _description, sql in MIGRATIONS:
+        if version <= current:
+            continue
+        try:
+            conn.executescript(
+                f"BEGIN IMMEDIATE;\n{sql}\nPRAGMA user_version = {int(version)};\nCOMMIT;")
+        except sqlite3.Error:
+            conn.rollback()
+            raise
+        applied.append(version)
+    return applied
 
 
 # Fixed width, so text order is time order. Variable-width ISO text sorts wrongly

@@ -149,6 +149,18 @@ SORT_COLUMNS: Mapping[str, str] = {
 
 FILTERABLE = frozenset({"queue_class", "evidence_class", "severity", "status", "attack_category"})
 
+#: When the flow was captured, as the dataset recorded it: capture-local text such as
+#: '2018-02-14 12:28:54.334391', so text order is time order. Not the alert's created_at, which is
+#: the detection run's time and identical for every alert in a run.
+FLOW_TIME = "json_extract(f.flow_features, '$.Timestamp')"
+
+#: A detector flagged the alert: it sits in any band but the bottom one.
+FLAGGED = "(a.queue_class != 'none')"
+
+#: The verdict currently in force on an alert (feedback does not stack; the latest one counts).
+EFFECTIVE_VERDICT = ("(SELECT fe.category FROM feedback_events fe WHERE fe.alert_id = a.id "
+                     "ORDER BY fe.created_at DESC, fe.id DESC LIMIT 1)")
+
 
 def _queue_filters(filters: Mapping[str, Any]) -> tuple[str, list[Any]]:
     """The WHERE clause for a queue query.
@@ -180,9 +192,28 @@ def _queue_filters(filters: Mapping[str, Any]) -> tuple[str, list[Any]]:
             clauses.append("a.combined_score <= ?")
             params.append(float(value))
         elif key == "search":
-            clauses.append("(f.src_ip LIKE ? OR f.dst_ip LIKE ? OR a.signature_rules LIKE ?)")
+            clauses.append("(f.src_ip LIKE ? OR f.dst_ip LIKE ? OR a.signature_rules LIKE ? "
+                           "OR f.source_record_id LIKE ?)")
             like = f"%{value}%"
-            params.extend([like, like, like])
+            params.extend([like, like, like, like])
+        elif key == "verdict":  # the verdict currently in force, not any verdict ever recorded
+            values = list(value)
+            if not values:
+                continue
+            clauses.append(f"{EFFECTIVE_VERDICT} IN ({', '.join('?' * len(values))})")
+            params.extend(values)
+        elif key == "owner_id":
+            clauses.append("a.owner_id = ?")
+            params.append(int(value))
+        elif key == "unassigned":
+            if value:
+                clauses.append("a.owner_id IS NULL")
+        elif key == "flow_from":
+            clauses.append(f"{FLOW_TIME} >= ?")
+            params.append(str(value))
+        elif key == "flow_to":
+            clauses.append(f"{FLOW_TIME} <= ?")
+            params.append(str(value))
         else:
             raise ValueError(f"{key!r} is not a queue filter")
     return (" WHERE " + " AND ".join(clauses)) if clauses else "", params
@@ -382,3 +413,111 @@ def dashboard_counts(conn: sqlite3.Connection, *, run_id: int | None = None) -> 
 def latest_run(conn: sqlite3.Connection) -> m.DetectionRun | None:
     row = conn.execute("SELECT * FROM detection_runs ORDER BY id DESC LIMIT 1").fetchone()
     return None if row is None else db.from_row(m.DetectionRun, row)
+
+
+# --------------------------------------------------------------------------------------------
+# Reads the console rebuild adds (B4, B5, B6). Aggregations run in SQL — one query per figure, never
+# one per row — so the overview stays as fast as the queue.
+# --------------------------------------------------------------------------------------------
+
+
+def flow_time(flow: m.FlowRecord) -> str | None:
+    """The flow's capture time as recorded in the dataset, or None when the capture had none."""
+    value = flow.flow_features.get("Timestamp")
+    return None if value is None else str(value)
+
+
+def family_sizes(conn: sqlite3.Connection,
+                 family_keys: Sequence[str | None]) -> dict[str, int]:
+    """Members per family for a page of alerts, in one query."""
+    keys = sorted({key for key in family_keys if key})
+    if not keys:
+        return {}
+    rows = conn.execute(
+        f"SELECT family_key, COUNT(*) AS n FROM alerts "
+        f"WHERE family_key IN ({', '.join('?' * len(keys))}) GROUP BY family_key", keys)
+    return {str(row["family_key"]): int(row["n"]) for row in rows}
+
+
+def _top(conn: sqlite3.Connection, expr: str, *, limit: int, where: str = "",
+         params: Sequence[Any] = ()) -> list[dict[str, Any]]:
+    """The most frequent values of ``expr``, flagged alerts first. ``params`` bind ``expr`` first,
+    then ``where``."""
+    sql = (f"SELECT {expr} AS v, COUNT(*) AS n, SUM({FLAGGED}) AS fl "
+           f"FROM alerts a JOIN flow_data f ON f.alert_id = a.id{where} "
+           f"GROUP BY v ORDER BY fl DESC, n DESC, v LIMIT ?")
+    return [{"value": str(row["v"]), "count": int(row["n"]), "flagged": int(row["fl"] or 0)}
+            for row in conn.execute(sql, [*params, limit])]
+
+
+def _verdict_mix(conn: sqlite3.Connection, where: str = "",
+                 params: Sequence[Any] = ()) -> dict[str, int]:
+    sql = (f"SELECT {EFFECTIVE_VERDICT} AS c, COUNT(*) AS n "
+           f"FROM alerts a JOIN flow_data f ON f.alert_id = a.id{where} GROUP BY c")
+    return {str(row["c"]): int(row["n"]) for row in conn.execute(sql, list(params))
+            if row["c"] is not None}
+
+
+def breakdowns(conn: sqlite3.Connection, *, limit: int = 10) -> dict[str, Any]:
+    """The overview's breakdowns (B4).
+
+    The histogram is **capture time**, bucketed by hour: these are recorded flows, so it shows when
+    the traffic happened, not how fast alerts are arriving now.
+    """
+    histogram = [
+        {"bucket": f"{row['h']}:00", "count": int(row["n"]), "flagged": int(row["fl"] or 0)}
+        for row in conn.execute(
+            f"SELECT substr({FLOW_TIME}, 1, 13) AS h, COUNT(*) AS n, SUM({FLAGGED}) AS fl "
+            f"FROM alerts a JOIN flow_data f ON f.alert_id = a.id "
+            f"WHERE {FLOW_TIME} IS NOT NULL GROUP BY h ORDER BY h")]
+    interventions = {
+        str(row["code"]): int(row["n"]) for row in conn.execute(
+            "SELECT json_extract(i.value, '$.code') AS code, COUNT(*) AS n "
+            "FROM audit_log al, json_each(al.details, '$.outcome.interventions') AS i "
+            "WHERE al.event_type IN ('GUARDRAIL_INTERVENTION', 'GUARDRAIL_REJECTION') "
+            "GROUP BY code") if row["code"] is not None}
+    return {
+        "top_source_ips": _top(conn, "f.src_ip", limit=limit),
+        "top_destination_ips": _top(conn, "f.dst_ip", limit=limit),
+        "top_destination_ports": _top(conn, "f.dst_port", limit=limit),
+        "verdict_mix": _verdict_mix(conn),
+        "status_mix": counts_by(conn, "status"),
+        "guardrail_interventions": interventions,
+        "flow_time_histogram": histogram,
+    }
+
+
+def entity_ip(conn: sqlite3.Connection, ip: str, *, limit: int = 10) -> dict[str, Any] | None:
+    """Everything the recorded flows say about one IP (B5); None when no alert involves it."""
+    where = " WHERE (f.src_ip = ? OR f.dst_ip = ?)"
+    params = [ip, ip]
+    head = conn.execute(
+        f"SELECT COUNT(*) AS n, SUM(f.src_ip = ?) AS src, SUM(f.dst_ip = ?) AS dst, "
+        f"SUM({FLAGGED}) AS fl, MIN({FLOW_TIME}) AS first_seen, MAX({FLOW_TIME}) AS last_seen "
+        f"FROM alerts a JOIN flow_data f ON f.alert_id = a.id{where}",
+        [ip, ip, *params]).fetchone()
+    if not head["n"]:
+        return None
+
+    def grouped(expr: str) -> dict[str, int]:
+        return {str(row["v"]): int(row["n"]) for row in conn.execute(
+            f"SELECT {expr} AS v, COUNT(*) AS n FROM alerts a "
+            f"JOIN flow_data f ON f.alert_id = a.id{where} GROUP BY v", params)
+            if row["v"] is not None}
+
+    return {
+        "ip": ip,
+        "alerts": int(head["n"]),
+        "as_source": int(head["src"] or 0),
+        "as_destination": int(head["dst"] or 0),
+        "flagged": int(head["fl"] or 0),
+        "first_seen": head["first_seen"],
+        "last_seen": head["last_seen"],
+        "by_queue_class": grouped("a.queue_class"),
+        "by_attack_category": grouped("a.attack_category"),
+        "verdict_mix": _verdict_mix(conn, where, params),
+        "top_peers": _top(conn, "CASE WHEN f.src_ip = ? THEN f.dst_ip ELSE f.src_ip END",
+                          where=where, params=[ip, *params], limit=limit),
+        "top_destination_ports": _top(conn, "f.dst_port", where=where, params=params,
+                                      limit=limit),
+    }

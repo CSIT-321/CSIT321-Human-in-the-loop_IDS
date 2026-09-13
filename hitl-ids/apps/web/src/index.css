@@ -1,0 +1,103 @@
+@import "tailwindcss";
+
+/*
+ * Design tokens — console rebuild R2 (docs/console-rebuild-proposal.md §1).
+ *
+ * The SOC analyst workstation: a near-black ground that recedes, square panels divided by 1 px rules,
+ * no shadows, and data carrying the colour. The semantic names (bg-surface, text-muted, border-border
+ * ...) are unchanged from S11, so every screen picks up the new look from these values alone; the
+ * workstation-specific names (primary, severity-*) are additions.
+ *
+ * Severity is never colour alone: every mark using these tokens is paired with a word (WCAG 1.4.1).
+ */
+@theme {
+  --color-bg: #0b0d10;
+  --color-surface: #111418;
+  --color-raised: #171b21;
+  --color-border: #242a33;
+  --color-border-strong: #333b47;
+
+  --color-text: #e6e8eb;
+  --color-muted: #8f97a3;
+  --color-dim: #656d79;
+
+  /* Data and links (IPs, alert IDs). The primary action is the deeper blue. */
+  --color-accent: #58a6ff;
+  --color-accent-dim: #0f2540;
+  --color-primary: #2f81f7;
+  --color-primary-hover: #4493f8;
+
+  --color-warn: #f0883e;
+  --color-warn-dim: #3a2312;
+  --color-ok: #3fb950;
+  --color-ok-dim: #0f2c17;
+  --color-danger: #f85149;
+  --color-danger-dim: #3d1518;
+  --color-violet: #bc8cff;
+  --color-violet-dim: #2a1d45;
+
+  --color-severity-critical: #f85149;
+  --color-severity-high: #f0883e;
+  --color-severity-medium: #e3b341;
+  --color-severity-low: #3fb950;
+  --color-severity-info: #58a6ff;
+
+  /* The demo-build stub badge: amber, so nobody mistakes the role switch for authentication. */
+  --color-stub: #e3b341;
+  --color-stub-bg: #2e2508;
+
+  --font-sans: "IBM Plex Sans", "Segoe UI", system-ui, -apple-system, sans-serif;
+  --font-mono: "JetBrains Mono", "Cascadia Mono", ui-monospace, monospace;
+}
+
+@layer base {
+  html,
+  body,
+  #root {
+    height: 100%;
+  }
+
+  body {
+    background-color: var(--color-bg);
+    color: var(--color-text);
+    font-family: var(--font-sans);
+    font-size: 14px;
+    -webkit-font-smoothing: antialiased;
+    font-feature-settings: "tnum" 1;
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+  }
+
+  ::selection {
+    background: var(--color-accent-dim);
+  }
+
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: var(--color-border-strong) transparent;
+  }
+}
+
+@layer components {
+  /* Section label: uppercase, letter-spaced monospace — the workstation's console-output voice. */
+  .label-mono {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--color-muted);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}

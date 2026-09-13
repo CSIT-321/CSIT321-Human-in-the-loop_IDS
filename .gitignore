@@ -13,6 +13,13 @@ stage-3/notebooks/*.pdf
 stage-3/outputs/ml-predictions.regenerated.json
 dashboard/node_modules/
 dashboard/dist/
+hitl-ids/apps/web/node_modules/
+hitl-ids/apps/web/dist/
+hitl-ids/apps/web/*.tsbuildinfo
+hitl-ids/apps/web/test-results/
+hitl-ids/apps/web/playwright-report/
+# pip install -e . build output
+*.egg-info/
 
 # hitl-ids: agent state, never tracked
 .omc/

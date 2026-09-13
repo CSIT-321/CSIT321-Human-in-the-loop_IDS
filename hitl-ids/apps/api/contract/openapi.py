@@ -59,7 +59,17 @@ MODELS: tuple[type[BaseModel], ...] = (
     a.FamilyEffect,
     a.ScoreAdjustment,
     a.GuardrailInterventionOut,
+    a.StatusChangeRequest,
+    a.AssignRequest,
+    a.TriageResponse,
+    a.NoteRequest,
+    a.NoteOut,
+    a.AlertNotes,
     o.DashboardSummary,
+    o.DashboardBreakdowns,
+    o.TopValue,
+    o.TimeBucket,
+    o.EntityIp,
     o.QueueBandCount,
     o.DetectionRunRequest,
     o.DetectionRunSummary,
@@ -68,6 +78,7 @@ MODELS: tuple[type[BaseModel], ...] = (
     o.GuardrailSetting,
     o.GuardrailConfigUpdate,
     o.EvaluationScenarioOut,
+    o.EvaluationRunOut,
     o.EvaluationComparison,
     o.EvaluationDetectionMetrics,
     o.ArmResultOut,
@@ -164,6 +175,13 @@ ALERT_REF = {
     "schema": {"type": "string", "format": "uuid"},
 }
 
+IP_PATH = {"name": "ip", "in": "path", "required": True,
+           "description": "An IPv4 or IPv6 address", "schema": {"type": "string"}}
+
+TOP_LIMIT = {"name": "limit", "in": "query", "required": False,
+             "description": "How many top values to return per list",
+             "schema": {"type": "integer", "minimum": 1, "maximum": 50, "default": 10}}
+
 RUN_ID = {"name": "runId", "in": "path", "required": True,
           "schema": {"type": "string"},
           "description": "Evaluation run id, e.g. 20260912T032022Z"}
@@ -235,6 +253,79 @@ def _paths() -> dict[str, Any]:
                                       **_json(a.FeedbackHistory)}, **_errors(404)},
             }
         },
+        "/api/alerts/{alertRef}/status": {
+            "post": {
+                "operationId": "changeAlertStatus",
+                "summary": "Claim, work, resolve, dismiss, release or reopen an alert",
+                "description": "Workflow, not judgement: never moves a score or invokes a guardrail. "
+                               "Working an alert makes the caller its owner when it has none. A "
+                               "refused transition is a 409. Writes an ALERT_STATUS_CHANGE audit "
+                               "entry.",
+                "tags": ["alerts", "triage"],
+                "parameters": [ROLE_PARAMETER, ALERT_REF],
+                "requestBody": {"required": True, **_json(a.StatusChangeRequest)},
+                "responses": {"200": {"description": "The alert after the change",
+                                      **_json(a.TriageResponse)},
+                              **_errors(400, 403, 404, 409)},
+                "x-required-role": "security_analyst | system_admin",
+            }
+        },
+        "/api/alerts/{alertRef}/assign": {
+            "post": {
+                "operationId": "assignAlert",
+                "summary": "Assign an alert to the caller, or unassign it",
+                "tags": ["alerts", "triage"],
+                "parameters": [ROLE_PARAMETER, ALERT_REF],
+                "requestBody": {"required": True, **_json(a.AssignRequest)},
+                "responses": {"200": {"description": "The alert after the change",
+                                      **_json(a.TriageResponse)},
+                              **_errors(400, 403, 404, 409)},
+                "x-required-role": "security_analyst | system_admin",
+            }
+        },
+        "/api/alerts/{alertRef}/notes": {
+            "get": {
+                "operationId": "listAlertNotes",
+                "summary": "The alert's notes thread, oldest first",
+                "tags": ["alerts", "triage"],
+                "parameters": [ROLE_PARAMETER, ALERT_REF],
+                "responses": {"200": {"description": "The thread", **_json(a.AlertNotes)},
+                              **_errors(404)},
+            },
+            "post": {
+                "operationId": "addAlertNote",
+                "summary": "Add a note to the alert",
+                "description": "Append-only: a correction is a new note.",
+                "tags": ["alerts", "triage"],
+                "parameters": [ROLE_PARAMETER, ALERT_REF],
+                "requestBody": {"required": True, **_json(a.NoteRequest)},
+                "responses": {"200": {"description": "The stored note", **_json(a.NoteOut)},
+                              **_errors(400, 403, 404)},
+                "x-required-role": "security_analyst | system_admin",
+            },
+        },
+        "/api/dashboard/breakdowns": {
+            "get": {
+                "operationId": "getDashboardBreakdowns",
+                "summary": "Top talkers, verdict and status mix, guardrail actions, capture-time "
+                           "histogram",
+                "description": "Recorded flows: the histogram is capture time, not a live rate.",
+                "tags": ["dashboard"],
+                "parameters": [ROLE_PARAMETER, TOP_LIMIT],
+                "responses": {"200": {"description": "Breakdowns",
+                                      **_json(o.DashboardBreakdowns)}, **_errors(400)},
+            }
+        },
+        "/api/entities/ip/{ip}": {
+            "get": {
+                "operationId": "getIpEntity",
+                "summary": "Everything the recorded flows say about one IP address",
+                "tags": ["entities"],
+                "parameters": [ROLE_PARAMETER, IP_PATH, TOP_LIMIT],
+                "responses": {"200": {"description": "The address's alerts, peers and ports",
+                                      **_json(o.EntityIp)}, **_errors(400, 404)},
+            }
+        },
         "/api/dashboard/summary": {
             "get": {
                 "operationId": "getDashboardSummary",
@@ -299,6 +390,18 @@ def _paths() -> dict[str, Any]:
                 "parameters": [ROLE_PARAMETER],
                 "responses": {"200": {"description": "A page of scenarios",
                                       **_page_of(o.EvaluationScenarioOut)}},
+            }
+        },
+        "/api/evaluation/runs": {
+            "get": {
+                "operationId": "listEvaluationRuns",
+                "summary": "Committed three-arm evaluation runs, newest first",
+                "description": "Read from evaluation/three-arm/runs/, not from a database: each arm "
+                               "runs against its own database copy.",
+                "tags": ["evaluation"],
+                "parameters": [ROLE_PARAMETER],
+                "responses": {"200": {"description": "A page of runs",
+                                      **_page_of(o.EvaluationRunOut)}},
             }
         },
         "/api/evaluation/runs/{runId}": {

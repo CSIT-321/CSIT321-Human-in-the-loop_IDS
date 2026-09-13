@@ -119,6 +119,13 @@ QueueSort = Literal["queue", "combined_score", "detection_score", "created_at", 
 
 SortDirection = Literal["asc", "desc"]
 
+#: `me` — alerts owned by the caller's demo user; `unassigned` — alerts nobody owns.
+QueueOwner = Literal["me", "unassigned"]
+
+#: A flow capture time as the dataset records it (capture-local, no timezone): a date, optionally
+#: with hours, minutes, seconds and microseconds. Compared as text, so text order is time order.
+FLOW_TIME_PATTERN = r"^\d{4}-\d{2}-\d{2}( \d{2}(:\d{2}(:\d{2}(\.\d{1,6})?)?)?)?$"
+
 
 class QueueQuery(ApiModel):
     """Query parameters for ``GET /api/alerts``."""
@@ -142,3 +149,13 @@ class QueueQuery(ApiModel):
         default=None, max_length=200,
         description="Substring of source IP, destination IP, or matched rule id")
     run_id: int | None = Field(default=None, description="Restrict to one detection run")
+    verdict: list[m.FeedbackCategory] | None = Field(
+        default=None, description="Filter by the verdict currently in force")
+    owner: QueueOwner | None = Field(
+        default=None, description="`me`: owned by the caller's demo user; `unassigned`: no owner")
+    flow_from: str | None = Field(
+        default=None, pattern=FLOW_TIME_PATTERN,
+        description="Earliest flow capture time, capture-local, e.g. 2018-02-14 12:00")
+    flow_to: str | None = Field(
+        default=None, pattern=FLOW_TIME_PATTERN,
+        description="Latest flow capture time; a date alone means the end of that day")

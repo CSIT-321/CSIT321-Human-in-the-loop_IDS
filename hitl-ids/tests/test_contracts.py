@@ -70,10 +70,12 @@ DEVIATION_TABLES = {
                        "weight", "feedback_counts", "dominant_category", "agreement_ratio",
                        "gate_open", "gate_reason", "learned_adjustment", "learned_offset",
                        "applied_adjustment", "applied_offset", "updated_at"},
+    # Console rebuild B2; added by migration 1 (db.MIGRATIONS), not schema.sql.
+    "alert_notes": {"id", "alert_id", "user_id", "body", "created_at"},
 }
 ENGINE_FEEDBACK_CATEGORIES = {"confirm_true_positive", "mark_false_positive",
                               "mark_expected_activity", "needs_investigation", "escalate"}
-APPEND_ONLY = [("audit_log", "audit"), ("feedback_events", "feedback")]
+APPEND_ONLY = [("audit_log", "audit"), ("feedback_events", "feedback"), ("alert_notes", "note")]
 
 T0 = datetime(2026, 9, 11, 12, 0, tzinfo=UTC)
 MODEL_VERSION = "xgb-8class-20260911"
@@ -205,6 +207,8 @@ def graph(conn: sqlite3.Connection) -> dict[str, m.Contract]:
         dominant_category="mark_false_positive", agreement_ratio=1.0, gate_open=False,
         gate_reason="not enough learning verdicts: 1 of 3 required", learned_adjustment=-15.0,
         learned_offset=0, applied_adjustment=0.0, applied_offset=0, updated_at=T0))
+    put("note", m.AlertNote(alert_id=alert, user_id=user, body="Destination is the SSH bastion.",
+                            created_at=T0))
     conn.commit()
     return rows
 
@@ -262,6 +266,8 @@ EXPECTED_FOREIGN_KEYS = {
     ("feedback_events", "user_id", "users", "id"),
     ("feedback_events", "amended_from_id", "feedback_events", "id"),
     ("audit_log", "actor_id", "users", "id"),
+    ("alert_notes", "alert_id", "alerts", "id"),
+    ("alert_notes", "user_id", "users", "id"),
     ("audit_log", "alert_id", "alerts", "id"),
     ("audit_log", "feedback_id", "feedback_events", "id"),
     ("evaluation_scenarios", "dataset_id", "datasets", "id"),

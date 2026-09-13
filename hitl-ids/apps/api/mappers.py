@@ -18,6 +18,8 @@ a client to switch on, and a sentence for it to show. Making guardrails visible 
 
 from __future__ import annotations
 
+import copy
+import functools
 from collections.abc import Mapping
 from typing import Any
 
@@ -25,7 +27,10 @@ from apps.api.contract import alerts as ca
 from apps.api.contract import operations as co
 from apps.api.contract.common import Actor
 from packages.contracts import models as m
+from packages.detection.feedback.learning import detection_placement
 from packages.detection.feedback.service import FEEDBACK_EFFECTS
+from packages.detection.guardrail.policy import GuardrailPolicy
+from packages.detection.ranking.severity import load_severity_chart
 
 #: A guardrail's code, as a sentence an analyst can read. `{value}` is the configured setting.
 GUARDRAIL_TEXT: dict[str, str] = {
@@ -73,7 +78,8 @@ def actor(user: m.User | None, user_id: int | None = None) -> Actor:
 # --------------------------------------------------------------------------------------------
 
 
-def alert_summary(alert: m.Alert, flow: m.FlowRecord, *, has_feedback: bool) -> ca.AlertSummary:
+def alert_summary(alert: m.Alert, flow: m.FlowRecord, *, has_feedback: bool,
+                  owner: m.User | None = None, family_size: int = 0) -> ca.AlertSummary:
     return ca.AlertSummary(
         alert_ref=alert.alert_ref,
         created_at=alert.created_at,
@@ -95,6 +101,11 @@ def alert_summary(alert: m.Alert, flow: m.FlowRecord, *, has_feedback: bool) -> 
         dst_ip=flow.dst_ip,
         dst_port=flow.dst_port,
         protocol=flow.protocol,
+        source_record_id=flow.source_record_id,
+        flow_time=None if flow.flow_features.get("Timestamp") is None
+        else str(flow.flow_features["Timestamp"]),
+        owner=None if alert.owner_id is None else actor(owner, alert.owner_id),
+        family_size=family_size,
     )
 
 
@@ -249,11 +260,30 @@ def _summary(event: m.FeedbackEvent | None,
     return f"{head}, and {applied} was applied. No guardrail intervened."
 
 
+@functools.lru_cache(maxsize=1)
+def _severity_chart():
+    # Imports are at module level on purpose: a first import inside a request handler can race when
+    # the browser opens an alert and fires its three reads at once.
+    return load_severity_chart()
+
+
+def detection_band(alert: m.Alert) -> str:
+    """The band detection placed the alert in, before any feedback.
+
+    The chain is always drawn from detection (``score_before`` is the detection score), so its
+    "before" band must be detection's placement too. It was once the *evidence class*, which made a
+    dismissed Tier 2 candidate read "Model only → Model only (unchanged)" and hid the one visible
+    consequence of the verdict. Recomputed with the same pure function and defaults S9 stores at
+    ingest (`pipeline/runner.py::_place`), from fields feedback never changes.
+    """
+    return detection_placement(alert, _severity_chart(), GuardrailPolicy()).queue_class
+
+
 def score_adjustment(alert: m.Alert, event: m.FeedbackEvent | None, *,
                      queue_class_before: str | None = None,
                      settings: Mapping[str, float] | None = None) -> ca.ScoreAdjustment:
     """The chain S12 draws. An alert with no verdict gets the identity chain, never null."""
-    before = queue_class_before or alert.evidence_class
+    before = queue_class_before or detection_band(alert)
     if event is None:
         return ca.ScoreAdjustment(
             detection_score=alert.detection_score, score_before=alert.detection_score,
@@ -296,9 +326,45 @@ def feedback_record(event: m.FeedbackEvent, alert: m.Alert, user: m.User | None,
 # --------------------------------------------------------------------------------------------
 
 
+def note_out(note: m.AlertNote, user: m.User | None) -> ca.NoteOut:
+    return ca.NoteOut(note_id=note.id or 0, author=actor(user, note.user_id), body=note.body,
+                      created_at=note.created_at)
+
+
+GUARDRAIL_EVENTS = frozenset({"GUARDRAIL_INTERVENTION", "GUARDRAIL_REJECTION"})
+
+
+def _explain_guardrail_details(details: dict[str, Any]) -> dict[str, Any]:
+    """Add the analyst's sentence to each stored intervention, for the administrator's log.
+
+    The audit record keeps the outcome whole — code, configured value, requested and applied values
+    — but not the sentence the analyst was shown. Without it the guardrail log could only print a
+    code. The sentence is built from the *stored* configured value, not today's setting, so a later
+    change to a guardrail cannot rewrite what the log says happened. The stored record is untouched:
+    this works on a copy, and a detail it cannot parse is returned as it was.
+    """
+    enriched = copy.deepcopy(details)
+    outcome = enriched.get("outcome")
+    items = outcome.get("interventions") if isinstance(outcome, dict) else None
+    if not isinstance(items, list):
+        return details
+    for item in items:
+        if not isinstance(item, dict):
+            continue
+        try:
+            item["explanation"] = _text(m.GuardrailIntervention.model_validate(
+                {key: item.get(key) for key in
+                 ("code", "configured_value", "original_value", "applied_value")}))
+        except ValueError:
+            continue
+    return enriched
+
+
 def audit_entry(entry: m.AuditEntry, user: m.User | None,
                 alert_ref: str | None = None) -> co.AuditEntryOut:
     details = dict(entry.details or {})
+    if entry.event_type in GUARDRAIL_EVENTS:
+        details = _explain_guardrail_details(details)
     return co.AuditEntryOut(
         event_id=entry.id or 0, event_type=entry.event_type, actor=actor(user, entry.actor_id),
         created_at=entry.created_at, alert_ref=alert_ref,
