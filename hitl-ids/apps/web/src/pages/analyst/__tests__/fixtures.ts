@@ -220,6 +220,63 @@ export const SUMMARY: Schemas["DashboardSummary"] = {
   byEvidenceClass: { ml_only: 3925, corroborated: 0, signature_override: 0, none: 1075 },
 };
 
+/**
+ * `GET /api/dashboard/breakdowns?limit=5` on the demo database (R4), with two verdicts and one
+ * guardrail intervention added so the mixes are not empty; the real database has none yet.
+ */
+export const BREAKDOWNS: Schemas["DashboardBreakdowns"] = {
+  generatedAt: "2026-09-14T08:00:00.000000Z",
+  topSourceIps: [
+    { value: "18.219.193.20", count: 197, flagged: 197 },
+    { value: "172.31.69.13", count: 106, flagged: 98 },
+    { value: "172.31.69.24", count: 96, flagged: 87 },
+    { value: "18.221.219.4", count: 80, flagged: 80 },
+    { value: "18.218.115.60", count: 77, flagged: 76 },
+  ],
+  topDestinationIps: [
+    { value: "172.31.69.25", count: 452, flagged: 452 },
+    { value: "172.31.69.28", count: 210, flagged: 207 },
+    { value: "18.219.211.138", count: 150, flagged: 150 },
+    { value: "172.31.69.15", count: 34, flagged: 34 },
+    { value: "172.31.69.21", count: 33, flagged: 29 },
+  ],
+  topDestinationPorts: [
+    { value: "80", count: 803, flagged: 462 },
+    { value: "8080", count: 150, flagged: 150 },
+    { value: "21", count: 146, flagged: 146 },
+    { value: "22", count: 58, flagged: 56 },
+    { value: "31337", count: 27, flagged: 27 },
+  ],
+  verdictMix: { mark_false_positive: 1, confirm_true_positive: 1 },
+  statusMix: { new: 4998, claimed: 2 },
+  guardrailInterventions: { critical_alert_floor: 1 },
+  flowTimeHistogram: [
+    { bucket: "2018-02-14 12:00", count: 28, flagged: 1 },
+    { bucket: "2018-02-14 13:00", count: 44, flagged: 0 },
+    { bucket: "2018-02-14 14:00", count: 76, flagged: 23 },
+    { bucket: "2018-02-14 15:00", count: 94, flagged: 50 },
+  ],
+};
+
+/** `GET /api/entities/ip/18.218.115.60?limit=10` on the demo database: the Web Attack source. */
+export const ATTACKER_ENTITY: Schemas["EntityIp"] = {
+  ip: "18.218.115.60",
+  alerts: 77,
+  asSource: 77,
+  asDestination: 0,
+  flagged: 76,
+  firstSeen: "2018-02-20 14:34:14.574275",
+  lastSeen: "2018-02-23 19:17:03.720682",
+  byQueueClass: { none: 1, tier2_candidate: 76 },
+  byAttackCategory: { DDoS: 17, "Web Attack": 59 },
+  verdictMix: {},
+  topPeers: [
+    { value: "172.31.69.28", count: 69, flagged: 68 },
+    { value: "172.31.69.25", count: 8, flagged: 8 },
+  ],
+  topDestinationPorts: [{ value: "80", count: 77, flagged: 76 }],
+};
+
 const DEMO_ACTOR: Schemas["Actor"] = {
   userId: 1,
   displayName: "Demo security analyst",

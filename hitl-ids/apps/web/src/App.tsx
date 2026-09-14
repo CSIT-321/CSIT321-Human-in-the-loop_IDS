@@ -17,6 +17,8 @@ import { AlertDetailPage } from "./pages/analyst/AlertDetailPage";
 import { DashboardPage } from "./pages/analyst/DashboardPage";
 import { FeedbackImpactPage } from "./pages/analyst/FeedbackImpactPage";
 import { InvestigationsPage } from "./pages/analyst/InvestigationsPage";
+import { IpEntityPage } from "./pages/analyst/IpEntityPage";
+import { OverviewPage } from "./pages/analyst/OverviewPage";
 import { QueuePage } from "./pages/analyst/QueuePage";
 import { WorkstationPage } from "./pages/analyst/WorkstationPage";
 import { MetricsPage } from "./pages/evaluator/MetricsPage";
@@ -38,6 +40,8 @@ export const routes: RouteObject[] = [
     children: [
       { index: true, element: <HomeRedirect /> },
       { path: "workstation", element: <WorkstationPage /> },
+      { path: "overview", element: <OverviewPage /> },
+      { path: "entities/ip/:ip", element: <IpEntityPage /> },
       { path: "dashboard", element: <DashboardPage /> },
       { path: "queue", element: <QueuePage /> },
       { path: "alerts/:alertRef", element: <AlertDetailPage /> },

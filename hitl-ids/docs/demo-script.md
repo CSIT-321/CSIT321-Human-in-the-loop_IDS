@@ -14,19 +14,25 @@ like it.
 ## Before the audience arrives
 
 ```
-cd hitl-ids
-python scripts/run_detection.py            # rebuild data/demo.db from scratch: 5,000 flows, ~21 s
-python scripts/rehearse_demo.py            # 41 checks on a throwaway copy; must end "holds end to end"
-cd apps/web && npm run e2e && cd ../..     # the same story in a real browser, on its own copy (~45 s)
-python -m uvicorn apps.api.main:app        # API on :8000
-cd apps/web && npm run dev                 # console on http://localhost:5173
+:: terminal 1 — from hitl-ids
+.venv\Scripts\activate                     :: the project's Python 3.11; python --version must say 3.11
+python scripts/run_detection.py            :: rebuild data/demo.db from scratch: 5,000 flows, ~21 s
+python scripts/rehearse_demo.py            :: 41 checks on a throwaway copy; must end "holds end to end"
+python -m uvicorn apps.api.main:app        :: API on :8000 — leave this terminal open
+
+:: terminal 2 — from hitl-ids\apps\web
+npm run e2e                                :: the same story in a real browser, on its own copy (<1 min)
+npm run dev                                :: console on http://localhost:5173
 ```
 
 **Rebuild `data/demo.db` before every audience.** Verdicts are permanent — the audit trail refuses
 `UPDATE` and `DELETE` — so a database that has been demonstrated on is a database that has already been
 judged. The rehearsal and the browser test (`npm run e2e`) both run on copies and never touch it.
 
-Use Python 3.11 (`C:/ProgramData/miniconda3/python.exe` on the development machine).
+Python comes from the project environment `hitl-ids\.venv` (3.11). If it is missing or reports 3.12, rebuild
+it with `C:\ProgramData\miniconda3\python.exe -m venv .venv` and `python -m pip install -r requirements.txt` —
+never `py -m venv`, which picks 3.12 on this machine. `npm run e2e` starts its own API and needs
+`set HITL_PYTHON=<hitl-ids>\.venv\Scripts\python.exe` in terminal 2.
 
 ---
 
@@ -34,7 +40,8 @@ Use Python 3.11 (`C:/ProgramData/miniconda3/python.exe` on the development machi
 
 ### 1. Sign in as the analyst — the queue
 
-*Sign in* → username `g.ang`, choose **Analyst** → lands on **Alert Queue**, "Showing 1–50 of 5,000".
+*Sign in* → username `g.ang`, choose **Analyst** → lands on the **Workstation** (queue, alert and context in
+one view, "5,000 alerts"). Click **Alert Queue** in the sidebar for the full table, "Showing 1–50 of 5,000".
 
 > Every flow becomes an alert — 5,000 of them. They are ranked by band first, then by score. Two score
 > columns: *Detection* is what the detectors said and never changes; *Operational* is what analysts
@@ -51,7 +58,7 @@ Search `AL-00478` → open it. It is a **Tier 2 candidate** at **99.89**, rank 6
 > The model is 99.9% sure this is a Web Attack. No rule agrees. **Ground truth says it is benign.**
 > The decision is the analyst's.
 
-Choose **Mark false positive** (requests −30) → **Record verdict**.
+Choose **False Positive** (requests −30) → **Record verdict**.
 
 The chain reads **99.89 → requested −30.00 → guardrail: Bound → applied −29.89 → 70.00**, labelled
 **Capped by a guardrail**, with the guardrail's own sentence: *"This alert is Critical, so its score was
@@ -68,7 +75,7 @@ held at the floor of 70."* The band moves **Tier 2 candidate → Model only**; t
 Search `AL-03086` → open it. Bottom band, **36.94**, nothing flagged it. **Ground truth: an attempted
 Web Attack.**
 
-Choose **Confirm true positive** (requests +10) → **Record verdict** → **Applied as requested**:
+Choose **True Positive** (requests +10) → **Record verdict** → **Applied as requested**:
 36.94 → **46.94**, band **Nothing flagged it → Model only**.
 
 > Say this plainly: it leaves the bottom band, but it only climbs from rank 998 to 997, because it was

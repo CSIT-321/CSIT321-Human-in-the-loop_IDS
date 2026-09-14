@@ -1001,7 +1001,7 @@ because openapi-typescript marks defaulted request fields required.
 
 ---
 
-## v1.22 — Console rebuild R1: the triage backend (2026-09-13) ← **current**
+## v1.22 — Console rebuild R1: the triage backend (2026-09-13)
 
 The user asked for a full redesign of the console, modelled on real SOC/IDS workflows
 (`docs/console-rebuild-proposal.md`, `docs/research/soc-console-research.md`). R1 adds the backend that
@@ -1023,6 +1023,88 @@ workflow needs. **411 Python tests · 103 web tests · typecheck and `check:api`
 **Honest limits.** `ruff` is not installed in the Python 3.11 environment, so lint was not run. The API
 applies migration 1 to `data/demo.db` the first time it serves that file — a schema upgrade, not a data
 change.
+
+---
+
+## v1.23 — Console rebuild R2–R3, the "features don't work" report, and a project Python environment (2026-09-14)
+
+The console now looks like the SOC workstation the user asked for, analysts land on it, and the project
+has a Python environment that cannot silently pick the wrong interpreter. Committed as `b534db6` on
+`feat/demo-build` and **pushed to origin** (the branch did not exist there before).
+**411 Python tests (in `.venv`) · 103 web tests · typecheck clean · `npm run e2e` passes.**
+
+### What landed
+
+| | Change | Rationale |
+|---|---|---|
+| ADD | **R2 design system**: `apps/web/src/index.css` tokens (near-black ground, square panels, 1 px rules), IBM Plex Sans + JetBrains Mono, `.label-mono`, severity as dot + word; restyled `TopBar` (UTC clock, "Recorded flows" badge — not a live feed), `Sidebar`, `ui.tsx` primitives | The user's design reference (a Figma Make screenshot); tokens in `console-rebuild-proposal.md` §1 |
+| ADD | **R3 analyst workstation** `/analyst/workstation`, now the analyst home: `features/workstation/` — `KpiStrip`, `QueuePane` (band tabs with counts, search, `j`/`k`), `AlertPane` (Claim · Start work · Resolve · Dismiss · Release · Reopen; meters; tabs Overview · Verdict · Flow record · Notes · History), `ContextRail` (flow diagram, per-IP context from B5, `FamilySummary`, real quick actions only) | Queue beside the alert is the SOC norm (research §4). Nothing invented: no geo, threat intel or response actions |
+| DEC | **Industry verdict labels on screen**: True Positive · Escalate to Tier 2 · Needs investigation · Benign Positive · False Positive (`features/feedback/categories.ts`, `categoryLabel()` for audit text). API values unchanged | User decision (proposal §0) |
+| FIX | Verdict radio grid sized by container (`@container`) so it fits the workstation column; duplicate "Tier 2 candidate" pill removed; nested family card replaced by `FamilySummary`; remaining `rounded-xl/lg` and old primary buttons restyled across 15 pages | Found by a scripted walk of every screen |
+| ADD | `e2e/demo.spec.ts` and `e2e/capture-guide.spec.ts` updated for the workstation home and the new labels; capture adds `01b–01e` workstation shots; all 35 `docs/img/demo-guide/` images recaptured | The S16 gate and the guide follow the product |
+| ADD | **Showcase guide** artifact (https://claude.ai/code/artifact/0696a658-591d-401a-8c25-2adc4fec8882): workstation act, run-from folders, architecture section (stack, diagram, module map, one-verdict trace, API surface, config, tests), project-environment setup and troubleshooting | User request |
+| ADD | **Project Python environment** `hitl-ids/.venv` (gitignored), created from `C:\ProgramData\miniconda3\python.exe` (3.11.11); `requirements.txt` pins the tested set (XGBoost 3.2.0, FastAPI 0.136.0, Starlette 1.6.0, Uvicorn 0.37.0, pydantic 2.11.9, numpy 2.3.5, pandas 2.3.3, scikit-learn 1.7.1) | The user's `python` and `py` are 3.12 |
+| FIX | `pyproject.toml`: declares FastAPI and Uvicorn (never listed), `httpx` in dev, and `[tool.setuptools.packages.find] include = ["apps*", "packages*"]` | `pip install -e ".[dev]"` failed for everyone ("Multiple top-level packages discovered in a flat-layout") and would not have installed the API |
+
+### The "features no longer work" report — diagnosed, not a code defect
+
+1. **Nothing was listening on :8000.** Vite was up on :5173 (twice: `127.0.0.1` and `::1`), so pages loaded and every
+   API call failed. A scripted probe of all 28 screens and workstation actions against a fresh API + DB copy found
+   0 failed requests and 0 console errors.
+2. **The user's `python` is 3.12.6**, whose FastAPI 0.115.11 + Starlette 1.6.0 fail at import:
+   `TypeError: Router.__init__() got an unexpected keyword argument 'on_startup'`. Its `py` launcher lists only
+   3.12, 3.8 and 3.7 — **not** the miniconda 3.11.
+3. **`py -m venv .venv` over the 3.11 environment rebased it onto 3.12** (`pyvenv.cfg home = …Python312`) while
+   keeping cp311 wheels: `(.venv)` prompt, `python --version` 3.12.6, `Error importing numpy`. Rebuilt from the
+   miniconda path; verified 3.11.11, imports, API serves, 411 tests pass.
+4. **Correction:** earlier docs said "Python 3.12 has no matching `xgboost` build". False — pip resolves
+   xgboost 3.4.1 for 3.12. The project stays on 3.11 because that is the tested set.
+
+### Figma (figma-console MCP, Desktop Bridge plugin) — partial
+
+File **"Untitled"** (key `SJ5fC4xzbME46JGrqwgdVO`): pages **Tokens** (21 colour variables + token sheet),
+**Workstation** (hi-fi 1440×900 mock, pre-label-change), **Screens** (hi-fi *proposed* Overview, IP entity, Admin,
+Evaluator + a Workstation copy — **these are proposals, not the product**), **Wireframes** (5 greyscale frames).
+Requested and **not done**: full-fidelity designs of *every real screen* from login, plus a wireframe for each, on a
+"Product screens" page. Blocked: the plugin **disconnected** after a temporary image server was started on :9231,
+inside the port range the plugin scans (9223–9232). The plugin also refuses `createImageAsync` from localhost
+("does not satisfy the allowedDomains"), so screens must be built as vector layers.
+
+### Open for the next session (debugging)
+
+See HANDOVER §0b. In short: Figma "Product screens" page; R4 (Overview page, IP entity page — endpoints exist, no
+UI route yet); R5 is a mechanical restyle only; R6 PUM not regenerated; HANDOVER/plan do not track the rebuild
+as S-steps; `ruff` never run (now installed in `.venv`); Vitest tests time out under CPU contention (pass alone).
+
+---
+
+## v1.24 — Console rebuild R4: Overview and the IP entity page (2026-09-14) ← **current**
+
+The user chose to finish the console rebuild before S17 (the plan still names S17 `NEXT`; the rebuild is off the
+S-step graph). R4 gives the B4 and B5 endpoints from v1.22 their screens. No backend or contract change.
+**411 Python tests (unchanged) · 120 web tests (103 + 17) · typecheck clean · `npm run e2e` passes.** Not committed.
+
+### What landed
+
+| | Change | Rationale |
+|---|---|---|
+| ADD | **`/analyst/overview`** (`pages/analyst/OverviewPage.tsx`), in the analyst nav after Workstation: flow volume by capture hour (chart + table), top source / destination addresses and destination ports, alerts by predicted class, verdicts in force, triage status, guardrail interventions | Proposal §4, analyst "Overview". Every figure is `GET /api/dashboard/breakdowns` or `/summary`; charts repeat as tables |
+| ADD | **`/analyst/entities/ip/:ip`** (`pages/analyst/IpEntityPage.tsx`): summary, queue bands in contract order, attack classes, verdicts in force, top peers (each a link to its own page), destination ports, and a pivot to the workstation search | Proposal §4 "Entity (IP)". A 404 for an address no alert mentions shows the API's own message |
+| ADD | Addresses link to the entity page from the Overview's top-talker tables and from the workstation context rail (`ContextRail.tsx`) | The analyst's next question about an address is "what else did it do?" |
+| ADD | `overview.test.tsx` (9) and `ipEntity.test.tsx` (8); `BREAKDOWNS` and `ATTACKER_ENTITY` fixtures from the real demo database (read-only query), with two verdicts and one intervention added to `BREAKDOWNS` because the real database has none | Fixtures typed against the generated contract |
+| DEC | Overview card titled **"Alerts by predicted class"**, not "attack classes" | `byAttackCategory` includes Benign |
+
+### How it was built
+
+Routes, nav, fixtures and the rail link by Claude; the two pages and their tests by two DeepSeek workers in
+parallel (`timeout 1500`, one page each, no shared files), reviewed file by file. Review changed two things: the
+Overview card title above, and the entity test's peer fixture, which claimed to be demo-database values but had
+invented bands, classes, first-seen time and port — replaced with the real values. The worker also added empty
+states to three cards the brief did not mention; kept, matching `DashboardPage`.
+
+**Honest limits.** The two pages have not been looked at in a browser: `npm run e2e` passes but does not visit
+them, and the guide was not recaptured. There is no eslint config in `apps/web`, so no lint ran. The Figma
+**Screens** proposals were not compared (plugin unreliable, v1.23). `rehearse_demo.py` still not re-run after R3.
 
 ---
 

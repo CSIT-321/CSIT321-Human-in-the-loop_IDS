@@ -3,16 +3,17 @@
 **Purpose.** Carry the full state of this project into a fresh session with zero loss of context
 and minimal token cost. Everything a new session needs is here or one link away.
 
-**Last updated:** 2026-09-13 (rev 15) · **Branch:** `feat/demo-build` (local; renamed from
-`feat/s7-feedback`, which no longer described what it carries) ·
-`feat/s2-contracts` and `feat/s6-fusion` **pushed to origin** as view-only progress branches ·
+**Last updated:** 2026-09-14 (rev 16) · **Branch:** `feat/demo-build` — **pushed to origin** at
+`b534db6` and tracking `origin/feat/demo-build` (not merged to `main`; no PR opened) ·
+`feat/s2-contracts` and `feat/s6-fusion` pushed earlier as view-only progress branches ·
 **Phases 2–5 DONE · the S16 demo gate PASSED** (S12, S13, S14, S16 in changelog v1.21) ·
-**Console rebuild in progress** (user request, `docs/console-rebuild-proposal.md`): R1 triage backend
-DONE, **R2 design system NEXT** —
-changelog v1.22 · **411 tests, 0 skipped** (Python) + **103 web tests** (`apps/web`, `npm test`) +
-the browser narrative (`npm run e2e`) ·
-`python scripts/run_detection.py` builds the demo database · `python scripts/run_evaluation.py`
-runs the three-arm evaluation · `cd apps/web && npm run dev` serves the console
+**Console rebuild** (user request, `docs/console-rebuild-proposal.md`): R1 backend, R2 design system and
+R3 analyst workstation and R4 Overview + IP entity pages DONE; **R5 next** (user chose to finish the rebuild before S17) —
+changelog v1.24 · **411 tests, 0 skipped** (Python, in `.venv`) + **120 web tests** (`apps/web`, `npm test`) +
+the browser narrative (`npm run e2e`, passes) ·
+**Python runs from `hitl-ids\.venv` (3.11) — see §0b before running anything** ·
+`python scripts/run_detection.py` builds the demo database · `python -m uvicorn apps.api.main:app`
+serves the API on :8000 · `cd apps/web && npm run dev` serves the console on :5173
 **Iteration 1 (Evidence & Direction) complete** · the ranking formula and the agreement gate were
 chosen by experiment (Q29, Q30) · collaborator's `origin/main` merged ·
 **NFR-01 explainability satisfied** · **NFR-05 proven at evaluation level**
@@ -46,21 +47,91 @@ confirm the order with the user before starting either. To present the demo, fol
 anything. Then confirm the ground you are standing on:
 
 ```
-python -m pytest                      # expect 385 passed, 0 skipped
+cd hitl-ids && .venv\Scripts\activate  # every terminal; python --version must print 3.11.x (§0b)
+python -m pytest                      # expect 411 passed, 0 skipped
 python scripts/run_detection.py       # rebuilds data/demo.db: 5,000 flows -> 5,000 alerts, ~21 s
 python scripts/rehearse_demo.py       # the S16 narrative through the API on a copy: 41 checks
-cd apps/web && npm test && npm run e2e && cd ../..   # 103 web tests; the narrative in a browser
+cd apps/web && npm test && npm run e2e && cd ../..   # 120 web tests; the narrative in a browser
 python scripts/run_evaluation.py      # the three arms over that database, ~3 s
 python scripts/build_openapi.py --check   # the committed API contract is in step with the models
 ```
 
-Use `C:/ProgramData/miniconda3/python.exe` for all three — see §6 on the two interpreters. The
-databases are gitignored, so a fresh checkout has to rebuild them; everything else is committed.
+`npm run e2e` needs `HITL_PYTHON` pointing at a 3.11 interpreter (it starts its own API):
+`set HITL_PYTHON=%CD%\.venv\Scripts\python.exe` from `hitl-ids` first. The databases are gitignored, so a
+fresh checkout has to rebuild them; everything else is committed.
 
 **Read [`evaluation-report.md`](evaluation-report.md) before quoting any number about feedback.**
 S15 did not find the result the project wanted, and the honest version is the one to present:
 similar-alert learning works and does not leak, but on this sample it *lowered* precision, because
 the control queue was already perfect and the mechanism promoted a false positive to rank 1.
+
+---
+
+## 0b. Starting a debugging session — read before touching anything
+
+**The last session (changelog v1.23) ended mid-debugging with the user.** Everything below was verified
+on 2026-09-14 unless marked otherwise.
+
+### Run the system (two terminals, both from `hitl-ids`)
+
+```
+:: terminal 1 — the API
+cd "C:\Users\Glenn Ang\Desktop\SIM Assignments\FYP\CSIT321-Human-in-the-loop_IDS\hitl-ids"
+.venv\Scripts\activate
+python --version                         :: must print Python 3.11.11
+python -m uvicorn apps.api.main:app      :: "Uvicorn running on http://127.0.0.1:8000"; leave it open
+
+:: terminal 2 — the console
+cd "C:\Users\Glenn Ang\Desktop\SIM Assignments\FYP\CSIT321-Human-in-the-loop_IDS\hitl-ids\apps\web"
+npm run dev                              :: http://localhost:5173 — analysts land on /analyst/workstation
+```
+
+Check `http://localhost:8000/api/health` → `{"status":"ok","database":"…\\data\\demo.db","exists":true}`.
+From Claude's Bash tool, call the environment directly: `.venv/Scripts/python.exe …` (no activation).
+
+### Traps that already cost a session — check these first
+
+| Symptom | Cause | Fix |
+|---|---|---|
+| Console loads but every panel errors / buttons do nothing | **API not running on :8000** (this was the whole "features no longer work" report) | Start terminal 1 |
+| `TypeError: Router.__init__() got an unexpected keyword argument 'on_startup'`, paths show `Python312` | Ran under the user's system Python 3.12.6 (FastAPI 0.115 + Starlette 1.6) | Activate `.venv` |
+| `(.venv)` in the prompt but `python --version` is 3.12; `Error importing numpy` | Someone ran `py -m venv .venv` or `python -m venv .venv` — both are 3.12 here; the `py` launcher does not list the miniconda 3.11 | `deactivate`, delete `.venv`, `C:\ProgramData\miniconda3\python.exe -m venv .venv`, activate, `python -m pip install -r requirements.txt` |
+| `No module named 'apps'` | uvicorn run outside `hitl-ids` | `cd hitl-ids` |
+| KPI strip dashes / Claim, notes, IP panel `NOT_FOUND` | API process older than the R1 endpoints | Restart the API |
+| Two Vite servers on :5173 (`127.0.0.1` and `::1`) | A second `npm run dev` left running | Close one terminal |
+| A Vitest test fails in the full run but passes alone (seen: `feedback.test.tsx`, `guardrails.test.tsx`) | Timeouts under CPU contention when typecheck/build/e2e run concurrently | Run `npm test` on its own; not a code defect |
+| Figma MCP tools vanish mid-session | The Desktop Bridge plugin scans ports **9223–9232**; a server started on 9231 broke it | Never bind 9223–9232; re-run the plugin in Figma Desktop; restart Claude Code with `--continue` if tools stay missing |
+
+### Files and facts the next session needs
+
+- **Environment:** `hitl-ids/.venv` (gitignored) · `requirements.txt` (tested pins: xgboost 3.2.0, fastapi
+  0.136.0, starlette 1.6.0, uvicorn 0.37.0) · `pyproject.toml` now lists FastAPI/Uvicorn and
+  `packages.find include = ["apps*","packages*"]` (without it `pip install -e .` fails).
+- **Console:** analyst home `/analyst/workstation` (`pages/analyst/WorkstationPage.tsx`,
+  `features/workstation/`); the old Alert Queue and alert pages still exist and the e2e story uses them.
+  Verdict labels are display-only (`features/feedback/categories.ts`); API category values are unchanged.
+- **Showcase guide** (published artifact, private):
+  https://claude.ai/code/artifact/0696a658-591d-401a-8c25-2adc4fec8882 — its source is a scratchpad file of the
+  last session; to update it, read it back with the Artifact tool (`action: read`) and republish to that URL.
+  Screenshots: `docs/img/demo-guide/` via `GUIDE_CAPTURE=1 npx playwright test capture-guide`.
+- **Figma:** file "Untitled", key `SJ5fC4xzbME46JGrqwgdVO`, via the figma-console MCP. Pages Tokens · Workstation
+  · Screens (*proposed* R4/R5 designs, not the product) · Wireframes. `createImageAsync` from localhost is
+  refused by the plugin manifest, so screens must be built as vector layers.
+- **Never commit** `docs/FYP-26-S3-13_PrelimUserManual.docx` (user's edits), `docs/FYP-26-S3-13_PUM.pdf` or
+  `hitl-ids/Screenshot 2026-09-13 210609.png` (the design reference). All three are uncommitted by design.
+
+### Open when the last session ended
+
+1. **Figma "Product screens" page** — full-fidelity designs of every *real* screen from login (Login,
+   Workstation, Dashboard, Alert Queue, alert detail, Investigations, Feedback Impact, System Status,
+   Guardrails, Audit Trail, Scenarios, Evaluation run, Detection Metrics) plus a wireframe for each. Requested,
+   not built: blocked by the plugin disconnect. Mark or replace the stale proposals on the Screens page.
+2. **Console rebuild** — R4 **done** (v1.24: `/analyst/overview`, `/analyst/entities/ip/:ip`; not yet viewed in a
+   browser). **R5 next**: admin and evaluator are only mechanically restyled; **R6** `rehearse_demo.py` not re-run
+   since R3, PUM not regenerated, guide not recaptured for the two new pages.
+3. **Not yet run:** `ruff` (now installed in `.venv`), `rehearse_demo.py` after R3.
+4. **Plan tracking:** the rebuild is not an S-step in `plans/hitl-ids-demo-build.md`; the plan still names S17
+   `NEXT`. Ask the user whether the rebuild continues before S17/S18.
 
 ---
 
@@ -304,11 +375,14 @@ These were believed, then disproved. Re-proposing them wastes a cycle.
 - Kaggle is **not authenticated** — irrelevant now; the dataset came from the authors' own server.
 - The 10.4 GB archive and 142 MB `train_sample.csv` are gitignored. The **frozen fixture CSVs are
   force-added** because they are the reproducibility anchor.
-- **Two Python interpreters, and they disagree.**
-  - `python` may resolve to **Python 3.12 / pandas 3**, which has no `xgboost`, so one contracts
-    test skips.
-  - `C:/ProgramData/miniconda3/python.exe` is **3.11 / pandas 2**; the full suite passes there with
-    0 skipped.
+- **Use the project environment `hitl-ids/.venv`** (Python 3.11.11, built from
+  `C:/ProgramData/miniconda3/python.exe`, installed from `requirements.txt`). The full suite passes there with
+  0 skipped. From Bash: `.venv/Scripts/python.exe`.
+  - The machine's `python` and `py` are **Python 3.12.6 / pandas 3** with an incompatible FastAPI 0.115 +
+    Starlette 1.6 and no `xgboost`. `py -0p` lists 3.12, 3.8, 3.7 only — never create the environment with
+    `py` or bare `python` (§0b).
+  - Correction (v1.23): 3.12 *can* install xgboost (3.4.1); the project stays on 3.11 because that is the
+    tested set, not because 3.12 is impossible.
   - Jupyter's `python3` kernel runs 3.12 even when launched from miniconda's jupyter.
   - Pandas 3 changed date parsing: always parse ISO timestamps with `format="ISO8601"`, never
     `dayfirst` (changelog v1.12).
@@ -339,6 +413,12 @@ These were believed, then disproved. Re-proposing them wastes a cycle.
 | 14 | **NEXT →** S17 — prefix flow exporter (post-demo) | Claude | S18 (full backend) is equally unblocked and may run in parallel; confirm the order with the user first. Read the plan's S17 section: schema reconciliation against `feature-columns.json` must stop and report, never silently coerce |
 
 Full detail per step: [`../../plans/hitl-ids-demo-build.md`](../../plans/hitl-ids-demo-build.md).
+
+**Console rebuild (user request, off the S-step graph)** — tracked in
+[`console-rebuild-proposal.md`](console-rebuild-proposal.md) §6, not in the table above: R0–R3 **DONE**
+(changelog v1.22 backend, v1.23 design system + workstation) · R4 **DONE** (v1.24, Overview + IP entity) ·
+**R5 next** (restyled only) · R6 partly done. **User decision (2026-09-14): finish the rebuild before S17.** Open
+items: §0b.
 
 **Guardrail constants — use the collaborator's `stage-5/config/adaptation-config.json`**, which is
 richer than the docs and now merged: max negative **-30**, **max positive +20** (the docs omit a

@@ -36,6 +36,7 @@ export const ROLE_META: Readonly<Record<Role, RoleMeta>> = {
     home: "/analyst/workstation",
     nav: [
       { to: "/analyst/workstation", label: "Workstation" },
+      { to: "/analyst/overview", label: "Overview" },
       { to: "/analyst/dashboard", label: "Dashboard" },
       { to: "/analyst/queue", label: "Alert Queue" },
       { to: "/analyst/investigations", label: "Investigations" },

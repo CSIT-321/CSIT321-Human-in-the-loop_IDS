@@ -109,7 +109,13 @@ function IpContext({ ip, label }: { ip: string; label: string }) {
   return (
     <div className="space-y-1.5">
       <p className="flex items-baseline justify-between gap-2">
-        <span className="truncate font-mono text-xs text-accent">{ip}</span>
+        <Link
+          to={`/analyst/entities/ip/${encodeURIComponent(ip)}`}
+          title="Open the address page"
+          className="truncate font-mono text-xs text-accent hover:text-text"
+        >
+          {ip}
+        </Link>
         <span className="font-mono text-[10px] uppercase text-dim">{label}</span>
       </p>
       {entity.status === "loading" && <p className="font-mono text-[11px] text-dim">loading…</p>}
