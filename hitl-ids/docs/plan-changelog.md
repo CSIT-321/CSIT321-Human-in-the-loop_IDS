@@ -1160,10 +1160,22 @@ the product. No application code changed. **411 Python tests (unchanged) · 126 
 | CHG | All guide screenshots re-rendered (`docs/img/demo-guide/`, 37 files; 25 changed, 2 new) | 21–31 showed pre-R5 screens |
 | CHG | **Showcase guide republished** (same URL, version 7): Act 2 gains the Overview and one-address walkthrough; Acts 7–8 describe the operations overview, Detector hits, audit pills, the newest-run glance and per-class panels; roles, API surface and feature coverage updated | The guide follows the product |
 
-**Not done — needs the user.** The Preliminary User Manual was **not** regenerated. Its section 4 is 16 wireframes drawn by
-`scripts/make_wireframes.py` from the pre-rebuild screens (no workstation, Overview or IP page), and
-`scripts/build_user_manual.py` writes straight to `docs/FYP-26-S3-13_PrelimUserManual.docx`, which holds the user's own
-edits. Rebuilding would overwrite them, so it waits for the user's decision.
+### The user manual (after the user's decision)
+
+`scripts/build_user_manual.py` wrote straight to `docs/FYP-26-S3-13_PrelimUserManual.docx`, which holds the user's own
+edits, so it was not run until the user chose: **build to a new file**.
+
+| | Change | Rationale |
+|---|---|---|
+| ADD | `build_user_manual.py --out <path>`; the default path is unchanged; document name Version 0.2 | A rebuild replaces its target wholesale |
+| CHG | `docs/preliminary-user-manual.md` v0.2, from the built product: the web console is running, not "in progress"; installation uses `requirements.txt` on Python 3.11 and expects 411 tests; frontend set-up is a real step; key features add the workstation and the recording-only context | Docs follow the product (user instruction, 2026-09-13) |
+| CHG | Section 4: 16 pre-rebuild wireframes → **22 screenshots** from `docs/img/demo-guide/`, adding the workstation, notes, Overview, IP address page, Feedback Impact and the evaluator's run page | The screens now exist, so the figures show them |
+| KEEP | 4.13 "When a guardrail refuses outright" stays a **wireframe, labelled as one** | The dataset has no rule-only alert, so no screen can show a refusal |
+| ADD | `docs/FYP-26-S3-13_PrelimUserManual_v0.2.docx`: 22 figures, 4 tables, 36 headings | The new file the user asked for; their edited `.docx` hashed identical before and after the build |
+
+**Honest limits.** Built with `C:\ProgramData\miniconda3\python.exe` (3.11.11, python-docx 1.2.0): `python-docx` is not in
+`hitl-ids/.venv`, and was not added to the pinned environment for a document build. Not opened in Word, so the table of
+contents and page numbers are unverified until it is; the cover still carries the bracketed placeholders.
 
 ---
 

@@ -17,10 +17,15 @@ The layout follows the sample manual the school supplied:
 **Details we do not have are written as visible placeholders**, never invented and never left
 silently blank: an assessor's name guessed wrong is worse than an obvious [TO BE COMPLETED].
 
-Output: hitl-ids/docs/FYP-26-S3-13_PrelimUserManual.docx
+Output: hitl-ids/docs/FYP-26-S3-13_PrelimUserManual.docx, or the path given with --out:
+
+    python scripts/build_user_manual.py --out docs/FYP-26-S3-13_PrelimUserManual_v0.2.docx
+
+Use --out whenever the default file holds edits made in Word: a rebuild replaces it wholesale.
 """
 from __future__ import annotations
 
+import argparse
 import re
 import sys
 from pathlib import Path
@@ -59,7 +64,7 @@ TEAM = [
 ]
 
 DOC_TITLE = "User Manual"
-DOC_NAME = "FYP-26-S3-13 User Manual, Version 0.1"
+DOC_NAME = "FYP-26-S3-13 User Manual, Version 0.2"
 
 INK = RGBColor(0x1F, 0x1F, 0x1F)
 ACCENT = RGBColor(0x1F, 0x4E, 0x79)
@@ -208,7 +213,9 @@ def add_callout(document: Document, lines: list[str], width: float) -> None:
 
 def add_figure(document: Document, src: Path, alt: str, width: float) -> None:
     if not src.exists():
-        raise SystemExit(f"missing figure {src}\nrun: python scripts/make_wireframes.py")
+        raise SystemExit(f"missing figure {src}\n"
+                         "screenshots: GUIDE_CAPTURE=1 npx playwright test capture-guide (in apps/web)\n"
+                         "wireframes:  python scripts/make_wireframes.py")
     document.add_picture(str(src), width=Inches(width))
     document.paragraphs[-1].alignment = WD_ALIGN_PARAGRAPH.CENTER
     caption = document.add_paragraph()
@@ -416,6 +423,12 @@ def build_chrome(document: Document) -> None:
 
 
 def main() -> int:
+    parser = argparse.ArgumentParser(description="Render docs/preliminary-user-manual.md as .docx")
+    parser.add_argument("--out", type=Path, default=TARGET,
+                        help="where to write the .docx (default: %(default)s)")
+    target = parser.parse_args().out
+    if not target.is_absolute():
+        target = HITL / target
     if not SOURCE.exists():
         print(f"missing {SOURCE}", file=sys.stderr)
         return 2
@@ -440,11 +453,11 @@ def main() -> int:
     render_body(document, markdown, width)
     update_fields_on_open(document)
 
-    TARGET.parent.mkdir(parents=True, exist_ok=True)
-    document.save(TARGET)
+    target.parent.mkdir(parents=True, exist_ok=True)
+    document.save(target)
     # Python 3.11 forbids a backslash inside an f-string expression, so count first.
     figures = len(re.findall(r"^!\[", markdown, re.M))
-    print(f"wrote {TARGET.relative_to(HITL)}")
+    print(f"wrote {target}")
     print(f"  {figures} figures, {len(document.paragraphs)} paragraphs, "
           f"{len(document.tables)} tables")
     print("  open it in Word once so the contents and page numbers fill in")

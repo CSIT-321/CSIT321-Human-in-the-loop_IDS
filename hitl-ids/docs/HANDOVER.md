@@ -8,7 +8,7 @@ and minimal token cost. Everything a new session needs is here or one link away.
 `feat/s2-contracts` and `feat/s6-fusion` pushed earlier as view-only progress branches ·
 **Phases 2–5 DONE · the S16 demo gate PASSED** (S12, S13, S14, S16 in changelog v1.21) ·
 **Console rebuild** (user request, `docs/console-rebuild-proposal.md`): R1 backend, R2 design system and
-R3 workstation, R4 Overview + IP entity and R5 admin + evaluator screens DONE; R6 done except the user manual (awaits the user) —
+R3–R6 DONE, **the rebuild is complete**; next is the plan's S17 (S18 equally unblocked — confirm the order with the user) —
 changelog v1.26 · **411 tests, 0 skipped** (Python, in `.venv`) + **126 web tests** (`apps/web`, `npm test`) +
 the browser narrative (`npm run e2e`, passes) ·
 **Python runs from `hitl-ids\.venv` (3.11) — see §0b before running anything** ·
@@ -117,7 +117,8 @@ From Claude's Bash tool, call the environment directly: `.venv/Scripts/python.ex
 - **Figma:** file "Untitled", key `SJ5fC4xzbME46JGrqwgdVO`, via the figma-console MCP. Pages Tokens · Workstation
   · Screens (*proposed* R4/R5 designs, not the product) · Wireframes. `createImageAsync` from localhost is
   refused by the plugin manifest, so screens must be built as vector layers.
-- **Never commit** `docs/FYP-26-S3-13_PrelimUserManual.docx` (user's edits), `docs/FYP-26-S3-13_PUM.pdf` or
+- **Never commit or rebuild over** `docs/FYP-26-S3-13_PrelimUserManual.docx` (user's edits; the generated
+  `_v0.2.docx` beside it is committed), `docs/FYP-26-S3-13_PUM.pdf` or
   `hitl-ids/Screenshot 2026-09-13 210609.png` (the design reference). All three are uncommitted by design.
 
 ### Open when the last session ended
@@ -126,13 +127,13 @@ From Claude's Bash tool, call the environment directly: `.venv/Scripts/python.ex
    Workstation, Dashboard, Alert Queue, alert detail, Investigations, Feedback Impact, System Status,
    Guardrails, Audit Trail, Scenarios, Evaluation run, Detection Metrics) plus a wireframe for each. Requested,
    not built: blocked by the plugin disconnect. Mark or replace the stale proposals on the Screens page.
-2. **Console rebuild** — R4 **done** (v1.24), R5 **done** (v1.25), R6 **done except the PUM** (v1.26): rehearsal holds,
-   guide recaptured with Overview / IP shots, showcase republished (version 7). **Open: the PUM** — section 4 is 16
-   pre-rebuild wireframes (`scripts/make_wireframes.py`), and `scripts/build_user_manual.py` overwrites the user's
-   edited `.docx`; ask before rebuilding. Verdicts per analyst (proposal §4) not built — no endpoint.
+2. **Console rebuild — complete.** R4 (v1.24), R5 (v1.25), R6 (v1.26): rehearsal holds, guide recaptured with Overview /
+   IP shots, showcase republished (version 7), PUM v0.2 built to `docs/FYP-26-S3-13_PrelimUserManual_v0.2.docx` from real
+   screenshots. Build the PUM with `C:\ProgramData\miniconda3\python.exe` (python-docx is not in `.venv`) and **always
+   pass `--out`**. Not built: verdicts per analyst (proposal §4) — no endpoint.
 3. **Not yet run:** `ruff` (now installed in `.venv`). `rehearse_demo.py` was re-run after R5 (v1.26) and holds.
-4. **Plan tracking:** the rebuild is not an S-step in `plans/hitl-ids-demo-build.md`; the plan still names S17
-   `NEXT`. Ask the user whether the rebuild continues before S17/S18.
+4. **Plan tracking:** the rebuild is not an S-step in `plans/hitl-ids-demo-build.md`, and it is now finished; the
+   plan's S17 `NEXT` stands. S18 is equally unblocked — confirm the order with the user before starting either.
 
 ---
 
@@ -418,8 +419,8 @@ Full detail per step: [`../../plans/hitl-ids-demo-build.md`](../../plans/hitl-id
 **Console rebuild (user request, off the S-step graph)** — tracked in
 [`console-rebuild-proposal.md`](console-rebuild-proposal.md) §6, not in the table above: R0–R3 **DONE**
 (changelog v1.22 backend, v1.23 design system + workstation) · R4 **DONE** (v1.24, Overview + IP entity) ·
-R5 **DONE** (v1.25, admin + evaluator) · R6 **done except the PUM** (v1.26). **User decision (2026-09-14): finish the
-rebuild before S17.** Once the PUM question is settled, the plan's S17 is next. Open items: §0b.
+R5 **DONE** (v1.25, admin + evaluator) · R6 **DONE** (v1.26, gate, guide, showcase, PUM v0.2). **The rebuild is
+complete**; the plan's S17 is next (S18 equally unblocked — confirm the order with the user). Open items: §0b.
 
 **Guardrail constants — use the collaborator's `stage-5/config/adaptation-config.json`**, which is
 richer than the docs and now merged: max negative **-30**, **max positive +20** (the docs omit a
