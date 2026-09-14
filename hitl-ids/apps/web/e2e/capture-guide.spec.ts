@@ -75,7 +75,10 @@ test("capture the demo guide", async ({ page }) => {
   const wsSearch = page.getByLabel("Search alerts");
   await wsSearch.fill("AL-00478");
   await wsSearch.press("Enter");
-  await page.getByRole("list", { name: "Alerts" }).getByRole("button").first().click();
+  // Wait for the search to narrow the list: clicking the first card before it does opens another alert.
+  const wsCards = page.getByRole("list", { name: "Alerts" }).getByRole("button");
+  await expect(wsCards).toHaveCount(1);
+  await wsCards.first().click();
   await expect(page.getByRole("region", { name: "Alert detail" }).getByText("AL-00478").first()).toBeVisible();
   await expect(
     page.getByRole("complementary", { name: "Alert context" }).getByText("Addresses in the recording"),
@@ -101,6 +104,14 @@ test("capture the demo guide", async ({ page }) => {
   await page.getByLabel("Band").selectOption({ label: "Model only" });
   await expect(page.getByText(/Showing 1–50 of 352/)).toBeVisible();
   await shot(page, "04-queue-filtered");
+
+  // Act 2b — the overview and one address (R4), before any verdict changes the mixes.
+  await page.getByRole("navigation", { name: "Main" }).getByRole("link", { name: "Overview" }).click();
+  await expect(card(page, "Top source addresses").getByRole("link").first()).toBeVisible();
+  await shot(page, "04b-overview");
+  await page.goto("/analyst/entities/ip/18.218.115.60");
+  await expect(card(page, "Top peers").getByRole("link", { name: "172.31.69.28" })).toBeVisible();
+  await shot(page, "04c-ip-entity");
 
   // Act 3 — AL-00478, the confident false positive.
   await openAlert(page, "AL-00478");
@@ -163,6 +174,11 @@ test("capture the demo guide", async ({ page }) => {
   // Act 7 — administrator.
   await switchRole(page, "System Administrator", "/admin/status");
   await expect(card(page, "Latest detection run").getByText("xgb-8class-20260911")).toBeVisible();
+  // The figures row and service health come from two other requests; wait for both (R5).
+  await expect(page.getByText("API answering")).toBeVisible();
+  // Total alerts comes from the summary and Unresolved from the breakdowns; no alert has been closed,
+  // so both read 5,000 once both requests have answered.
+  await expect(page.getByLabel("Operations").getByText("5,000")).toHaveCount(2);
   await shot(page, "21-admin-status");
   await page.getByRole("navigation", { name: "Main" }).getByRole("link", { name: "Guardrails" }).click();
   await expect(page.getByRole("heading", { level: 1, name: "Guardrails" })).toBeVisible();

@@ -1108,7 +1108,7 @@ them, and the guide was not recaptured. There is no eslint config in `apps/web`,
 
 ---
 
-## v1.25 — Console rebuild R5: admin and evaluator screens (2026-09-14) ← **current**
+## v1.25 — Console rebuild R5: admin and evaluator screens (2026-09-14)
 
 R4 committed as `98697a7`. R5 replaces the mechanical restyle of the admin and evaluator screens with layouts in the
 workstation's style. No backend or contract change. **411 Python tests (unchanged) · 126 web tests (120 + 6) ·
@@ -1141,6 +1141,29 @@ existing one. The browser pass then found the histogram, the strip columns and t
 page would break the rule that the API defines every figure. The guide (`docs/img/demo-guide/`) was not recaptured, so
 screenshots 21–31 and the published showcase show the pre-R5 screens. `rehearse_demo.py` still not re-run after R3.
 Figma plugin still disconnected; proposals not compared.
+
+---
+
+## v1.26 — Console rebuild R6: the gate re-verified, the guide recaptured (2026-09-14) ← **current**
+
+R5 committed as `288d95d`. R6 re-checks the S16 demo gate after the rebuild and brings the presenter's material up to
+the product. No application code changed. **411 Python tests (unchanged) · 126 web tests · `npm run e2e` passes ·
+`rehearse_demo.py` holds end to end · guide capture passes.**
+
+### What landed
+
+| | Change | Rationale |
+|---|---|---|
+| VERIFY | **`rehearse_demo.py`** re-run on a throwaway copy after R3–R5: "The demo narrative holds end to end." | Not run since R3 (HANDOVER §0b) |
+| ADD | Guide capture takes **`04b-overview`** and **`04c-ip-entity`**, before any verdict changes the mixes | The guide had no shot of either R4 page |
+| FIX | Capture spec: the workstation search now waits for the list to narrow to one card before clicking; System Status waits for service health and for both 5,000 figures (summary and breakdowns) | Found by running it: one run opened the wrong alert, and screenshot 21 was taken with the figures row still loading |
+| CHG | All guide screenshots re-rendered (`docs/img/demo-guide/`, 37 files; 25 changed, 2 new) | 21–31 showed pre-R5 screens |
+| CHG | **Showcase guide republished** (same URL, version 7): Act 2 gains the Overview and one-address walkthrough; Acts 7–8 describe the operations overview, Detector hits, audit pills, the newest-run glance and per-class panels; roles, API surface and feature coverage updated | The guide follows the product |
+
+**Not done — needs the user.** The Preliminary User Manual was **not** regenerated. Its section 4 is 16 wireframes drawn by
+`scripts/make_wireframes.py` from the pre-rebuild screens (no workstation, Overview or IP page), and
+`scripts/build_user_manual.py` writes straight to `docs/FYP-26-S3-13_PrelimUserManual.docx`, which holds the user's own
+edits. Rebuilding would overwrite them, so it waits for the user's decision.
 
 ---
 

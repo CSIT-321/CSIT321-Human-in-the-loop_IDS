@@ -8,8 +8,8 @@ and minimal token cost. Everything a new session needs is here or one link away.
 `feat/s2-contracts` and `feat/s6-fusion` pushed earlier as view-only progress branches ·
 **Phases 2–5 DONE · the S16 demo gate PASSED** (S12, S13, S14, S16 in changelog v1.21) ·
 **Console rebuild** (user request, `docs/console-rebuild-proposal.md`): R1 backend, R2 design system and
-R3 workstation, R4 Overview + IP entity and R5 admin + evaluator screens DONE; **R6 next** (user chose to finish the rebuild before S17) —
-changelog v1.25 · **411 tests, 0 skipped** (Python, in `.venv`) + **126 web tests** (`apps/web`, `npm test`) +
+R3 workstation, R4 Overview + IP entity and R5 admin + evaluator screens DONE; R6 done except the user manual (awaits the user) —
+changelog v1.26 · **411 tests, 0 skipped** (Python, in `.venv`) + **126 web tests** (`apps/web`, `npm test`) +
 the browser narrative (`npm run e2e`, passes) ·
 **Python runs from `hitl-ids\.venv` (3.11) — see §0b before running anything** ·
 `python scripts/run_detection.py` builds the demo database · `python -m uvicorn apps.api.main:app`
@@ -126,11 +126,11 @@ From Claude's Bash tool, call the environment directly: `.venv/Scripts/python.ex
    Workstation, Dashboard, Alert Queue, alert detail, Investigations, Feedback Impact, System Status,
    Guardrails, Audit Trail, Scenarios, Evaluation run, Detection Metrics) plus a wireframe for each. Requested,
    not built: blocked by the plugin disconnect. Mark or replace the stale proposals on the Screens page.
-2. **Console rebuild** — R4 **done** (v1.24) and R5 **done** (v1.25), both checked in Chromium at 1440 px.
-   **R6 next**: `rehearse_demo.py` not re-run since R3; the guide (`docs/img/demo-guide/`, 21–31) and the showcase
-   artifact still show pre-R5 screens and have no Overview / IP entity shots; PUM not regenerated. Verdicts per
-   analyst (proposal §4) not built — no endpoint.
-3. **Not yet run:** `ruff` (now installed in `.venv`), `rehearse_demo.py` after R3.
+2. **Console rebuild** — R4 **done** (v1.24), R5 **done** (v1.25), R6 **done except the PUM** (v1.26): rehearsal holds,
+   guide recaptured with Overview / IP shots, showcase republished (version 7). **Open: the PUM** — section 4 is 16
+   pre-rebuild wireframes (`scripts/make_wireframes.py`), and `scripts/build_user_manual.py` overwrites the user's
+   edited `.docx`; ask before rebuilding. Verdicts per analyst (proposal §4) not built — no endpoint.
+3. **Not yet run:** `ruff` (now installed in `.venv`). `rehearse_demo.py` was re-run after R5 (v1.26) and holds.
 4. **Plan tracking:** the rebuild is not an S-step in `plans/hitl-ids-demo-build.md`; the plan still names S17
    `NEXT`. Ask the user whether the rebuild continues before S17/S18.
 
@@ -418,8 +418,8 @@ Full detail per step: [`../../plans/hitl-ids-demo-build.md`](../../plans/hitl-id
 **Console rebuild (user request, off the S-step graph)** — tracked in
 [`console-rebuild-proposal.md`](console-rebuild-proposal.md) §6, not in the table above: R0–R3 **DONE**
 (changelog v1.22 backend, v1.23 design system + workstation) · R4 **DONE** (v1.24, Overview + IP entity) ·
-R5 **DONE** (v1.25, admin + evaluator) · **R6 next** (re-verify the gate, recapture the guide, PUM). **User decision
-(2026-09-14): finish the rebuild before S17.** Open items: §0b.
+R5 **DONE** (v1.25, admin + evaluator) · R6 **done except the PUM** (v1.26). **User decision (2026-09-14): finish the
+rebuild before S17.** Once the PUM question is settled, the plan's S17 is next. Open items: §0b.
 
 **Guardrail constants — use the collaborator's `stage-5/config/adaptation-config.json`**, which is
 richer than the docs and now merged: max negative **-30**, **max positive +20** (the docs omit a
