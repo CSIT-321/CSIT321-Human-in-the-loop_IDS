@@ -1078,7 +1078,7 @@ as S-steps; `ruff` never run (now installed in `.venv`); Vitest tests time out u
 
 ---
 
-## v1.24 — Console rebuild R4: Overview and the IP entity page (2026-09-14) ← **current**
+## v1.24 — Console rebuild R4: Overview and the IP entity page (2026-09-14)
 
 The user chose to finish the console rebuild before S17 (the plan still names S17 `NEXT`; the rebuild is off the
 S-step graph). R4 gives the B4 and B5 endpoints from v1.22 their screens. No backend or contract change.
@@ -1105,6 +1105,42 @@ states to three cards the brief did not mention; kept, matching `DashboardPage`.
 **Honest limits.** The two pages have not been looked at in a browser: `npm run e2e` passes but does not visit
 them, and the guide was not recaptured. There is no eslint config in `apps/web`, so no lint ran. The Figma
 **Screens** proposals were not compared (plugin unreliable, v1.23). `rehearse_demo.py` still not re-run after R3.
+
+---
+
+## v1.25 — Console rebuild R5: admin and evaluator screens (2026-09-14) ← **current**
+
+R4 committed as `98697a7`. R5 replaces the mechanical restyle of the admin and evaluator screens with layouts in the
+workstation's style. No backend or contract change. **411 Python tests (unchanged) · 126 web tests (120 + 6) ·
+typecheck clean · `npm run e2e` passes · all eight R4/R5 screens captured in Chromium at 1440 px, no console errors.**
+
+### What landed
+
+| | Change | Rationale |
+|---|---|---|
+| ADD | **`StatStrip`** in `components/ui.tsx`: a row of headline figures in the KPI-strip style, columns sized to the figure count | One primitive for both workers; the first version left empty cells on four-figure strips, found in the browser |
+| CHG | **System Status** → operations overview: figures row (total, needs review, Tier 2, verdicts, guardrail actions, unresolved), service health and a new **Detector hits** card (a meter per detector evidence class) beside the latest run | Proposal §4 "Operations overview". `none` is left out of Detector hits: nothing flagging an alert is not a hit |
+| CHG | **Guardrails**: three-column limits form; Save is the console's primary button (`bg-primary`, as "Record verdict") | A side-by-side layout was tried and reverted: the read-only settings table wrapped unreadably at 1440 px |
+| CHG | **Audit Trail**: filter toolbar with Export CSV as the primary button; event types as colour-coded pills whose text is unchanged; pager above the table | Proposal §4 |
+| CHG | **Scenarios** → experiment overview: "Newest run at a glance" shows the three arms side by side with precision@50 and its signed change against control (the −0.020 fall is shown) | Proposal §4 "Experiment overview" |
+| CHG | **Run**: figures row; comparison and guardrail outcomes side by side; compact arms table (short headers with full-name titles, no wrapping); delta groups side by side | The arms table wrapped "C-guardrails-off" over three lines |
+| CHG | **Metrics**: figures row; the uniform F1 bar chart replaced by **small multiples** — a precision / recall / F1 meter per class, amber below 0.99 | Eight bars between 0.93 and 1.0 read as identical; Infiltration's 0.933 now stands out |
+| FIX | **Overview (R4)** histogram: one stacked bar per capture hour (flagged + not flagged) at 1080 px, hour table scrolls inside the card | Seen in the browser: paired bars over 108 hours drew as slivers, and the table ran 108 rows |
+| ADD | 6 web tests (status 2, audit 1, scenarios 1, run 1, metrics 1); every existing admin and evaluator assertion passes unmodified | The existing tests pin the on-screen wording |
+
+### How it was built
+
+`StatStrip` and Guardrails by Claude — Guardrails holds the guardrail write path, which is never delegated; only its
+layout and button changed, not validation or the `PUT`. Status + Audit and the three evaluator pages by two DeepSeek
+workers in parallel (`timeout 1500`), each forbidden to edit shared files or existing assertions, reviewed by diff.
+Review changed: the admin `BREAKDOWNS` fixture claimed demo-database values but its status mix was invented (the
+comment now says synthetic); `none` removed from Detector hits; two ad-hoc primary-button styles replaced with the
+existing one. The browser pass then found the histogram, the strip columns and the Guardrails wrap.
+
+**Honest limits.** "Verdicts per analyst" (proposal §4) was not built: no endpoint reports it, and computing it in the
+page would break the rule that the API defines every figure. The guide (`docs/img/demo-guide/`) was not recaptured, so
+screenshots 21–31 and the published showcase show the pre-R5 screens. `rehearse_demo.py` still not re-run after R3.
+Figma plugin still disconnected; proposals not compared.
 
 ---
 

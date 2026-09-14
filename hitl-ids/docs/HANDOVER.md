@@ -8,8 +8,8 @@ and minimal token cost. Everything a new session needs is here or one link away.
 `feat/s2-contracts` and `feat/s6-fusion` pushed earlier as view-only progress branches ·
 **Phases 2–5 DONE · the S16 demo gate PASSED** (S12, S13, S14, S16 in changelog v1.21) ·
 **Console rebuild** (user request, `docs/console-rebuild-proposal.md`): R1 backend, R2 design system and
-R3 analyst workstation and R4 Overview + IP entity pages DONE; **R5 next** (user chose to finish the rebuild before S17) —
-changelog v1.24 · **411 tests, 0 skipped** (Python, in `.venv`) + **120 web tests** (`apps/web`, `npm test`) +
+R3 workstation, R4 Overview + IP entity and R5 admin + evaluator screens DONE; **R6 next** (user chose to finish the rebuild before S17) —
+changelog v1.25 · **411 tests, 0 skipped** (Python, in `.venv`) + **126 web tests** (`apps/web`, `npm test`) +
 the browser narrative (`npm run e2e`, passes) ·
 **Python runs from `hitl-ids\.venv` (3.11) — see §0b before running anything** ·
 `python scripts/run_detection.py` builds the demo database · `python -m uvicorn apps.api.main:app`
@@ -51,7 +51,7 @@ cd hitl-ids && .venv\Scripts\activate  # every terminal; python --version must p
 python -m pytest                      # expect 411 passed, 0 skipped
 python scripts/run_detection.py       # rebuilds data/demo.db: 5,000 flows -> 5,000 alerts, ~21 s
 python scripts/rehearse_demo.py       # the S16 narrative through the API on a copy: 41 checks
-cd apps/web && npm test && npm run e2e && cd ../..   # 120 web tests; the narrative in a browser
+cd apps/web && npm test && npm run e2e && cd ../..   # 126 web tests; the narrative in a browser
 python scripts/run_evaluation.py      # the three arms over that database, ~3 s
 python scripts/build_openapi.py --check   # the committed API contract is in step with the models
 ```
@@ -126,9 +126,10 @@ From Claude's Bash tool, call the environment directly: `.venv/Scripts/python.ex
    Workstation, Dashboard, Alert Queue, alert detail, Investigations, Feedback Impact, System Status,
    Guardrails, Audit Trail, Scenarios, Evaluation run, Detection Metrics) plus a wireframe for each. Requested,
    not built: blocked by the plugin disconnect. Mark or replace the stale proposals on the Screens page.
-2. **Console rebuild** — R4 **done** (v1.24: `/analyst/overview`, `/analyst/entities/ip/:ip`; not yet viewed in a
-   browser). **R5 next**: admin and evaluator are only mechanically restyled; **R6** `rehearse_demo.py` not re-run
-   since R3, PUM not regenerated, guide not recaptured for the two new pages.
+2. **Console rebuild** — R4 **done** (v1.24) and R5 **done** (v1.25), both checked in Chromium at 1440 px.
+   **R6 next**: `rehearse_demo.py` not re-run since R3; the guide (`docs/img/demo-guide/`, 21–31) and the showcase
+   artifact still show pre-R5 screens and have no Overview / IP entity shots; PUM not regenerated. Verdicts per
+   analyst (proposal §4) not built — no endpoint.
 3. **Not yet run:** `ruff` (now installed in `.venv`), `rehearse_demo.py` after R3.
 4. **Plan tracking:** the rebuild is not an S-step in `plans/hitl-ids-demo-build.md`; the plan still names S17
    `NEXT`. Ask the user whether the rebuild continues before S17/S18.
@@ -417,8 +418,8 @@ Full detail per step: [`../../plans/hitl-ids-demo-build.md`](../../plans/hitl-id
 **Console rebuild (user request, off the S-step graph)** — tracked in
 [`console-rebuild-proposal.md`](console-rebuild-proposal.md) §6, not in the table above: R0–R3 **DONE**
 (changelog v1.22 backend, v1.23 design system + workstation) · R4 **DONE** (v1.24, Overview + IP entity) ·
-**R5 next** (restyled only) · R6 partly done. **User decision (2026-09-14): finish the rebuild before S17.** Open
-items: §0b.
+R5 **DONE** (v1.25, admin + evaluator) · **R6 next** (re-verify the gate, recapture the guide, PUM). **User decision
+(2026-09-14): finish the rebuild before S17.** Open items: §0b.
 
 **Guardrail constants — use the collaborator's `stage-5/config/adaptation-config.json`**, which is
 richer than the docs and now merged: max negative **-30**, **max positive +20** (the docs omit a

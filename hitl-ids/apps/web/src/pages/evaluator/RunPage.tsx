@@ -5,6 +5,9 @@
  * with only feedback and the guardrails differing. The screen's job is to report the comparison
  * honestly — every delta is rendered in the direction it actually moved, including the ones that went
  * the wrong way, and the banner says so before the reader meets them.
+ *
+ * The layout is the workstation's: a headline strip of the run's shape, then the comparison and the
+ * guardrail outcomes side by side, then the tables that carry the detail.
  */
 
 import { Link, useParams } from "react-router";
@@ -13,7 +16,7 @@ import type { Schemas } from "../../api/client";
 import { api, unwrap } from "../../api/client";
 import { useApi } from "../../api/useApi";
 import { ApiView, EmptyState } from "../../components/states";
-import { Card, Delta, KeyValues, PageHeader, Pill } from "../../components/ui";
+import { Card, Delta, KeyValues, PageHeader, Pill, StatStrip, type Stat } from "../../components/ui";
 import { formatNumber, formatRatio, formatScore } from "../../design/format";
 import {
   MOVEMENT_ROWS,
@@ -64,6 +67,33 @@ function MeasuredBanner({ deltas }: { deltas: Deltas }) {
   );
 }
 
+/** The run's shape in four figures — what the strip is for, before the tables get into the detail. */
+function runStats(run: Comparison): readonly Stat[] {
+  return [
+    {
+      label: "Verdicts in sequence",
+      value: formatNumber(run.sequenceLength),
+      hint: "Analyst verdicts replayed through each arm",
+    },
+    {
+      label: "Arms",
+      value: formatNumber((run.arms ?? []).length),
+      hint: "How many arms this run recorded",
+    },
+    {
+      label: "Detection identical",
+      value: run.detectionMetricsIdenticalAcrossArms ? "Yes" : "No",
+      tone: run.detectionMetricsIdenticalAcrossArms ? "text-ok" : "text-danger",
+      hint: "Proof that feedback reordered the queue and did not touch the detector",
+    },
+    {
+      label: "Commit",
+      value: run.commit === null ? "—" : run.commit.slice(0, 8),
+      hint: "The commit the run was recorded at",
+    },
+  ];
+}
+
 function ComparisonCard({ run }: { run: Comparison }) {
   return (
     <Card title="What was compared">
@@ -110,7 +140,7 @@ function ArmsCard({ arms }: { arms: readonly Schemas["ArmResultOut"][] }) {
   return (
     <Card title="Arms" subtitle="The same detection everywhere; only feedback and the guardrails differ.">
       <div className="overflow-x-auto">
-        <table className="w-full text-left text-sm">
+        <table className="w-full text-left text-[13px]">
           <thead className="text-muted">
             <tr>
               <th scope="col" className={TH}>
@@ -125,26 +155,26 @@ function ArmsCard({ arms }: { arms: readonly Schemas["ArmResultOut"][] }) {
               <th scope="col" className={TH}>
                 Verdicts
               </th>
-              <th scope="col" className={TH}>
-                Precision@50
+              <th scope="col" className={TH} title="Precision at 50">
+                P@50
               </th>
-              <th scope="col" className={TH}>
-                False positives in top 50
+              <th scope="col" className={TH} title="False positives in top 50">
+                FP top 50
               </th>
-              <th scope="col" className={TH}>
-                MRR (true positives)
+              <th scope="col" className={TH} title="MRR (true positives)">
+                MRR TP
               </th>
-              <th scope="col" className={TH}>
-                Mean rank (true positives)
+              <th scope="col" className={TH} title="Mean rank (true positives)">
+                Mean rank TP
               </th>
-              <th scope="col" className={TH}>
-                Critical floor breaches
+              <th scope="col" className={TH} title="Critical floor breaches">
+                Floor breaches
               </th>
-              <th scope="col" className={TH}>
+              <th scope="col" className={TH} title="Guardrail pass or fail">
                 Guardrail check
               </th>
-              <th scope="col" className={TH}>
-                Guardrail actions
+              <th scope="col" className={TH} title="Guardrail actions, as the arm recorded them">
+                Actions
               </th>
             </tr>
           </thead>
@@ -153,7 +183,7 @@ function ArmsCard({ arms }: { arms: readonly Schemas["ArmResultOut"][] }) {
               const actions = Object.entries(arm.guardrailActions ?? {});
               return (
                 <tr key={arm.arm} className="border-t border-border">
-                  <th scope="row" className={`${TD} text-left font-normal text-text`}>
+                  <th scope="row" className={`${TD} whitespace-nowrap text-left font-normal text-text`}>
                     {arm.arm}
                   </th>
                   <td className={TD}>
@@ -198,7 +228,7 @@ function ArmsCard({ arms }: { arms: readonly Schemas["ArmResultOut"][] }) {
   );
 }
 
-/** One table per arm pair. Nothing is sorted, filtered or dropped: the record's own order stands. */
+/** One table per arm pair, the three pairs side by side. Nothing is sorted, filtered or dropped. */
 function DeltasCard({ deltas }: { deltas: Deltas }) {
   const groups = Object.entries(deltas ?? {});
 
@@ -210,12 +240,12 @@ function DeltasCard({ deltas }: { deltas: Deltas }) {
       {groups.length === 0 ? (
         <EmptyState title="This run records no deltas" />
       ) : (
-        <div className="space-y-6">
+        <div className="grid gap-4 lg:grid-cols-3">
           {groups.map(([group, metrics]) => (
-            <div key={group}>
+            <div key={group} className="min-w-0">
               <h3 className="text-sm font-semibold text-text">{deltaGroupLabel(group)}</h3>
               <div className="mt-2 overflow-x-auto">
-                <table className="w-full text-left text-sm">
+                <table className="w-full text-left text-[13px]">
                   <thead className="text-muted">
                     <tr>
                       <th scope="col" className={TH}>
@@ -280,7 +310,7 @@ function MovementCard({ movement }: { movement: Movement }) {
               <div key={arm}>
                 <h3 className="text-sm font-semibold text-text">{arm}</h3>
                 <div className="mt-2 overflow-x-auto">
-                  <table className="w-full text-left text-sm">
+                  <table className="w-full text-left text-[13px]">
                     <thead className="text-muted">
                       <tr>
                         <th scope="col" className={TH}>
@@ -407,11 +437,16 @@ export function RunPage() {
           <>
             <MeasuredBanner deltas={data.deltas} />
             <div className="mt-6 space-y-6">
-              <ComparisonCard run={data} />
+              <StatStrip label="Run" stats={runStats(data)} />
+
+              <div className="grid gap-4 xl:grid-cols-2">
+                <ComparisonCard run={data} />
+                <GuardrailsCard prevented={data.guardrailsPrevented} />
+              </div>
+
               <ArmsCard arms={data.arms ?? []} />
               <DeltasCard deltas={data.deltas} />
               <MovementCard movement={data.movement} />
-              <GuardrailsCard prevented={data.guardrailsPrevented} />
             </div>
           </>
         )}

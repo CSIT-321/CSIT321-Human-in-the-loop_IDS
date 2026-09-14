@@ -7,7 +7,7 @@ import { screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 
 import { jsonResponse, renderApp, stubFetch } from "../../../test/renderApp";
-import { EVALUATOR, NO_RUNS_PAGE, RUNS_PAGE, RUN_ID, SCENARIOS_PAGE } from "./fixtures";
+import { COMPARISON, EVALUATOR, NO_RUNS_PAGE, RUNS_PAGE, RUN_ID, SCENARIOS_PAGE } from "./fixtures";
 
 /** Route by pathname, so a test never depends on request order. */
 function stubApi(overrides: { runs?: unknown } = {}): void {
@@ -67,5 +67,27 @@ describe("evaluator: scenarios", () => {
     expect(await screen.findByText("No evaluation runs recorded")).toBeInTheDocument();
     // No run means no pre-registration to show.
     expect(screen.queryByRole("heading", { level: 2, name: "Pre-registration" })).toBeNull();
+  });
+
+  it("shows the newest run's three arms, and a way into the run itself", async () => {
+    // Deliberately not `stubApi`: the comparison endpoint is the point here, and the existing helper
+    // 404s it so the other cases can prove the page survives that.
+    stubFetch((request) => {
+      const { pathname } = new URL(request.url);
+      if (pathname === "/api/evaluation/runs") return jsonResponse(RUNS_PAGE);
+      if (pathname === "/api/evaluation/scenarios") return jsonResponse(SCENARIOS_PAGE);
+      if (pathname === `/api/evaluation/runs/${RUN_ID}`) return jsonResponse(COMPARISON);
+      return jsonResponse({ error: { code: "NOT_FOUND", message: `No stub for ${pathname}` } }, 404);
+    });
+    renderApp("/evaluator/scenarios", { session: EVALUATOR });
+
+    expect(await screen.findByText("A-control")).toBeInTheDocument();
+    expect(screen.getByText("B-treatment")).toBeInTheDocument();
+    expect(screen.getByText("C-guardrails-off")).toBeInTheDocument();
+
+    expect(screen.getByRole("link", { name: "Open run →" })).toHaveAttribute(
+      "href",
+      `/evaluator/runs/${RUN_ID}`,
+    );
   });
 });

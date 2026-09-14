@@ -103,7 +103,7 @@ function FeedbackLimitsCard({
       subtitle="Only an administrator can change these, and every change records why."
     >
       <form onSubmit={submit} noValidate className="space-y-5">
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
           {EDITABLE_SETTINGS.map((setting) => {
             const help = settingFor(settings, setting.key)?.description ?? null;
             const inputId = `guardrail-${setting.field}`;
@@ -169,7 +169,7 @@ function FeedbackLimitsCard({
           <button
             type="submit"
             disabled={saving}
-            className="rounded-sm border border-accent bg-accent-dim px-3 py-1.5 text-sm font-medium text-accent disabled:opacity-50"
+            className="rounded-sm bg-primary px-4 py-2 text-sm font-semibold text-white hover:bg-primary-hover disabled:cursor-not-allowed disabled:opacity-40"
           >
             Save changes
           </button>
@@ -349,6 +349,8 @@ export function GuardrailsPage() {
           <LoadingState label="Reading the guardrail settings…" />
         )
       ) : (
+        // Stacked, not side by side: the read-only table has four columns and wraps unreadably in a
+        // narrow column (R5, checked in a 1440 px browser).
         <>
           <FeedbackLimitsCard settings={settings} onSaved={setSaved} />
           <OtherSettingsCard settings={settings} />

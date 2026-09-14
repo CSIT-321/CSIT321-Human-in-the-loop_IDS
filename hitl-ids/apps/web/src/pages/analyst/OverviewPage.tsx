@@ -24,8 +24,8 @@ import { categoryLabel } from "../../features/feedback/categories";
 type TopValue = Schemas["TopValue"];
 type TimeBucket = Schemas["TimeBucket"];
 
-const CHART_WIDTH = 640;
-const CHART_HEIGHT = 260;
+const CHART_WIDTH = 1080;
+const CHART_HEIGHT = 240;
 
 interface CountRow {
   readonly name: string;
@@ -42,20 +42,32 @@ function byCountDescending(left: TopValue, right: TopValue): number {
   return right.count - left.count;
 }
 
-/** The histogram: flows per capture hour, with the flagged share as a second bar. */
+/**
+ * The histogram: one stacked bar per capture hour, flagged at the base and the rest above it, so the
+ * bar's height is the hour's flow count. Side-by-side pairs over ~100 hours drew as invisible slivers.
+ */
 function VolumeChart({ buckets }: { buckets: readonly TimeBucket[] }) {
   const data = buckets.map((bucket) => ({
     name: bucket.bucket,
-    flows: bucket.count,
     flagged: bucket.flagged,
+    notFlagged: Math.max(0, bucket.count - bucket.flagged),
   }));
 
   return (
     <div className="overflow-x-auto">
+      <p className="mb-2 flex gap-4 font-mono text-[11px] text-muted">
+        <span className="inline-flex items-center gap-1.5">
+          <span aria-hidden className="h-2 w-2 rounded-sm bg-warn" /> flagged
+        </span>
+        <span className="inline-flex items-center gap-1.5">
+          <span aria-hidden className="h-2 w-2 rounded-sm bg-accent" /> not flagged
+        </span>
+      </p>
       <BarChart
         width={CHART_WIDTH}
         height={CHART_HEIGHT}
         data={data}
+        barCategoryGap={1}
         margin={{ top: 8, right: 16, bottom: 8, left: 8 }}
       >
         <XAxis
@@ -68,8 +80,8 @@ function VolumeChart({ buckets }: { buckets: readonly TimeBucket[] }) {
           tick={{ fill: "var(--color-muted)", fontSize: 11 }}
           allowDecimals={false}
         />
-        <Bar dataKey="flows" fill="var(--color-accent)" isAnimationActive={false} />
-        <Bar dataKey="flagged" fill="var(--color-warn)" isAnimationActive={false} />
+        <Bar dataKey="flagged" stackId="flows" fill="var(--color-warn)" isAnimationActive={false} />
+        <Bar dataKey="notFlagged" stackId="flows" fill="var(--color-accent)" isAnimationActive={false} />
       </BarChart>
     </div>
   );
@@ -87,7 +99,8 @@ function VolumeCard({ buckets }: { buckets: readonly TimeBucket[] }) {
       ) : (
         <>
           <VolumeChart buckets={buckets} />
-          <div className="mt-4 overflow-x-auto">
+          {/* ~100 capture hours: the table scrolls inside the card rather than lengthening the page. */}
+          <div className="mt-4 max-h-72 overflow-auto">
             <table className="w-full text-left text-sm">
               <thead>
                 <tr className="text-muted">

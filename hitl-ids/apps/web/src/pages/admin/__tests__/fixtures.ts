@@ -249,6 +249,23 @@ export const GUARDRAIL_ENTRIES: readonly Schemas["AuditEntryOut"][] = [
   ...AUDIT_ENTRIES.filter((entry) => entry.eventType === "GUARDRAIL_INTERVENTION"),
 ];
 
+/**
+ * A `GET /api/dashboard/breakdowns?limit=5` response for the operations strip. The address, port and
+ * histogram rows are the demo database's; `statusMix` is SYNTHETIC — the real database has every alert
+ * `new` — so the unresolved tile's sum (new + claimed + in progress = 4,996) is exercised across all
+ * three statuses, with one resolved-or-dismissed remainder left out. Nothing else on the page reads it.
+ */
+export const BREAKDOWNS: Schemas["DashboardBreakdowns"] = {
+  generatedAt: "2026-09-12T10:00:00.000000Z",
+  topSourceIps: [{ value: "18.218.115.60", count: 77, flagged: 76 }],
+  topDestinationIps: [{ value: "172.31.69.28", count: 210, flagged: 207 }],
+  topDestinationPorts: [{ value: "80", count: 803, flagged: 462 }],
+  verdictMix: { mark_false_positive: 1, confirm_true_positive: 1 },
+  statusMix: { new: 4884, claimed: 96, in_progress: 16 },
+  guardrailInterventions: { critical_alert_floor: 1 },
+  flowTimeHistogram: [{ bucket: "2018-02-14 12:00", count: 28, flagged: 1 }],
+};
+
 /** The shape both audit endpoints answer with: `{ items, page }`. */
 export function auditPage(
   items: readonly Schemas["AuditEntryOut"][],

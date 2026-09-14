@@ -110,4 +110,13 @@ describe("evaluator: detection metrics", () => {
     expect(await screen.findByText("No evaluation runs recorded")).toBeInTheDocument();
     expect(screen.queryByRole("note")).toBeNull();
   });
+
+  it("gives every class its own precision, recall and F1 meter", async () => {
+    stubApi();
+    renderApp(METRICS_PATH, { session: EVALUATOR });
+
+    await screen.findByRole("link", { name: RUN_ID });
+    // Eight classes, three metrics each: small multiples, not one bar per class in a single chart.
+    expect(screen.getAllByRole("meter")).toHaveLength(CLASS_NAMES.length * 3);
+  });
 });

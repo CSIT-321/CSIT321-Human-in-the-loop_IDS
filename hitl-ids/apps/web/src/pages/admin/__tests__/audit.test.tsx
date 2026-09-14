@@ -13,7 +13,7 @@ import { describe, expect, it, vi } from "vitest";
 
 import { CSV_HEADER, auditCsv, type AuditEntry } from "../../../features/admin/audit";
 import { jsonResponse, renderApp, stubFetch } from "../../../test/renderApp";
-import { ADMIN, AUDIT_ENTRIES, auditPage } from "./fixtures";
+import { ADMIN, AUDIT_ENTRIES, GUARDRAIL_ENTRIES, auditPage } from "./fixtures";
 
 function stubApi(entries = AUDIT_ENTRIES): Request[] {
   return stubFetch((request) => {
@@ -227,5 +227,23 @@ describe("the export's escaping", () => {
       `${CSV_HEADER}\n` +
         '"7","2026-09-12T10:00:00.000000Z","CONFIG_CHANGE","system_admin","Grace ""G"" Ang","","Rehearsal, second pass: raise the cap by ""10""",""\n',
     );
+  });
+});
+
+describe("admin audit: how a row reads", () => {
+  it("gives a guardrail rejection the danger tone, and the pill still says what happened", async () => {
+    stubApi(GUARDRAIL_ENTRIES);
+    renderApp("/admin/audit", { session: ADMIN });
+
+    // The filter offers every event type too, so wait for the table before reading a row out of it.
+    await screen.findByRole("table");
+    const table = within(screen.getByRole("table"));
+
+    // Colour is the aid, not the message: the humanised word is what says what happened.
+    const rejection = table.getByText("Guardrail rejection");
+    expect(rejection.className).toContain("text-danger");
+
+    // The same entry is still a row among the others, not a row of its own kind.
+    expect(table.getAllByRole("row")).toHaveLength(GUARDRAIL_ENTRIES.length + 1);
   });
 });

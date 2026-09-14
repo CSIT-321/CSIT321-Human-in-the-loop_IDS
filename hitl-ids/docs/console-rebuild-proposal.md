@@ -1,7 +1,7 @@
 # Console rebuild — proposal
 
-**Status: R1–R4 DONE (2026-09-14); R5 next (restyled only so far); R6 partly done.** Logged in
-`plan-changelog.md` v1.22 (R1), v1.23 (R2–R3, labels, Python environment) and v1.24 (R4).
+**Status: R1–R5 DONE (2026-09-14); R6 next (partly done).** Logged in `plan-changelog.md` v1.22 (R1),
+v1.23 (R2–R3, labels, Python environment), v1.24 (R4) and v1.25 (R5).
 
 **What it is.** A full redesign of every screen of the web console (`apps/web`), for all three roles.
 - **Look:** the user's design reference, the *SOC Analyst Workstation* screen from their Figma Make file.
@@ -176,8 +176,8 @@ All of these are contract-first and built by Claude, because they touch contract
 | R2 ✅ | New design system: tokens, shell, KPI strip, primitives (dense list, tabs, meters, key/value list, timeline, flow diagram, severity marker). **Done:** tokens in `index.css`, shell, primitives in `ui.tsx`; no timeline component (no per-alert event history UI yet) | Claude (not delegated) |
 | R3 ✅ | Analyst workstation: queue, detail, context rail, verdict and status actions, keyboard. **Done:** `/analyst/workstation` is the analyst home; industry verdict labels; MITRE tab (F1) not built | Claude (not delegated) |
 | R4 ✅ | Overview dashboards and entity view. **Done (v1.24):** `/analyst/overview`, `/analyst/entities/ip/:ip`, address links from the Overview and the context rail; 17 web tests. Not yet viewed in a browser or compared with the Figma **Screens** proposals | Delegated, reviewed |
-| R5 **NEXT** ◐ | Admin and evaluator screens. **So far:** mechanical restyle only (square panels, blue primary) | Delegated, reviewed |
-| R6 ◐ | Re-verify the S16 gate. **Done:** web tests, updated `npm run e2e` (passes), recaptured demo guide. **Not done:** `rehearse_demo.py` re-run after R3, PUM regenerated from the product, plan/HANDOVER tracking | Claude |
+| R5 ✅ | Admin and evaluator screens. **Done (v1.25):** operations overview with Detector hits, Guardrails form, Audit toolbar and event pills, experiment overview, compact Run page, per-class small multiples; `StatStrip`. Not built: verdicts per analyst (no endpoint) | Delegated, reviewed (Guardrails by Claude) |
+| R6 **NEXT** ◐ | Re-verify the S16 gate. **Done:** web tests, updated `npm run e2e` (passes), recaptured demo guide. **Not done:** `rehearse_demo.py` re-run after R3, PUM regenerated from the product, plan/HANDOVER tracking | Claude |
 
 Workers run under `timeout 1500`, at most two at a time (HANDOVER §6).
 

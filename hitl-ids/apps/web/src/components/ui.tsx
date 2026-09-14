@@ -83,6 +83,49 @@ export function PageHeader({ title, subtitle, actions }: { title: string; subtit
   );
 }
 
+export interface Stat {
+  readonly label: string;
+  /** Already formatted; `null` renders a dim dash while the figure is loading or absent. */
+  readonly value: ReactNode | null;
+  /** A text colour class, e.g. `text-warn`. */
+  readonly tone?: string;
+  readonly hint?: string;
+}
+
+/**
+ * A row of headline figures in the workstation's KPI-strip style (R5), for pages that are not the
+ * workstation. Cells are separated by 1 px rules, and the grid wraps on narrow screens.
+ */
+/** Wide-screen columns per figure count, as whole literals so Tailwind's scanner can see them. */
+const STRIP_COLUMNS: Readonly<Record<number, string>> = {
+  1: "sm:grid-cols-1",
+  2: "sm:grid-cols-2",
+  3: "sm:grid-cols-3",
+  4: "sm:grid-cols-2 xl:grid-cols-4",
+  5: "sm:grid-cols-3 xl:grid-cols-5",
+  6: "sm:grid-cols-3 xl:grid-cols-6",
+};
+
+export function StatStrip({ stats, label }: { stats: readonly Stat[]; label?: string }) {
+  // Columns follow the count, so a four-figure strip never leaves two empty cells at full width.
+  const columns = STRIP_COLUMNS[stats.length] ?? "sm:grid-cols-3 xl:grid-cols-6";
+  return (
+    <dl
+      aria-label={label}
+      className={`grid grid-cols-2 gap-px overflow-hidden rounded-sm border border-border bg-border ${columns}`}
+    >
+      {stats.map((stat) => (
+        <div key={stat.label} className="min-w-0 bg-surface px-4 py-3" title={stat.hint}>
+          <dt className="label-mono truncate text-[10px]">{stat.label}</dt>
+          <dd className={`mt-1 truncate font-mono text-xl font-semibold tabular-nums ${stat.tone ?? "text-text"}`}>
+            {stat.value === null ? <span className="text-dim">—</span> : stat.value}
+          </dd>
+        </div>
+      ))}
+    </dl>
+  );
+}
+
 /** A label/value grid for panels: flow details, run metadata, and the like. */
 export function KeyValues({ rows }: { rows: readonly (readonly [string, ReactNode])[] }) {
   return (

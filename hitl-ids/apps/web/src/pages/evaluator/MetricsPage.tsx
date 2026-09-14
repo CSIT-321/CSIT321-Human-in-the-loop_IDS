@@ -7,26 +7,36 @@
  * tool per attack class), and the score distribution is saturated, so a promotion among the top band
  * has nowhere to go.
  *
+ * The per-class figures appear twice on purpose. Once as a table, which is the readable and assertable
+ * copy, and once as small multiples below it: one panel per class, one meter per metric. Small
+ * multiples rather than a single bar chart because eight classes scoring between 0.98 and 1.0 read as
+ * eight identical bars — a class that is not perfect is visible here as itself, and its meter turns
+ * warn rather than merely being shorter.
+ *
  * The run is found rather than typed: the runs list is asked for one row, and that row's id drives
  * the metrics request.
  */
 
-import type { ReactNode } from "react";
 import { Link } from "react-router";
-import { Bar, BarChart, XAxis, YAxis } from "recharts";
 
 import type { Schemas } from "../../api/client";
 import { api, unwrap } from "../../api/client";
 import { useApi } from "../../api/useApi";
 import { ApiView, EmptyState } from "../../components/states";
-import { Card, KeyValues, PageHeader } from "../../components/ui";
+import { Card, KeyValues, PageHeader, StatStrip, type Stat } from "../../components/ui";
 import { formatNumber, formatPercent, formatRatio } from "../../design/format";
 import { classMetricRows } from "../../features/evaluation/values";
+import { Meter } from "../../features/workstation/Meter";
 
-const CHART_WIDTH = 680;
-const CHART_HEIGHT = 260;
 const TH = "px-3 py-2 font-medium";
 const TD = "px-3 py-1.5";
+
+/** A metric below this is imperfect, and its meter says so in colour rather than in width alone. */
+const IMPERFECT_BELOW = 0.99;
+
+function metricTone(value: number): string {
+  return value < IMPERFECT_BELOW ? "bg-warn" : "bg-accent";
+}
 
 /** Why a promotion can be inert, in the run's own numbers. One string, so it reads as one sentence. */
 function saturationSentence(saturation: Schemas["SaturationMetrics"]): string {
@@ -36,7 +46,7 @@ function saturationSentence(saturation: Schemas["SaturationMetrics"]): string {
   );
 }
 
-/** The caveat both the KPI row and the per-class table sit under. */
+/** The caveat the headline strip and the per-class table sit under. */
 function TestbedCaution() {
   return (
     <div role="note" className="rounded-sm border border-stub/40 bg-stub-bg p-4 text-sm text-stub">
@@ -48,11 +58,59 @@ function TestbedCaution() {
   );
 }
 
-function Kpi({ label, children }: { label: string; children: ReactNode }) {
+/** The headline figures, in the workstation's strip style. */
+function detectionStats(data: Schemas["EvaluationDetectionMetrics"], runId: string): readonly Stat[] {
+  return [
+    {
+      label: "Macro F1",
+      value: formatRatio(data.macroF1),
+      hint: "The macro-averaged F1 over the eight classes",
+    },
+    { label: "Alerts", value: formatNumber(data.alerts), hint: "Scored alerts in the recorded run" },
+    { label: "Attacks", value: formatNumber(data.attacks), hint: "Ground-truth attack flows" },
+    {
+      label: "Run",
+      value: (
+        <Link to={`/evaluator/runs/${runId}`} className="text-accent hover:text-text">
+          {runId}
+        </Link>
+      ),
+      hint: "The run these metrics were measured on",
+    },
+  ];
+}
+
+/** One class as a mini panel: its support, then a meter per metric. */
+function ClassPanel({ name, metrics }: { name: string; metrics: Schemas["ClassMetrics"] }) {
   return (
-    <div className="rounded-sm border border-border bg-surface p-5">
-      <p className="text-sm text-muted">{label}</p>
-      <p className="mt-2 text-3xl font-semibold text-text">{children}</p>
+    <div className="min-w-0 bg-surface p-3">
+      <p className="label-mono truncate" title={name}>
+        {name}
+      </p>
+      <p className="mt-0.5 font-mono text-[11px] text-muted">support {formatNumber(metrics.support)}</p>
+      <div className="mt-3 space-y-2.5">
+        <Meter
+          label="Precision"
+          value={metrics.precision}
+          max={1}
+          display={formatRatio(metrics.precision)}
+          tone={metricTone(metrics.precision)}
+        />
+        <Meter
+          label="Recall"
+          value={metrics.recall}
+          max={1}
+          display={formatRatio(metrics.recall)}
+          tone={metricTone(metrics.recall)}
+        />
+        <Meter
+          label="F1"
+          value={metrics.f1}
+          max={1}
+          display={formatRatio(metrics.f1)}
+          tone={metricTone(metrics.f1)}
+        />
+      </div>
     </div>
   );
 }
@@ -77,25 +135,12 @@ function DetectionSection({ runId }: { runId: string }) {
         <ApiView resource={detection} loadingLabel="Loading detection metrics…">
           {(data) => {
             const perClass = Object.entries(data.perClass ?? {});
-            const chartRows = perClass.map(([name, metrics]) => ({ name, f1: metrics.f1 }));
             const precisionAt = data.precisionAt ?? [];
             const { saturation, signatureOverride } = data;
 
             return (
               <div className="space-y-6">
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-                  <Kpi label="Macro F1">{formatRatio(data.macroF1)}</Kpi>
-                  <Kpi label="Alerts">{formatNumber(data.alerts)}</Kpi>
-                  <Kpi label="Attacks">{formatNumber(data.attacks)}</Kpi>
-                  <Kpi label="Run">
-                    <Link
-                      to={`/evaluator/runs/${runId}`}
-                      className="font-mono text-xl text-accent hover:text-text"
-                    >
-                      {runId}
-                    </Link>
-                  </Kpi>
-                </div>
+                <StatStrip label="Detection" stats={detectionStats(data, runId)} />
 
                 <Card
                   title="Per class"
@@ -164,118 +209,108 @@ function DetectionSection({ runId }: { runId: string }) {
                     </table>
                   </div>
 
-                  {/* The chart repeats the F1 column above; the table is the readable, assertable copy. */}
-                  <div className="mt-6 overflow-x-auto">
-                    <BarChart
-                      width={CHART_WIDTH}
-                      height={CHART_HEIGHT}
-                      data={chartRows}
-                      margin={{ top: 8, right: 16, bottom: 8, left: 8 }}
-                    >
-                      <XAxis
-                        dataKey="name"
-                        stroke="var(--color-border)"
-                        tick={{ fill: "var(--color-muted)", fontSize: 10 }}
-                      />
-                      <YAxis
-                        domain={[0, 1]}
-                        stroke="var(--color-border)"
-                        tick={{ fill: "var(--color-muted)", fontSize: 11 }}
-                      />
-                      <Bar dataKey="f1" fill="var(--color-accent)" isAnimationActive={false} />
-                    </BarChart>
-                  </div>
-                </Card>
-
-                <Card title="Flagged vs benign">
-                  <KeyValues rows={classMetricRows(data.flaggedVsBenign)} />
-                </Card>
-
-                <Card
-                  title="Precision at k"
-                  subtitle="Of the top k alerts in the queue, how many are attacks."
-                >
-                  {precisionAt.length === 0 ? (
-                    <EmptyState title="This run records no precision@k" />
-                  ) : (
-                    <div className="overflow-x-auto">
-                      <table className="w-full text-left text-sm">
-                        <thead className="text-muted">
-                          <tr>
-                            <th scope="col" className={TH}>
-                              k
-                            </th>
-                            <th scope="col" className={TH}>
-                              Precision
-                            </th>
-                            <th scope="col" className={TH}>
-                              Attacks
-                            </th>
-                            <th scope="col" className={TH}>
-                              False positives
-                            </th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {precisionAt.map((row) => (
-                            <tr key={row.k} className="border-t border-border">
-                              <th scope="row" className={`${TD} text-left font-normal text-text`}>
-                                {formatNumber(row.k)}
-                              </th>
-                              <td className={`${TD} font-mono tabular-nums text-text`}>
-                                {formatRatio(row.precision)}
-                              </td>
-                              <td className={`${TD} font-mono tabular-nums text-text`}>
-                                {formatNumber(row.attacks)}
-                              </td>
-                              <td className={`${TD} font-mono tabular-nums text-text`}>
-                                {formatNumber(row.falsePositives)}
-                              </td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
+                  {/*
+                    The same figures again as small multiples. A class below the accent threshold turns
+                    warn, so an imperfect class is visible without comparing bar heights.
+                  */}
+                  {perClass.length > 0 && (
+                    <div className="mt-6 grid gap-px bg-border sm:grid-cols-2 xl:grid-cols-4">
+                      {perClass.map(([name, metrics]) => (
+                        <ClassPanel key={name} name={name} metrics={metrics} />
+                      ))}
                     </div>
                   )}
                 </Card>
 
-                <Card title="Score saturation">
-                  <KeyValues
-                    rows={[
-                      ["Flagged alerts", formatNumber(saturation.flaggedAlerts)],
-                      ["At maximum score", formatNumber(saturation.atMaximumScore)],
-                      ["Share at maximum", formatPercent(saturation.shareAtMaximum)],
-                      [
-                        "Distinct scores among flagged",
-                        formatNumber(saturation.distinctScoresAmongFlagged),
-                      ],
-                    ]}
-                  />
-                  <p className="mt-4 text-sm text-muted">
-                    {saturationSentence(saturation)}
-                  </p>
-                </Card>
+                <div className="grid gap-4 xl:grid-cols-2">
+                  <Card title="Flagged vs benign">
+                    <KeyValues rows={classMetricRows(data.flaggedVsBenign)} />
+                  </Card>
 
-                <Card
-                  title="Signature-backed alerts (invariant I3)"
-                  subtitle="A rule-only alert the model disputes cannot be moved by feedback at all: the disagreement goes to an administrator."
-                >
-                  <KeyValues
-                    rows={[
-                      ["Alerts", formatNumber(signatureOverride.alerts)],
-                      ["Changed by feedback", formatNumber(signatureOverride.changed)],
-                      [
-                        "Preservation rate",
-                        signatureOverride.preservationRate === null
-                          ? "—"
-                          : formatPercent(signatureOverride.preservationRate),
-                      ],
-                    ]}
-                  />
-                  {signatureOverride.note !== null && (
-                    <p className="mt-4 text-sm text-muted">{signatureOverride.note}</p>
-                  )}
-                </Card>
+                  <Card
+                    title="Precision at k"
+                    subtitle="Of the top k alerts in the queue, how many are attacks."
+                  >
+                    {precisionAt.length === 0 ? (
+                      <EmptyState title="This run records no precision@k" />
+                    ) : (
+                      <div className="overflow-x-auto">
+                        <table className="w-full text-left text-sm">
+                          <thead className="text-muted">
+                            <tr>
+                              <th scope="col" className={TH}>
+                                k
+                              </th>
+                              <th scope="col" className={TH}>
+                                Precision
+                              </th>
+                              <th scope="col" className={TH}>
+                                Attacks
+                              </th>
+                              <th scope="col" className={TH}>
+                                False positives
+                              </th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {precisionAt.map((row) => (
+                              <tr key={row.k} className="border-t border-border">
+                                <th scope="row" className={`${TD} text-left font-normal text-text`}>
+                                  {formatNumber(row.k)}
+                                </th>
+                                <td className={`${TD} font-mono tabular-nums text-text`}>
+                                  {formatRatio(row.precision)}
+                                </td>
+                                <td className={`${TD} font-mono tabular-nums text-text`}>
+                                  {formatNumber(row.attacks)}
+                                </td>
+                                <td className={`${TD} font-mono tabular-nums text-text`}>
+                                  {formatNumber(row.falsePositives)}
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    )}
+                  </Card>
+
+                  <Card title="Score saturation">
+                    <KeyValues
+                      rows={[
+                        ["Flagged alerts", formatNumber(saturation.flaggedAlerts)],
+                        ["At maximum score", formatNumber(saturation.atMaximumScore)],
+                        ["Share at maximum", formatPercent(saturation.shareAtMaximum)],
+                        [
+                          "Distinct scores among flagged",
+                          formatNumber(saturation.distinctScoresAmongFlagged),
+                        ],
+                      ]}
+                    />
+                    <p className="mt-4 text-sm text-muted">{saturationSentence(saturation)}</p>
+                  </Card>
+
+                  <Card
+                    title="Signature-backed alerts (invariant I3)"
+                    subtitle="A rule-only alert the model disputes cannot be moved by feedback at all: the disagreement goes to an administrator."
+                  >
+                    <KeyValues
+                      rows={[
+                        ["Alerts", formatNumber(signatureOverride.alerts)],
+                        ["Changed by feedback", formatNumber(signatureOverride.changed)],
+                        [
+                          "Preservation rate",
+                          signatureOverride.preservationRate === null
+                            ? "—"
+                            : formatPercent(signatureOverride.preservationRate),
+                        ],
+                      ]}
+                    />
+                    {signatureOverride.note !== null && (
+                      <p className="mt-4 text-sm text-muted">{signatureOverride.note}</p>
+                    )}
+                  </Card>
+                </div>
               </div>
             );
           }}

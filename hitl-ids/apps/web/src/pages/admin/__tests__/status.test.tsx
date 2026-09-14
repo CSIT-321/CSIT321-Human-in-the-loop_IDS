@@ -11,7 +11,7 @@ import userEvent from "@testing-library/user-event";
 import { describe, expect, it } from "vitest";
 
 import { jsonResponse, renderApp, stubFetch } from "../../../test/renderApp";
-import { ADMIN, RUN, SUMMARY } from "./fixtures";
+import { ADMIN, BREAKDOWNS, RUN, SUMMARY } from "./fixtures";
 
 const CONFLICT = { error: { code: "CONFLICT", message: "No detection run has been recorded yet." } };
 
@@ -107,5 +107,57 @@ describe("admin status: the latest run", () => {
       expect(runs).toHaveLength(2);
     });
     expect(await screen.findByText("xgb-8class-20260911")).toBeInTheDocument();
+  });
+});
+
+/**
+ * The operations strip and the detector bars read the two dashboard endpoints, so these stubs answer
+ * `breakdowns` too. The suite above deliberately leaves it a 404: the strip must show dashes rather
+ * than an error when the endpoint is not there, which is why the 409 case still expects no
+ * "Something went wrong".
+ */
+describe("admin status: the operations strip", () => {
+  function stubDashboard(): Request[] {
+    return stubFetch((request) => {
+      const { pathname } = new URL(request.url);
+      if (pathname === "/api/dashboard/summary" && request.method === "GET") {
+        return jsonResponse(SUMMARY);
+      }
+      if (pathname === "/api/dashboard/breakdowns" && request.method === "GET") {
+        return jsonResponse(BREAKDOWNS);
+      }
+      if (pathname === "/api/detection/run" && request.method === "POST") return jsonResponse(RUN, 202);
+      return jsonResponse({ error: { code: "NOT_FOUND", message: `No stub for ${pathname}` } }, 404);
+    });
+  }
+
+  it("shows the summary's own total, formatted, and adds up only the unresolved tile", async () => {
+    stubDashboard();
+    renderApp("/admin/status", { session: ADMIN });
+
+    const strip = (await screen.findByText("Total alerts")).closest("dl");
+    expect(strip).not.toBeNull();
+    if (strip === null) return;
+
+    // 5,000 is the fixture's totalAlerts; no other tile in the strip reports it.
+    expect(await within(strip).findByText("5,000")).toBeInTheDocument();
+    expect(within(strip).getByText("Needs review")).toBeInTheDocument();
+    expect(within(strip).getByText("Tier 2 flagged")).toBeInTheDocument();
+    expect(within(strip).getByText("Verdicts")).toBeInTheDocument();
+    expect(within(strip).getByText("Guardrail actions")).toBeInTheDocument();
+    // Unresolved is the one figure the page adds up: new + claimed + in progress = 4,884 + 96 + 16.
+    expect(await within(strip).findByText("4,996")).toBeInTheDocument();
+  });
+
+  it("breaks the run's evidence classes into a meter each, once the run has loaded", async () => {
+    stubDashboard();
+    renderApp("/admin/status", { session: ADMIN });
+
+    const hits = (await screen.findByText("Detector hits")).closest("section");
+    expect(hits).not.toBeNull();
+    if (hits === null) return;
+
+    expect((await within(hits).findAllByRole("meter")).length).toBeGreaterThan(0);
+    expect(within(hits).getByText("Model only hits")).toBeInTheDocument();
   });
 });

@@ -152,4 +152,12 @@ describe("evaluator: one run", () => {
     expect(alert).toHaveTextContent("No evaluation run 'nope'");
     expect(alert).toHaveTextContent("NOT_FOUND");
   });
+
+  it("heads the run with a strip carrying its shape", async () => {
+    stubApi();
+    renderApp(RUN_PATH, { session: EVALUATOR });
+
+    expect(await screen.findByText("Verdicts in sequence")).toBeInTheDocument();
+    expect(screen.getByText("Detection identical")).toBeInTheDocument();
+  });
 });

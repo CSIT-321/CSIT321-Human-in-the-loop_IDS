@@ -9,6 +9,10 @@
  * Filters live in the URL, so a filtered view can be linked, reloaded and handed over. The export
  * re-reads every page the filters match rather than exporting the visible hundred: a CSV that
  * silently stopped at the page boundary would be the kind of half-truth the trail exists to prevent.
+ *
+ * The filter row is a toolbar rather than a panel — it is the table's controls, not a report — and
+ * the event type is a pill, so the trail can be sorted by kind at a glance. The pill's colour is an
+ * aid to that scan and never the only carrier: the humanised word inside it says what happened.
  */
 
 import { useState } from "react";
@@ -17,7 +21,7 @@ import { useSearchParams } from "react-router";
 import { ApiError, CLIENT_ERROR, api, unwrap } from "../../api/client";
 import { useApi } from "../../api/useApi";
 import { ApiView, EmptyState, ErrorState } from "../../components/states";
-import { Card, PageHeader } from "../../components/ui";
+import { Card, PageHeader, Pill, type Tone } from "../../components/ui";
 import { formatDateTime, formatNumber, humanise } from "../../design/format";
 import {
   CSV_HEADER,
@@ -36,9 +40,25 @@ const PAGE_SIZE = 100;
 const EXPORT_PAGE_SIZE = 500;
 
 const CONTROL_CLASS = "rounded-sm border border-border bg-raised px-3 py-1.5 text-sm text-text";
-const LABEL_CLASS = "block text-sm text-muted";
-const TH_CLASS = "px-3 py-2 font-medium";
-const TD_CLASS = "px-3 py-1.5 text-text";
+/** The console's one primary button, as the verdict form's "Record verdict" draws it. */
+const PRIMARY_CLASS =
+  "rounded-sm bg-primary px-4 py-1.5 text-sm font-semibold text-white hover:bg-primary-hover disabled:cursor-not-allowed disabled:opacity-40";
+const LABEL_CLASS = "block text-xs text-dim";
+const TH_CLASS = "px-2 py-1.5 font-medium";
+const TD_CLASS = "px-2 py-1.5 text-text";
+
+/**
+ * The trail's kinds, coloured. Anything the contract adds later falls through to `muted`, so an
+ * unrecognised event still renders — with its own humanised name, which is the part that matters.
+ */
+const EVENT_TONE: Partial<Record<AuditEntry["eventType"], Tone>> = {
+  FEEDBACK: "accent",
+  FEEDBACK_AMEND: "accent",
+  GUARDRAIL_INTERVENTION: "warn",
+  GUARDRAIL_REJECTION: "danger",
+  SIMILAR_ALERT_LEARNING: "violet",
+  CONFIG_CHANGE: "stub",
+};
 
 function asApiError(cause: unknown): ApiError {
   return cause instanceof ApiError
@@ -61,7 +81,7 @@ async function collectEntries(query: ReturnType<typeof auditQuery>): Promise<rea
 }
 
 function DetailsCell({ entry }: { entry: AuditEntry }) {
-  if (entry.details === null) return <span className="text-muted">—</span>;
+  if (entry.details === null) return <span className="text-dim">—</span>;
   return (
     <details>
       <summary className="cursor-pointer text-accent">View</summary>
@@ -75,9 +95,9 @@ function DetailsCell({ entry }: { entry: AuditEntry }) {
 function EntryTable({ entries }: { entries: readonly AuditEntry[] }) {
   return (
     <div className="overflow-x-auto">
-      <table className="w-full text-left text-sm">
+      <table className="w-full text-left text-[13px]">
         <thead>
-          <tr className="text-muted">
+          <tr className="text-dim">
             <th scope="col" className={TH_CLASS}>
               When
             </th>
@@ -101,10 +121,12 @@ function EntryTable({ entries }: { entries: readonly AuditEntry[] }) {
         <tbody>
           {entries.map((entry) => (
             <tr key={entry.eventId} className="border-t border-border align-top">
-              <td className={`${TD_CLASS} whitespace-nowrap text-muted`}>
+              <td className={`${TD_CLASS} whitespace-nowrap font-mono text-muted`}>
                 {formatDateTime(entry.createdAt)}
               </td>
-              <td className={`${TD_CLASS} whitespace-nowrap`}>{humanise(entry.eventType)}</td>
+              <td className={`${TD_CLASS} whitespace-nowrap`}>
+                <Pill tone={EVENT_TONE[entry.eventType] ?? "muted"}>{humanise(entry.eventType)}</Pill>
+              </td>
               <td className={TD_CLASS}>{entry.actor.displayName ?? entry.actor.role ?? "system"}</td>
               <td className={`${TD_CLASS} font-mono`}>{shortAlertRef(entry.alertRef)}</td>
               <td className={`${TD_CLASS} text-muted`}>{entry.rationale ?? "—"}</td>
@@ -170,14 +192,14 @@ export function AuditPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       <PageHeader
         title="Audit Trail"
         subtitle="Every run, verdict, guardrail action, family-learning event and configuration change, newest first. The database refuses UPDATE and DELETE on this table."
       />
 
-      <Card title="Filters">
-        <div className="flex flex-wrap items-end gap-4">
+      <div className="rounded-sm border border-border bg-surface px-4 py-3">
+        <div className="flex flex-wrap items-end gap-3">
           <div className="space-y-1">
             <label htmlFor="audit-event-type" className={LABEL_CLASS}>
               Event type
@@ -223,19 +245,14 @@ export function AuditPage() {
           <button type="button" onClick={clearFilters} className={CONTROL_CLASS}>
             Clear filters
           </button>
-          <button
-            type="button"
-            onClick={exportCsv}
-            disabled={exporting}
-            className={`${CONTROL_CLASS} disabled:opacity-50`}
-          >
+          <button type="button" onClick={exportCsv} disabled={exporting} className={`${PRIMARY_CLASS} ml-auto`}>
             {exporting ? "Exporting…" : "Export CSV"}
           </button>
         </div>
-        <p className="mt-3 text-xs text-dim">
+        <p className="mt-2 text-xs text-dim">
           The export carries every entry these filters match, as {CSV_HEADER}.
         </p>
-      </Card>
+      </div>
 
       {exportError !== null && <ErrorState error={exportError} />}
 
@@ -248,29 +265,31 @@ export function AuditPage() {
           {(data) => {
             const shownTo = data.page.offset + data.page.returned;
             return (
-              <div className="space-y-4">
-                <p className="text-sm text-muted">
-                  Showing {data.page.offset + 1}–{shownTo} of {formatNumber(data.page.total)}
-                </p>
-                <EntryTable entries={data.items} />
-                <div className="flex items-center gap-3">
-                  <button
-                    type="button"
-                    disabled={data.page.offset === 0}
-                    onClick={() => setOffset(Math.max(0, data.page.offset - PAGE_SIZE))}
-                    className={`${CONTROL_CLASS} disabled:opacity-50`}
-                  >
-                    Previous
-                  </button>
-                  <button
-                    type="button"
-                    disabled={shownTo >= data.page.total}
-                    onClick={() => setOffset(data.page.offset + PAGE_SIZE)}
-                    className={`${CONTROL_CLASS} disabled:opacity-50`}
-                  >
-                    Next
-                  </button>
+              <div className="space-y-3">
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <p className="text-[13px] text-muted">
+                    Showing {data.page.offset + 1}–{shownTo} of {formatNumber(data.page.total)}
+                  </p>
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      disabled={data.page.offset === 0}
+                      onClick={() => setOffset(Math.max(0, data.page.offset - PAGE_SIZE))}
+                      className={`${CONTROL_CLASS} disabled:opacity-50`}
+                    >
+                      Previous
+                    </button>
+                    <button
+                      type="button"
+                      disabled={shownTo >= data.page.total}
+                      onClick={() => setOffset(data.page.offset + PAGE_SIZE)}
+                      className={`${CONTROL_CLASS} disabled:opacity-50`}
+                    >
+                      Next
+                    </button>
+                  </div>
                 </div>
+                <EntryTable entries={data.items} />
               </div>
             );
           }}
