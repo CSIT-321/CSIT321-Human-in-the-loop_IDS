@@ -1144,7 +1144,7 @@ Figma plugin still disconnected; proposals not compared.
 
 ---
 
-## v1.26 — Console rebuild R6: the gate re-verified, the guide recaptured (2026-09-14) ← **current**
+## v1.26 — Console rebuild R6: the gate re-verified, the guide recaptured (2026-09-14)
 
 R5 committed as `288d95d`. R6 re-checks the S16 demo gate after the rebuild and brings the presenter's material up to
 the product. No application code changed. **411 Python tests (unchanged) · 126 web tests · `npm run e2e` passes ·
@@ -1179,7 +1179,43 @@ contents and page numbers are unverified until it is; the cover still carries th
 
 ---
 
-## Open items
+## v1.27 — S18a landed: real accounts replace the role-switch stub (2026-09-15) ← **current**
+
+User request: *"the console shows 3 different users' views as a drop-down menu — enforce account
+separation and have them log in from their own account to their own views."* That is the auth core
+of S18, pulled forward as its own step (**S18a**) without S18's remainder (Postgres, user
+management, the remaining TDM endpoints). **426 Python tests (15 new) · 128 web tests ·
+`npm run e2e` passes with three real sign-ins · `rehearse_demo.py` holds end to end.**
+
+### What landed
+
+| | Change | Rationale |
+|---|---|---|
+| ADD | `apps/api/auth.py`: bcrypt passwords, 8-hour HS256 JWTs (`HITL_IDS_JWT_SECRET` env with a committed dev default), `current_user` principal, `require_role` on the real role, `POST /api/auth/login` + `GET /api/auth/me`; `last_login` recorded | S18's auth tasks, by user instruction |
+| ADD | Three seeded accounts — `g.ang`/analyst-demo, `admin`/admin-demo, `evaluator`/evaluator-demo — created idempotently at first sign-in, so fresh, old and rehearsal-copy databases all self-heal | One account per view is the requested separation |
+| DEL | The `X-Demo-Role` stub end to end: `demo_role_stub`, the header parameter in the contract, `ROLE_HEADER`, the login page's role chips, the TopBar "Switch role" dropdown and its amber stub badge, `switchRole()` | A client can no longer claim a role by writing a header |
+| CHG | `_acting_user` (the lazy `demo-{role}` stand-in) deleted: verdicts, notes, status changes and config changes attribute to the signed-in account's `user_id`; `owner=me` resolves to it directly | The stub was faking the attribution NFR-02 requires; pre-existing `demo-{role}` rows stay so old audit trails resolve |
+| CHG | Contract: `/api/auth/*` added, an `Authorization` bearer parameter on every protected operation, `UNAUTHORIZED` in the error code union, 401 stamped on every protected response (one loop, not 17 copies); `openapi.json` regenerated, client regenerated | The contract is the authority |
+| CHG | `rehearse_demo.py` signs in per account instead of sending role headers; the 41 checks are unchanged | The rehearsal must exercise the real path |
+| CHG | E2E (`demo.spec.ts`, `capture-guide.spec.ts`): the narrative's two mid-run role switches are now sign-out → sign-in as that account | There is no other way to another view now |
+| ADD | `tests/test_auth.py`: login per account, identical 401 for wrong-user/wrong-password/disabled, tampered and expired tokens, the RBAC matrix, seeding idempotency, first-login-on-empty-DB | What the stub could never test |
+
+### Found by running it
+
+| | Finding | Fix |
+|---|---|---|
+| FIX | `data/demo.db` had been **appended to** by a rebuild (10,000 alerts; `run_detection.py` opens, never truncates) — the e2e failed on "5,000 alerts" and the rehearsal on record uniqueness before any auth question arose | Deleted and rebuilt once: 5,000 alerts, narrative green. **Re-running `run_detection.py` does not reset the DB — delete `data/demo.db` first** |
+| FIX | The 401-on-expiry interceptor initially returned the middleware context object from `onResponse`, which openapi-fetch 0.17 rejects ("must return new Response()") — every non-2xx response became a network error | Correct signature; returns undefined |
+
+### Honest limits
+
+Tokens live in `sessionStorage` (XSS-readable; a cookie would be stronger but breaks the
+header-asserting test harness and the second-origin e2e proxy). The JWT secret default is committed
+because the demo runs offline; passwords are committed on purpose and documented in
+`docs/demo-script.md`. Sessions signed in before this change read as signed out (shape changed) —
+that is correct, not a bug.
+
+
 
 | Item | Blocker | Owner |
 |---|---|---|

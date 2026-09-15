@@ -3,14 +3,17 @@
 **Purpose.** Carry the full state of this project into a fresh session with zero loss of context
 and minimal token cost. Everything a new session needs is here or one link away.
 
-**Last updated:** 2026-09-14 (rev 16) · **Branch:** `feat/demo-build` — **pushed to origin** at
+**Last updated:** 2026-09-15 (rev 17) · **Branch:** `feat/demo-build` — **pushed to origin** at
 `b534db6` and tracking `origin/feat/demo-build` (not merged to `main`; no PR opened) ·
 `feat/s2-contracts` and `feat/s6-fusion` pushed earlier as view-only progress branches ·
 **Phases 2–5 DONE · the S16 demo gate PASSED** (S12, S13, S14, S16 in changelog v1.21) ·
-**Console rebuild** (user request, `docs/console-rebuild-proposal.md`): R1 backend, R2 design system and
-R3–R6 DONE, **the rebuild is complete**; next is the plan's S17 (S18 equally unblocked — confirm the order with the user) —
-changelog v1.26 · **411 tests, 0 skipped** (Python, in `.venv`) + **126 web tests** (`apps/web`, `npm test`) +
-the browser narrative (`npm run e2e`, passes) ·
+**Console rebuild** (user request, `docs/console-rebuild-proposal.md`): R1–R6 DONE, **complete** ·
+**S18a account separation landed** (user request): real sign-in — the seeded accounts
+`g.ang`/`analyst-demo`, `admin`/`admin-demo`, `evaluator`/`evaluator-demo` (one per view); bcrypt +
+8-hour JWT bearer; `X-Demo-Role` and the role dropdown/chips are gone; next is the plan's S17 (the
+S18 remainder equally unblocked — confirm the order with the user) —
+changelog v1.27 · **426 tests, 0 skipped** (Python, in `.venv`) + **128 web tests** (`apps/web`, `npm test`) +
+the browser narrative (`npm run e2e`, passes with three real sign-ins) ·
 **Python runs from `hitl-ids\.venv` (3.11) — see §0b before running anything** ·
 `python scripts/run_detection.py` builds the demo database · `python -m uvicorn apps.api.main:app`
 serves the API on :8000 · `cd apps/web && npm run dev` serves the console on :5173
@@ -51,7 +54,7 @@ cd hitl-ids && .venv\Scripts\activate  # every terminal; python --version must p
 python -m pytest                      # expect 411 passed, 0 skipped
 python scripts/run_detection.py       # rebuilds data/demo.db: 5,000 flows -> 5,000 alerts, ~21 s
 python scripts/rehearse_demo.py       # the S16 narrative through the API on a copy: 41 checks
-cd apps/web && npm test && npm run e2e && cd ../..   # 126 web tests; the narrative in a browser
+cd apps/web && npm test && npm run e2e && cd ../..   # 128 web tests; the narrative in a browser
 python scripts/run_evaluation.py      # the three arms over that database, ~3 s
 python scripts/build_openapi.py --check   # the committed API contract is in step with the models
 ```
@@ -412,7 +415,8 @@ These were believed, then disproved. Re-proposing them wastes a cycle.
 | ~~11~~ | ~~S11 — web shell, role switching, design system, typed client~~ | **DONE 2026-09-13** | `apps/web/`: client generated from `openapi.json` (`npm run check:api` guards it), design tokens in Tailwind, three role shells with per-role nav, stub role switch labelled on screen. 30 web tests. Architecture by Claude, components by a DeepSeek worker, reviewed file by file. Changelog v1.20 |
 | ~~12~~ | ~~S12 — analyst path · S13 — admin path · S14 — evaluator path~~ | **DONE 2026-09-13** | Components by DeepSeek workers, reviewed file by file; the verdict form, the score-adjustment chain and the guardrail messaging by Claude. Contract additions: `sourceRecordId` + search, `GET /api/evaluation/runs`. Changelog v1.21 |
 | ~~13~~ | ~~S16 — demo assembly and rehearsal (the gate)~~ | **DONE 2026-09-13** | Narrative corrected to the `Port Scan / 445` family (deviations E6). `rehearse_demo.py` 41/41 on a copy and on a freshly seeded database; `npm run e2e` passed in Chromium. Three defects found by the browser run, all fixed with tests. Script: `docs/demo-script.md`. Changelog v1.21 |
-| 14 | **NEXT →** S17 — prefix flow exporter (post-demo) | Claude | S18 (full backend) is equally unblocked and may run in parallel; confirm the order with the user first. Read the plan's S17 section: schema reconciliation against `feature-columns.json` must stop and report, never silently coerce |
+| ~~14~~ | ~~S18a — account separation: real login (JWT, bcrypt, RBAC)~~ | **DONE 2026-09-15** | `apps/api/auth.py`: bcrypt, 8-hour HS256 bearers, `current_user` + `require_role` on the real role, `/api/auth/login` + `/api/auth/me`, `last_login`. Three seeded accounts (`g.ang`, `admin`, `evaluator`) self-heal on first sign-in; `_acting_user` gone — writes attribute to the signed-in account. `X-Demo-Role`, the TopBar role dropdown and the login role chips deleted end to end. 15 new tests (`tests/test_auth.py`); `rehearse_demo.py` and the e2e narrative sign in per account. Changelog v1.27 |
+| 15 | **NEXT →** S17 — prefix flow exporter (post-demo) | Claude | S18 (full backend) is equally unblocked and may run in parallel; confirm the order with the user first. Read the plan's S17 section: schema reconciliation against `feature-columns.json` must stop and report, never silently coerce |
 
 Full detail per step: [`../../plans/hitl-ids-demo-build.md`](../../plans/hitl-ids-demo-build.md).
 

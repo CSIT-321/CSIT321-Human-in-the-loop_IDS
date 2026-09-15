@@ -141,6 +141,7 @@ changelog's current version. Status is one of `DONE` · `PARTIAL` · `NEXT` · `
 | S14 | Evaluator path (thin) | DONE | v1.21 |
 | S16 | Demo assembly and rehearsal ⭐ GATE | DONE | v1.21 |
 | S17 | Prefix flow-exporter module | NEXT | — |
+| S18a | Account separation: real login (JWT, bcrypt, RBAC) | DONE | v1.27 |
 | S18 | Full backend (D3 complete) | TODO | — |
 
 <!-- PLAN-STATUS:END -->
@@ -150,8 +151,9 @@ anything* is built and tested: flows in, rules and model score them, fusion rank
 verdict reshapes the queue inside guardrails, all of it persisted, audited, reproducible and now
 measured against a control. Since then the API (S10a, S10b), the console (S11–S14) and the demo gate
 (S16) have landed: **the presentable demo exists**, and its narrative is asserted end to end through
-the API and through a browser. What remains is post-demo: the flow exporter (S17) and the full
-backend (S18), which may run in parallel.
+the API and through a browser. The console's three views are now three real accounts (S18a): the
+role-switch stub is gone. What remains is post-demo: the flow exporter (S17) and the full
+backend's remainder (S18), which may run in parallel.
 
 **S1 is PARTIAL, deliberately.** The Python slice (`packages/`, `tests/`, `scripts/`, `config/`) is
 real and complete; `apps/api/` and `apps/web/` do not exist yet and are created by S10 and S11.
@@ -434,7 +436,7 @@ Route implementations behind the S10a contract.
 
 > **v0.3 FIX.** v0.2 had a single S10 depending only on S9, and told S11 to start "once OpenAPI is frozen" — circular, because FastAPI generates OpenAPI *from* implemented handlers. Splitting the contract out lets S11 start for real. S10a also depends on **S15**, because `GET /api/evaluation/*` response schemas cannot be written before S15 defines the metrics.
 
-**Context brief.** Only endpoints the demo path exercises. Auth is a **role-switch stub** — real JWT/bcrypt is S18. Deliberately narrow; the other ~25 TDM endpoints are S18.
+**Context brief.** Only endpoints the demo path exercises. Auth is a **role-switch stub** — ~~real JWT/bcrypt is S18~~ **landed as S18a (v1.27): real accounts, bcrypt, JWT bearers, RBAC; `X-Demo-Role` is gone**. Deliberately narrow; the other ~25 TDM endpoints are S18.
 
 **v1.0 addition.** `GET /api/alerts` must return `evidence_class`. The feedback write path — `POST /api/alerts/{id}/feedback` — invokes guardrail logic and is therefore **Claude's, not delegated**, per the plan's own anti-pattern list.
 
@@ -660,13 +662,25 @@ Rehearse end-to-end from a clean clone. Record known limitations honestly.
 
 **Rollback.** `CsvReplaySource` remains default; exporter is opt-in.
 
+## S18a — Account separation: real login (JWT, bcrypt, RBAC)
+
+**Deps:** S16 · **Owner:** Claude · **Branch:** `feat/demo-build` · **Landed:** 2026-09-15 (changelog v1.27)
+
+Pulled out of S18 by user instruction: the console's three views stopped being one signed-in user
+switching roles (the `X-Demo-Role` stub) and became three seeded accounts — `g.ang` (analyst),
+`admin`, `evaluator` — each signing in to its own view. `apps/api/auth.py` owns the mechanism:
+bcrypt at sign-in, an 8-hour HS256 bearer token, a `current_user` principal every protected handler
+depends on, and `require_role` checking the account's real role. Verdicts, notes and config changes
+attribute to the signed-in account. The RBAC matrix, token validation and seeding are tested in
+`tests/test_auth.py`; the rehearsal and the browser narrative sign in per account.
+
 ## S18 — Full backend (D3 complete)
 
 **Deps:** S16 · **Owner:** Claude + delegate · **Branch:** `feat/s18-backend` · ∥ S17
 
-**Tasks.** SQLite → PostgreSQL (schema was written for it in S2). Real JWT + bcrypt + RBAC replacing the S10 stub. Remaining TDM endpoints: user management, rule manager, model version management, fusion weight config, bulk feedback, exports, notifications. Re-verify append-only triggers under Postgres.
+**Tasks.** SQLite → PostgreSQL (schema was written for it in S2). Remaining TDM endpoints: user management, rule manager, model version management, fusion weight config, bulk feedback, exports, notifications. Re-verify append-only triggers under Postgres. ~~Real JWT + bcrypt + RBAC replacing the S10 stub~~ — landed ahead of this step as **S18a** (v1.27).
 
-**Verify.** Full API contract suite; RBAC matrix test per role per endpoint; audit immutability re-proven on Postgres.
+**Verify.** Full API contract suite; RBAC matrix re-proven per role per endpoint on Postgres; audit immutability re-proven on Postgres.
 
 **Exit criteria.** Feature parity with the TDM's specified surface.
 
