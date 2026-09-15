@@ -1,0 +1,1156 @@
+<title>IDS Console Showcase</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Semi+Condensed:wght@500;600;700&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+  :root {
+    --ground: #f4f6f9;
+    --surface: #ffffff;
+    --sunk: #eaeef4;
+    --ink: #0e1a2b;
+    --muted: #56657a;
+    --rule: #d5dde7;
+    --accent: #1f6fd6;
+    --tier2: #b8322a;
+    --tier2-soft: #f8e1df;
+    --model: #1f6fd6;
+    --model-soft: #dde9fa;
+    --corrob: #6a47cf;
+    --corrob-soft: #ebe5fb;
+    --none: #6b7686;
+    --none-soft: #e6e9ee;
+    --ok: #1c7a45;
+    --stub: #8a5a00;
+    --stub-soft: #fbefd2;
+    --shadow: 0 1px 2px rgb(14 26 43 / 0.06), 0 8px 24px rgb(14 26 43 / 0.06);
+    --frame: #0b0d10;
+    --font-display: "Barlow Semi Condensed", "Arial Narrow", "Segoe UI", sans-serif;
+    --font-body: "IBM Plex Sans", "Segoe UI", system-ui, -apple-system, sans-serif;
+    --font-mono: "JetBrains Mono", "Cascadia Mono", Consolas, ui-monospace, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ground: #0b0d10;
+      --surface: #111418;
+      --sunk: #171b21;
+      --ink: #e6e8eb;
+      --muted: #8f97a3;
+      --rule: #242a33;
+      --accent: #58a6ff;
+      --tier2: #f85149;
+      --tier2-soft: #3d1518;
+      --model: #58a6ff;
+      --model-soft: #0f2540;
+      --corrob: #bc8cff;
+      --corrob-soft: #2a1d45;
+      --none: #8f97a3;
+      --none-soft: #171b21;
+      --ok: #3fb950;
+      --stub: #e3b341;
+      --stub-soft: #2e2508;
+      --shadow: none;
+      --frame: #333b47;
+    }
+  }
+  :root[data-theme="dark"] {
+    --ground: #0b0d10;
+    --surface: #111418;
+    --sunk: #171b21;
+    --ink: #e6e8eb;
+    --muted: #8f97a3;
+    --rule: #242a33;
+    --accent: #58a6ff;
+    --tier2: #f85149;
+    --tier2-soft: #3d1518;
+    --model: #58a6ff;
+    --model-soft: #0f2540;
+    --corrob: #bc8cff;
+    --corrob-soft: #2a1d45;
+    --none: #8f97a3;
+    --none-soft: #171b21;
+    --ok: #3fb950;
+    --stub: #e3b341;
+    --stub-soft: #2e2508;
+    --shadow: none;
+    --frame: #333b47;
+  }
+
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+  body {
+    margin: 0;
+    background: var(--ground);
+    color: var(--ink);
+    font-family: var(--font-body);
+    font-size: 16px;
+    line-height: 1.6;
+    padding-inline: 20px;
+    padding-block: 0 96px;
+  }
+  a { color: var(--accent); text-underline-offset: 3px; }
+  a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 3px; }
+  code, .mono { font-family: var(--font-mono); font-size: 0.88em; }
+  code { background: var(--sunk); border: 1px solid var(--rule); border-radius: 4px; padding: 0.05em 0.35em; overflow-wrap: anywhere; }
+  kbd { font-family: var(--font-mono); font-size: 0.85em; border: 1px solid var(--rule); border-bottom-width: 2px; border-radius: 4px; padding: 0 0.35em; background: var(--surface); }
+  h1, h2, h3 { font-family: var(--font-display); text-wrap: balance; line-height: 1.15; margin: 0; }
+
+  .shell { max-width: 1180px; margin-inline: auto; display: grid; grid-template-columns: minmax(0, 1fr); gap: 48px; }
+  @media (min-width: 1080px) { .shell { grid-template-columns: 220px minmax(0, 1fr); gap: 56px; } }
+
+  .masthead { grid-column: 1 / -1; padding-block: 56px 32px; border-bottom: 1px solid var(--rule); display: grid; gap: 26px; }
+  .eyebrow { font-family: var(--font-mono); font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+  .masthead h1 { font-size: clamp(40px, 6vw, 64px); font-weight: 700; letter-spacing: -0.01em; }
+  .lede { font-size: 19px; max-width: 64ch; margin: 0; }
+  .thesis { font-family: var(--font-mono); font-size: 14px; color: var(--muted); display: flex; flex-wrap: wrap; gap: 6px 10px; align-items: center; }
+  .thesis .arrow { color: var(--accent); }
+  .facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1px; background: var(--rule); border: 1px solid var(--rule); border-radius: 8px; overflow: hidden; }
+  .fact { background: var(--surface); padding: 14px 16px; display: grid; gap: 2px; }
+  .fact b { font-family: var(--font-display); font-size: 28px; font-weight: 600; font-variant-numeric: tabular-nums; line-height: 1.1; }
+  .fact span { font-size: 13px; color: var(--muted); }
+
+  .toc { font-size: 14px; }
+  @media (min-width: 1080px) { .toc nav { position: sticky; top: 24px; } }
+  .toc h2 { font-size: 12px; font-family: var(--font-mono); font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); margin-bottom: 12px; }
+  .toc ol { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; }
+  .toc a { display: grid; grid-template-columns: 2.4em 1fr; padding: 5px 8px; border-radius: 6px; text-decoration: none; color: var(--ink); }
+  .toc a:hover { background: var(--sunk); }
+  .toc .n { font-family: var(--font-mono); font-size: 12px; color: var(--muted); padding-top: 2px; }
+
+  main { display: grid; gap: 72px; min-width: 0; }
+  section.part { display: grid; gap: 22px; scroll-margin-top: 20px; min-width: 0; }
+  .part-head { display: grid; gap: 6px; padding-bottom: 14px; border-bottom: 2px solid var(--ink); }
+  .part-head .act { font-family: var(--font-mono); font-size: 12px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--accent); }
+  .part-head h2 { font-size: clamp(30px, 4vw, 40px); font-weight: 600; }
+  .part-head .route { font-family: var(--font-mono); font-size: 13px; color: var(--muted); overflow-wrap: anywhere; }
+  .prose { max-width: 68ch; display: grid; gap: 14px; }
+  .prose p { margin: 0; }
+  .aside { max-width: 68ch; margin: 0; font-size: 14px; color: var(--muted); }
+  h3 { font-size: 22px; font-weight: 600; margin-top: 10px; }
+
+  ol.steps { counter-reset: step; list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; max-width: 72ch; }
+  ol.steps > li { counter-increment: step; display: grid; grid-template-columns: 30px minmax(0, 1fr); gap: 12px; align-items: baseline; }
+  ol.steps > li::before { content: counter(step); font-family: var(--font-mono); font-size: 12px; font-weight: 500; width: 26px; height: 26px; display: inline-grid; place-items: center; border: 1px solid var(--rule); border-radius: 50%; background: var(--surface); color: var(--muted); }
+
+  .say { max-width: 68ch; margin: 0; padding: 14px 18px; background: var(--surface); border: 1px solid var(--rule); border-radius: 10px; display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 14px; align-items: baseline; }
+  .say::before { content: "Say"; font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--accent); padding: 2px 8px; border: 1px solid var(--accent); border-radius: 999px; }
+  .say p { margin: 0; font-style: italic; }
+
+  .proves { max-width: 76ch; display: flex; flex-wrap: wrap; gap: 8px; align-items: center; font-size: 14px; color: var(--muted); }
+  .proves > span:first-child { font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; }
+  .tag { font-size: 13px; padding: 2px 10px; border-radius: 999px; background: var(--sunk); border: 1px solid var(--rule); color: var(--ink); }
+
+  .note { max-width: 72ch; padding: 12px 16px; border-radius: 8px; background: var(--stub-soft); color: var(--ink); font-size: 15px; }
+  .note b { color: var(--stub); }
+
+  figure.screen { margin: 0; display: grid; gap: 8px; min-width: 0; }
+  figure.screen .frame { border: 1px solid var(--frame); border-radius: 10px; overflow: hidden; background: #0b0d10; box-shadow: var(--shadow); }
+  figure.screen img { display: block; width: 100%; height: auto; max-width: 100%; }
+  figure.screen.narrow { max-width: 820px; }
+  figcaption { font-size: 14px; color: var(--muted); display: flex; flex-wrap: wrap; gap: 4px 10px; }
+  figcaption .path { font-family: var(--font-mono); font-size: 12px; color: var(--ink); }
+  .pair { display: grid; gap: 20px; grid-template-columns: minmax(0, 1fr); }
+  @media (min-width: 900px) { .pair { grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start; } }
+
+  .band { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 500; padding: 1px 10px; border-radius: 999px; white-space: nowrap; }
+  .band::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+  .b-tier2 { color: var(--tier2); background: var(--tier2-soft); }
+  .b-model { color: var(--model); background: var(--model-soft); }
+  .b-corrob { color: var(--corrob); background: var(--corrob-soft); }
+  .b-none { color: var(--none); background: var(--none-soft); }
+
+  .chain { display: flex; flex-wrap: wrap; align-items: stretch; gap: 6px; font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+  .chain .step { background: var(--surface); border: 1px solid var(--rule); border-radius: 8px; padding: 8px 12px; display: grid; gap: 2px; min-width: 96px; }
+  .chain .step small { font-family: var(--font-body); font-size: 12px; color: var(--muted); }
+  .chain .step b { font-size: 18px; font-weight: 500; }
+  .chain .to { align-self: center; color: var(--muted); }
+  .chain .warn b { color: var(--stub); }
+  .chain .final { border-color: var(--accent); }
+  .chain .final b { color: var(--accent); font-size: 20px; }
+
+  .table-wrap { overflow-x: auto; border: 1px solid var(--rule); border-radius: 10px; background: var(--surface); }
+  table { border-collapse: collapse; width: 100%; font-size: 15px; }
+  th, td { text-align: left; padding: 10px 14px; border-bottom: 1px solid var(--rule); vertical-align: top; }
+  thead th { font-family: var(--font-mono); font-size: 11px; font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); background: var(--sunk); white-space: nowrap; }
+  tbody tr:last-child td { border-bottom: 0; }
+  .num { text-align: right; font-variant-numeric: tabular-nums; font-family: var(--font-mono); font-size: 14px; white-space: nowrap; }
+  .neg { color: var(--tier2); }
+
+  pre.cmd { margin: 0; background: #0b0d10; color: #e6e8eb; border-radius: 10px; padding: 16px 18px; overflow-x: auto; font-family: var(--font-mono); font-size: 13.5px; line-height: 1.7; border: 1px solid var(--frame); }
+  pre.cmd .c { color: #8f97a3; }
+  pre.cmd .p { color: #58a6ff; user-select: none; }
+
+  .roles { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
+  .role { background: var(--surface); border: 1px solid var(--rule); border-radius: 10px; padding: 16px; display: grid; gap: 6px; align-content: start; }
+  .role h3 { font-size: 20px; margin: 0; }
+  .role .home { font-family: var(--font-mono); font-size: 12px; color: var(--accent); }
+  .role p { margin: 0; font-size: 15px; color: var(--muted); }
+
+  .labels { display: grid; gap: 1px; background: var(--rule); border: 1px solid var(--rule); border-radius: 10px; overflow: hidden; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); max-width: 900px; }
+  .labels div { background: var(--surface); padding: 10px 14px; display: grid; gap: 2px; }
+  .labels b { font-size: 15px; }
+  .labels span { font-family: var(--font-mono); font-size: 12px; color: var(--muted); }
+
+  figure.arch { margin: 0; display: grid; gap: 10px; min-width: 0; }
+  figure.arch svg { display: block; width: 100%; max-width: 100%; height: auto; background: var(--surface); border: 1px solid var(--rule); border-radius: 10px; padding: 8px; color: var(--ink); font-family: var(--font-body); }
+  figure.arch figcaption { display: block; max-width: 76ch; }
+
+  footer { grid-column: 1 / -1; border-top: 1px solid var(--rule); padding-top: 20px; font-size: 14px; color: var(--muted); }
+</style>
+
+<div class="shell">
+  <header class="masthead">
+    <div class="eyebrow">FYP-26-S3-13 · Human-in-the-Loop Intrusion Detection · Presenter's guide</div>
+    <h1>IDS Console Showcase</h1>
+    <p class="lede">A start-to-finish walkthrough of the demo, in the order to present it. It covers <strong>every feature</strong> across the analyst, administrator and evaluator roles, including the analyst <strong>workstation</strong>. Every number and screen here comes from the running system on the demo database.</p>
+    <div class="thesis" aria-label="The thesis of the demo">
+      <span>The model is confidently wrong</span><span class="arrow">→</span>
+      <span>a human overrules it</span><span class="arrow">→</span>
+      <span>guardrails bound the change and explain it</span><span class="arrow">→</span>
+      <span>the correction spreads to similar alerts</span>
+    </div>
+    <div class="facts">
+      <div class="fact"><b>5,000</b><span>recorded flows, each an alert</span></div>
+      <div class="fact"><b>996</b><span>flagged for review</span></div>
+      <div class="fact"><b>644</b><span>Tier 2 candidates at start</span></div>
+      <div class="fact"><b>3</b><span>accounts: analyst, admin, evaluator</span></div>
+      <div class="fact"><b>41</b><span>rehearsal checks, all passing</span></div>
+    </div>
+  </header>
+
+  <aside class="toc">
+    <nav aria-label="Contents">
+      <h2>Contents</h2>
+      <ol>
+        <li><a href="#setup"><span class="n">00</span>Before you start</a></li>
+        <li><a href="#architecture"><span class="n">0a</span>Architecture</a></li>
+        <li><a href="#act1"><span class="n">01</span>Sign in and roles</a></li>
+        <li><a href="#workstation"><span class="n">1b</span>The workstation</a></li>
+        <li><a href="#act2"><span class="n">02</span>Dashboard, queue, overview</a></li>
+        <li><a href="#act3"><span class="n">03</span>AL-00478: the wrong model</a></li>
+        <li><a href="#act4"><span class="n">04</span>AL-03086: the missed attack</a></li>
+        <li><a href="#act5"><span class="n">05</span>Family learning</a></li>
+        <li><a href="#act6"><span class="n">06</span>Every other verdict</a></li>
+        <li><a href="#act7"><span class="n">07</span>Administrator</a></li>
+        <li><a href="#act8"><span class="n">08</span>Evaluator</a></li>
+        <li><a href="#dataset"><span class="n">09</span>The dataset</a></li>
+        <li><a href="#analysis"><span class="n">10</span>Analysis before and after</a></li>
+        <li><a href="#decisions"><span class="n">11</span>What we decided, and why</a></li>
+        <li><a href="#different"><span class="n">12</span>What makes it different</a></li>
+        <li><a href="#shipping"><span class="n">13</span>Shipping it to a customer</a></li>
+        <li><a href="#reset"><span class="n">14</span>Reset and troubleshooting</a></li>
+        <li><a href="#limits"><span class="n">15</span>Known limitations</a></li>
+        <li><a href="#coverage"><span class="n">16</span>Feature coverage</a></li>
+      </ol>
+    </nav>
+  </aside>
+
+  <main>
+    <section class="part" id="setup">
+      <div class="part-head">
+        <span class="act">Before the audience arrives</span>
+        <h2>Build a clean database, then start two servers</h2>
+      </div>
+      <div class="prose">
+        <p><strong>Verdicts are permanent.</strong> The audit trail refuses <code>UPDATE</code> and <code>DELETE</code>, so a database that has been demonstrated on has already been judged. Rebuild it before every audience; it takes about 21 seconds.</p>
+        <p><strong>The project has its own Python environment</strong>, <code>hitl-ids\.venv</code>: Python 3.11 with the exact library versions the tests, the demo database and the trained model were produced with (listed in <code>requirements.txt</code>). Activate it in every terminal you run Python commands in. After activating, a plain <code>python</code> means the project's Python, whatever other Python (for example 3.12) is installed on the computer. You also need Node.js 18 or newer for the console.</p>
+      </div>
+      <h3>Which folder each command runs from</h3>
+      <div class="prose">
+        <p>Everything Python runs from the <strong><code>hitl-ids</code> folder</strong>: the one that contains <code>apps/</code>, <code>packages/</code>, <code>data/</code> and <code>pyproject.toml</code>. Commands like <code>python -m uvicorn apps.api.main:app</code> find the code <em>relative to the folder you are in</em>, so from anywhere else they fail with <code>No module named 'apps'</code>. The console's npm commands run from <code>hitl-ids/apps/web</code>.</p>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Folder</th><th>On the development machine</th><th>Run here</th></tr></thead>
+          <tbody>
+            <tr><td class="mono">hitl-ids</td><td class="mono">C:\Users\Glenn Ang\Desktop\SIM Assignments\FYP\CSIT321-Human-in-the-loop_IDS\hitl-ids</td><td>pip install · run_detection · rehearse_demo · <strong>uvicorn (the API)</strong> · pytest</td></tr>
+            <tr><td class="mono">hitl-ids/apps/web</td><td class="mono">…\CSIT321-Human-in-the-loop_IDS\hitl-ids\apps\web</td><td>npm install · <strong>npm run dev (the console)</strong> · npm test · npm run e2e</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <pre class="cmd"><span class="c"># ── terminal 1: the API ─────────────────────────────────────────────</span>
+<span class="p">&gt; </span>cd "C:\Users\Glenn Ang\Desktop\SIM Assignments\FYP\CSIT321-Human-in-the-loop_IDS\hitl-ids"
+<span class="p">&gt; </span>dir                                       <span class="c"># you should see apps  data  packages  pyproject.toml</span>
+
+<span class="c"># one-time: create the project environment from Python 3.11, then install into it</span>
+<span class="c"># (already done on the development machine — skip to "every terminal")</span>
+<span class="c"># use this full path: "py -m venv" and plain "python -m venv" would pick Python 3.12</span>
+<span class="p">&gt; </span>C:\ProgramData\miniconda3\python.exe -m venv .venv
+<span class="p">&gt; </span>.venv\Scripts\activate
+<span class="p">&gt; </span>python -m pip install -r requirements.txt
+
+<span class="c"># every terminal: activate the environment first</span>
+<span class="p">&gt; </span>.venv\Scripts\activate                   <span class="c"># Command Prompt; the prompt now starts with (.venv)</span>
+<span class="p">PS&gt; </span>.venv\Scripts\Activate.ps1               <span class="c"># or this, in PowerShell</span>
+<span class="p">&gt; </span>python --version                         <span class="c"># must print Python 3.11.x</span>
+
+<span class="c"># before every audience</span>
+<span class="p">&gt; </span>python scripts/run_detection.py          <span class="c"># fresh data/demo.db: 5,000 flows → 5,000 alerts</span>
+<span class="p">&gt; </span>python scripts/rehearse_demo.py          <span class="c"># 41 checks on a copy; must end "holds end to end"</span>
+
+<span class="c"># start the API on :8000 and leave this terminal open</span>
+<span class="p">&gt; </span>python -m uvicorn apps.api.main:app
+
+<span class="c"># ── terminal 2: the console ─────────────────────────────────────────</span>
+<span class="p">&gt; </span>cd "C:\Users\Glenn Ang\Desktop\SIM Assignments\FYP\CSIT321-Human-in-the-loop_IDS\hitl-ids\apps\web"
+<span class="p">&gt; </span>npm install                              <span class="c"># one-time</span>
+<span class="p">&gt; </span>npm run dev                              <span class="c"># http://localhost:5173</span></pre>
+      <p class="aside">Uvicorn prints <code>Uvicorn running on http://127.0.0.1:8000</code> when the API is up; Vite prints <code>Local: http://localhost:5173/</code>. To leave the environment, type <code>deactivate</code>. Any Python 3.11 can create it; on the development machine that is <code>C:\ProgramData\miniconda3\python.exe</code>. The console's terminal does not need the environment: Node runs it.</p>
+      <div class="note"><b>Both servers must be running.</b> The console is only the screens; every number, verdict, claim and note goes through the API. If the API is not running, the pages still load but every panel reports <em>"Cannot reach the API"</em> and no button does anything. After pulling new code, <strong>restart the API</strong>: an API started before an update does not have the endpoints the workstation uses.</div>
+      <div class="prose">
+        <p>Open <a href="http://localhost:5173">http://localhost:5173</a>. To confirm the API is up and which database it is serving, open <code>http://localhost:8000/api/health</code>. The API's first request also adds the alert-notes table to an older database; alert data is not changed.</p>
+        <p>Optional last check: <code>npm run e2e</code> in <code>apps/web</code> plays this whole story in a real browser against its own copy of the database, in under a minute. It never touches <code>data/demo.db</code>.</p>
+      </div>
+      <h3>Reading the queue: bands and evidence</h3>
+      <div class="prose">
+        <p>Every alert has two labels. Its <strong>evidence class</strong> records what detected it and never changes. Its <strong>queue band</strong> decides where it ranks, and analyst feedback moves it. Within a band, alerts rank by operational score.</p>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Band, in queue order</th><th>Meaning</th><th class="num">At start</th></tr></thead>
+          <tbody>
+            <tr><td><span class="band b-tier2">Tier 2 candidate</span></td><td>Would escalate past Tier 1: critical and high-severity</td><td class="num">644</td></tr>
+            <tr><td><span class="band b-corrob">Corroborated</span></td><td>A signature rule and the model agree</td><td class="num">0*</td></tr>
+            <tr><td><span class="band b-model">Model only</span></td><td>Only the model flagged it; no rule gives a checkable reason</td><td class="num">352</td></tr>
+            <tr><td><span class="band b-none">Nothing flagged it</span></td><td>No detector fired. These alerts still exist, because they are the denominator of every measurement</td><td class="num">4,004</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="aside">* All 200 corroborated alerts start in the Tier 2 band. A "Signature override" band exists too, for alerts only a rule flagged, but this dataset contains none.</p>
+      <h3>The five verdicts</h3>
+      <div class="prose"><p>The console uses the closing labels SOC tools use: Microsoft Sentinel and Elastic close incidents as True, Benign or False Positive. Each verdict shows the score change it <em>requests</em>; the guardrails decide what is applied.</p></div>
+      <div class="labels" role="list" aria-label="Verdict labels">
+        <div role="listitem"><b>True Positive</b><span>requests +10.00</span></div>
+        <div role="listitem"><b>Escalate to Tier 2</b><span>requests +15.00</span></div>
+        <div role="listitem"><b>Needs investigation</b><span>requests ±0.00</span></div>
+        <div role="listitem"><b>Benign Positive</b><span>requests −15.00</span></div>
+        <div role="listitem"><b>False Positive</b><span>requests −30.00</span></div>
+      </div>
+    </section>
+
+    <section class="part" id="architecture">
+      <div class="part-head">
+        <span class="act">How it is built</span>
+        <h2>Architecture: the stack, the modules, and how they connect</h2>
+        <span class="route">hitl-ids/ · apps/web · apps/api · packages · scripts · data</span>
+      </div>
+      <div class="prose">
+        <p>The system has <strong>two halves that share one database</strong>. The <strong>offline half</strong> is a set of Python scripts: they turn recorded network flows into scored, explained alerts and write them to SQLite, and they run the evaluation. The <strong>online half</strong> is what the audience sees: a React console in the browser, served by Vite, talking to a FastAPI service that reads and writes that same database through the domain packages. Nothing is a live feed: detection runs before the demo, and the console works on its results.</p>
+      </div>
+
+      <h3>Tech stack</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Layer</th><th>Technology</th><th>Version in use</th><th>What it does here</th></tr></thead>
+          <tbody>
+            <tr><td>Console UI</td><td>React · TypeScript</td><td class="mono">19.3 · 5.9</td><td>Every screen for the three roles</td></tr>
+            <tr><td>Routing</td><td>React Router</td><td class="mono">7.18</td><td>URL per screen; filters and the selected alert live in the address bar</td></tr>
+            <tr><td>Styling</td><td>Tailwind CSS · IBM Plex Sans · JetBrains Mono</td><td class="mono">4.3</td><td>The design tokens in <code>src/index.css</code></td></tr>
+            <tr><td>Charts</td><td>Recharts</td><td class="mono">3.10</td><td>Dashboard charts and the Overview's capture-hour histogram</td></tr>
+            <tr><td>API client</td><td>openapi-fetch · openapi-typescript</td><td class="mono">0.17 · 7.13</td><td>A typed client generated from the API contract, so a wrong field fails the build</td></tr>
+            <tr><td>Dev server / build</td><td>Vite</td><td class="mono">8.3</td><td>Serves the console on :5173 and forwards <code>/api</code> to the API</td></tr>
+            <tr><td>API</td><td>FastAPI on Uvicorn</td><td class="mono">0.136 · 0.37</td><td>20 JSON operations plus <code>/api/health</code>, on :8000; interactive docs at <code>/docs</code></td></tr>
+            <tr><td>Contracts</td><td>Pydantic</td><td class="mono">2.11</td><td>Every row and every request/response body is a validated model</td></tr>
+            <tr><td>Database</td><td>SQLite (Python <code>sqlite3</code>)</td><td class="mono">—</td><td><code>data/demo.db</code>; append-only tables enforced by triggers</td></tr>
+            <tr><td>Detection model</td><td>XGBoost · native TreeSHAP</td><td class="mono">3.2</td><td>8-class classifier and a per-alert explanation</td></tr>
+            <tr><td>Data</td><td>pandas · NumPy · scikit-learn</td><td class="mono">2.3 · 2.3 · 1.7</td><td>Loading CSE-CIC-IDS2018 flows, training and metrics</td></tr>
+            <tr><td>Runtimes</td><td>Python · Node.js</td><td class="mono">3.11 · 22</td><td>Python runs from the project environment <code>hitl-ids\.venv</code>; tested versions are pinned in <code>requirements.txt</code></td></tr>
+            <tr><td>Tests</td><td>pytest · Vitest + Testing Library · Playwright</td><td class="mono">8 · 5 · 1.63</td><td>Backend, component and real-browser end-to-end tests</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>How the pieces connect</h3>
+      <figure class="arch">
+        <svg viewBox="0 0 1000 660" role="img" aria-label="Architecture: the browser console calls /api through the Vite dev server, which forwards to the FastAPI app; the API uses the detection and contracts packages to read and write the SQLite demo database and reads evaluation result files. Offline, run_detection writes alerts into the database, run_evaluation writes result files, and build_openapi produces the contract the console's typed client is generated from.">
+          <defs>
+            <marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" style="fill:currentColor"/></marker>
+            <marker id="arrA" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" style="fill:var(--accent)"/></marker>
+          </defs>
+
+          <text x="40" y="18" font-size="12" style="fill:var(--muted)" font-family="JetBrains Mono, monospace" letter-spacing="1">ONLINE · WHAT THE AUDIENCE USES</text>
+          <text x="680" y="18" font-size="12" style="fill:var(--muted)" font-family="JetBrains Mono, monospace" letter-spacing="1">OFFLINE · RUN BEFORE THE DEMO</text>
+          <line x1="650" y1="10" x2="650" y2="650" stroke="currentColor" stroke-opacity="0.2" stroke-dasharray="4 6"/>
+
+          <!-- Browser -->
+          <rect x="40" y="30" width="560" height="64" rx="6" style="fill:var(--surface);stroke:var(--accent)" stroke-width="1.5"/>
+          <text x="60" y="56" font-size="15" font-weight="600" fill="currentColor">Browser · React console</text>
+          <text x="60" y="78" font-size="12" style="fill:var(--muted)" font-family="JetBrains Mono, monospace">apps/web/src · pages · features · typed API client</text>
+
+          <line x1="320" y1="94" x2="320" y2="136" style="stroke:var(--accent)" stroke-width="1.5" marker-end="url(#arrA)"/>
+          <text x="332" y="120" font-size="12" style="fill:var(--accent)" font-family="JetBrains Mono, monospace">HTTP /api/* · X-Demo-Role header</text>
+
+          <!-- Vite -->
+          <rect x="40" y="140" width="560" height="64" rx="6" style="fill:var(--surface);stroke:var(--rule)"/>
+          <text x="60" y="166" font-size="15" font-weight="600" fill="currentColor">Vite dev server · :5173</text>
+          <text x="60" y="188" font-size="12" style="fill:var(--muted)" font-family="JetBrains Mono, monospace">serves the UI · proxies /api → 127.0.0.1:8000</text>
+
+          <line x1="320" y1="204" x2="320" y2="246" style="stroke:var(--accent)" stroke-width="1.5" marker-end="url(#arrA)"/>
+          <text x="332" y="230" font-size="12" style="fill:var(--accent)" font-family="JetBrains Mono, monospace">forwards the request</text>
+
+          <!-- API -->
+          <rect x="40" y="250" width="560" height="64" rx="6" style="fill:var(--surface);stroke:var(--accent)" stroke-width="1.5"/>
+          <text x="60" y="276" font-size="15" font-weight="600" fill="currentColor">FastAPI app on Uvicorn · :8000</text>
+          <text x="60" y="298" font-size="12" style="fill:var(--muted)" font-family="JetBrains Mono, monospace">apps/api · routes → mappers · contract (Pydantic)</text>
+
+          <!-- API -> packages -->
+          <line x1="170" y1="314" x2="170" y2="366" style="stroke:var(--accent)" stroke-width="1.5" marker-end="url(#arrA)"/>
+          <text x="180" y="344" font-size="12" style="fill:var(--accent)" font-family="JetBrains Mono, monospace">calls</text>
+          <line x1="470" y1="314" x2="470" y2="366" stroke="currentColor" stroke-width="1.2" marker-end="url(#arr)"/>
+          <text x="480" y="344" font-size="12" style="fill:var(--muted)" font-family="JetBrains Mono, monospace">validates with</text>
+
+          <!-- packages -->
+          <rect x="40" y="370" width="260" height="84" rx="6" style="fill:var(--surface);stroke:var(--rule)"/>
+          <text x="56" y="396" font-size="14" font-weight="600" fill="currentColor">packages/detection</text>
+          <text x="56" y="417" font-size="11.5" style="fill:var(--muted)" font-family="JetBrains Mono, monospace">feedback → guardrail</text>
+          <text x="56" y="435" font-size="11.5" style="fill:var(--muted)" font-family="JetBrains Mono, monospace">triage · audit · store</text>
+
+          <line x1="300" y1="412" x2="336" y2="412" stroke="currentColor" stroke-width="1.2" marker-end="url(#arr)"/>
+          <text x="318" y="403" font-size="11" text-anchor="middle" style="fill:var(--muted)" font-family="JetBrains Mono, monospace">uses</text>
+
+          <rect x="340" y="370" width="260" height="84" rx="6" style="fill:var(--surface);stroke:var(--rule)"/>
+          <text x="356" y="396" font-size="14" font-weight="600" fill="currentColor">packages/contracts</text>
+          <text x="356" y="417" font-size="11.5" style="fill:var(--muted)" font-family="JetBrains Mono, monospace">models · db · schema.sql</text>
+          <text x="356" y="435" font-size="11.5" style="fill:var(--muted)" font-family="JetBrains Mono, monospace">migrations</text>
+
+          <!-- contracts -> db -->
+          <line x1="470" y1="454" x2="470" y2="506" style="stroke:var(--accent)" stroke-width="1.5" marker-end="url(#arrA)"/>
+          <text x="480" y="484" font-size="12" style="fill:var(--accent)" font-family="JetBrains Mono, monospace">SQL · reads and writes</text>
+
+          <!-- stores -->
+          <rect x="340" y="510" width="260" height="70" rx="6" style="fill:var(--sunk);stroke:currentColor" stroke-opacity="0.5"/>
+          <text x="356" y="537" font-size="14" font-weight="600" fill="currentColor">SQLite · data/demo.db</text>
+          <text x="356" y="559" font-size="11.5" style="fill:var(--muted)" font-family="JetBrains Mono, monospace">alerts · flows · verdicts · audit</text>
+
+          <rect x="40" y="510" width="260" height="70" rx="6" style="fill:var(--sunk);stroke:currentColor" stroke-opacity="0.5"/>
+          <text x="56" y="537" font-size="14" font-weight="600" fill="currentColor">Evaluation results</text>
+          <text x="56" y="559" font-size="11.5" style="fill:var(--muted)" font-family="JetBrains Mono, monospace">evaluation/three-arm/runs/*.json</text>
+
+          <!-- API reads evaluation files (dashed) -->
+          <polyline points="40,282 20,282 20,545 36,545" fill="none" stroke="currentColor" stroke-width="1.2" stroke-dasharray="5 4" marker-end="url(#arr)"/>
+          <text x="14" y="420" font-size="11" style="fill:var(--muted)" font-family="JetBrains Mono, monospace" transform="rotate(-90 14 420)" text-anchor="middle">reads result files</text>
+
+          <!-- Offline column -->
+          <rect x="680" y="140" width="290" height="64" rx="6" style="fill:var(--surface);stroke:var(--rule)"/>
+          <text x="696" y="166" font-size="14" font-weight="600" fill="currentColor">scripts/build_openapi.py</text>
+          <text x="696" y="188" font-size="11.5" style="fill:var(--muted)" font-family="JetBrains Mono, monospace">writes apps/api/openapi.json</text>
+          <polyline points="825,140 825,62 604,62" fill="none" stroke="currentColor" stroke-width="1.2" stroke-dasharray="5 4" marker-end="url(#arr)"/>
+          <text x="714" y="54" font-size="11" style="fill:var(--muted)" font-family="JetBrains Mono, monospace" text-anchor="middle">npm run gen:api</text>
+
+          <rect x="680" y="360" width="290" height="94" rx="6" style="fill:var(--surface);stroke:var(--rule)"/>
+          <text x="696" y="384" font-size="14" font-weight="600" fill="currentColor">Inputs</text>
+          <text x="696" y="404" font-size="11.5" style="fill:var(--muted)" font-family="JetBrains Mono, monospace">data/processed/demo_sample.csv</text>
+          <text x="696" y="421" font-size="11.5" style="fill:var(--muted)" font-family="JetBrains Mono, monospace">models/xgboost_ids_model.json</text>
+          <text x="696" y="438" font-size="11.5" style="fill:var(--muted)" font-family="JetBrains Mono, monospace">tuned signature rule set</text>
+          <line x1="825" y1="454" x2="825" y2="506" stroke="currentColor" stroke-width="1.2" marker-end="url(#arr)"/>
+          <text x="835" y="484" font-size="11" style="fill:var(--muted)" font-family="JetBrains Mono, monospace">read by</text>
+
+          <rect x="680" y="510" width="290" height="70" rx="6" style="fill:var(--surface);stroke:var(--rule)"/>
+          <text x="696" y="537" font-size="14" font-weight="600" fill="currentColor">scripts/run_detection.py</text>
+          <text x="696" y="559" font-size="11.5" style="fill:var(--muted)" font-family="JetBrains Mono, monospace">rules + model → fusion → rank</text>
+          <line x1="680" y1="545" x2="604" y2="545" stroke="currentColor" stroke-width="1.2" marker-end="url(#arr)"/>
+          <text x="642" y="537" font-size="11" text-anchor="middle" style="fill:var(--muted)" font-family="JetBrains Mono, monospace">writes</text>
+
+          <rect x="680" y="596" width="290" height="54" rx="6" style="fill:var(--surface);stroke:var(--rule)"/>
+          <text x="696" y="620" font-size="14" font-weight="600" fill="currentColor">scripts/run_evaluation.py</text>
+          <text x="696" y="639" font-size="11.5" style="fill:var(--muted)" font-family="JetBrains Mono, monospace">three arms on database copies</text>
+          <polyline points="680,623 170,623 170,584" fill="none" stroke="currentColor" stroke-width="1.2" marker-end="url(#arr)"/>
+          <text x="420" y="616" font-size="11" text-anchor="middle" style="fill:var(--muted)" font-family="JetBrains Mono, monospace">writes results.json</text>
+        </svg>
+        <figcaption>Blue arrows are the path one request takes while the console is in use. Dashed arrows happen at build time or read files. <code>run_detection.py</code> uses the same <code>packages/</code> code as the API, so detection and the console share one set of contracts.</figcaption>
+      </figure>
+
+      <h3>Module map</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Folder</th><th>Responsibility</th><th>Key files</th></tr></thead>
+          <tbody>
+            <tr><td class="mono">apps/web/src/pages</td><td>One component per screen, grouped by role: analyst, admin, evaluator, and the login page</td><td class="mono">analyst/WorkstationPage.tsx · analyst/AlertDetailPage.tsx · admin/GuardrailsPage.tsx · evaluator/RunPage.tsx</td></tr>
+            <tr><td class="mono">apps/web/src/features</td><td>Reusable pieces of those screens: the workstation's three columns, the evidence panels, the verdict form and score chain, admin and evaluation helpers</td><td class="mono">workstation/ · alert/ · feedback/FeedbackPanel.tsx · feedback/categories.ts</td></tr>
+            <tr><td class="mono">apps/web/src/api</td><td>The typed HTTP client, generated from the contract, plus the loading/error/success hook every screen uses</td><td class="mono">client.ts · schema.d.ts (generated) · useApi.ts</td></tr>
+            <tr><td class="mono">apps/web/src/session · components</td><td>Real sign-in since S18a (bcrypt + JWT), the session and route guards; the shell (top bar, sidebar) and shared UI primitives</td><td class="mono">roles.ts · guards.tsx · layout/ · ui.tsx · states.tsx</td></tr>
+            <tr><td class="mono">apps/api</td><td>HTTP only: parse and validate the request, check the role, call a package, map rows to response shapes, one error envelope</td><td class="mono">main.py · routes.py · deps.py · mappers.py</td></tr>
+            <tr><td class="mono">apps/api/contract</td><td>The API contract written first: request/response models and the hand-authored OpenAPI document the client is generated from</td><td class="mono">alerts.py · operations.py · common.py · openapi.py → openapi.json</td></tr>
+            <tr><td class="mono">packages/contracts</td><td>The canonical data model shared by everything: Pydantic models for every table, the SQLite schema, migrations and the row codec</td><td class="mono">models.py · db.py · schema.sql</td></tr>
+            <tr><td class="mono">packages/detection/signature</td><td>Signature rules: which flow fields a rule may test, the rule engine, the versioned tuned rule set</td><td class="mono">engine.py · observable.py · rule_set.py</td></tr>
+            <tr><td class="mono">packages/detection/ml</td><td>XGBoost inference with native TreeSHAP explanations</td><td class="mono">inference.py</td></tr>
+            <tr><td class="mono">packages/detection/fusion · ranking</td><td>Complementary Evidence Fusion of rule and model evidence; the severity chart and queue ranking</td><td class="mono">fusion/cef.py · ranking/severity.py · ranking/formulas.py</td></tr>
+            <tr><td class="mono">packages/detection/pipeline</td><td>The batch run (source → detectors → fusion → database) and the repository layer the API reads through</td><td class="mono">runner.py · source.py · predictor.py · store.py</td></tr>
+            <tr><td class="mono">packages/detection/feedback · guardrail</td><td>A verdict → guardrails bound the change → stored, re-scored, audited; similar-alert (family) learning</td><td class="mono">feedback/service.py · feedback/learning.py · guardrail/policy.py</td></tr>
+            <tr><td class="mono">packages/detection/triage · audit</td><td>Alert status, ownership and notes; the typed, append-only audit writer</td><td class="mono">triage.py · audit/writer.py</td></tr>
+            <tr><td class="mono">packages/evaluation</td><td>The three-arm evaluation: pre-registered verdict sequence, harness, metrics, and the one join to ground truth</td><td class="mono">scenario.py · harness.py · metrics.py · truth.py</td></tr>
+            <tr><td class="mono">scripts</td><td>Command-line entry points: build samples, train, write the rule set, run detection and evaluation, rehearse, generate the contract</td><td class="mono">run_detection.py · run_evaluation.py · rehearse_demo.py · build_openapi.py · serve_rehearsal.py</td></tr>
+            <tr><td class="mono">data · models · evaluation</td><td>The demo database and samples; the trained model and its feature list; committed evaluation results</td><td class="mono">data/demo.db · models/xgboost_ids_model.json · evaluation/three-arm/runs/</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>One verdict, end to end</h3>
+      <ol class="steps">
+        <li><strong>Browser.</strong> The analyst picks <em>False Positive</em> and clicks Record verdict. <code>FeedbackPanel.tsx</code> calls <code>POST /api/alerts/{alertRef}/feedback</code> through the typed client, which adds the <code>X-Demo-Role</code> header.</li>
+        <li><strong>Vite</strong> forwards <code>/api/…</code> from :5173 to the API on :8000 (<code>vite.config.ts</code>).</li>
+        <li><strong>FastAPI</strong> (<code>routes.py</code>) validates the body as a <code>FeedbackRequest</code>, resolves the role and opens a database connection (<code>deps.py</code>).</li>
+        <li><strong>Feedback service</strong> (<code>feedback/service.py</code>) asks the <strong>guardrail policy</strong> how far the score may move, stores the verdict, updates the alert's score and band, runs <strong>family learning</strong>, and writes <strong>audit</strong> entries, all in one transaction.</li>
+        <li><strong>Mappers</strong> turn the stored rows into a <code>FeedbackResponse</code>: the requested change, what bound it, the applied change, and what the family learned.</li>
+        <li><strong>Browser</strong> draws the score-adjustment chain from that response. It never predicts the outcome locally, because only the guardrails know it.</li>
+      </ol>
+
+      <h3>The API surface</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Area</th><th>Operations</th><th>Used by</th></tr></thead>
+          <tbody>
+            <tr><td>Queue and alert</td><td class="mono">GET /api/alerts · GET /api/alerts/{ref} · GET …/score-adjustment · GET …/feedback-history</td><td>Workstation, Alert Queue, alert page</td></tr>
+            <tr><td>Verdicts</td><td class="mono">POST /api/alerts/{ref}/feedback</td><td>Verdict form</td></tr>
+            <tr><td>Triage</td><td class="mono">POST …/status · POST …/assign · GET/POST …/notes</td><td>Workstation header and Notes tab</td></tr>
+            <tr><td>Overview and context</td><td class="mono">GET /api/dashboard/summary · GET /api/dashboard/breakdowns · GET /api/entities/ip/{ip}</td><td>KPI strip, Dashboard, Overview, IP address page, context rail, System Status</td></tr>
+            <tr><td>Administration</td><td class="mono">GET/PUT /api/config/guardrails · GET /api/audit-log · POST /api/detection/run</td><td>Guardrails, Audit Trail, System Status</td></tr>
+            <tr><td>Evaluation</td><td class="mono">GET /api/evaluation/scenarios · GET /api/evaluation/runs · GET …/runs/{id} · GET …/runs/{id}/detection</td><td>Evaluator screens</td></tr>
+            <tr><td>Health</td><td class="mono">GET /api/health</td><td>Check the API is up and which database it serves</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="aside">With the API running, <code>http://localhost:8000/docs</code> lists every operation interactively.</p>
+
+      <h3>Configuration and data</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Setting or store</th><th>Default</th><th>Purpose</th></tr></thead>
+          <tbody>
+            <tr><td class="mono">HITL_IDS_DB</td><td class="mono">hitl-ids/data/demo.db</td><td>Which SQLite file the API serves</td></tr>
+            <tr><td class="mono">HITL_API_TARGET</td><td class="mono">http://127.0.0.1:8000</td><td>Where Vite forwards <code>/api</code>; the end-to-end tests point it at a disposable API on :8001</td></tr>
+            <tr><td class="mono">VITE_API_BASE_URL</td><td>same origin</td><td>Call an API on another host instead of going through the proxy</td></tr>
+            <tr><td class="mono">Authorization: Bearer</td><td>the token issued at sign-in</td><td>Real sign-in (S18a): bcrypt-checked accounts, 8-hour JWTs, RBAC on the account's role. Three accounts seed themselves on first sign-in; override the dev default with <code>HITL_IDS_JWT_SECRET</code></td></tr>
+            <tr><td>Database tables</td><td class="mono">14</td><td><code>users, datasets, signature_rules, ml_models, detection_runs, alerts, flow_data, feedback_events, alert_families, alert_notes, audit_log, guardrail_config, evaluation_scenarios, evaluation_runs</code>. <code>audit_log</code>, <code>feedback_events</code> and <code>alert_notes</code> refuse UPDATE and DELETE.</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>How it is tested</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Layer</th><th>Tool</th><th>Command and folder</th></tr></thead>
+          <tbody>
+            <tr><td>Contracts, detection, guardrails, API</td><td>pytest</td><td class="mono">python -m pytest · hitl-ids</td></tr>
+            <tr><td>Screens and components</td><td>Vitest + Testing Library</td><td class="mono">npm test · hitl-ids/apps/web</td></tr>
+            <tr><td>Client matches the contract</td><td>openapi-typescript</td><td class="mono">npm run check:api · hitl-ids/apps/web</td></tr>
+            <tr><td>The whole demo in a real browser</td><td>Playwright</td><td class="mono">npm run e2e · hitl-ids/apps/web</td></tr>
+            <tr><td>The demo story through the API</td><td>rehearse_demo.py</td><td class="mono">python scripts/rehearse_demo.py · hitl-ids</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="proves"><span>Shows</span><span class="tag">tech stack</span><span class="tag">module boundaries</span><span class="tag">request path</span><span class="tag">offline vs online</span><span class="tag">API surface</span><span class="tag">configuration</span><span class="tag">test layers</span></div>
+    </section>
+
+    <section class="part" id="act1">
+      <div class="part-head">
+        <span class="act">Act 1</span>
+        <h2>Sign in, and the three roles</h2>
+        <span class="route">/login</span>
+      </div>
+      <ol class="steps">
+        <li>Open the console. Sign in as <code>g.ang</code> / <code>analyst-demo</code>. You land on the <strong>Workstation</strong>.</li>
+      </ol>
+      <figure class="screen narrow">
+        <div class="frame"><img src="img/demo-guide/01-login.png" alt="Sign-in page with a username field, a password field and a blue Sign in button — no role picker" width="1440" height="900"></div>
+        <figcaption><span class="path">/login</span><span>One account per view: the role comes from the account, not a picker.</span></figcaption>
+      </figure>
+      <div class="roles">
+        <div class="role"><h3>Security Analyst</h3><span class="home">g.ang · lands on /analyst/workstation</span><p>Workstation, Overview, Dashboard, Alert Queue, Investigations, Feedback Impact, and a page per IP address. Records verdicts, claims and closes alerts, keeps notes.</p></div>
+        <div class="role"><h3>System Administrator</h3><span class="home">admin · lands on /admin/status</span><p>System Status, Guardrails, Audit Trail. The only account that can change guardrail settings.</p></div>
+        <div class="role"><h3>Evaluator</h3><span class="home">evaluator · lands on /evaluator/scenarios</span><p>Evaluation runs, the three-arm comparison, detection metrics.</p></div>
+      </div>
+      <blockquote class="say"><p>Sign-in is real: passwords are checked against bcrypt hashes, the server issues an 8-hour signed token, and every request carries it. There is no role switcher — to show another view, sign out and sign in as that account (<code>admin</code>/<code>admin-demo</code>, <code>evaluator</code>/<code>evaluator-demo</code>). A wrong password is refused on the spot.</p></blockquote>
+      <div class="proves"><span>Shows</span><span class="tag">account sign-in (bcrypt + JWT)</span><span class="tag">wrong password refused</span><span class="tag">no role picker</span><span class="tag">session survives a refresh</span></div>
+    </section>
+
+    <section class="part" id="workstation">
+      <div class="part-head">
+        <span class="act">Act 1b · where the analyst works</span>
+        <h2>The workstation: queue, alert and context in one view</h2>
+        <span class="route">/analyst/workstation</span>
+      </div>
+      <div class="prose">
+        <p>SOC consoles put the queue beside the alert, rather than a page per alert. The workstation has three columns: the <strong>alert queue</strong> on the left, the <strong>selected alert</strong> in the centre, and its <strong>context</strong> on the right. Above them, the top bar shows a UTC clock and a <strong>Recorded flows</strong> badge (these are recorded lab flows, not a live feed). The KPI strip counts Critical, Tier 2 candidates, Needs review, Unresolved, Verdicts, False positives, Guardrail actions and Total alerts.</p>
+      </div>
+      <figure class="screen">
+        <div class="frame"><img src="img/demo-guide/01b-workstation.png" alt="The workstation: KPI strip with 996 Critical and 644 Tier 2 candidates, the alert queue with band tabs and Brute Force cards, AL-01958 open in the centre with Claim, Start work, Resolve and Dismiss, and the context rail with the flow diagram and address details" width="1440" height="900"></div>
+        <figcaption><span class="path">/analyst/workstation</span><span>The first alert in queue order opens automatically.</span></figcaption>
+      </figure>
+      <ol class="steps">
+        <li><strong>Band tabs</strong> filter the queue: All · Tier 2 · Needs review · Rule + model · Rule only · Model only · Not flagged, each with its count.</li>
+        <li><strong>Search</strong> a record, IP or rule id (press <kbd>/</kbd> to jump there). Search <code>AL-00478</code> and click its card.</li>
+        <li>Move through the list with <kbd>j</kbd> and <kbd>k</kbd>; the centre and the rail follow the selection. The selection, tab and search live in the address bar.</li>
+        <li>The alert header shows its band, evidence and severity, the flow and capture time, and three meters: <strong>operational score</strong> (feedback moves it), <strong>detection score</strong> (fixed) and <strong>model confidence</strong>.</li>
+      </ol>
+      <figure class="screen">
+        <div class="frame"><img src="img/demo-guide/01c-workstation-al00478.png" alt="AL-00478 selected in the workstation: Web Attack, Critical, Tier 2 candidate, Model only, operational and detection score 99.89, with its flow and both addresses in the context rail" width="1440" height="900"></div>
+        <figcaption><span class="path">AL-00478 in the workstation</span><span>The rail shows what the recording holds about both addresses, and the alert's family.</span></figcaption>
+      </figure>
+      <h3>Triage actions: status and ownership</h3>
+      <div class="prose">
+        <p><strong>Claim</strong> makes you the owner. <strong>Start work</strong> moves the alert to in progress, <strong>Resolve</strong> or <strong>Dismiss</strong> closes it, <strong>Release</strong> hands it back, and <strong>Reopen</strong> brings a closed alert back to in progress. Each action is written to the audit trail. <strong>These never move a score</strong>: status is workflow, not judgement. Only verdicts move scores, and the guardrails bound them.</p>
+      </div>
+      <h3>Tabs</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Tab</th><th>What it holds</th></tr></thead>
+          <tbody>
+            <tr><td>Overview</td><td>The combined explanation, the signature rules (or the "no rule matched" state) and the model's TreeSHAP evidence</td></tr>
+            <tr><td>Verdict</td><td>The score-adjustment chain and the verdict form, with all five verdicts</td></tr>
+            <tr><td>Flow record</td><td>The flow's 5-tuple, sizes and every recorded feature</td></tr>
+            <tr><td>Notes</td><td>A notes thread. Notes are permanent: a correction is a new note</td></tr>
+            <tr><td>History</td><td>Every verdict on the alert, oldest first, amendments included</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="pair">
+        <figure class="screen">
+          <div class="frame"><img src="img/demo-guide/01d-workstation-verdict-tab.png" alt="The Verdict tab for AL-00478: the score-adjustment chain applied as requested, and the verdict form with True Positive and Escalate to Tier 2" width="1440" height="900"></div>
+          <figcaption><span class="path">Verdict tab</span><span>The same verdict form as the full alert page, sized to the column.</span></figcaption>
+        </figure>
+        <figure class="screen">
+          <div class="frame"><img src="img/demo-guide/01e-workstation-notes.png" alt="The Notes tab with an Add a note box and an Add note button" width="1440" height="900"></div>
+          <figcaption><span class="path">Notes tab</span><span>Append-only, with the author and time on each note.</span></figcaption>
+        </figure>
+      </div>
+      <h3>The context rail</h3>
+      <div class="prose">
+        <p><strong>Flow</strong> draws source → destination:port over the protocol. <strong>Addresses in the recording</strong> shows, for each address, its alert count, how many were flagged, when it was first and last seen, its top peers, and <em>All alerts for this address</em>, which searches the queue. Click the address itself to open its full page (Act 2). <strong>Family</strong> shows the family key, members and whether its learning gate is open. <strong>Quick actions</strong> copy the flow indicator or open the full alert page. There are no blocklist, isolate or ticket buttons, because these are recorded flows, not a live network.</p>
+      </div>
+      <blockquote class="say"><p>This is where an analyst spends the shift: the queue on the left, the evidence in the middle, the context on the right. Claiming and closing an alert is workflow; only a verdict moves a score, and the guardrails decide how far.</p></blockquote>
+      <div class="note"><b>For the story below</b> you can record every verdict either here in the Verdict tab or on the full alert page. The acts use the full page, because its screenshots show each card at a readable size.</div>
+      <div class="proves"><span>Shows</span><span class="tag">three-column workstation</span><span class="tag">KPI strip</span><span class="tag">band tabs · search · j/k</span><span class="tag">claim · start · resolve · dismiss · release · reopen</span><span class="tag">notes thread</span><span class="tag">address and family context</span></div>
+    </section>
+
+    <section class="part" id="act2">
+      <div class="part-head">
+        <span class="act">Act 2</span>
+        <h2>The dashboard, the queue, and the overview</h2>
+        <span class="route">/analyst/dashboard · /analyst/queue · /analyst/overview · /analyst/entities/ip/:ip</span>
+      </div>
+      <ol class="steps">
+        <li>Click <strong>Dashboard</strong> in the left navigation.</li>
+        <li>Point out the four counters, queue composition, <strong>Needs a human</strong> (the highest-ranked alerts awaiting review), and the breakdowns by attack class and severity.</li>
+        <li>Click <strong>Alert Queue</strong> for the full table. Show both score columns, then set <strong>Band</strong> to <em>Model only</em>.</li>
+      </ol>
+      <figure class="screen">
+        <div class="frame"><img src="img/demo-guide/02-dashboard.png" alt="Analyst dashboard: 5,000 alerts in queue, 996 awaiting review, 644 Tier 2 candidates, 0 moved by feedback, queue composition and Needs a human" width="1440" height="900"></div>
+        <figcaption><span class="path">/analyst/dashboard</span><span>"Moved by feedback" reads 0 until someone records a verdict.</span></figcaption>
+      </figure>
+      <figure class="screen">
+        <div class="frame"><img src="img/demo-guide/03-queue.png" alt="The alert queue: search, band, evidence, severity, attack class, needs review, sort and direction filters above a ranked table" width="1440" height="900"></div>
+        <figcaption><span class="path">/analyst/queue</span><span>Ranked by band, then operational score. "Showing 1–50 of 5,000".</span></figcaption>
+      </figure>
+      <blockquote class="say"><p>Every flow becomes an alert, including the four thousand nobody flagged. There are two score columns. <em>Detection</em> is what the detectors said, and it never changes. <em>Operational</em> is what analysts move, and it is how you see a human's effect.</p></blockquote>
+      <h3>Every filter, with the count you will see</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Control</th><th>Try</th><th class="num">Rows</th></tr></thead>
+          <tbody>
+            <tr><td>Search</td><td>A rule ID: <code>SIG-SSH-BRUTE-FORCE</code>, then Enter</td><td class="num">54</td></tr>
+            <tr><td>Search</td><td>An address: <code>172.31.69.28</code></td><td class="num">215</td></tr>
+            <tr><td>Band</td><td><em>Tier 2 candidate</em></td><td class="num">644</td></tr>
+            <tr><td>Band</td><td><em>Model only</em></td><td class="num">352</td></tr>
+            <tr><td>Attack class</td><td><em>Web Attack</em></td><td class="num">61</td></tr>
+            <tr><td>Attack class</td><td><em>Infiltration</em></td><td class="num">35</td></tr>
+            <tr><td>Needs review only</td><td>Tick it</td><td class="num">996</td></tr>
+            <tr><td>Evidence · Severity · Sort · Direction</td><td>Narrow or re-order the view; <em>Queue order</em> is the ranking the evaluation measured</td><td class="num">—</td></tr>
+            <tr><td>Clear filters · Previous · Next</td><td>50 rows per page</td><td class="num">—</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <figure class="screen">
+        <div class="frame"><img src="img/demo-guide/04-queue-filtered.png" alt="The queue filtered to the Model only band, showing 1–50 of 352" width="1440" height="900"></div>
+        <figcaption><span class="path">/analyst/queue?queueClass=ml_only</span><span>Filters live in the address bar, so Refresh and Back keep the view.</span></figcaption>
+      </figure>
+      <h3>Overview: who talked, and when</h3>
+      <ol class="steps">
+        <li>Click <strong>Overview</strong> in the left navigation, before any verdict is recorded.</li>
+        <li>Point out <strong>Flow volume by capture hour</strong>: one bar per hour of the recording, the flagged share at its base. The subtitle says it plainly: when the traffic was captured, not a live rate.</li>
+        <li>Below it: the top source and destination addresses, the top destination ports, alerts by predicted class, the verdicts in force, triage status and guardrail interventions. Every chart is repeated as a table.</li>
+      </ol>
+      <figure class="screen">
+        <div class="frame"><img src="img/demo-guide/04b-overview.png" alt="Overview page: a stacked histogram of flows per capture hour with the flagged share in amber, its hour table, and cards for top source addresses, top destination addresses and top destination ports" width="1440" height="900"></div>
+        <figcaption><span class="path">/analyst/overview</span><span>The busiest source, <span class="mono">18.219.193.20</span>, accounts for 197 flows, every one flagged.</span></figcaption>
+      </figure>
+      <h3>One address, in full</h3>
+      <ol class="steps">
+        <li>Click any address in the Overview's tables, or in the workstation's context rail. Open <code>18.218.115.60</code>, the source of the Web Attacks in Act 3.</li>
+        <li>Walk the cards: <strong>Summary</strong> (77 alerts, all as source, 76 flagged, first and last seen), <strong>Queue bands</strong>, <strong>Attack classes</strong>, <strong>Verdicts in force</strong>, <strong>Top peers</strong> and <strong>Destination ports</strong>.</li>
+        <li>Click the peer <code>172.31.69.28</code> to follow the traffic to its destination, or <strong>All alerts for this address</strong> to open the workstation searched for it.</li>
+      </ol>
+      <figure class="screen">
+        <div class="frame"><img src="img/demo-guide/04c-ip-entity.png" alt="IP address page for 18.218.115.60: summary of 77 alerts, 77 as source, 76 flagged; queue bands Tier 2 candidate 76 and Nothing flagged it 1; attack classes Web Attack 59 and DDoS 17; no verdicts yet; top peers 172.31.69.28 and 172.31.69.25; destination port 80" width="1440" height="900"></div>
+        <figcaption><span class="path">/analyst/entities/ip/18.218.115.60</span><span>Everything the recording says about one address, and nothing it does not.</span></figcaption>
+      </figure>
+      <blockquote class="say"><p>This is the analyst's next question about an address: what else did it do? The page answers only from the recorded flows. There is no geolocation or threat-intelligence panel, because the recording holds none.</p></blockquote>
+      <div class="proves"><span>Shows</span><span class="tag">KPI counters</span><span class="tag">queue composition</span><span class="tag">attack-class and severity charts</span><span class="tag">search · filters · sort · paging</span><span class="tag">both score columns</span><span class="tag">capture-hour histogram</span><span class="tag">top talkers and ports</span><span class="tag">IP address page · peer pivot</span></div>
+    </section>
+
+    <section class="part" id="act3">
+      <div class="part-head">
+        <span class="act">Act 3 · the centrepiece</span>
+        <h2>AL-00478: a confident model that is wrong</h2>
+        <span class="route">/analyst/alerts/8f22e741-c776-4999-b347-17a0c42aca6a</span>
+      </div>
+      <ol class="steps">
+        <li>In the Alert Queue, click <strong>Clear filters</strong>, search <code>AL-00478</code> and open it (or use <em>Open full page</em> from the workstation). It is a <span class="band b-tier2">Tier 2 candidate</span> at <strong>99.89</strong>, rank 639 of 5,000.</li>
+        <li>Walk the four evidence panels: <strong>Flow</strong>, <strong>Signature rules</strong>, <strong>Model prediction</strong>, <strong>Combined explanation</strong>.</li>
+        <li>Show <strong>Similar alerts (family)</strong>: Web Attack · port 80 · tcp, 61 members, learning gate closed.</li>
+        <li>In <strong>Record a verdict</strong>, choose <strong>False Positive</strong> (requests −30.00), optionally add a note, and click <strong>Record verdict</strong>.</li>
+        <li><strong>Refresh the page.</strong> The new score is still there.</li>
+      </ol>
+      <figure class="screen">
+        <div class="frame"><img src="img/demo-guide/05-alert-header.png" alt="Alert detail for AL-00478 with Tier 2 candidate, Model only and Critical badges, and the Scores card" width="1440" height="900"></div>
+        <figcaption><span class="path">AL-00478</span><span>Band, evidence and severity badges, plus the "→ Tier 2 candidate" marker.</span></figcaption>
+      </figure>
+      <figure class="screen">
+        <div class="frame"><img src="img/demo-guide/06-evidence-panels.png" alt="The four evidence panels for AL-00478: flow details, an empty signature panel saying no rule matched, the model prediction with TreeSHAP features, and the combined explanation" width="1440" height="900"></div>
+        <figcaption><span class="path">Four evidence panels</span><span>"No rule matched (ML-only alert)." is a state, not an error.</span></figcaption>
+      </figure>
+      <div class="prose">
+        <p><strong>What the model says.</strong> Web Attack at 99.9% confidence. The panel lists the features that pushed it <em>towards</em> that call: <code>Fwd Packet Length Std</code> = 238.825 (+2.838), <code>Down/Up Ratio</code> = 0.833 (+0.914), <code>Dst Port</code> = 80 (+0.563). It also lists those that pushed <em>away</em>, led by <code>Fwd Packet Length Mean</code> (−0.214). The explanation passes its additivity check, so it accounts for the prediction exactly.</p>
+        <p><strong>What ground truth says:</strong> benign. The system itself never sees ground truth.</p>
+      </div>
+      <blockquote class="say"><p>The model is 99.9% sure this is a Web Attack, and no rule agrees. It's benign. The panels inform the decision; the decision is the analyst's.</p></blockquote>
+      <div class="pair">
+        <figure class="screen">
+          <div class="frame"><img src="img/demo-guide/08-verdict-form.png" alt="The Record a verdict card with the five verdicts True Positive, Escalate to Tier 2, Needs investigation, Benign Positive and False Positive; False Positive is selected, requesting −30.00"></div>
+          <figcaption><span class="path">Record a verdict</span><span>Each verdict shows the change it requests before you commit.</span></figcaption>
+        </figure>
+        <figure class="screen">
+          <div class="frame"><img src="img/demo-guide/09-verdict-capped.png" alt="Verdict outcome: Capped by a guardrail, the score chain, and the sentence that the Critical floor held the score at 70"></div>
+          <figcaption><span class="path">Verdict outcome</span><span>The guardrail acts, and says why.</span></figcaption>
+        </figure>
+      </div>
+      <h3>The score-adjustment chain</h3>
+      <div class="chain" role="group" aria-label="Score chain for AL-00478">
+        <div class="step"><small>Detection score</small><b>99.89</b></div><span class="to" aria-hidden="true">→</span>
+        <div class="step"><small>Requested change</small><b>−30.00</b></div><span class="to" aria-hidden="true">→</span>
+        <div class="step warn"><small>Guardrail</small><b>Bound</b></div><span class="to" aria-hidden="true">→</span>
+        <div class="step"><small>Applied change</small><b>−29.89</b></div><span class="to" aria-hidden="true">→</span>
+        <div class="step final"><small>Operational score</small><b>70.00</b></div>
+      </div>
+      <div class="prose">
+        <p>It is labelled <strong>Capped by a guardrail</strong>, with the guardrail's own sentence: <em>"This alert is Critical, so its score was held at the floor of 70."</em> The band moves from <span class="band b-tier2">Tier 2 candidate</span> to <span class="band b-model">Model only</span>, and the alert drops from rank 639 to <strong>rank 996</strong>.</p>
+      </div>
+      <blockquote class="say"><p>The verdict is recorded in full. The guardrail limited how far one verdict may move a Critical alert; it didn't overrule the analyst's finding. And it gives the number.</p></blockquote>
+      <div class="pair">
+        <figure class="screen">
+          <div class="frame"><img src="img/demo-guide/10-chain-persisted.png" alt="After a refresh, the Score adjustment card still shows the capped chain ending at 70.00"></div>
+          <figcaption><span class="path">After Refresh</span><span>The adjusted score persists.</span></figcaption>
+        </figure>
+        <figure class="screen">
+          <div class="frame"><img src="img/demo-guide/11-history.png" alt="Verdict history: False Positive, requested −30.00, applied −29.89, capped, marked In effect"></div>
+          <figcaption><span class="path">Verdict history</span><span>Oldest first. A newer verdict supersedes an older one, and both stay listed.</span></figcaption>
+        </figure>
+      </div>
+      <h3>For contrast: an alert a rule can explain</h3>
+      <div class="prose"><p>Open <code>AL-01958</code>, a Brute Force alert where the rule <code>SIG-FTP-BRUTE-FORCE</code> and the model agree (<span class="band b-corrob">Corroborated</span> evidence). The signature panel lists each clause beside the value this flow actually had, so anyone can check the match.</p></div>
+      <div class="pair">
+        <figure class="screen">
+          <div class="frame"><img src="img/demo-guide/12-signature-rule.png" alt="Signature rules panel for AL-01958 listing SIG-FTP-BRUTE-FORCE clauses: protocol TCP, destination port 21, flow packets per second at least 10, total forward packets at least 1, flow duration at most 5,000,000"></div>
+          <figcaption><span class="path">AL-01958 · Signature rules</span><span>Required against observed, clause by clause.</span></figcaption>
+        </figure>
+        <figure class="screen">
+          <div class="frame"><img src="img/demo-guide/13-combined-explanation.png" alt="Combined explanation for AL-01958: a signature rule and the model agree on Brute Force"></div>
+          <figcaption><span class="path">AL-01958 · Combined explanation</span><span>A sentence an analyst can repeat in a handover.</span></figcaption>
+        </figure>
+      </div>
+      <div class="proves"><span>Shows</span><span class="tag">four evidence panels</span><span class="tag">TreeSHAP towards / away</span><span class="tag">rule clauses vs observed</span><span class="tag">verdict form</span><span class="tag">score-adjustment chain</span><span class="tag">Critical floor guardrail</span><span class="tag">persistence across refresh</span><span class="tag">verdict history</span></div>
+    </section>
+
+    <section class="part" id="act4">
+      <div class="part-head">
+        <span class="act">Act 4</span>
+        <h2>AL-03086: the attack both detectors missed</h2>
+        <span class="route">/analyst/alerts/048f12e7-56db-470b-a69d-714c54fe0bb7</span>
+      </div>
+      <ol class="steps">
+        <li>Search <code>AL-03086</code> and open it: <span class="band b-none">Nothing flagged it</span>, score <strong>36.94</strong>. Ground truth says it is an <strong>attempted Web Attack</strong>.</li>
+        <li>Choose <strong>True Positive</strong> (requests +10.00) and click <strong>Record verdict</strong>.</li>
+      </ol>
+      <figure class="screen narrow">
+        <div class="frame"><img src="img/demo-guide/14-confirm-applied.png" alt="Verdict outcome for AL-03086: Applied as requested, 36.94 to 46.94, band Nothing flagged it to Model only"></div>
+        <figcaption><span class="path">AL-03086 · outcome</span><span>36.94 → <b>46.94</b>, applied as requested. Band: Nothing flagged it → Model only.</span></figcaption>
+      </figure>
+      <blockquote class="say"><p>No guardrail needed to act here. Be honest about how far it moved: it leaves the bottom band, but it only climbs from rank 998 to 997, because it already led the unflagged alerts. By design, one confirmation moves one band.</p></blockquote>
+      <div class="proves"><span>Shows</span><span class="tag">a human catches a missed attack</span><span class="tag">verdict applied without intervention</span><span class="tag">band promotion</span></div>
+    </section>
+
+    <section class="part" id="act5">
+      <div class="part-head">
+        <span class="act">Act 5</span>
+        <h2>Three agreeing verdicts teach a family</h2>
+        <span class="route">Port Scan · port 445 · tcp — five members</span>
+      </div>
+      <ol class="steps">
+        <li>Open <code>AL-01696</code> and record <strong>True Positive</strong>. The outcome reads <em>"Similar-alert learning did not apply"</em>: 1 of the 3 required learning verdicts.</li>
+        <li>Do the same for <code>AL-03873</code>: 2 of 3.</li>
+        <li>Do the same for <code>AL-03153</code>. The outcome now reads <strong>"Similar-alert learning applied: 2 other alerts in this family moved."</strong></li>
+        <li>Search <code>AL-03044</code>, then <code>AL-04526</code>. Both are now <span class="band b-tier2">Tier 2 candidate</span>, with <strong>no verdict of their own</strong>.</li>
+      </ol>
+      <div class="pair">
+        <figure class="screen">
+          <div class="frame"><img src="img/demo-guide/15-family-gate-open.png" alt="Verdict outcome for AL-03153 saying similar-alert learning applied and 2 other alerts in this family moved"></div>
+          <figcaption><span class="path">AL-03153 · outcome</span><span>The third agreeing verdict opens the gate.</span></figcaption>
+        </figure>
+        <figure class="screen">
+          <div class="frame"><img src="img/demo-guide/16-family-open.png" alt="Similar alerts (family) card with the learning gate Open and True Positive as the dominant verdict"></div>
+          <figcaption><span class="path">Similar alerts (family)</span><span>Gate open; all three verdicts agree.</span></figcaption>
+        </figure>
+      </div>
+      <figure class="screen">
+        <div class="frame"><img src="img/demo-guide/17-untouched-promoted.png" alt="Queue search for AL-03044 showing it in the Tier 2 candidate band without a Verdict recorded marker"></div>
+        <figcaption><span class="path">/analyst/queue?search=AL-03044</span><span>Moved by its family's learning, not by a verdict of its own.</span></figcaption>
+      </figure>
+      <blockquote class="say"><p>One analyst cannot move a family; three who agree can. Nothing outside the family moved, and all five alerts are real Port Scans. The same mechanism can go wrong, though, and the evaluator view shows where it did.</p></blockquote>
+      <h3>The analyst's other two views</h3>
+      <div class="pair">
+        <figure class="screen">
+          <div class="frame"><img src="img/demo-guide/18-investigations.png" alt="Investigations page listing every recorded verdict, newest first, with the verdicts True Positive and False Positive"></div>
+          <figcaption><span class="path">/analyst/investigations</span><span>Every verdict, newest first, linked to its alert.</span></figcaption>
+        </figure>
+        <figure class="screen">
+          <div class="frame"><img src="img/demo-guide/19-feedback-impact.png" alt="Feedback Impact page with tables of similar-alert learning and guardrail actions"></div>
+          <figcaption><span class="path">/analyst/feedback-impact</span><span>What the verdicts changed, and what the guardrails stopped.</span></figcaption>
+        </figure>
+      </div>
+      <figure class="screen">
+        <div class="frame"><img src="img/demo-guide/20-dashboard-after.png" alt="Analyst dashboard after the verdicts, with Moved by feedback no longer zero"></div>
+        <figcaption><span class="path">/analyst/dashboard</span><span>Back on the dashboard, "Moved by feedback" now counts real movement.</span></figcaption>
+      </figure>
+      <div class="proves"><span>Shows</span><span class="tag">similar-alert learning</span><span class="tag">3-verdict agreement gate</span><span class="tag">untouched members promoted</span><span class="tag">Investigations</span><span class="tag">Feedback Impact</span></div>
+    </section>
+
+    <section class="part" id="act6">
+      <div class="part-head">
+        <span class="act">Act 6 · optional, for questions</span>
+        <h2>Every other verdict, and every other guardrail</h2>
+        <span class="route">Each row is a different family, so the story above is unaffected</span>
+      </div>
+      <div class="prose"><p>Use these when someone asks <em>"what happens if…"</em>. Every result below was recorded against the demo database.</p></div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Open</th><th>Verdict</th><th class="num">Requests</th><th>What happens</th></tr></thead>
+          <tbody>
+            <tr><td class="mono">AL-01707</td><td>False Positive</td><td class="num">−30.00</td><td>Infiltration, score 100. <strong>Capped</strong> at 75, so only −25 is applied: <em>"Infiltration alerts are held at a floor of 75."</em></td></tr>
+            <tr><td class="mono">AL-01973</td><td>Benign Positive</td><td class="num">−15.00</td><td>DoS, score 100. Applied in full, 100 → <strong>85.00</strong>; no guardrail binds.</td></tr>
+            <tr><td class="mono">AL-03066</td><td>Escalate to Tier 2</td><td class="num">+15.00</td><td>DoS, already at 100. <strong>Capped</strong>: <em>"Scores are bounded to 0-100, so the change was clamped at 100."</em> The band still moves from Model only to Tier 2 candidate, because escalation is a routing decision.</td></tr>
+            <tr><td class="mono">AL-04260</td><td>Needs investigation</td><td class="num">±0.00</td><td>Nothing flagged it, 14.06. Keeps the alert open without moving it, and teaches its family nothing.</td></tr>
+            <tr><td class="mono">AL-04260</td><td>Then: False Positive</td><td class="num">−30.00</td><td>A <strong>new verdict replaces</strong> the old one. Verdict history keeps both; the older is marked Superseded.</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="note"><b>Not demonstrable on this data:</b> the refusal guardrail. A rule-only alert the model disputes cannot be moved by feedback at all. Unit tests cover it, but the corrected dataset contains no rule-only alerts, so no screen can show it.</div>
+      <div class="proves"><span>Shows</span><span class="tag">all five verdicts</span><span class="tag">Infiltration floor</span><span class="tag">score clamp</span><span class="tag">escalation to Tier 2</span><span class="tag">verdict amendment</span></div>
+    </section>
+
+    <section class="part" id="act7">
+      <div class="part-head">
+        <span class="act">Act 7</span>
+        <h2>The administrator</h2>
+        <span class="route">/admin/status · /admin/guardrails · /admin/audit</span>
+      </div>
+      <ol class="steps">
+        <li><strong>Sign out</strong>, then sign in as <code>admin</code> / <code>admin-demo</code>. The navigation changes, and analyst pages are no longer reachable.</li>
+        <li><strong>System Status</strong>: a row of operations figures (total alerts, needs review, Tier 2, verdicts, guardrail actions, unresolved), service health, <strong>Detector hits</strong> (how many alerts the rule and the model flagged together, and the model alone), and the latest detection run. <strong>Check again</strong> reports the run; it does not start a new one.</li>
+        <li><strong>Guardrails</strong>: set <em>Critical alert floor</em> to <code>85</code>, type a short reason, and click <strong>Save changes</strong>. The form refuses and says why.</li>
+        <li>Reload the page and scroll to the <strong>Guardrail log</strong>. The cap on AL-00478 is there, with the same sentence the analyst saw.</li>
+        <li><strong>Audit Trail</strong>: every run, verdict, guardrail action, family-learning event and configuration change, plus every claim, status change and assignment made in the workstation. Each event type has its own colour, with its name always written in it. Filter by event type or date, and try <strong>Export CSV</strong>.</li>
+      </ol>
+      <figure class="screen">
+        <div class="frame"><img src="img/demo-guide/21-admin-status.png" alt="System Status: an operations figures row, service health, a Detector hits card with meters for rule-and-model and model-only hits, and the latest detection run, run 1 completed with model xgb-8class-20260911 and rule set s4b-1, with breakdowns by evidence class and queue band"></div>
+        <figcaption><span class="path">/admin/status</span><span>Run 1 · <span class="mono">xgb-8class-20260911</span> · rules <span class="mono">s4b-1</span> · seed 20260911.</span></figcaption>
+      </figure>
+      <div class="pair">
+        <figure class="screen">
+          <div class="frame"><img src="img/demo-guide/22-guardrail-validation.png" alt="Feedback limits form refusing a critical floor of 85, which must be below the critical threshold of 80, and asking for a longer reason"></div>
+          <figcaption><span class="path">Feedback limits</span><span>Five editable settings. The floor must stay below the threshold, and a reason is required.</span></figcaption>
+        </figure>
+        <figure class="screen">
+          <div class="frame"><img src="img/demo-guide/23-guardrail-log.png" alt="Guardrail log listing the capped verdict on AL-00478 with its explanation"></div>
+          <figcaption><span class="path">Guardrail log</span><span>The sentence uses the value in force when the guardrail acted.</span></figcaption>
+        </figure>
+      </div>
+      <figure class="screen">
+        <div class="frame"><img src="img/demo-guide/24-audit-trail.png" alt="Audit Trail with a filter toolbar for event type and dates, a blue Export CSV button, and a table of events whose types are colour-coded pills"></div>
+        <figcaption><span class="path">/admin/audit</span><span>Append-only at the database: <code>UPDATE</code> and <code>DELETE</code> both raise.</span></figcaption>
+      </figure>
+      <div class="note"><b>If you save a real change</b> (say, floor 65 with a proper reason), it is recorded as a configuration change and stays in this database. Set it back to 70, or rebuild the database, before the next audience. An analyst attempting the same change through the API receives <code>403 FORBIDDEN_ROLE</code>.</div>
+      <blockquote class="say"><p>The administrator sees everything the guardrails did, and why. Changing a guardrail needs a reason, and the reason goes into a trail nobody can edit.</p></blockquote>
+      <div class="proves"><span>Shows</span><span class="tag">account separation</span><span class="tag">service health</span><span class="tag">run provenance</span><span class="tag">guardrail form validation</span><span class="tag">guardrail log</span><span class="tag">audit filters</span><span class="tag">CSV export</span></div>
+    </section>
+
+    <section class="part" id="act8">
+      <div class="part-head">
+        <span class="act">Act 8 · close on this</span>
+        <h2>The evaluator, including the result that went the wrong way</h2>
+        <span class="route">/evaluator/scenarios · /evaluator/runs/20260912T032022Z · /evaluator/metrics</span>
+      </div>
+      <ol class="steps">
+        <li><strong>Sign out</strong>, then sign in as <code>evaluator</code> / <code>evaluator-demo</code>. Show run <code>20260912T032022Z</code>, its pre-registration (rule <code>s15-preregistration-1</code>, 40 verdicts fixed before any arm ran), and <strong>Newest run at a glance</strong>: the three arms side by side, with precision@50 already showing its <span class="neg">−0.020</span> fall against control.</li>
+        <li>Click <strong>Open run →</strong>. Read the banner aloud, then the figures row, <strong>What was compared</strong> beside <strong>What the guardrails prevented</strong>, and the <strong>Arms</strong>, <strong>Deltas</strong> and <strong>Who moved</strong> tables.</li>
+        <li>Click <strong>Detection Metrics</strong>: the testbed caution, the figures row, the per-class table and a precision / recall / F1 panel for each class, then precision at k and score saturation.</li>
+      </ol>
+      <figure class="screen">
+        <div class="frame"><img src="img/demo-guide/25-eval-scenarios.png" alt="Evaluation scenarios listing run 20260912T032022Z, the newest run at a glance with arms A-control at precision@50 1.000 and B-treatment and C-guardrails-off at 0.980, a −0.020 change each, and the pre-registration"></div>
+        <figcaption><span class="path">/evaluator/scenarios</span><span>Three arms with the same data, model, rules and seed; only feedback and guardrails differ.</span></figcaption>
+      </figure>
+      <figure class="screen">
+        <div class="frame"><img src="img/demo-guide/26-eval-run.png" alt="Evaluation run page with an amber banner saying precision fell under feedback, a figures row of 40 verdicts, 3 arms, detection identical and the commit, and the comparison beside what the guardrails prevented"></div>
+        <figcaption><span class="path">/evaluator/runs/20260912T032022Z</span><span>The banner comes before the table.</span></figcaption>
+      </figure>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Arm</th><th>Feedback</th><th>Guardrails</th><th class="num">Precision@50</th><th class="num">FPs in top 50</th><th class="num">Mean rank of attacks</th><th>Guardrail actions</th></tr></thead>
+          <tbody>
+            <tr><td class="mono">A-control</td><td>Off</td><td>On</td><td class="num">1.000</td><td class="num">0</td><td class="num">510.20</td><td>none</td></tr>
+            <tr><td class="mono">B-treatment</td><td>On</td><td>On</td><td class="num">0.980</td><td class="num">1</td><td class="num">511.43</td><td>capped 40</td></tr>
+            <tr><td class="mono">C-guardrails-off</td><td>On</td><td>Off</td><td class="num">0.980</td><td class="num">1</td><td class="num">511.43</td><td>capped 40</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="pair">
+        <figure class="screen">
+          <div class="frame"><img src="img/demo-guide/27-eval-deltas.png" alt="Deltas card: treatment minus control, precision at 10 −0.100, precision at 50 −0.020, false positives in top 50 −1"></div>
+          <figcaption><span class="path">Deltas</span><span>Treatment − Control: precision@10 <span class="neg">−0.100</span>, precision@50 <span class="neg">−0.020</span>, shown as measured.</span></figcaption>
+        </figure>
+        <figure class="screen">
+          <div class="frame"><img src="img/demo-guide/28-eval-who-moved.png" alt="Who moved card: 805 same-family alerts with 200 promoted and 2 benign promoted, one benign alert reaching rank 1, and 4,155 unrelated alerts that did not move"></div>
+          <figcaption><span class="path">Who moved</span><span>None of the 4,155 unrelated alerts moved. Two benign alerts were promoted, and one reached <b>rank 1</b>.</span></figcaption>
+        </figure>
+      </div>
+      <blockquote class="say"><p>Detection is identical across all three arms: feedback reordered the queue and never touched the detector. The control queue was already near-perfect, so feedback could only disturb it, and precision fell. Family learning also promoted a benign alert to rank 1. We report that, not just the numbers that flatter the design. And the guardrails didn't bind on this sequence, because it had no dismissals; that's a result too.</p></blockquote>
+      <figure class="screen">
+        <div class="frame"><img src="img/demo-guide/29-eval-metrics.png" alt="Detection Metrics page with the testbed caution, a figures row of macro F1 0.988, 5,000 alerts, 1,000 attacks and the run id, and the per-class table"></div>
+        <figcaption><span class="path">/evaluator/metrics</span><span>Macro F1 0.988, measured against ground truth the system never sees.</span></figcaption>
+      </figure>
+      <div class="pair">
+        <figure class="screen">
+          <div class="frame"><img src="img/demo-guide/30-per-class.png" alt="Per-class metrics for all eight classes as a table, then one panel per class with precision, recall and F1 meters; meters below 0.99 are amber"></div>
+          <figcaption><span class="path">Per class</span><span>A panel per class, amber below 0.99, so Infiltration (F1 0.933) and Web Attack (0.975) stand out rather than hiding among eight near-identical bars.</span></figcaption>
+        </figure>
+        <figure class="screen">
+          <div class="frame"><img src="img/demo-guide/31-saturation.png" alt="Score saturation card: 975 of 996 flagged alerts share the maximum score, with 13 distinct scores"></div>
+          <figcaption><span class="path">Score saturation</span><span>975 of 996 flagged alerts share the maximum score, so a promotion among them has nowhere to go.</span></figcaption>
+        </figure>
+      </div>
+      <div class="note"><b>Say it before you're asked:</b> the 0.99 F1 is a property of this testbed, where a single tool generated each attack class. It is not a claim about real-world traffic, and the page says so too.</div>
+      <div class="proves"><span>Shows</span><span class="tag">pre-registration</span><span class="tag">three-arm comparison</span><span class="tag">deltas as measured</span><span class="tag">movement and leakage check</span><span class="tag">guardrails prevented</span><span class="tag">per-class metrics</span><span class="tag">precision at k</span><span class="tag">saturation</span></div>
+    </section>
+
+    <section class="part" id="dataset">
+      <div class="part-head">
+        <span class="act">The evidence behind the demo</span>
+        <h2>The dataset: which one, why, and what is in it</h2>
+      </div>
+      <div class="prose">
+        <p><strong>Which.</strong> CSE-CIC-IDS2018 — the <em>improved</em> archive (<code>CSECICIDS2018_improved.zip</code>), a collaboration between the Canadian Institute for Cybersecurity and AWS: realistic benign background traffic against AWS-hosted services, with labelled attacks launched against them.</p>
+        <p><strong>Why this one.</strong> Four reasons, each a finding of ours rather than a convenience: <em>(1) corrected labels</em> — our own pre-analysis found Infiltration records mislabelled in the original labels, and the improved archive carries the corrections; <em>(2) feature provenance</em> — the same team's CICFlowMeter defines the flow features, so the planned exporter (S17) reproduces the training features exactly: no train/serve skew; <em>(3) realistic benign traffic</em> — a live AWS estate under attack, not synthetic flows, which is what makes the false-positive story honest; <em>(4) per-flow features and labels</em> — exactly what ranking, guardrails and evaluation need.</p>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>What the demo sample holds</th><th>Value</th></tr></thead>
+          <tbody>
+            <tr><td>Source rows considered</td><td class="mono">63,195,145</td></tr>
+            <tr><td>Demo sample (disjoint from training, Q20)</td><td class="mono">5,000 flows · seed 20260911</td></tr>
+            <tr><td>Benign</td><td class="mono">4,000</td></tr>
+            <tr><td>Attacks — 7 classes</td><td class="mono">DoS 200 · DDoS 200 · Brute Force 200 · Botnet 150 · Port Scan 150 · Web Attack 60 · Infiltration 40</td></tr>
+            <tr><td>Capture window</td><td class="mono">14 Feb 2018 (recorded — the console says so)</td></tr>
+            <tr><td>Per flow</td><td>CIC feature vector, addresses, ports, protocol, duration, packets, bytes, label, attempted flag</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="note"><b>Every flow becomes an alert</b> — all 5,000. The 1,000 flagged sit in the evidence bands; the 4,000 nobody flagged are the queue's bottom band and the evaluation's denominator. There is no cherry-picked alert list.</div>
+      <div class="proves"><span>Shows</span><span class="tag">dataset provenance</span><span class="tag">class balance</span><span class="tag">why 2018 improved</span></div>
+    </section>
+
+    <section class="part" id="analysis">
+      <div class="part-head">
+        <span class="act">The evidence behind the demo</span>
+        <h2>Analysis, before and after</h2>
+      </div>
+      <h3>Before we built — what the pre-analysis found</h3>
+      <div class="prose">
+        <p><strong>Notebooks 01–03, over frozen fixtures:</strong> the Infiltration mislabelling (above); the XGBoost retrain to 8 classes with native TreeSHAP explanations; and a held-out re-test of the tuned rules — precision <strong>0.9999</strong>, recall <strong>0.1993</strong> over 250,655 unseen rows, 2 false positives in 30,025 hits. High precision and knowingly low recall: rules exist to give a <em>checkable reason</em>, not to catch everything.</p>
+        <p><strong>The assumption we withdrew.</strong> The plan assumed the two detectors were complementary. On corrected data they are not: the signature layer adds no detections, it adds a reason a human can check. Fusion was re-specified around that (evidence classes, CEF v1.8) — the honest redesign, logged as a withdrawn claim.</p>
+        <p><strong>The gap that made tuning moot.</strong> Every flagged flow scores 81.3–100; every unflagged flow 0–42.77; nothing scores in between. Any critical threshold from 42.78 to 81.3 produces the identical queue — recorded as decision Q23, which is why the parameters are configuration, not code.</p>
+      </div>
+      <h3>After we built — what the evaluation measured</h3>
+      <div class="prose">
+        <p><strong>S15, the three-arm evaluation</strong> (control · family learning · guardrails-off) is the post-analysis, and the evaluator account shows it:</p>
+        <p><strong>Detection never moved.</strong> Per-class metrics are identical across all three arms — feedback reorders the queue and cannot touch the detector. <strong>Learning works and does not leak:</strong> similar-alert learning moved family members and no ground truth escaped. <strong>And the result that went the wrong way:</strong> precision@50 fell <strong>1.000 → 0.980</strong> (Δ −0.020) under feedback, because family learning promoted a benign alert to rank 1 — the control queue was already perfect, so feedback could only disturb it. We ship that number as the headline, not a footnote. Macro F1 0.99, stated as a property of the testbed.</p>
+      </div>
+      <div class="proves"><span>Shows</span><span class="tag">pre-analysis findings</span><span class="tag">withdrawn assumption</span><span class="tag">three-arm result</span><span class="tag">the wrong-way delta, shown</span></div>
+    </section>
+
+    <section class="part" id="decisions">
+      <div class="part-head">
+        <span class="act">The evidence behind the demo</span>
+        <h2>What we decided, and why</h2>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Decision</th><th>What it says</th><th>Why</th></tr></thead>
+          <tbody>
+            <tr><td>Corrected dataset</td><td>CSE-CIC-IDS2018 improved, not 2017 or the original labels</td><td>Our pre-analysis found the Infiltration mislabelling; training on wrong labels teaches wrong lessons</td></tr>
+            <tr><td>Q18</td><td>Attempted attacks are malicious (<code>is_attempted</code>)</td><td>A failed attack is still an attack to triage</td></tr>
+            <tr><td>Q19</td><td>Port Scan split from Infiltration as its own class</td><td>Different intent, different response</td></tr>
+            <tr><td>Q20</td><td>Training and demo samples are disjoint</td><td>The demo must not be a memorisation test</td></tr>
+            <tr><td>Q22</td><td>Evidence priority: corroborated &gt; signature override &gt; model-only</td><td>A rule the model disputes outranks a bare model call — it is checkable (invariant I5)</td></tr>
+            <tr><td>Q23</td><td>Accept the fusion defaults</td><td>The 42.77–81.3 score gap: any threshold in it gives the identical queue</td></tr>
+            <tr><td>Q24/Q25</td><td>Five queue bands, Tier 2 candidates on top</td><td>Escalation must be visible before evidence class</td></tr>
+            <tr><td>Q29</td><td>Formula C2 (Elo-style) for family learning</td><td>Chosen by experiment over fixed-step, weighted and uncertainty variants</td></tr>
+            <tr><td>Q30</td><td>Agreement gate: ≥ 3 verdicts, dominant ≥ 0.67, no tie</td><td>Run 2 showed a single verdict moving a whole family — that is one analyst's opinion re-ranking the queue</td></tr>
+            <tr><td>E2</td><td>An explicit <em>Escalate to Tier 2</em> verdict</td><td>Tier 1's escalation must be a recorded decision, not a side effect</td></tr>
+            <tr><td>S18a</td><td>Three real accounts replace the role-switch stub</td><td>A view is a person: identity comes from the account, enforcement from the server</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="proves"><span>Shows</span><span class="tag">decision log</span><span class="tag">experiment-chosen constants</span><span class="tag">withdrawn assumptions on record</span></div>
+    </section>
+
+    <section class="part" id="different">
+      <div class="part-head">
+        <span class="act">The evidence behind the demo</span>
+        <h2>What makes this different from a commercial IDS</h2>
+      </div>
+      <div class="prose">
+        <p>A conventional IDS — however good its detectors — treats the analyst as a <em>consumer</em>: alerts arrive with a score, the analyst closes or escalates them, and everything they learned ends in a ticket the engine never reads. This system closes that loop, and bounds it:</p>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th></th><th>This console</th><th>A typical commercial IDS</th></tr></thead>
+          <tbody>
+            <tr><td><strong>The analyst teaches the engine</strong></td><td>A verdict re-ranks future similar alerts behind an agreement gate — three analysts must agree</td><td>Verdicts end in a ticket; the ranking never learns from them</td></tr>
+            <tr><td><strong>Guardrails with sentences</strong></td><td>Every bound on analyst influence (+20 / −30, floors, immune bands) is explained on screen, in prose</td><td>Scores move silently, or analyst overrides are unlimited</td></tr>
+            <tr><td><strong>Two scores, one frozen</strong></td><td>Detection never moves; Operational is what humans moved — the effect is visible and auditable</td><td>One opaque score that mixes detector and human edits</td></tr>
+            <tr><td><strong>Evidence you can check</strong></td><td>Rule clauses beside the values this flow actually had; SHAP towards <em>and away</em></td><td>"Model says malicious, confidence 99%"</td></tr>
+            <tr><td><strong>No lone analyst moves a family</strong></td><td>Agreement gate + demotion shield: noisy verdicts cannot thrash the queue</td><td>Not applicable — there is no family learning to abuse</td></tr>
+            <tr><td><strong>Append-only by construction</strong></td><td>Verdicts, notes and audit refuse UPDATE and DELETE at the database</td><td>Case notes are editable records</td></tr>
+            <tr><td><strong>The product measures itself</strong></td><td>A built-in evaluator: three arms, pre-registration, wrong-way deltas displayed</td><td>Accuracy claims with no harness you can run</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="note"><b>The one-line version:</b> in a normal IDS the human is downstream of the model; here the model is downstream of the human — bounded, explained, and measured.</div>
+      <div class="proves"><span>Shows</span><span class="tag">closed feedback loop</span><span class="tag">bounded human influence</span><span class="tag">explainability as evidence</span><span class="tag">self-measurement</span></div>
+    </section>
+
+    <section class="part" id="shipping">
+      <div class="part-head">
+        <span class="act">The evidence behind the demo</span>
+        <h2>Shipping it to a customer</h2>
+      </div>
+      <div class="prose">
+        <p><strong>What ships today</strong> is a lab appliance: an offline batch pipeline, a SQLite database, the API and the built console, three seeded accounts. It replays recorded traffic — by design, for evaluation.</p>
+        <p><strong>The production path is planned, not improvised:</strong></p>
+      </div>
+      <ol class="steps">
+        <li><strong>Flow ingestion (S17).</strong> A CICFlowMeter-fork exporter turns the customer's SPAN/TAP/PCAP into the same feature schema the model trained on — the dataset's provenance is what guarantees no train/serve skew.</li>
+        <li><strong>Backend hardening (S18).</strong> PostgreSQL (the schema was written for it in S2), real user management and provisioning instead of seeded accounts, the remaining endpoint surface, append-only guarantees re-proven on Postgres.</li>
+        <li><strong>Deployment shape.</strong> On-prem, as a container/VM beside the customer's existing SIEM — the pipeline and its database stay on the customer's site. A SOC does not ship its flows to a vendor, and we do not ask it to.</li>
+        <li><strong>Per-customer configuration.</strong> Guardrail settings and the severity chart are admin-configurable at runtime and snapshotted per run; model and rule versions are recorded on every run, so any past decision is replayable.</li>
+        <li><strong>Rollout pattern.</strong> Replay the customer's historical flows first (shadow mode), tune the guardrails on their traffic, then put Tier 1 on the console <em>beside</em> the incumbent IDS — the ranked queue and the two score columns make the cutover observable, not a leap of faith.</li>
+      </ol>
+      <div class="proves"><span>Shows</span><span class="tag">deployment shape</span><span class="tag">data stays on site</span><span class="tag">shadow-mode rollout</span><span class="tag">versioned replay</span></div>
+    </section>
+
+    <section class="part" id="reset">
+      <div class="part-head">
+        <span class="act">After the demo</span>
+        <h2>Reset and troubleshooting</h2>
+      </div>
+      <pre class="cmd"><span class="c"># in the API terminal: stop it (Ctrl+C), rebuild the database, start it again</span>
+<span class="p">&gt; </span>cd "C:\Users\Glenn Ang\Desktop\SIM Assignments\FYP\CSIT321-Human-in-the-loop_IDS\hitl-ids"
+<span class="p">&gt; </span>.venv\Scripts\activate
+<span class="p">&gt; </span>python scripts/run_detection.py
+<span class="p">&gt; </span>python -m uvicorn apps.api.main:app</pre>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>You see</th><th>Cause</th><th>Fix</th></tr></thead>
+          <tbody>
+            <tr><td>Starting the API ends in <code>TypeError: Router.__init__() got an unexpected keyword argument 'on_startup'</code>, and the paths mention <code>Python312</code></td><td>The project environment isn't active, so the computer's own Python 3.12 ran it (its FastAPI 0.115 doesn't work with its Starlette 1.6)</td><td>From <code>hitl-ids</code>: <code>.venv\Scripts\activate</code>, then run the command again</td></tr>
+            <tr><td><code>python --version</code> prints 3.12 (or anything but 3.11)</td><td>The environment isn't active in this terminal</td><td>Activate it; the prompt should start with <code>(.venv)</code></td></tr>
+            <tr><td>The prompt shows <code>(.venv)</code> but <code>python --version</code> still prints 3.12, and imports fail with <code>Error importing numpy</code></td><td>The environment was created with <code>py -m venv</code> or plain <code>python -m venv</code>, which use Python 3.12. The <code>py</code> launcher does not know about the miniconda Python 3.11</td><td><code>deactivate</code>, delete the <code>.venv</code> folder, then recreate it with the full path: <code>C:\ProgramData\miniconda3\python.exe -m venv .venv</code>, activate, and <code>python -m pip install -r requirements.txt</code></td></tr>
+            <tr><td>PowerShell says <code>Activate.ps1 cannot be loaded because running scripts is disabled</code></td><td>PowerShell's script policy</td><td>Use Command Prompt and <code>.venv\Scripts\activate</code>, or skip activation and call <code>.venv\Scripts\python.exe</code> directly</td></tr>
+            <tr><td><code>No module named 'apps'</code> when starting the API</td><td>You ran uvicorn from the wrong folder</td><td><code>cd</code> into <code>hitl-ids</code> (the folder with <code>apps/</code> and <code>packages/</code>) and run it again</td></tr>
+            <tr><td><code>No module named 'fastapi'</code>, <code>'uvicorn'</code> or <code>'xgboost'</code></td><td>The environment isn't active, or was never installed</td><td>Activate <code>.venv</code>; if it still fails, <code>python -m pip install -r requirements.txt</code></td></tr>
+            <tr><td>Every panel says "Cannot reach the API" · <code>NETWORK_UNREACHABLE</code>; buttons do nothing</td><td>The API isn't running on :8000 (the console on :5173 still loads)</td><td>Start <code>python -m uvicorn apps.api.main:app</code> from <code>hitl-ids/</code>, then reload</td></tr>
+            <tr><td>The workstation loads, but the KPI strip shows dashes, or Claim, notes or the address panel fail with <code>NOT_FOUND</code></td><td>The API was started before the latest code</td><td>Stop the API and start it again</td></tr>
+            <tr><td>"Something went wrong" · <code>DATABASE_MISSING</code> · HTTP 503</td><td>There is no <code>data/demo.db</code></td><td>Run <code>python scripts/run_detection.py</code></td></tr>
+            <tr><td>Alerts already say "Verdict recorded"</td><td>This database was demonstrated on</td><td>Rebuild it, as above</td></tr>
+            <tr><td><code>AL-00478</code> isn't in the Tier 2 band</td><td>An earlier run dismissed it</td><td>Rebuild it</td></tr>
+            <tr><td>Port 8000 or 5173 already in use</td><td>A previous server is still running; two copies of <code>npm run dev</code> is a common one</td><td>Stop it, or close its terminal</td></tr>
+            <tr><td>Tests are skipped</td><td>A test needs a file that isn't there, such as the demo sample or the trained model</td><td>Run pytest with <code>-ra</code> to see each skip's reason</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="part" id="limits">
+      <div class="part-head">
+        <span class="act">Be honest about these</span>
+        <h2>Known limitations</h2>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Limitation</th><th>Why</th></tr></thead>
+          <tbody>
+            <tr><td>Accounts are seeded and their passwords are committed</td><td>It is an offline demo; real user management and provisioning are S18</td></tr>
+            <tr><td>Detection is an offline batch; "Check again" only reports the latest run</td><td>A 21-second job doesn't belong inside a web request</td></tr>
+            <tr><td>The workstation shows recorded flows only: no live feed, geolocation, threat intelligence or response actions</td><td>The recording holds none of that data, so the console does not invent it</td></tr>
+            <tr><td>Families are a coarse key (class, port, protocol, rule)</td><td>That coarseness promoted a benign alert to rank 1 in the evaluation</td></tr>
+            <tr><td>The 0.99 macro F1 is a property of the testbed</td><td>A single tool generated each attack class</td></tr>
+            <tr><td>Feedback could not raise precision on this sample</td><td>The control queue already had precision 1.000 up to k = 200</td></tr>
+            <tr><td><code>AL-03086</code> climbs only one rank</td><td>One confirmation moves one band, and it already led its band</td></tr>
+            <tr><td>The refusal guardrail can't be shown</td><td>The dataset contains no rule-only alerts</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="part" id="coverage">
+      <div class="part-head">
+        <span class="act">Checklist</span>
+        <h2>Feature coverage</h2>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Feature</th><th>Where</th><th>Act</th></tr></thead>
+          <tbody>
+            <tr><td>Account sign-in (bcrypt + JWT), wrong password refused, sign out</td><td class="mono">/login · top bar</td><td>1, 7</td></tr>
+            <tr><td>Workstation: KPI strip, band tabs with counts, search, j/k keyboard triage</td><td class="mono">/analyst/workstation</td><td>1b</td></tr>
+            <tr><td>Claim, start work, resolve, dismiss, release, reopen (audited, never moves a score)</td><td class="mono">Workstation header</td><td>1b</td></tr>
+            <tr><td>Alert notes thread (append-only)</td><td class="mono">Workstation · Notes</td><td>1b</td></tr>
+            <tr><td>Flow diagram, address context and pivot, family summary, quick actions</td><td class="mono">Workstation · context rail</td><td>1b</td></tr>
+            <tr><td>Dashboard counters, queue composition, Needs a human, charts</td><td class="mono">/analyst/dashboard</td><td>2, 5</td></tr>
+            <tr><td>Ranked queue: search, band / evidence / severity / attack-class filters, needs review, sort, paging</td><td class="mono">/analyst/queue</td><td>2</td></tr>
+            <tr><td>Overview: capture-hour histogram, top addresses and ports, predicted classes, verdict and status mix, guardrail interventions</td><td class="mono">/analyst/overview</td><td>2</td></tr>
+            <tr><td>IP address page: summary, bands, classes, verdicts, peers (each a link), ports, workstation pivot</td><td class="mono">/analyst/entities/ip/:ip</td><td>2</td></tr>
+            <tr><td>Four evidence panels, including every flow feature</td><td class="mono">/analyst/alerts/:ref</td><td>3</td></tr>
+            <tr><td>Rule clauses against observed values</td><td class="mono">AL-01958</td><td>3</td></tr>
+            <tr><td>TreeSHAP towards and away, additivity check</td><td class="mono">AL-00478</td><td>3</td></tr>
+            <tr><td>Verdict form: True Positive, Escalate to Tier 2, Needs investigation, Benign Positive, False Positive; investigation note</td><td class="mono">Record a verdict</td><td>3, 4, 6</td></tr>
+            <tr><td>Score-adjustment chain with the guardrail's sentence</td><td class="mono">Score adjustment</td><td>3</td></tr>
+            <tr><td>Critical floor · Infiltration floor · score clamp</td><td class="mono">AL-00478 · AL-01707 · AL-03066</td><td>3, 6</td></tr>
+            <tr><td>Persistence across refresh; verdict history and amendment</td><td class="mono">Verdict history</td><td>3, 6</td></tr>
+            <tr><td>Similar-alert learning, agreement gate, untouched members moved</td><td class="mono">Port Scan / 445</td><td>5</td></tr>
+            <tr><td>Investigations · Feedback Impact</td><td class="mono">/analyst/investigations · /analyst/feedback-impact</td><td>5</td></tr>
+            <tr><td>Operations figures, service health, detector hits and run provenance</td><td class="mono">/admin/status</td><td>7</td></tr>
+            <tr><td>Guardrail settings with validation and a required reason; guardrail log</td><td class="mono">/admin/guardrails</td><td>7</td></tr>
+            <tr><td>Append-only audit trail, filters, CSV export</td><td class="mono">/admin/audit</td><td>7</td></tr>
+            <tr><td>Newest run at a glance: the three arms side by side with the change against control</td><td class="mono">/evaluator/scenarios</td><td>8</td></tr>
+            <tr><td>Pre-registration, three-arm comparison, deltas as measured, who moved</td><td class="mono">/evaluator/runs/:id</td><td>8</td></tr>
+            <tr><td>Per-class table and precision / recall / F1 panels, precision at k, saturation, testbed caution</td><td class="mono">/evaluator/metrics</td><td>8</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    Version 8 · 15 Sep 2026 — real accounts (S18a), and five new sections: the dataset, analysis before and after, the decision log, what makes this different, and shipping. Every screenshot was taken from the running console, against a disposable copy of the demo database (<code>GUIDE_CAPTURE=1 npx playwright test capture-guide</code>). The spoken script is <code>hitl-ids/docs/demo-script.md</code>; the automated gate is <code>npm run e2e</code>.
+  </footer>
+</div>
