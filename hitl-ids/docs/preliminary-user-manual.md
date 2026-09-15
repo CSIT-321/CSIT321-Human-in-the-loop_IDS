@@ -19,7 +19,7 @@ CSIT321 Project · School of Computing and Information Technology
 | | |
 |---|---|
 | Title | Preliminary User Manual |
-| Document name | FYP-26-S3-13 Preliminary User Manual, Version 0.2 |
+| Document name | FYP-26-S3-13 Preliminary User Manual, Version 0.3 |
 | Status | Draft for team review |
 
 ### Record of revision
@@ -28,6 +28,7 @@ CSIT321 Project · School of Computing and Information Technology
 |---|---|---|---|---|
 | 12 Sep 2026 | First draft: introduction, installation, key features, and the sixteen initial GUIs | 1–4 | Glenn | 0.1 |
 | 14 Sep 2026 | Updated from the built console: the web interface is running, so section 4 shows screenshots of the real screens (workstation, overview and IP address page added); installation uses the pinned Python 3.11 environment | 1–4 | Glenn | 0.2 |
+| 15 Sep 2026 | Sign-in is now real: three accounts with passwords replace the role picker, section 4.1 and the login screenshot updated | 4.1 | Glenn | 0.3 |
 
 ---
 
@@ -203,17 +204,23 @@ plays the whole demonstration in a real browser against its own copy of the data
 Every screen below is a screenshot of the running console, captured against a disposable copy of the
 demo database. Screens are shown in the order a demonstration visits them.
 
-### (4.1) Sign in and role selection
+### (4.1) Sign in — one account per view
 
 ![Sign in](img/demo-guide/01-login.png)
 
-The first screen. The user enters a username and chooses which role to sign in as: analyst,
-administrator or evaluator. The choice decides which views are available — only an administrator can
-change the guardrail settings, for example.
+The first screen. The user signs in with a username and password; the account decides which views
+are available. The system ships with three accounts, one per role:
 
-Authentication in the demo build is deliberately a stub, and the screen says so: the role is trusted
-as sent. Real sign-in with password hashing and role-based access control is scheduled after the
-demo. The role can be switched later from the top bar.
+| Account | Password | View |
+|---|---|---|
+| `g.ang` | `analyst-demo` | Security analyst — the workstation and queue |
+| `admin` | `admin-demo` | System administrator — status, guardrails, audit trail |
+| `evaluator` | `evaluator-demo` | Evaluator — scenarios and three-arm comparisons |
+
+Sign-in is real: passwords are checked against bcrypt hashes, the server issues a signed token, and
+every request carries it — a user cannot reach another role's views by choosing a role, because
+there is no role to choose. Only an administrator can change the guardrail settings, for example.
+To see another view, sign out and sign in as that account's user; a sign-in lasts eight hours.
 
 ### (4.2) The analyst workstation
 
