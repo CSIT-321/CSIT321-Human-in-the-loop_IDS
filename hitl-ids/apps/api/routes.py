@@ -25,7 +25,9 @@ from typing import Annotated, Any, Literal
 
 from fastapi import APIRouter, Depends, Query, status
 
+from apps.api import auth
 from apps.api.contract import alerts as ca
+from apps.api.contract import auth as au
 from apps.api.contract import operations as co
 from apps.api.contract.common import (
     DEFAULT_PAGE_SIZE,
@@ -34,7 +36,7 @@ from apps.api.contract.common import (
     Page,
     PageInfo,
 )
-from apps.api.deps import ApiError, demo_role_stub, get_connection, not_found, require_role
+from apps.api.deps import ApiError, get_connection, not_found
 from apps.api.mappers import (
     alert_summary,
     audit_entry,
@@ -61,8 +63,36 @@ EVALUATION_RUNS = HITL / "evaluation" / "three-arm" / "runs"
 router = APIRouter()
 
 Conn = Annotated[sqlite3.Connection, Depends(get_connection)]
-Role = Annotated[str, Depends(demo_role_stub)]
-AdminOnly = Depends(require_role("system_admin"))
+Principal = Annotated[auth.Principal, Depends(auth.current_user)]
+AdminOnly = Depends(auth.require_role("system_admin"))
+
+
+# --------------------------------------------------------------------------------------------
+# Sign-in (S18a) — the one pair of endpoints with no principal: login mints one, me reports it
+# --------------------------------------------------------------------------------------------
+
+
+@router.post("/api/auth/login", response_model=au.LoginResponse, tags=["auth"],
+             operation_id="login")
+def login(body: au.LoginRequest, conn: Conn) -> au.LoginResponse:
+    """Sign in as one of the seeded accounts. A wrong username, a wrong password and a disabled
+    account all answer the same 401, so nothing about the account list leaks."""
+    user = auth.authenticate(conn, body.username, body.password)
+    if user is None:
+        raise ApiError(401, "UNAUTHORIZED", "Invalid username or password")
+    with conn:
+        conn.execute("UPDATE users SET last_login = ? WHERE id = ?",
+                     (db.format_timestamp(m.utc_now()), user.id))
+    return au.LoginResponse(token=auth.encode_token(user), username=user.username,
+                            display_name=user.display_name, role=user.role)
+
+
+@router.get("/api/auth/me", response_model=au.MeResponse, tags=["auth"],
+            operation_id="getCurrentUser")
+def me(principal: Principal) -> au.MeResponse:
+    """Who the token says is calling — the session check a client runs when it wants to be sure."""
+    return au.MeResponse(username=principal.username, display_name=principal.display_name,
+                         role=principal.role)
 
 
 def guardrail_values(conn: sqlite3.Connection) -> dict[str, float]:
@@ -85,7 +115,7 @@ def _page(items: list[Any], total: int, limit: int, offset: int) -> dict[str, An
             operation_id="listAlerts")
 def list_alerts(
     conn: Conn,
-    role: Role,
+    principal: Principal,
     limit: int = Query(DEFAULT_PAGE_SIZE, ge=1, le=MAX_PAGE_SIZE),
     offset: int = Query(0, ge=0),
     sort: str = Query("queue"),
@@ -108,8 +138,8 @@ def list_alerts(
     """The ranked queue, in the contract's order unless an inspection sort overrides it."""
     owner_id: int | None = None
     if owner == "me":
-        # A role that has never acted has no demo user, so it owns nothing; -1 matches no row.
-        owner_id = _existing_user(conn, role) or -1
+        # The signed-in account. A user who has never been assigned anything owns nothing.
+        owner_id = principal.user_id
     try:
         rows, total = store.queue_page(
             conn, limit=limit, offset=offset, sort=sort, direction=direction,
@@ -148,13 +178,6 @@ def _summary(conn: sqlite3.Connection, alert: m.Alert,
     return _summaries(conn, [(alert, flow)])[0]
 
 
-def _existing_user(conn: sqlite3.Connection, role: str) -> int | None:
-    """The role's demo user if it has acted before — a read never creates one."""
-    row = conn.execute("SELECT id FROM users WHERE role = ? ORDER BY id LIMIT 1",
-                       (role,)).fetchone()
-    return None if row is None else int(row["id"])
-
-
 def _load_alert(conn: sqlite3.Connection, alert_ref: str) -> m.Alert:
     alert = store.alert_by_ref(conn, alert_ref)
     if alert is None:
@@ -164,7 +187,7 @@ def _load_alert(conn: sqlite3.Connection, alert_ref: str) -> m.Alert:
 
 @router.get("/api/alerts/{alertRef}", response_model=ca.AlertDetail, tags=["alerts"],
             operation_id="getAlert")
-def get_alert(alertRef: str, conn: Conn, role: Role) -> ca.AlertDetail:  # noqa: N803
+def get_alert(alertRef: str, conn: Conn, principal: Principal) -> ca.AlertDetail:  # noqa: N803
     """One alert and its four evidence panels. An unflagged alert is a valid response, not a 404."""
     alert = _load_alert(conn, alertRef)
     flow = store.flow_for_alert(conn, alert.id)
@@ -194,31 +217,13 @@ def get_alert(alertRef: str, conn: Conn, role: Role) -> ca.AlertDetail:  # noqa:
 # --------------------------------------------------------------------------------------------
 
 
-def _acting_user(conn: sqlite3.Connection, role: str) -> int:
-    """The demo's stand-in for a signed-in user.
-
-    S18 replaces this with a real principal. Until then a verdict still needs an actor, because
-    `feedback_events.user_id` is a foreign key and the audit trail records *who* — an unattributed
-    verdict would break NFR-02 for the sake of a stub.
-    """
-    row = conn.execute("SELECT id FROM users WHERE role = ? ORDER BY id LIMIT 1",
-                       (role,)).fetchone()
-    if row is not None:
-        return int(row["id"])
-    with conn:
-        return db.insert(conn, m.User(
-            username=f"demo-{role}", password_hash="not-a-login-account",
-            display_name=f"Demo {role.replace('_', ' ')}",
-            email=f"{role}@demo.local", role=role))
-
-
 @router.post("/api/alerts/{alertRef}/feedback", response_model=ca.FeedbackResponse,
              tags=["alerts", "feedback"], operation_id="submitFeedback")
 def post_feedback(alertRef: str, body: ca.FeedbackRequest, conn: Conn,  # noqa: N803
-                  role: Role) -> ca.FeedbackResponse:
+                  principal: Principal) -> ca.FeedbackResponse:
     """Record one analyst verdict: guardrails, family learning and audit, in one transaction."""
     alert = _load_alert(conn, alertRef)
-    user_id = _acting_user(conn, role)
+    user_id = principal.user_id
     try:
         result = submit_feedback(conn, alert_id=alert.id, user_id=user_id,
                                  category=body.category, note=body.note)
@@ -244,7 +249,7 @@ def post_feedback(alertRef: str, body: ca.FeedbackRequest, conn: Conn,  # noqa: 
 
 @router.get("/api/alerts/{alertRef}/score-adjustment", response_model=ca.ScoreAdjustment,
             tags=["alerts", "feedback"], operation_id="getScoreAdjustment")
-def get_score_adjustment(alertRef: str, conn: Conn, role: Role) -> ca.ScoreAdjustment:  # noqa: N803
+def get_score_adjustment(alertRef: str, conn: Conn, principal: Principal) -> ca.ScoreAdjustment:  # noqa: N803
     alert = _load_alert(conn, alertRef)
     return score_adjustment(alert, current_feedback(conn, alert.id),
                             settings=guardrail_values(conn))
@@ -252,7 +257,7 @@ def get_score_adjustment(alertRef: str, conn: Conn, role: Role) -> ca.ScoreAdjus
 
 @router.get("/api/alerts/{alertRef}/feedback-history", response_model=ca.FeedbackHistory,
             tags=["alerts", "feedback"], operation_id="getFeedbackHistory")
-def get_feedback_history(alertRef: str, conn: Conn, role: Role) -> ca.FeedbackHistory:  # noqa: N803
+def get_feedback_history(alertRef: str, conn: Conn, principal: Principal) -> ca.FeedbackHistory:  # noqa: N803
     alert = _load_alert(conn, alertRef)
     events = store.feedback_for_alert(conn, alert.id)
     users = store.users_by_id(conn, [e.user_id for e in events])
@@ -273,16 +278,16 @@ def get_feedback_history(alertRef: str, conn: Conn, role: Role) -> ca.FeedbackHi
 # moves a score or invokes a guardrail. Gated to the roles that work alerts.
 # --------------------------------------------------------------------------------------------
 
-TriageRoles = Depends(require_role("security_analyst", "system_admin"))
+TriageRoles = Depends(auth.require_role("security_analyst", "system_admin"))
 
 
 @router.post("/api/alerts/{alertRef}/status", response_model=ca.TriageResponse,
              tags=["alerts", "triage"], operation_id="changeAlertStatus",
              dependencies=[TriageRoles])
 def post_status(alertRef: str, body: ca.StatusChangeRequest, conn: Conn,  # noqa: N803
-                role: Role) -> ca.TriageResponse:
+                principal: Principal) -> ca.TriageResponse:
     alert = _load_alert(conn, alertRef)
-    actor_id = _acting_user(conn, role)
+    actor_id = principal.user_id
     try:
         result = triage.change_status(conn, alert_id=int(alert.id or 0), actor_id=actor_id,
                                       to_status=body.status, reason=body.reason)
@@ -296,9 +301,9 @@ def post_status(alertRef: str, body: ca.StatusChangeRequest, conn: Conn,  # noqa
 @router.post("/api/alerts/{alertRef}/assign", response_model=ca.TriageResponse,
              tags=["alerts", "triage"], operation_id="assignAlert", dependencies=[TriageRoles])
 def post_assign(alertRef: str, body: ca.AssignRequest, conn: Conn,  # noqa: N803
-                role: Role) -> ca.TriageResponse:
+                principal: Principal) -> ca.TriageResponse:
     alert = _load_alert(conn, alertRef)
-    actor_id = _acting_user(conn, role)
+    actor_id = principal.user_id
     try:
         result = triage.assign(conn, alert_id=int(alert.id or 0), actor_id=actor_id,
                                owner_id=actor_id if body.owner == "me" else None,
@@ -311,7 +316,7 @@ def post_assign(alertRef: str, body: ca.AssignRequest, conn: Conn,  # noqa: N803
 
 @router.get("/api/alerts/{alertRef}/notes", response_model=ca.AlertNotes,
             tags=["alerts", "triage"], operation_id="listAlertNotes")
-def get_notes(alertRef: str, conn: Conn, role: Role) -> ca.AlertNotes:  # noqa: N803
+def get_notes(alertRef: str, conn: Conn, principal: Principal) -> ca.AlertNotes:  # noqa: N803
     alert = _load_alert(conn, alertRef)
     notes = triage.notes_for_alert(conn, int(alert.id or 0))
     users = store.users_by_id(conn, [note.user_id for note in notes])
@@ -322,9 +327,9 @@ def get_notes(alertRef: str, conn: Conn, role: Role) -> ca.AlertNotes:  # noqa: 
 @router.post("/api/alerts/{alertRef}/notes", response_model=ca.NoteOut,
              tags=["alerts", "triage"], operation_id="addAlertNote", dependencies=[TriageRoles])
 def post_note(alertRef: str, body: ca.NoteRequest, conn: Conn,  # noqa: N803
-              role: Role) -> ca.NoteOut:
+              principal: Principal) -> ca.NoteOut:
     alert = _load_alert(conn, alertRef)
-    user_id = _acting_user(conn, role)
+    user_id = principal.user_id
     try:
         note = triage.add_note(conn, alert_id=int(alert.id or 0), user_id=user_id,
                                body=body.body)
@@ -335,14 +340,14 @@ def post_note(alertRef: str, body: ca.NoteRequest, conn: Conn,  # noqa: N803
 
 @router.get("/api/dashboard/breakdowns", response_model=co.DashboardBreakdowns,
             tags=["dashboard"], operation_id="getDashboardBreakdowns")
-def dashboard_breakdowns(conn: Conn, role: Role,
+def dashboard_breakdowns(conn: Conn, principal: Principal,
                          limit: int = Query(10, ge=1, le=50)) -> co.DashboardBreakdowns:
     return co.DashboardBreakdowns(generated_at=m.utc_now(), **store.breakdowns(conn, limit=limit))
 
 
 @router.get("/api/entities/ip/{ip}", response_model=co.EntityIp, tags=["entities"],
             operation_id="getIpEntity")
-def get_ip_entity(ip: str, conn: Conn, role: Role,
+def get_ip_entity(ip: str, conn: Conn, principal: Principal,
                   limit: int = Query(10, ge=1, le=50)) -> co.EntityIp:
     try:
         ipaddress.ip_address(ip)
@@ -356,7 +361,7 @@ def get_ip_entity(ip: str, conn: Conn, role: Role,
 
 @router.get("/api/dashboard/summary", response_model=co.DashboardSummary, tags=["dashboard"],
             operation_id="getDashboardSummary")
-def dashboard_summary(conn: Conn, role: Role) -> co.DashboardSummary:
+def dashboard_summary(conn: Conn, principal: Principal) -> co.DashboardSummary:
     run = store.latest_run(conn)
     counts = store.dashboard_counts(conn)
     return co.DashboardSummary(
@@ -406,7 +411,7 @@ def _alert_refs(conn: sqlite3.Connection, alert_ids: list[int | None]) -> dict[i
             operation_id="listAuditLog")
 def list_audit_log(
     conn: Conn,
-    role: Role,
+    principal: Principal,
     limit: int = Query(100, ge=1, le=500),
     offset: int = Query(0, ge=0),
     event_type: list[str] | None = Query(None, alias="eventType"),
@@ -425,7 +430,7 @@ def list_audit_log(
 
 @router.get("/api/config/guardrails", response_model=co.GuardrailConfig, tags=["config"],
             operation_id="getGuardrailConfig")
-def get_guardrail_config(conn: Conn, role: Role) -> co.GuardrailConfig:
+def get_guardrail_config(conn: Conn, principal: Principal) -> co.GuardrailConfig:
     return co.GuardrailConfig(
         settings=[guardrail_setting(entry) for entry in store.guardrail_settings(conn)])
 
@@ -433,7 +438,7 @@ def get_guardrail_config(conn: Conn, role: Role) -> co.GuardrailConfig:
 @router.put("/api/config/guardrails", response_model=co.GuardrailConfig, tags=["config"],
             operation_id="updateGuardrailConfig", dependencies=[AdminOnly])
 def update_guardrail_config(body: co.GuardrailConfigUpdate, conn: Conn,
-                            role: Role) -> co.GuardrailConfig:
+                            principal: Principal) -> co.GuardrailConfig:
     """Change guardrail settings. Admin only, and the rationale is recorded, not just the value."""
     changes = body.model_dump(exclude={"rationale"}, exclude_none=True)
     if not changes:
@@ -444,7 +449,7 @@ def update_guardrail_config(body: co.GuardrailConfigUpdate, conn: Conn,
         raise ApiError(400, "VALIDATION_FAILED", f"Unknown guardrail settings: {sorted(unknown)}",
                        {"allowed": sorted(known)})
 
-    actor_id = _acting_user(conn, role)
+    actor_id = principal.user_id
     now = m.utc_now()
     with conn:
         for key, value in changes.items():
@@ -453,7 +458,7 @@ def update_guardrail_config(body: co.GuardrailConfigUpdate, conn: Conn,
         db.insert(conn, m.AuditEntry(
             event_type="CONFIG_CHANGE", actor_id=actor_id, created_at=now,
             details={"changes": changes, "rationale": body.rationale}))
-    return get_guardrail_config(conn, role)
+    return get_guardrail_config(conn, principal)
 
 
 # --------------------------------------------------------------------------------------------
@@ -463,7 +468,7 @@ def update_guardrail_config(body: co.GuardrailConfigUpdate, conn: Conn,
 
 @router.get("/api/evaluation/scenarios", response_model=Page[co.EvaluationScenarioOut],
             tags=["evaluation"], operation_id="listEvaluationScenarios")
-def list_scenarios(conn: Conn, role: Role, limit: int = Query(50, ge=1, le=MAX_PAGE_SIZE),
+def list_scenarios(conn: Conn, principal: Principal, limit: int = Query(50, ge=1, le=MAX_PAGE_SIZE),
                    offset: int = Query(0, ge=0)) -> dict[str, Any]:
     total = int(conn.execute("SELECT COUNT(*) AS n FROM evaluation_scenarios").fetchone()["n"])
     rows = conn.execute("SELECT * FROM evaluation_scenarios ORDER BY id LIMIT ? OFFSET ?",
@@ -500,7 +505,7 @@ def _results(run_id: str) -> dict[str, Any]:
 
 @router.get("/api/evaluation/runs", response_model=Page[co.EvaluationRunOut],
             tags=["evaluation"], operation_id="listEvaluationRuns")
-def list_evaluation_runs(role: Role) -> dict[str, Any]:
+def list_evaluation_runs(principal: Principal) -> dict[str, Any]:
     """Every committed run with a results record, newest first (run ids are UTC timestamps).
 
     No paging parameters: the contract declares none, and runs are a handful of committed records.
@@ -524,7 +529,7 @@ def list_evaluation_runs(role: Role) -> dict[str, Any]:
 
 @router.get("/api/evaluation/runs/{runId}", response_model=co.EvaluationComparison,
             tags=["evaluation"], operation_id="getEvaluationRun")
-def get_evaluation_run(runId: str, role: Role) -> co.EvaluationComparison:  # noqa: N803
+def get_evaluation_run(runId: str, principal: Principal) -> co.EvaluationComparison:  # noqa: N803
     """The three arms and their deltas. Deltas may be negative; render them as measured."""
     results = _results(runId)
     return co.EvaluationComparison(
@@ -546,7 +551,7 @@ def get_evaluation_run(runId: str, role: Role) -> co.EvaluationComparison:  # no
 @router.get("/api/evaluation/runs/{runId}/detection",
             response_model=co.EvaluationDetectionMetrics, tags=["evaluation"],
             operation_id="getEvaluationDetectionMetrics")
-def get_evaluation_detection(runId: str, role: Role) -> co.EvaluationDetectionMetrics:  # noqa: N803
+def get_evaluation_detection(runId: str, principal: Principal) -> co.EvaluationDetectionMetrics:  # noqa: N803
     """Per-class metrics. Identical across all three arms by construction."""
     results = _results(runId)
     arms = results.get("full_metrics", {})

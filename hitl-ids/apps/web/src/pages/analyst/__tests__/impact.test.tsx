@@ -21,7 +21,7 @@ import {
   auditPage,
 } from "./fixtures";
 
-const ANALYST: Session = { username: "g.ang", role: "security_analyst" };
+const ANALYST: Session = { username: "g.ang", displayName: "Glenn Ang", role: "security_analyst", token: "test-token" };
 
 const FLOOR_EXPLANATION = "This alert is Critical, so its score was held at the floor of 70.";
 

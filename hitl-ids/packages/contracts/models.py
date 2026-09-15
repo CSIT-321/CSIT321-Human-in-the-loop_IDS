@@ -328,7 +328,7 @@ class MlPrediction(ProducerContract):
 
 
 class User(Contract):
-    """TDM §7.2.1. Real authentication is deferred to S18; S10 uses a stub."""
+    """TDM §7.2.1. S18a made these real login accounts (bcrypt + JWT); the demo seeds three."""
 
     id: int | None = None
     username: str = Field(min_length=1, max_length=100)

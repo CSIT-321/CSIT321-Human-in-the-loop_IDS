@@ -18,7 +18,7 @@ import {
   NO_VERDICT_ADJUSTMENT,
 } from "./fixtures";
 
-const ANALYST: Session = { username: "g.ang", role: "security_analyst" };
+const ANALYST: Session = { username: "g.ang", displayName: "Glenn Ang", role: "security_analyst", token: "test-token" };
 
 const HISTORY: Schemas["FeedbackHistory"] = {
   alertRef: AL_00478_REF,

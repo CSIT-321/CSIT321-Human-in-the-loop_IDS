@@ -1,22 +1,22 @@
 import { describe, expect, it } from "vitest";
 
 import { jsonResponse, stubFetch } from "../test/renderApp";
-import { api, ApiError, CLIENT_ERROR, setApiRole, unwrap } from "./client";
+import { api, ApiError, CLIENT_ERROR, setApiToken, unwrap } from "./client";
 
 describe("api client", () => {
-  it("sends the signed-in role on every request", async () => {
+  it("sends the signed-in account's bearer token on every request", async () => {
     const seen = stubFetch(() => jsonResponse({ items: [], page: { limit: 50, offset: 0, total: 0 } }));
-    setApiRole("evaluator");
+    setApiToken("evaluator-token");
     await unwrap(api.GET("/api/evaluation/scenarios"));
     expect(seen).toHaveLength(1);
-    expect(seen[0]?.headers.get("X-Demo-Role")).toBe("evaluator");
+    expect(seen[0]?.headers.get("Authorization")).toBe("Bearer evaluator-token");
   });
 
-  it("sends no role header when signed out, so the API's own default applies", async () => {
+  it("sends no Authorization header when signed out", async () => {
     const seen = stubFetch(() => jsonResponse({ items: [], page: { limit: 50, offset: 0, total: 0 } }));
-    setApiRole(null);
+    setApiToken(null);
     await unwrap(api.GET("/api/evaluation/scenarios"));
-    expect(seen[0]?.headers.has("X-Demo-Role")).toBe(false);
+    expect(seen[0]?.headers.has("Authorization")).toBe(false);
   });
 
   it("turns the contract's error envelope into an ApiError carrying its code", async () => {

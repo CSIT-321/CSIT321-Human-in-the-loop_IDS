@@ -51,9 +51,16 @@ FAMILY_KEY = '["Port Scan",445,"tcp","-"]'
 FAMILY_JUDGED = ("AL-01696", "AL-03873", "AL-03153")
 FAMILY_UNTOUCHED = ("AL-03044", "AL-04526")
 
-ANALYST = {"X-Demo-Role": "security_analyst"}
-ADMIN = {"X-Demo-Role": "system_admin"}
-EVALUATOR = {"X-Demo-Role": "evaluator"}
+ANALYST: dict[str, str] = {}
+ADMIN: dict[str, str] = {}
+EVALUATOR: dict[str, str] = {}
+
+
+def sign_in(client: TestClient, username: str, password: str) -> dict[str, str]:
+    """S18a: the rehearsal signs in the way the console does — one real account per view."""
+    token = ok(client.post("/api/auth/login",
+                           json={"username": username, "password": password}))["token"]
+    return {"Authorization": f"Bearer {token}"}
 
 
 class RehearsalFailed(AssertionError):
@@ -102,8 +109,12 @@ def verdict(client: TestClient, alert_ref: str, category: str, note: str) -> dic
 
 
 def rehearse(database: Path) -> None:
+    global ANALYST, ADMIN, EVALUATOR
     truth = GroundTruth.load()
     client = TestClient(create_app(database))
+    ANALYST = sign_in(client, "g.ang", "analyst-demo")
+    ADMIN = sign_in(client, "admin", "admin-demo")
+    EVALUATOR = sign_in(client, "evaluator", "evaluator-demo")
 
     print("\n1. The queue, and a confident model that is wrong")
     fp = find(client, FALSE_POSITIVE)

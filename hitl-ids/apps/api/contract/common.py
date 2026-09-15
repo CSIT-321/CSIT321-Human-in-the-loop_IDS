@@ -27,10 +27,6 @@ from pydantic.alias_generators import to_camel
 from packages.contracts import db
 from packages.contracts import models as m
 
-#: The role-switch stub (D3). Real JWT/bcrypt is S18; until then the client states its role in a
-#: header and the handlers trust it. This is a demo affordance and is documented as one.
-ROLE_HEADER = "X-Demo-Role"
-
 #: The queue's order is the contract's, cited rather than restated. Ordering by anything else —
 #: `evidence_priority`, say, as plan v1.0 wrongly specified — hides the re-ranking that feedback
 #: performs, which is the one thing the demo exists to show (`deviations.md` C13).
@@ -90,6 +86,7 @@ class ErrorResponse(ApiModel):
 
 #: The codes the demo path can return. A client switches on these, never on the message.
 ErrorCode = Literal[
+    "UNAUTHORIZED",
     "NOT_FOUND",
     "VALIDATION_FAILED",
     "FORBIDDEN_ROLE",
@@ -100,7 +97,7 @@ ErrorCode = Literal[
 
 
 class Actor(ApiModel):
-    """Who did something. The demo's users are seeded; S18 replaces this with a real principal."""
+    """Who did something. Since S18a these are the real seeded accounts, not stub role-holders."""
 
     user_id: int | None = Field(default=None, description="Internal id; null for system actions")
     display_name: str | None = None

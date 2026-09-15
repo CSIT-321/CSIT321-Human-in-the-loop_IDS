@@ -28,7 +28,6 @@ from apps.api.contract import operations as o
 from apps.api.contract.common import (
     MAX_PAGE_SIZE,
     QUEUE_ORDER,
-    ROLE_HEADER,
     ErrorResponse,
     QueueQuery,
 )
@@ -40,6 +39,9 @@ from scripts.build_openapi import TARGET, rendered
 #: Every endpoint the plan's S10a task list names. `GET /api/evaluation/*` is expanded to the
 #: three concrete endpoints S14 needs.
 REQUIRED_OPERATIONS = {
+    # S18a: sign-in. The one operation without an Authorization parameter, plus the session check.
+    ("/api/auth/login", "post"),
+    ("/api/auth/me", "get"),
     ("/api/alerts", "get"),
     ("/api/alerts/{alertRef}", "get"),
     ("/api/alerts/{alertRef}/feedback", "post"),
@@ -212,12 +214,11 @@ def test_the_family_effect_is_reportable(document):
 
 
 def test_the_admin_write_is_role_gated(document):
-    """The plan's named verification: the role stub blocks an analyst from the guardrail config."""
+    """The plan's named verification: an analyst account is blocked from the guardrail config."""
     put = document["paths"]["/api/config/guardrails"]["put"]
     assert put["x-required-role"] == "system_admin"
-    assert "403" in put["responses"]
-    role = next(p for p in put["parameters"] if p["name"] == ROLE_HEADER)
-    assert set(role["schema"]["enum"]) == set(get_args(m.Role))
+    assert "403" in put["responses"] and "401" in put["responses"]
+    assert any(parameter["name"] == "Authorization" for parameter in put["parameters"])
 
 
 def test_changing_guardrails_requires_a_rationale():

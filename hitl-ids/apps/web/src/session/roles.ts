@@ -2,16 +2,14 @@
  * The three demo roles and what each one sees (plan step S11, decision D6).
  *
  * The role literals mirror `packages/contracts/models.py::Role`; `roles.test.ts` fails if the
- * generated API schema stops accepting one of them. Each role's `home` is where it lands after
- * sign-in, as the plan's S11 verification names it: analyst -> queue, admin -> system status,
- * evaluator -> scenario list.
+ * generated API schema stops accepting one of them. Each role's `home` is where its account lands
+ * after sign-in, as the plan's S11 verification names it: analyst -> queue, admin -> system status,
+ * evaluator -> scenario list. Since S18a the role is a property of the signed-in account, not a
+ * header a client sends.
  */
 
 export const ROLES = ["security_analyst", "system_admin", "evaluator"] as const;
 export type Role = (typeof ROLES)[number];
-
-/** The request header the API's `demo_role_stub` reads. Trusted as sent: S18 replaces it. */
-export const ROLE_HEADER = "X-Demo-Role";
 
 export interface NavItem {
   readonly to: string;
@@ -21,9 +19,9 @@ export interface NavItem {
 export interface RoleMeta {
   /** Full name, as the top bar shows it. */
   readonly label: string;
-  /** Short name, as the sign-in chips show it. */
+  /** Short name, as the account picker on the sign-in page once showed it. */
   readonly short: string;
-  /** Where the role lands after sign-in or a role switch. Always one of `nav`. */
+  /** Where the account lands after sign-in. Always one of `nav`. */
   readonly home: string;
   /** Left navigation, in display order. */
   readonly nav: readonly NavItem[];

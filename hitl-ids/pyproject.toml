@@ -16,6 +16,9 @@ dependencies = [
     # "Router.__init__() got an unexpected keyword argument 'on_startup'".
     "fastapi>=0.136",
     "uvicorn>=0.37",
+    # S18a real sign-in: bcrypt hashes the seeded demo passwords, PyJWT mints the bearer tokens.
+    "bcrypt",
+    "pyjwt>=2.10",
 ]
 
 # Only these two folders are importable code; data/, models/, rules/, notebooks/ and the rest are not.

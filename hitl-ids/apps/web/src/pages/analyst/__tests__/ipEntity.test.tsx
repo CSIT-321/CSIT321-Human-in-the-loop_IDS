@@ -17,7 +17,7 @@ import type { Session } from "../../../session/SessionContext";
 import { jsonResponse, renderApp, stubFetch } from "../../../test/renderApp";
 import { ATTACKER_ENTITY } from "./fixtures";
 
-const ANALYST: Session = { username: "g.ang", role: "security_analyst" };
+const ANALYST: Session = { username: "g.ang", displayName: "Glenn Ang", role: "security_analyst", token: "test-token" };
 
 const ATTACKER = ATTACKER_ENTITY.ip;
 const PEER = "172.31.69.28";

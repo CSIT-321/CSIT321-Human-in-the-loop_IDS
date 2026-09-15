@@ -16,7 +16,7 @@ import type { Session } from "../../../session/SessionContext";
 import { jsonResponse, renderApp, stubFetch } from "../../../test/renderApp";
 import { BREAKDOWNS, SUMMARY } from "./fixtures";
 
-const ANALYST: Session = { username: "g.ang", role: "security_analyst" };
+const ANALYST: Session = { username: "g.ang", displayName: "Glenn Ang", role: "security_analyst", token: "test-token" };
 
 function stubOverview(handler: (request: Request) => Response | undefined): Request[] {
   return stubFetch((request) => {

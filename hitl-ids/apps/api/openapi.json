@@ -3,7 +3,7 @@
     "schemas": {
       "Actor": {
         "additionalProperties": false,
-        "description": "Who did something. The demo's users are seeded; S18 replaces this with a real principal.",
+        "description": "Who did something. Since S18a these are the real seeded accounts, not stub role-holders.",
         "properties": {
           "displayName": {
             "anyOf": [
@@ -1990,6 +1990,96 @@
         "title": "GuardrailSetting",
         "type": "object"
       },
+      "LoginRequest": {
+        "additionalProperties": false,
+        "description": "What the sign-in form sends. A wrong username and a wrong password answer identically.",
+        "properties": {
+          "password": {
+            "maxLength": 128,
+            "minLength": 1,
+            "title": "Password",
+            "type": "string"
+          },
+          "username": {
+            "maxLength": 100,
+            "minLength": 1,
+            "title": "Username",
+            "type": "string"
+          }
+        },
+        "required": [
+          "username",
+          "password"
+        ],
+        "title": "LoginRequest",
+        "type": "object"
+      },
+      "LoginResponse": {
+        "additionalProperties": false,
+        "description": "The signed token plus the account it names. The console stores this as its session.",
+        "properties": {
+          "displayName": {
+            "title": "Displayname",
+            "type": "string"
+          },
+          "role": {
+            "enum": [
+              "security_analyst",
+              "system_admin",
+              "evaluator"
+            ],
+            "title": "Role",
+            "type": "string"
+          },
+          "token": {
+            "description": "JWT bearer token; send as `Authorization: Bearer <token>`. Valid for 8 hours.",
+            "title": "Token",
+            "type": "string"
+          },
+          "username": {
+            "title": "Username",
+            "type": "string"
+          }
+        },
+        "required": [
+          "token",
+          "username",
+          "displayName",
+          "role"
+        ],
+        "title": "LoginResponse",
+        "type": "object"
+      },
+      "MeResponse": {
+        "additionalProperties": false,
+        "description": "Who the token says is calling — the session check for `GET /api/auth/me`.",
+        "properties": {
+          "displayName": {
+            "title": "Displayname",
+            "type": "string"
+          },
+          "role": {
+            "enum": [
+              "security_analyst",
+              "system_admin",
+              "evaluator"
+            ],
+            "title": "Role",
+            "type": "string"
+          },
+          "username": {
+            "title": "Username",
+            "type": "string"
+          }
+        },
+        "required": [
+          "username",
+          "displayName",
+          "role"
+        ],
+        "title": "MeResponse",
+        "type": "object"
+      },
       "MlPanel": {
         "additionalProperties": false,
         "description": "Panel 3 — what the model said, and why (NFR-01).\n\n``additivityPassed`` is not decoration: it is the check that the explanation actually explains\nthis prediction. 5,000/5,000 pass on the demo sample.",
@@ -2816,7 +2906,7 @@
     }
   },
   "info": {
-    "description": "The demo API for the Human-in-the-Loop IDS dashboard (FYP-26-S3-13).\n\n**Deliberately narrow.** Only the endpoints the demo path exercises; the remaining TDM surface is\nS18. Adding endpoints \"while we're here\" is on the plan's anti-pattern list.\n\n**Authentication is a stub.** Send `X-Demo-Role: security_analyst | system_admin | evaluator`.\nReal JWT/bcrypt with RBAC is S18. The stub is enforced only where a role genuinely gates an action,\nso `PUT /api/config/guardrails` refuses anything but `system_admin`.\n\n**Queue ordering is fixed by contract**: `queue_priority ASC, combined_score DESC, id ASC`. Feedback moves an alert between queue\n*bands*, never across evidence classes, so a client that re-sorts by `evidenceClass` will hide the\nre-ranking the system exists to perform.\n\n**Alerts are identified by `alertRef` (UUID).** Row ids are never exposed.\n\n**Every flow becomes an alert**, including flows no detector flagged. They are the queue's bottom\nband and the evaluation's denominator.",
+    "description": "The demo API for the Human-in-the-Loop IDS dashboard (FYP-26-S3-13).\n\n**Deliberately narrow.** Only the endpoints the demo path exercises; the remaining TDM surface is\nS18. Adding endpoints \"while we're here\" is on the plan's anti-pattern list.\n\n**Authentication is real (S18a).** `POST /api/auth/login` with one of the three seeded accounts\nreturns a JWT bearer token; send it as `Authorization: Bearer <token>` on every other request. No\ntoken, a forged token or an expired one is a 401. The role gates only where a role genuinely gates\nan action, so `PUT /api/config/guardrails` refuses anything but `system_admin`.\n\n**Queue ordering is fixed by contract**: `queue_priority ASC, combined_score DESC, id ASC`. Feedback moves an alert between queue\n*bands*, never across evidence classes, so a client that re-sorts by `evidenceClass` will hide the\nre-ranking the system exists to perform.\n\n**Alerts are identified by `alertRef` (UUID).** Row ids are never exposed.\n\n**Every flow becomes an alert**, including flows no detector flagged. They are the queue's bottom\nband and the evaluation's denominator.",
     "title": "HITL IDS demo API",
     "version": "0.1.0"
   },
@@ -2828,16 +2918,12 @@
         "operationId": "listAlerts",
         "parameters": [
           {
-            "description": "Role-switch stub (S18 replaces this with a real principal)",
+            "description": "`Bearer <token>` from POST /api/auth/login",
             "in": "header",
-            "name": "X-Demo-Role",
+            "name": "Authorization",
             "required": false,
             "schema": {
-              "enum": [
-                "security_analyst",
-                "system_admin",
-                "evaluator"
-              ],
+              "example": "Bearer eyJhbGciOiJIUzI1NiJ9...",
               "type": "string"
             }
           },
@@ -3270,6 +3356,16 @@
               }
             },
             "description": "Validation failed"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not signed in, or the token expired"
           }
         },
         "summary": "The ranked analyst queue",
@@ -3284,16 +3380,12 @@
         "operationId": "getAlert",
         "parameters": [
           {
-            "description": "Role-switch stub (S18 replaces this with a real principal)",
+            "description": "`Bearer <token>` from POST /api/auth/login",
             "in": "header",
-            "name": "X-Demo-Role",
+            "name": "Authorization",
             "required": false,
             "schema": {
-              "enum": [
-                "security_analyst",
-                "system_admin",
-                "evaluator"
-              ],
+              "example": "Bearer eyJhbGciOiJIUzI1NiJ9...",
               "type": "string"
             }
           },
@@ -3319,6 +3411,16 @@
             },
             "description": "The alert and its four evidence panels"
           },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not signed in, or the token expired"
+          },
           "404": {
             "content": {
               "application/json": {
@@ -3341,16 +3443,12 @@
         "operationId": "assignAlert",
         "parameters": [
           {
-            "description": "Role-switch stub (S18 replaces this with a real principal)",
+            "description": "`Bearer <token>` from POST /api/auth/login",
             "in": "header",
-            "name": "X-Demo-Role",
+            "name": "Authorization",
             "required": false,
             "schema": {
-              "enum": [
-                "security_analyst",
-                "system_admin",
-                "evaluator"
-              ],
+              "example": "Bearer eyJhbGciOiJIUzI1NiJ9...",
               "type": "string"
             }
           },
@@ -3395,6 +3493,16 @@
               }
             },
             "description": "Validation failed"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not signed in, or the token expired"
           },
           "403": {
             "content": {
@@ -3441,16 +3549,12 @@
         "operationId": "submitFeedback",
         "parameters": [
           {
-            "description": "Role-switch stub (S18 replaces this with a real principal)",
+            "description": "`Bearer <token>` from POST /api/auth/login",
             "in": "header",
-            "name": "X-Demo-Role",
+            "name": "Authorization",
             "required": false,
             "schema": {
-              "enum": [
-                "security_analyst",
-                "system_admin",
-                "evaluator"
-              ],
+              "example": "Bearer eyJhbGciOiJIUzI1NiJ9...",
               "type": "string"
             }
           },
@@ -3496,6 +3600,16 @@
             },
             "description": "Validation failed"
           },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not signed in, or the token expired"
+          },
           "404": {
             "content": {
               "application/json": {
@@ -3530,16 +3644,12 @@
         "operationId": "getFeedbackHistory",
         "parameters": [
           {
-            "description": "Role-switch stub (S18 replaces this with a real principal)",
+            "description": "`Bearer <token>` from POST /api/auth/login",
             "in": "header",
-            "name": "X-Demo-Role",
+            "name": "Authorization",
             "required": false,
             "schema": {
-              "enum": [
-                "security_analyst",
-                "system_admin",
-                "evaluator"
-              ],
+              "example": "Bearer eyJhbGciOiJIUzI1NiJ9...",
               "type": "string"
             }
           },
@@ -3565,6 +3675,16 @@
             },
             "description": "The verdict history"
           },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not signed in, or the token expired"
+          },
           "404": {
             "content": {
               "application/json": {
@@ -3588,16 +3708,12 @@
         "operationId": "listAlertNotes",
         "parameters": [
           {
-            "description": "Role-switch stub (S18 replaces this with a real principal)",
+            "description": "`Bearer <token>` from POST /api/auth/login",
             "in": "header",
-            "name": "X-Demo-Role",
+            "name": "Authorization",
             "required": false,
             "schema": {
-              "enum": [
-                "security_analyst",
-                "system_admin",
-                "evaluator"
-              ],
+              "example": "Bearer eyJhbGciOiJIUzI1NiJ9...",
               "type": "string"
             }
           },
@@ -3623,6 +3739,16 @@
             },
             "description": "The thread"
           },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not signed in, or the token expired"
+          },
           "404": {
             "content": {
               "application/json": {
@@ -3645,16 +3771,12 @@
         "operationId": "addAlertNote",
         "parameters": [
           {
-            "description": "Role-switch stub (S18 replaces this with a real principal)",
+            "description": "`Bearer <token>` from POST /api/auth/login",
             "in": "header",
-            "name": "X-Demo-Role",
+            "name": "Authorization",
             "required": false,
             "schema": {
-              "enum": [
-                "security_analyst",
-                "system_admin",
-                "evaluator"
-              ],
+              "example": "Bearer eyJhbGciOiJIUzI1NiJ9...",
               "type": "string"
             }
           },
@@ -3700,6 +3822,16 @@
             },
             "description": "Validation failed"
           },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not signed in, or the token expired"
+          },
           "403": {
             "content": {
               "application/json": {
@@ -3734,16 +3866,12 @@
         "operationId": "getScoreAdjustment",
         "parameters": [
           {
-            "description": "Role-switch stub (S18 replaces this with a real principal)",
+            "description": "`Bearer <token>` from POST /api/auth/login",
             "in": "header",
-            "name": "X-Demo-Role",
+            "name": "Authorization",
             "required": false,
             "schema": {
-              "enum": [
-                "security_analyst",
-                "system_admin",
-                "evaluator"
-              ],
+              "example": "Bearer eyJhbGciOiJIUzI1NiJ9...",
               "type": "string"
             }
           },
@@ -3769,6 +3897,16 @@
             },
             "description": "original, requested, bound, actual, final"
           },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not signed in, or the token expired"
+          },
           "404": {
             "content": {
               "application/json": {
@@ -3793,16 +3931,12 @@
         "operationId": "changeAlertStatus",
         "parameters": [
           {
-            "description": "Role-switch stub (S18 replaces this with a real principal)",
+            "description": "`Bearer <token>` from POST /api/auth/login",
             "in": "header",
-            "name": "X-Demo-Role",
+            "name": "Authorization",
             "required": false,
             "schema": {
-              "enum": [
-                "security_analyst",
-                "system_admin",
-                "evaluator"
-              ],
+              "example": "Bearer eyJhbGciOiJIUzI1NiJ9...",
               "type": "string"
             }
           },
@@ -3848,6 +3982,16 @@
             },
             "description": "Validation failed"
           },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not signed in, or the token expired"
+          },
           "403": {
             "content": {
               "application/json": {
@@ -3892,16 +4036,12 @@
         "operationId": "listAuditLog",
         "parameters": [
           {
-            "description": "Role-switch stub (S18 replaces this with a real principal)",
+            "description": "`Bearer <token>` from POST /api/auth/login",
             "in": "header",
-            "name": "X-Demo-Role",
+            "name": "Authorization",
             "required": false,
             "schema": {
-              "enum": [
-                "security_analyst",
-                "system_admin",
-                "evaluator"
-              ],
+              "example": "Bearer eyJhbGciOiJIUzI1NiJ9...",
               "type": "string"
             }
           },
@@ -4061,6 +4201,16 @@
             },
             "description": "Validation failed"
           },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not signed in, or the token expired"
+          },
           "403": {
             "content": {
               "application/json": {
@@ -4078,21 +4228,103 @@
         ]
       }
     },
+    "/api/auth/login": {
+      "post": {
+        "description": "One of the three seeded accounts — one per role, so a view is a person, not a hat. The response's role comes from the account; a client cannot choose it. A wrong username, a wrong password and a disabled account all answer the same 401.",
+        "operationId": "login",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LoginRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LoginResponse"
+                }
+              }
+            },
+            "description": "The token and the account it names"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not signed in, or the token expired"
+          }
+        },
+        "summary": "Sign in and receive a bearer token",
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/api/auth/me": {
+      "get": {
+        "description": "Who the token says is calling — the session check.",
+        "operationId": "getCurrentUser",
+        "parameters": [
+          {
+            "description": "`Bearer <token>` from POST /api/auth/login",
+            "in": "header",
+            "name": "Authorization",
+            "required": false,
+            "schema": {
+              "example": "Bearer eyJhbGciOiJIUzI1NiJ9...",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MeResponse"
+                }
+              }
+            },
+            "description": "The account named by the token"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not signed in, or the token expired"
+          }
+        },
+        "summary": "The signed-in account",
+        "tags": [
+          "auth"
+        ]
+      }
+    },
     "/api/config/guardrails": {
       "get": {
         "operationId": "getGuardrailConfig",
         "parameters": [
           {
-            "description": "Role-switch stub (S18 replaces this with a real principal)",
+            "description": "`Bearer <token>` from POST /api/auth/login",
             "in": "header",
-            "name": "X-Demo-Role",
+            "name": "Authorization",
             "required": false,
             "schema": {
-              "enum": [
-                "security_analyst",
-                "system_admin",
-                "evaluator"
-              ],
+              "example": "Bearer eyJhbGciOiJIUzI1NiJ9...",
               "type": "string"
             }
           }
@@ -4107,6 +4339,16 @@
               }
             },
             "description": "The settings"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not signed in, or the token expired"
           }
         },
         "summary": "Current guardrail settings",
@@ -4119,16 +4361,12 @@
         "operationId": "updateGuardrailConfig",
         "parameters": [
           {
-            "description": "Role-switch stub (S18 replaces this with a real principal)",
+            "description": "`Bearer <token>` from POST /api/auth/login",
             "in": "header",
-            "name": "X-Demo-Role",
+            "name": "Authorization",
             "required": false,
             "schema": {
-              "enum": [
-                "security_analyst",
-                "system_admin",
-                "evaluator"
-              ],
+              "example": "Bearer eyJhbGciOiJIUzI1NiJ9...",
               "type": "string"
             }
           }
@@ -4164,6 +4402,16 @@
             },
             "description": "Validation failed"
           },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not signed in, or the token expired"
+          },
           "403": {
             "content": {
               "application/json": {
@@ -4188,16 +4436,12 @@
         "operationId": "getDashboardBreakdowns",
         "parameters": [
           {
-            "description": "Role-switch stub (S18 replaces this with a real principal)",
+            "description": "`Bearer <token>` from POST /api/auth/login",
             "in": "header",
-            "name": "X-Demo-Role",
+            "name": "Authorization",
             "required": false,
             "schema": {
-              "enum": [
-                "security_analyst",
-                "system_admin",
-                "evaluator"
-              ],
+              "example": "Bearer eyJhbGciOiJIUzI1NiJ9...",
               "type": "string"
             }
           },
@@ -4234,6 +4478,16 @@
               }
             },
             "description": "Validation failed"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not signed in, or the token expired"
           }
         },
         "summary": "Top talkers, verdict and status mix, guardrail actions, capture-time histogram",
@@ -4247,16 +4501,12 @@
         "operationId": "getDashboardSummary",
         "parameters": [
           {
-            "description": "Role-switch stub (S18 replaces this with a real principal)",
+            "description": "`Bearer <token>` from POST /api/auth/login",
             "in": "header",
-            "name": "X-Demo-Role",
+            "name": "Authorization",
             "required": false,
             "schema": {
-              "enum": [
-                "security_analyst",
-                "system_admin",
-                "evaluator"
-              ],
+              "example": "Bearer eyJhbGciOiJIUzI1NiJ9...",
               "type": "string"
             }
           }
@@ -4271,6 +4521,16 @@
               }
             },
             "description": "Summary counts"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not signed in, or the token expired"
           }
         },
         "summary": "Queue composition and feedback activity",
@@ -4285,16 +4545,12 @@
         "operationId": "startDetectionRun",
         "parameters": [
           {
-            "description": "Role-switch stub (S18 replaces this with a real principal)",
+            "description": "`Bearer <token>` from POST /api/auth/login",
             "in": "header",
-            "name": "X-Demo-Role",
+            "name": "Authorization",
             "required": false,
             "schema": {
-              "enum": [
-                "security_analyst",
-                "system_admin",
-                "evaluator"
-              ],
+              "example": "Bearer eyJhbGciOiJIUzI1NiJ9...",
               "type": "string"
             }
           }
@@ -4330,6 +4586,16 @@
             },
             "description": "Validation failed"
           },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not signed in, or the token expired"
+          },
           "403": {
             "content": {
               "application/json": {
@@ -4363,16 +4629,12 @@
         "operationId": "getIpEntity",
         "parameters": [
           {
-            "description": "Role-switch stub (S18 replaces this with a real principal)",
+            "description": "`Bearer <token>` from POST /api/auth/login",
             "in": "header",
-            "name": "X-Demo-Role",
+            "name": "Authorization",
             "required": false,
             "schema": {
-              "enum": [
-                "security_analyst",
-                "system_admin",
-                "evaluator"
-              ],
+              "example": "Bearer eyJhbGciOiJIUzI1NiJ9...",
               "type": "string"
             }
           },
@@ -4419,6 +4681,16 @@
             },
             "description": "Validation failed"
           },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not signed in, or the token expired"
+          },
           "404": {
             "content": {
               "application/json": {
@@ -4442,16 +4714,12 @@
         "operationId": "listEvaluationRuns",
         "parameters": [
           {
-            "description": "Role-switch stub (S18 replaces this with a real principal)",
+            "description": "`Bearer <token>` from POST /api/auth/login",
             "in": "header",
-            "name": "X-Demo-Role",
+            "name": "Authorization",
             "required": false,
             "schema": {
-              "enum": [
-                "security_analyst",
-                "system_admin",
-                "evaluator"
-              ],
+              "example": "Bearer eyJhbGciOiJIUzI1NiJ9...",
               "type": "string"
             }
           }
@@ -4481,6 +4749,16 @@
               }
             },
             "description": "A page of runs"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not signed in, or the token expired"
           }
         },
         "summary": "Committed three-arm evaluation runs, newest first",
@@ -4495,16 +4773,12 @@
         "operationId": "getEvaluationRun",
         "parameters": [
           {
-            "description": "Role-switch stub (S18 replaces this with a real principal)",
+            "description": "`Bearer <token>` from POST /api/auth/login",
             "in": "header",
-            "name": "X-Demo-Role",
+            "name": "Authorization",
             "required": false,
             "schema": {
-              "enum": [
-                "security_analyst",
-                "system_admin",
-                "evaluator"
-              ],
+              "example": "Bearer eyJhbGciOiJIUzI1NiJ9...",
               "type": "string"
             }
           },
@@ -4529,6 +4803,16 @@
             },
             "description": "Arms, deltas and what the guardrails prevented"
           },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not signed in, or the token expired"
+          },
           "404": {
             "content": {
               "application/json": {
@@ -4552,16 +4836,12 @@
         "operationId": "getEvaluationDetectionMetrics",
         "parameters": [
           {
-            "description": "Role-switch stub (S18 replaces this with a real principal)",
+            "description": "`Bearer <token>` from POST /api/auth/login",
             "in": "header",
-            "name": "X-Demo-Role",
+            "name": "Authorization",
             "required": false,
             "schema": {
-              "enum": [
-                "security_analyst",
-                "system_admin",
-                "evaluator"
-              ],
+              "example": "Bearer eyJhbGciOiJIUzI1NiJ9...",
               "type": "string"
             }
           },
@@ -4586,6 +4866,16 @@
             },
             "description": "Per-class metrics, saturation and I3"
           },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not signed in, or the token expired"
+          },
           "404": {
             "content": {
               "application/json": {
@@ -4608,16 +4898,12 @@
         "operationId": "listEvaluationScenarios",
         "parameters": [
           {
-            "description": "Role-switch stub (S18 replaces this with a real principal)",
+            "description": "`Bearer <token>` from POST /api/auth/login",
             "in": "header",
-            "name": "X-Demo-Role",
+            "name": "Authorization",
             "required": false,
             "schema": {
-              "enum": [
-                "security_analyst",
-                "system_admin",
-                "evaluator"
-              ],
+              "example": "Bearer eyJhbGciOiJIUzI1NiJ9...",
               "type": "string"
             }
           }
@@ -4647,6 +4933,16 @@
               }
             },
             "description": "A page of scenarios"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not signed in, or the token expired"
           }
         },
         "summary": "Pre-registered evaluation scenarios",
@@ -4663,6 +4959,10 @@
     }
   ],
   "tags": [
+    {
+      "description": "Sign-in and the current session",
+      "name": "auth"
+    },
     {
       "description": "The analyst queue and one alert's evidence",
       "name": "alerts"

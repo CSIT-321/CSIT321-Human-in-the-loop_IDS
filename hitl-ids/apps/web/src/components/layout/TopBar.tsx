@@ -1,18 +1,17 @@
 /**
- * The workstation's top bar: identity and data provenance on the left; the UTC clock, the stub role
- * switch and sign-out on the right.
+ * The workstation's top bar: identity and data provenance on the left; the UTC clock, the signed-in
+ * account and sign-out on the right.
  *
  * "Recorded flows" replaces the reference design's LIVE feed badge: this console scores recorded lab
  * traffic (CSE-CIC-IDS2018), and a live indicator would be a claim the system cannot make.
  *
- * The role switch is badged "Demo build" on purpose. It is not authentication — the API trusts
- * `X-Demo-Role` as sent — and S18 replaces it with real JWT, bcrypt and RBAC.
+ * There is no role switch. Since S18a the view belongs to the account signed in; to see another
+ * view, sign out and sign in as that account.
  */
 
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router";
 
-import { isRole, ROLES, ROLE_META } from "../../session/roles";
 import { useSession } from "../../session/SessionContext";
 
 /** "g.ang" -> "GA": the initials an avatar shows, ignoring anything that is not a letter or digit. */
@@ -35,7 +34,7 @@ function Clock() {
 }
 
 export function TopBar() {
-  const { session, switchRole, signOut } = useSession();
+  const { session, signOut } = useSession();
   const navigate = useNavigate();
 
   if (session === null) return null;
@@ -59,26 +58,6 @@ export function TopBar() {
       </div>
       <div className="flex items-center gap-3">
         <Clock />
-        <span className="rounded-sm border border-stub/30 bg-stub-bg px-2 py-0.5 font-mono text-[11px] text-stub">
-          Demo build · role switch stub
-        </span>
-        <select
-          aria-label="Switch role"
-          value={session.role}
-          onChange={(event) => {
-            const next = event.target.value;
-            if (!isRole(next)) return;
-            switchRole(next);
-            void navigate(ROLE_META[next].home);
-          }}
-          className="rounded-sm border border-border bg-raised px-2 py-1 text-xs text-text"
-        >
-          {ROLES.map((role) => (
-            <option key={role} value={role}>
-              {ROLE_META[role].label}
-            </option>
-          ))}
-        </select>
         <span
           aria-hidden
           title={session.username}
@@ -87,6 +66,7 @@ export function TopBar() {
           {initials(session.username)}
         </span>
         <span className="sr-only">{session.username}</span>
+        <span className="hidden truncate text-xs text-muted lg:inline">{session.displayName}</span>
         <button
           type="button"
           onClick={() => {

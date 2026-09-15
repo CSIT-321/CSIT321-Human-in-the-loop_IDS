@@ -14,7 +14,7 @@
 import type { Schemas } from "../../../api/client";
 import type { Session } from "../../../session/SessionContext";
 
-export const EVALUATOR: Session = { username: "e.val", role: "evaluator" };
+export const EVALUATOR: Session = { username: "e.val", displayName: "Evaluator", role: "evaluator", token: "test-token" };
 
 export const RUN_ID = "20260912T032022Z";
 

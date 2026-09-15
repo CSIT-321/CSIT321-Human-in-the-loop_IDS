@@ -13,16 +13,21 @@ import pytest
 from packages.contracts import db
 from test_api import client, database, rows  # noqa: F401  (shared fixtures)
 
-ANALYST = {"X-Demo-Role": "security_analyst"}
-ADMIN = {"X-Demo-Role": "system_admin"}
-EVALUATOR = {"X-Demo-Role": "evaluator"}
+
+def admin(client):  # noqa: A002
+    """The admin account's headers. The analyst is the client fixture's default sign-in."""
+    return {"Authorization": f"Bearer {client.tokens['admin']}"}
 
 
-def status(client, ref, to, headers=ANALYST):  # noqa: F811
+def evaluator(client):  # noqa: A002
+    return {"Authorization": f"Bearer {client.tokens['evaluator']}"}
+
+
+def status(client, ref, to, headers=None):  # noqa: F811
     return client.post(f"/api/alerts/{ref}/status", json={"status": to}, headers=headers)
 
 
-def assign(client, ref, owner, headers=ANALYST):  # noqa: F811
+def assign(client, ref, owner, headers=None):  # noqa: F811
     return client.post(f"/api/alerts/{ref}/assign", json={"owner": owner}, headers=headers)
 
 
@@ -52,7 +57,7 @@ def test_a_database_from_before_the_migration_is_upgraded_in_place(tmp_path):
 def test_notes_are_append_only_at_the_database(client, database):  # noqa: F811
     ref = rows(client, limit=1)[0]["alertRef"]
     assert client.post(f"/api/alerts/{ref}/notes", json={"body": "first look"},
-                       headers=ANALYST).status_code == 200
+                       headers=None).status_code == 200
     conn = db.connect(database)
     try:
         with pytest.raises(sqlite3.IntegrityError, match="append-only"):
@@ -78,7 +83,7 @@ def test_claiming_an_alert_makes_the_caller_its_owner_and_is_audited(client):  #
     assert alert["combinedScore"] == row["combinedScore"]  # workflow never moves a score
 
     audit = client.get("/api/audit-log", params={"eventType": ["ALERT_STATUS_CHANGE"]},
-                       headers=ADMIN).json()["items"]
+                       headers=admin(client)).json()["items"]
     assert audit[0]["alertRef"] == row["alertRef"]
     assert audit[0]["details"]["from_status"] == "new"
     assert audit[0]["details"]["to_status"] == "claimed"
@@ -127,9 +132,9 @@ def test_a_closed_alert_cannot_be_reassigned(client):  # noqa: F811
 
 def test_the_evaluator_cannot_triage(client):  # noqa: F811
     ref = rows(client, limit=1)[0]["alertRef"]
-    assert status(client, ref, "claimed", headers=EVALUATOR).status_code == 403
+    assert status(client, ref, "claimed", headers=evaluator(client)).status_code == 403
     assert client.post(f"/api/alerts/{ref}/notes", json={"body": "x"},
-                       headers=EVALUATOR).status_code == 403
+                       headers=evaluator(client)).status_code == 403
 
 
 def test_the_owner_filter_finds_my_alerts_and_the_unassigned_ones(client):  # noqa: F811
@@ -148,7 +153,7 @@ def test_notes_form_a_thread_oldest_first_with_their_author(client):  # noqa: F8
     ref = rows(client, limit=1)[0]["alertRef"]
     for body in ("Checked the destination: internal web server.", "No exploit payload found."):
         assert client.post(f"/api/alerts/{ref}/notes", json={"body": body},
-                           headers=ANALYST).status_code == 200
+                           headers=None).status_code == 200
     thread = client.get(f"/api/alerts/{ref}/notes").json()
     assert [n["body"] for n in thread["notes"]] == [
         "Checked the destination: internal web server.", "No exploit payload found."]
@@ -158,7 +163,7 @@ def test_notes_form_a_thread_oldest_first_with_their_author(client):  # noqa: F8
 @pytest.mark.parametrize("body", ["", "   "])
 def test_an_empty_note_is_refused(client, body):  # noqa: F811
     ref = rows(client, limit=1)[0]["alertRef"]
-    response = client.post(f"/api/alerts/{ref}/notes", json={"body": body}, headers=ANALYST)
+    response = client.post(f"/api/alerts/{ref}/notes", json={"body": body}, headers=None)
     assert response.status_code in (400, 422)
     assert response.json()["error"]["code"] == "VALIDATION_FAILED"
 

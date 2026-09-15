@@ -49,9 +49,18 @@ async function recordVerdict(page: Page, verdict: RegExp) {
   await expect(page.getByRole("region", { name: "Verdict outcome" })).toBeVisible();
 }
 
-async function switchRole(page: Page, label: string, home: string) {
-  await page.getByLabel("Switch role").selectOption({ label });
+async function signIn(page: Page, username: string, password: string, home: string) {
+  await page.getByLabel("Username").fill(username);
+  await page.getByLabel("Password").fill(password);
+  await page.getByRole("button", { name: "Sign in" }).click();
   await expect(page).toHaveURL(new RegExp(`${home}$`));
+}
+
+/** Since S18a there is no role switch: another view means signing in as its account. */
+async function signInAs(page: Page, username: string, password: string, home: string) {
+  await page.getByRole("button", { name: "Sign out" }).click();
+  await expect(page).toHaveURL(/\/login$/);
+  await signIn(page, username, password, home);
 }
 
 test("capture the demo guide", async ({ page }) => {
@@ -61,8 +70,8 @@ test("capture the demo guide", async ({ page }) => {
   // Act 1 — sign in.
   await page.goto("/login");
   await page.getByLabel("Username").fill("g.ang");
+  await page.getByLabel("Password").fill("analyst-demo");
   await shot(page, "01-login");
-  await page.getByRole("radio", { name: "Analyst" }).click();
   await page.getByRole("button", { name: "Sign in" }).click();
   await expect(page.getByText("5,000 alerts")).toBeVisible();
 
@@ -172,7 +181,7 @@ test("capture the demo guide", async ({ page }) => {
   await shot(page, "20-dashboard-after");
 
   // Act 7 — administrator.
-  await switchRole(page, "System Administrator", "/admin/status");
+  await signInAs(page, "admin", "admin-demo", "/admin/status");
   await expect(card(page, "Latest detection run").getByText("xgb-8class-20260911")).toBeVisible();
   // The figures row and service health come from two other requests; wait for both (R5).
   await expect(page.getByText("API answering")).toBeVisible();
@@ -201,7 +210,7 @@ test("capture the demo guide", async ({ page }) => {
   await shot(page, "24-audit-trail");
 
   // Act 8 — evaluator.
-  await switchRole(page, "Evaluator", "/evaluator/scenarios");
+  await signInAs(page, "evaluator", "evaluator-demo", "/evaluator/scenarios");
   await expect(page.getByRole("link", { name: "20260912T032022Z" })).toBeVisible();
   await shot(page, "25-eval-scenarios");
   await page.getByRole("link", { name: "20260912T032022Z" }).click();

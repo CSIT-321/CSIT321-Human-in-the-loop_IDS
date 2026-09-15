@@ -11,7 +11,6 @@
 
 import createClient, { type Middleware } from "openapi-fetch";
 
-import { ROLE_HEADER, type Role } from "../session/roles";
 import type { components, paths } from "./schema";
 
 export type Schemas = components["schemas"];
@@ -43,18 +42,32 @@ export class ApiError extends Error {
 /** Codes the client itself raises; every other code comes from the API. */
 export const CLIENT_ERROR = { network: "NETWORK_UNREACHABLE", unexpected: "UNEXPECTED_RESPONSE" } as const;
 
-// The role travels on every request. It is held here, set synchronously by the session, rather than
-// read from React state: a child component's first fetch runs before its parent's effects do.
-let currentRole: Role | null = null;
+// The bearer token travels on every request. It is held here, set synchronously by the session,
+// rather than read from React state: a child component's first fetch runs before its parent's
+// effects do.
+let currentToken: string | null = null;
 
-export function setApiRole(role: Role | null): void {
-  currentRole = role;
+export function setApiToken(token: string | null): void {
+  currentToken = token;
 }
 
-const roleHeader: Middleware = {
+// A 401 mid-session (an expired or revoked sign-in) signs the console out. The session provider
+// registers the handler; the guards then route the now-signed-out visitor to /login.
+let unauthorizedHandler: (() => void) | null = null;
+
+export function setApiUnauthorizedHandler(handler: (() => void) | null): void {
+  unauthorizedHandler = handler;
+}
+
+const authHeader: Middleware = {
   onRequest({ request }) {
-    if (currentRole !== null) request.headers.set(ROLE_HEADER, currentRole);
+    if (currentToken !== null) request.headers.set("Authorization", `Bearer ${currentToken}`);
     return request;
+  },
+  // Returning undefined — never a replacement Response — so openapi-fetch keeps the original.
+  onResponse({ response }) {
+    if (response.status === 401) unauthorizedHandler?.();
+    return undefined;
   },
 };
 
@@ -70,7 +83,7 @@ export const api = createClient<paths>({
   baseUrl: defaultBaseUrl(),
   fetch: (request) => globalThis.fetch(request),
 });
-api.use(roleHeader);
+api.use(authHeader);
 
 function isErrorResponse(value: unknown): value is { error: ErrorBody } {
   if (typeof value !== "object" || value === null || !("error" in value)) return false;

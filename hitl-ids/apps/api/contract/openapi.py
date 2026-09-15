@@ -24,11 +24,11 @@ from typing import Any
 from pydantic import BaseModel
 
 from apps.api.contract import alerts as a
+from apps.api.contract import auth as au
 from apps.api.contract import operations as o
 from apps.api.contract.common import (
     MAX_PAGE_SIZE,
     QUEUE_ORDER,
-    ROLE_HEADER,
     ErrorResponse,
     PageInfo,
     QueueQuery,
@@ -43,6 +43,9 @@ SCHEMA_REF = "#/components/schemas/{model}"
 MODELS: tuple[type[BaseModel], ...] = (
     ErrorResponse,
     PageInfo,
+    au.LoginRequest,
+    au.LoginResponse,
+    au.MeResponse,
     a.AlertSummary,
     a.AlertDetail,
     a.FlowPanel,
@@ -95,9 +98,10 @@ The demo API for the Human-in-the-Loop IDS dashboard (FYP-26-S3-13).
 **Deliberately narrow.** Only the endpoints the demo path exercises; the remaining TDM surface is
 S18. Adding endpoints "while we're here" is on the plan's anti-pattern list.
 
-**Authentication is a stub.** Send `{ROLE_HEADER}: security_analyst | system_admin | evaluator`.
-Real JWT/bcrypt with RBAC is S18. The stub is enforced only where a role genuinely gates an action,
-so `PUT /api/config/guardrails` refuses anything but `system_admin`.
+**Authentication is real (S18a).** `POST /api/auth/login` with one of the three seeded accounts
+returns a JWT bearer token; send it as `Authorization: Bearer <token>` on every other request. No
+token, a forged token or an expired one is a 401. The role gates only where a role genuinely gates
+an action, so `PUT /api/config/guardrails` refuses anything but `system_admin`.
 
 **Queue ordering is fixed by contract**: `{QUEUE_ORDER}`. Feedback moves an alert between queue
 *bands*, never across evidence classes, so a client that re-sorts by `evidenceClass` will hide the
@@ -140,7 +144,8 @@ def _page_of(model: type[BaseModel]) -> dict[str, Any]:
 
 def _errors(*codes: int) -> dict[str, Any]:
     text = {
-        400: "Validation failed", 403: "Role not permitted", 404: "Not found",
+        400: "Validation failed", 401: "Not signed in, or the token expired",
+        403: "Role not permitted", 404: "Not found",
         409: "Conflict", 422: "Guardrail rejected the request",
     }
     return {str(code): {"description": text[code], **_json(ErrorResponse)} for code in codes}
@@ -163,10 +168,14 @@ def _query_parameters(model: type[BaseModel]) -> list[dict[str, Any]]:
     ]
 
 
-ROLE_PARAMETER = {
-    "name": ROLE_HEADER, "in": "header", "required": False,
-    "description": "Role-switch stub (S18 replaces this with a real principal)",
-    "schema": {"type": "string", "enum": ["security_analyst", "system_admin", "evaluator"]},
+#: Every protected operation carries this. Optional in the document only so a generated client's
+#: call sites stay token-free — the console's session middleware stamps the header on every
+#: request (``apps/web/src/api/client.ts``), and API consumers who manage headers themselves get a
+#: 401 with the standard envelope if they forget.
+AUTH_PARAMETER = {
+    "name": "Authorization", "in": "header", "required": False,
+    "description": "`Bearer <token>` from POST /api/auth/login",
+    "schema": {"type": "string", "example": "Bearer eyJhbGciOiJIUzI1NiJ9..."},
 }
 
 ALERT_REF = {
@@ -188,7 +197,34 @@ RUN_ID = {"name": "runId", "in": "path", "required": True,
 
 
 def _paths() -> dict[str, Any]:
-    return {
+    paths = {
+        "/api/auth/login": {
+            "post": {
+                "operationId": "login",
+                "summary": "Sign in and receive a bearer token",
+                "description": "One of the three seeded accounts — one per role, so a view is a "
+                               "person, not a hat. The response's role comes from the account; a "
+                               "client cannot choose it. A wrong username, a wrong password and a "
+                               "disabled account all answer the same 401.",
+                "tags": ["auth"],
+                "requestBody": {"required": True, **_json(au.LoginRequest)},
+                "responses": {"200": {"description": "The token and the account it names",
+                                      **_json(au.LoginResponse)},
+                              **_errors(401)},
+            }
+        },
+        "/api/auth/me": {
+            "get": {
+                "operationId": "getCurrentUser",
+                "summary": "The signed-in account",
+                "description": "Who the token says is calling — the session check.",
+                "tags": ["auth"],
+                "parameters": [AUTH_PARAMETER],
+                "responses": {"200": {"description": "The account named by the token",
+                                      **_json(au.MeResponse)},
+                              **_errors(401)},
+            }
+        },
         "/api/alerts": {
             "get": {
                 "operationId": "listAlerts",
@@ -198,7 +234,7 @@ def _paths() -> dict[str, Any]:
                                f"other keys are inspection tools, not alternative rankings. "
                                f"Maximum page size {MAX_PAGE_SIZE}.",
                 "tags": ["alerts"],
-                "parameters": [ROLE_PARAMETER, *_query_parameters(QueueQuery)],
+                "parameters": [AUTH_PARAMETER, *_query_parameters(QueueQuery)],
                 "responses": {"200": {"description": "A page of the queue",
                                       **_page_of(a.AlertSummary)}, **_errors(400)},
             }
@@ -209,7 +245,7 @@ def _paths() -> dict[str, Any]:
                 "summary": "One alert: flow, signature, model and combined evidence",
                 "description": "An alert no detector flagged is a valid response, not a 404.",
                 "tags": ["alerts"],
-                "parameters": [ROLE_PARAMETER, ALERT_REF],
+                "parameters": [AUTH_PARAMETER, ALERT_REF],
                 "responses": {"200": {"description": "The alert and its four evidence panels",
                                       **_json(a.AlertDetail)}, **_errors(404)},
             }
@@ -224,7 +260,7 @@ def _paths() -> dict[str, Any]:
                                "`action: rejected`, not an error — the verdict was recorded and the "
                                "score was protected.",
                 "tags": ["alerts", "feedback"],
-                "parameters": [ROLE_PARAMETER, ALERT_REF],
+                "parameters": [AUTH_PARAMETER, ALERT_REF],
                 "requestBody": {"required": True, **_json(a.FeedbackRequest)},
                 "responses": {"200": {"description": "The verdict, its adjustment and its family "
                                                      "effect", **_json(a.FeedbackResponse)},
@@ -236,7 +272,7 @@ def _paths() -> dict[str, Any]:
                 "operationId": "getScoreAdjustment",
                 "summary": "The current adjustment chain for one alert",
                 "tags": ["alerts", "feedback"],
-                "parameters": [ROLE_PARAMETER, ALERT_REF],
+                "parameters": [AUTH_PARAMETER, ALERT_REF],
                 "responses": {"200": {"description": "original, requested, bound, actual, final",
                                       **_json(a.ScoreAdjustment)}, **_errors(404)},
             }
@@ -248,7 +284,7 @@ def _paths() -> dict[str, Any]:
                 "description": "Append-only. An amendment is a new record citing the one it "
                                "supersedes; `effective` names the verdict currently in force.",
                 "tags": ["alerts", "feedback"],
-                "parameters": [ROLE_PARAMETER, ALERT_REF],
+                "parameters": [AUTH_PARAMETER, ALERT_REF],
                 "responses": {"200": {"description": "The verdict history",
                                       **_json(a.FeedbackHistory)}, **_errors(404)},
             }
@@ -262,7 +298,7 @@ def _paths() -> dict[str, Any]:
                                "refused transition is a 409. Writes an ALERT_STATUS_CHANGE audit "
                                "entry.",
                 "tags": ["alerts", "triage"],
-                "parameters": [ROLE_PARAMETER, ALERT_REF],
+                "parameters": [AUTH_PARAMETER, ALERT_REF],
                 "requestBody": {"required": True, **_json(a.StatusChangeRequest)},
                 "responses": {"200": {"description": "The alert after the change",
                                       **_json(a.TriageResponse)},
@@ -275,7 +311,7 @@ def _paths() -> dict[str, Any]:
                 "operationId": "assignAlert",
                 "summary": "Assign an alert to the caller, or unassign it",
                 "tags": ["alerts", "triage"],
-                "parameters": [ROLE_PARAMETER, ALERT_REF],
+                "parameters": [AUTH_PARAMETER, ALERT_REF],
                 "requestBody": {"required": True, **_json(a.AssignRequest)},
                 "responses": {"200": {"description": "The alert after the change",
                                       **_json(a.TriageResponse)},
@@ -288,7 +324,7 @@ def _paths() -> dict[str, Any]:
                 "operationId": "listAlertNotes",
                 "summary": "The alert's notes thread, oldest first",
                 "tags": ["alerts", "triage"],
-                "parameters": [ROLE_PARAMETER, ALERT_REF],
+                "parameters": [AUTH_PARAMETER, ALERT_REF],
                 "responses": {"200": {"description": "The thread", **_json(a.AlertNotes)},
                               **_errors(404)},
             },
@@ -297,7 +333,7 @@ def _paths() -> dict[str, Any]:
                 "summary": "Add a note to the alert",
                 "description": "Append-only: a correction is a new note.",
                 "tags": ["alerts", "triage"],
-                "parameters": [ROLE_PARAMETER, ALERT_REF],
+                "parameters": [AUTH_PARAMETER, ALERT_REF],
                 "requestBody": {"required": True, **_json(a.NoteRequest)},
                 "responses": {"200": {"description": "The stored note", **_json(a.NoteOut)},
                               **_errors(400, 403, 404)},
@@ -311,7 +347,7 @@ def _paths() -> dict[str, Any]:
                            "histogram",
                 "description": "Recorded flows: the histogram is capture time, not a live rate.",
                 "tags": ["dashboard"],
-                "parameters": [ROLE_PARAMETER, TOP_LIMIT],
+                "parameters": [AUTH_PARAMETER, TOP_LIMIT],
                 "responses": {"200": {"description": "Breakdowns",
                                       **_json(o.DashboardBreakdowns)}, **_errors(400)},
             }
@@ -321,7 +357,7 @@ def _paths() -> dict[str, Any]:
                 "operationId": "getIpEntity",
                 "summary": "Everything the recorded flows say about one IP address",
                 "tags": ["entities"],
-                "parameters": [ROLE_PARAMETER, IP_PATH, TOP_LIMIT],
+                "parameters": [AUTH_PARAMETER, IP_PATH, TOP_LIMIT],
                 "responses": {"200": {"description": "The address's alerts, peers and ports",
                                       **_json(o.EntityIp)}, **_errors(400, 404)},
             }
@@ -331,7 +367,7 @@ def _paths() -> dict[str, Any]:
                 "operationId": "getDashboardSummary",
                 "summary": "Queue composition and feedback activity",
                 "tags": ["dashboard"],
-                "parameters": [ROLE_PARAMETER],
+                "parameters": [AUTH_PARAMETER],
                 "responses": {"200": {"description": "Summary counts",
                                       **_json(o.DashboardSummary)}},
             }
@@ -342,7 +378,7 @@ def _paths() -> dict[str, Any]:
                 "summary": "Start a batch detection run",
                 "description": "Detection is an offline batch (D3), never inline in a request.",
                 "tags": ["detection"],
-                "parameters": [ROLE_PARAMETER],
+                "parameters": [AUTH_PARAMETER],
                 "requestBody": {"required": False, **_json(o.DetectionRunRequest)},
                 "responses": {"202": {"description": "The run was accepted",
                                       **_json(o.DetectionRunSummary)},
@@ -355,7 +391,7 @@ def _paths() -> dict[str, Any]:
                 "operationId": "listAuditLog",
                 "summary": "The append-only audit trail",
                 "tags": ["audit"],
-                "parameters": [ROLE_PARAMETER, *_query_parameters(o.AuditQuery)],
+                "parameters": [AUTH_PARAMETER, *_query_parameters(o.AuditQuery)],
                 "responses": {"200": {"description": "A page of audit entries",
                                       **_page_of(o.AuditEntryOut)}, **_errors(400, 403)},
             }
@@ -365,7 +401,7 @@ def _paths() -> dict[str, Any]:
                 "operationId": "getGuardrailConfig",
                 "summary": "Current guardrail settings",
                 "tags": ["config"],
-                "parameters": [ROLE_PARAMETER],
+                "parameters": [AUTH_PARAMETER],
                 "responses": {"200": {"description": "The settings",
                                       **_json(o.GuardrailConfig)}},
             },
@@ -375,7 +411,7 @@ def _paths() -> dict[str, Any]:
                 "description": "A rationale is required: the audit entry records why, not just "
                                "what. An analyst role receives 403.",
                 "tags": ["config"],
-                "parameters": [ROLE_PARAMETER],
+                "parameters": [AUTH_PARAMETER],
                 "requestBody": {"required": True, **_json(o.GuardrailConfigUpdate)},
                 "responses": {"200": {"description": "The updated settings",
                                       **_json(o.GuardrailConfig)}, **_errors(400, 403)},
@@ -387,7 +423,7 @@ def _paths() -> dict[str, Any]:
                 "operationId": "listEvaluationScenarios",
                 "summary": "Pre-registered evaluation scenarios",
                 "tags": ["evaluation"],
-                "parameters": [ROLE_PARAMETER],
+                "parameters": [AUTH_PARAMETER],
                 "responses": {"200": {"description": "A page of scenarios",
                                       **_page_of(o.EvaluationScenarioOut)}},
             }
@@ -399,7 +435,7 @@ def _paths() -> dict[str, Any]:
                 "description": "Read from evaluation/three-arm/runs/, not from a database: each arm "
                                "runs against its own database copy.",
                 "tags": ["evaluation"],
-                "parameters": [ROLE_PARAMETER],
+                "parameters": [AUTH_PARAMETER],
                 "responses": {"200": {"description": "A page of runs",
                                       **_page_of(o.EvaluationRunOut)}},
             }
@@ -410,7 +446,7 @@ def _paths() -> dict[str, Any]:
                 "summary": "Three-arm comparison for one evaluation run",
                 "description": "Deltas may be negative and must be rendered as measured.",
                 "tags": ["evaluation"],
-                "parameters": [ROLE_PARAMETER, RUN_ID],
+                "parameters": [AUTH_PARAMETER, RUN_ID],
                 "responses": {"200": {"description": "Arms, deltas and what the guardrails "
                                                      "prevented",
                                       **_json(o.EvaluationComparison)}, **_errors(404)},
@@ -423,12 +459,22 @@ def _paths() -> dict[str, Any]:
                 "description": "Identical across all three arms by construction — feedback never "
                                "changes the detection decision.",
                 "tags": ["evaluation"],
-                "parameters": [ROLE_PARAMETER, RUN_ID],
+                "parameters": [AUTH_PARAMETER, RUN_ID],
                 "responses": {"200": {"description": "Per-class metrics, saturation and I3",
                                       **_json(o.EvaluationDetectionMetrics)}, **_errors(404)},
             }
         },
     }
+    # Every operation except login can answer 401 — a missing or expired sign-in is a fact of every
+    # protected path, not a per-path decision, so it is stamped once here rather than repeated in
+    # the literal above.
+    for path, operations in paths.items():
+        if path == "/api/auth/login":
+            continue
+        for operation in operations.values():
+            if isinstance(operation, dict):
+                operation["responses"]["401"] = _errors(401)["401"]
+    return paths
 
 
 def openapi_document() -> dict[str, Any]:
@@ -442,6 +488,7 @@ def openapi_document() -> dict[str, Any]:
         },
         "servers": [{"url": "http://localhost:8000", "description": "Local demo"}],
         "tags": [
+            {"name": "auth", "description": "Sign-in and the current session"},
             {"name": "alerts", "description": "The analyst queue and one alert's evidence"},
             {"name": "feedback", "description": "Verdicts, guardrails and family learning"},
             {"name": "dashboard", "description": "Queue composition"},

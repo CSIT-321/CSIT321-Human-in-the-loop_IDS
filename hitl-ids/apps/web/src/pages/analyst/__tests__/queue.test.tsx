@@ -14,7 +14,7 @@ import type { Session } from "../../../session/SessionContext";
 import { jsonResponse, renderApp, stubFetch } from "../../../test/renderApp";
 import { AL_00478_REF, CRITICAL_ALERT, UNFLAGGED_ALERT, alertsPage } from "./fixtures";
 
-const ANALYST: Session = { username: "g.ang", role: "security_analyst" };
+const ANALYST: Session = { username: "g.ang", displayName: "Glenn Ang", role: "security_analyst", token: "test-token" };
 
 function queryOf(request: Request | undefined): URLSearchParams {
   return new URL(request?.url ?? "http://localhost/").searchParams;

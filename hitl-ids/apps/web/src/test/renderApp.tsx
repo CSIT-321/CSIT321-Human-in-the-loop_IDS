@@ -22,7 +22,7 @@ export function jsonResponse(body: unknown, status = 200): Response {
 
 /**
  * Replace `fetch`. Returns the list of requests seen, so a test can assert on headers such as
- * `X-Demo-Role`.
+ * `Authorization`.
  */
 export function stubFetch(handler: FetchHandler): Request[] {
   const seen: Request[] = [];

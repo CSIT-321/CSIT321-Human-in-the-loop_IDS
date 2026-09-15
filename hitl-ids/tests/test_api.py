@@ -27,7 +27,10 @@ from pathlib import Path
 import pytest
 from fastapi.testclient import TestClient
 
+from apps.api import auth
 from apps.api.main import create_app
+from packages.contracts import db
+from packages.contracts import models as m
 from packages.detection.pipeline import store
 from packages.detection.pipeline.predictor import ReplayPredictor
 from packages.detection.pipeline.runner import open_database, run_detection
@@ -57,7 +60,24 @@ def database(tmp_path, sample, predictions) -> Path:
 
 @pytest.fixture
 def client(database) -> TestClient:
-    return TestClient(create_app(database))
+    """Signed in as g.ang (analyst) by default, mirroring the demo's main path.
+
+    The fixture seeds the three S18a accounts on this test's database and mints a token per
+    account, so a test that needs another role reads ``client.tokens["admin"]`` instead of
+    re-logging-in. Requests with no per-test headers carry the analyst token.
+    """
+    conn = db.connect(str(database))
+    try:
+        auth.ensure_demo_accounts(conn)
+        tokens = {username: auth.encode_token(db.from_row(m.User, conn.execute(
+            "SELECT * FROM users WHERE username = ?", (username,)).fetchone()))
+            for username, *_ in auth.DEMO_ACCOUNTS}
+    finally:
+        conn.close()
+    api = TestClient(create_app(database))
+    api.tokens = tokens
+    api.headers.update({"Authorization": f"Bearer {tokens['g.ang']}"})
+    return api
 
 
 def rows(client: TestClient, **params) -> list[dict]:
@@ -339,10 +359,9 @@ def test_the_audit_log_is_newest_first_and_filterable(client):
 
 
 def test_an_analyst_cannot_change_the_guardrails(client):
-    """The plan's named verification for the role stub."""
+    """The plan's named verification for the role check, now against a real account."""
     response = client.put("/api/config/guardrails",
-                          json={"criticalAlertFloor": 50, "rationale": "lowering"},
-                          headers={"X-Demo-Role": "security_analyst"})
+                          json={"criticalAlertFloor": 50, "rationale": "lowering"})
     assert response.status_code == 403
     assert response.json()["error"]["code"] == "FORBIDDEN_ROLE"
 
@@ -350,7 +369,7 @@ def test_an_analyst_cannot_change_the_guardrails(client):
 def test_an_admin_can_change_the_guardrails_and_it_is_audited(client):
     response = client.put("/api/config/guardrails",
                           json={"criticalAlertFloor": 65, "rationale": "Tuning for the demo."},
-                          headers={"X-Demo-Role": "system_admin"})
+                          headers={"Authorization": f"Bearer {client.tokens['admin']}"})
     assert response.status_code == 200, response.text
     settings = {s["configKey"]: s["configValue"] for s in response.json()["settings"]}
     assert settings["critical_alert_floor"] == 65
@@ -361,23 +380,25 @@ def test_an_admin_can_change_the_guardrails_and_it_is_audited(client):
 
 def test_changing_guardrails_without_a_rationale_is_refused(client):
     response = client.put("/api/config/guardrails", json={"criticalAlertFloor": 65},
-                          headers={"X-Demo-Role": "system_admin"})
+                          headers={"Authorization": f"Bearer {client.tokens['admin']}"})
     assert response.status_code == 400
 
 
-def test_an_unknown_role_is_refused_rather_than_downgraded(client):
-    response = client.get("/api/alerts", headers={"X-Demo-Role": "root"})
-    assert response.status_code == 400
-    assert response.json()["error"]["code"] == "VALIDATION_FAILED"
+def test_an_invalid_token_is_refused_rather_than_downgraded(client):
+    response = client.get("/api/alerts", headers={"Authorization": "Bearer not-a-token"})
+    assert response.status_code == 401
+    assert response.json()["error"]["code"] == "UNAUTHORIZED"
 
 
-def test_the_default_role_is_analyst(client):
-    """The demo's main path needs no header at all."""
+def test_the_fixture_is_signed_in_as_the_analyst(client):
+    """The demo's main path: the console's session is the analyst account."""
+    assert client.get("/api/auth/me").json()["username"] == "g.ang"
     assert client.get("/api/alerts", params={"limit": 1}).status_code == 200
 
 
 def test_a_detection_run_reports_the_existing_run(client):
-    response = client.post("/api/detection/run", headers={"X-Demo-Role": "system_admin"})
+    response = client.post("/api/detection/run",
+                           headers={"Authorization": f"Bearer {client.tokens['admin']}"})
     assert response.status_code == 202
     assert response.json()["alerts"] == len(ROWS)
 

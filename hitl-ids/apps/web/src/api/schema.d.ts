@@ -176,6 +176,46 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/auth/login": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Sign in and receive a bearer token
+         * @description One of the three seeded accounts — one per role, so a view is a person, not a hat. The response's role comes from the account; a client cannot choose it. A wrong username, a wrong password and a disabled account all answer the same 401.
+         */
+        post: operations["login"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/auth/me": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * The signed-in account
+         * @description Who the token says is calling — the session check.
+         */
+        get: operations["getCurrentUser"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/config/guardrails": {
         parameters: {
             query?: never;
@@ -354,7 +394,7 @@ export interface components {
     schemas: {
         /**
          * Actor
-         * @description Who did something. The demo's users are seeded; S18 replaces this with a real principal.
+         * @description Who did something. Since S18a these are the real seeded accounts, not stub role-holders.
          */
         Actor: {
             /**
@@ -1325,6 +1365,51 @@ export interface components {
             updatedAt: string | null;
         };
         /**
+         * LoginRequest
+         * @description What the sign-in form sends. A wrong username and a wrong password answer identically.
+         */
+        LoginRequest: {
+            /** Password */
+            password: string;
+            /** Username */
+            username: string;
+        };
+        /**
+         * LoginResponse
+         * @description The signed token plus the account it names. The console stores this as its session.
+         */
+        LoginResponse: {
+            /** Displayname */
+            displayName: string;
+            /**
+             * Role
+             * @enum {string}
+             */
+            role: "security_analyst" | "system_admin" | "evaluator";
+            /**
+             * Token
+             * @description JWT bearer token; send as `Authorization: Bearer <token>`. Valid for 8 hours.
+             */
+            token: string;
+            /** Username */
+            username: string;
+        };
+        /**
+         * MeResponse
+         * @description Who the token says is calling — the session check for `GET /api/auth/me`.
+         */
+        MeResponse: {
+            /** Displayname */
+            displayName: string;
+            /**
+             * Role
+             * @enum {string}
+             */
+            role: "security_analyst" | "system_admin" | "evaluator";
+            /** Username */
+            username: string;
+        };
+        /**
          * MlPanel
          * @description Panel 3 — what the model said, and why (NFR-01).
          *
@@ -1742,8 +1827,8 @@ export interface operations {
                 flowTo?: string | null;
             };
             header?: {
-                /** @description Role-switch stub (S18 replaces this with a real principal) */
-                "X-Demo-Role"?: "security_analyst" | "system_admin" | "evaluator";
+                /** @description `Bearer <token>` from POST /api/auth/login */
+                Authorization?: string;
             };
             path?: never;
             cookie?: never;
@@ -1771,14 +1856,23 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
+            /** @description Not signed in, or the token expired */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
         };
     };
     getAlert: {
         parameters: {
             query?: never;
             header?: {
-                /** @description Role-switch stub (S18 replaces this with a real principal) */
-                "X-Demo-Role"?: "security_analyst" | "system_admin" | "evaluator";
+                /** @description `Bearer <token>` from POST /api/auth/login */
+                Authorization?: string;
             };
             path: {
                 /** @description The alert's public UUID */
@@ -1797,6 +1891,15 @@ export interface operations {
                     "application/json": components["schemas"]["AlertDetail"];
                 };
             };
+            /** @description Not signed in, or the token expired */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
             /** @description Not found */
             404: {
                 headers: {
@@ -1812,8 +1915,8 @@ export interface operations {
         parameters: {
             query?: never;
             header?: {
-                /** @description Role-switch stub (S18 replaces this with a real principal) */
-                "X-Demo-Role"?: "security_analyst" | "system_admin" | "evaluator";
+                /** @description `Bearer <token>` from POST /api/auth/login */
+                Authorization?: string;
             };
             path: {
                 /** @description The alert's public UUID */
@@ -1838,6 +1941,15 @@ export interface operations {
             };
             /** @description Validation failed */
             400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not signed in, or the token expired */
+            401: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -1878,8 +1990,8 @@ export interface operations {
         parameters: {
             query?: never;
             header?: {
-                /** @description Role-switch stub (S18 replaces this with a real principal) */
-                "X-Demo-Role"?: "security_analyst" | "system_admin" | "evaluator";
+                /** @description `Bearer <token>` from POST /api/auth/login */
+                Authorization?: string;
             };
             path: {
                 /** @description The alert's public UUID */
@@ -1911,6 +2023,15 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
+            /** @description Not signed in, or the token expired */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
             /** @description Not found */
             404: {
                 headers: {
@@ -1935,8 +2056,8 @@ export interface operations {
         parameters: {
             query?: never;
             header?: {
-                /** @description Role-switch stub (S18 replaces this with a real principal) */
-                "X-Demo-Role"?: "security_analyst" | "system_admin" | "evaluator";
+                /** @description `Bearer <token>` from POST /api/auth/login */
+                Authorization?: string;
             };
             path: {
                 /** @description The alert's public UUID */
@@ -1955,6 +2076,15 @@ export interface operations {
                     "application/json": components["schemas"]["FeedbackHistory"];
                 };
             };
+            /** @description Not signed in, or the token expired */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
             /** @description Not found */
             404: {
                 headers: {
@@ -1970,8 +2100,8 @@ export interface operations {
         parameters: {
             query?: never;
             header?: {
-                /** @description Role-switch stub (S18 replaces this with a real principal) */
-                "X-Demo-Role"?: "security_analyst" | "system_admin" | "evaluator";
+                /** @description `Bearer <token>` from POST /api/auth/login */
+                Authorization?: string;
             };
             path: {
                 /** @description The alert's public UUID */
@@ -1990,6 +2120,15 @@ export interface operations {
                     "application/json": components["schemas"]["AlertNotes"];
                 };
             };
+            /** @description Not signed in, or the token expired */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
             /** @description Not found */
             404: {
                 headers: {
@@ -2005,8 +2144,8 @@ export interface operations {
         parameters: {
             query?: never;
             header?: {
-                /** @description Role-switch stub (S18 replaces this with a real principal) */
-                "X-Demo-Role"?: "security_analyst" | "system_admin" | "evaluator";
+                /** @description `Bearer <token>` from POST /api/auth/login */
+                Authorization?: string;
             };
             path: {
                 /** @description The alert's public UUID */
@@ -2038,6 +2177,15 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
+            /** @description Not signed in, or the token expired */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
             /** @description Role not permitted */
             403: {
                 headers: {
@@ -2062,8 +2210,8 @@ export interface operations {
         parameters: {
             query?: never;
             header?: {
-                /** @description Role-switch stub (S18 replaces this with a real principal) */
-                "X-Demo-Role"?: "security_analyst" | "system_admin" | "evaluator";
+                /** @description `Bearer <token>` from POST /api/auth/login */
+                Authorization?: string;
             };
             path: {
                 /** @description The alert's public UUID */
@@ -2082,6 +2230,15 @@ export interface operations {
                     "application/json": components["schemas"]["ScoreAdjustment"];
                 };
             };
+            /** @description Not signed in, or the token expired */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
             /** @description Not found */
             404: {
                 headers: {
@@ -2097,8 +2254,8 @@ export interface operations {
         parameters: {
             query?: never;
             header?: {
-                /** @description Role-switch stub (S18 replaces this with a real principal) */
-                "X-Demo-Role"?: "security_analyst" | "system_admin" | "evaluator";
+                /** @description `Bearer <token>` from POST /api/auth/login */
+                Authorization?: string;
             };
             path: {
                 /** @description The alert's public UUID */
@@ -2123,6 +2280,15 @@ export interface operations {
             };
             /** @description Validation failed */
             400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not signed in, or the token expired */
+            401: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -2176,8 +2342,8 @@ export interface operations {
                 until?: string | null;
             };
             header?: {
-                /** @description Role-switch stub (S18 replaces this with a real principal) */
-                "X-Demo-Role"?: "security_analyst" | "system_admin" | "evaluator";
+                /** @description `Bearer <token>` from POST /api/auth/login */
+                Authorization?: string;
             };
             path?: never;
             cookie?: never;
@@ -2205,8 +2371,82 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
+            /** @description Not signed in, or the token expired */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
             /** @description Role not permitted */
             403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    login: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["LoginRequest"];
+            };
+        };
+        responses: {
+            /** @description The token and the account it names */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LoginResponse"];
+                };
+            };
+            /** @description Not signed in, or the token expired */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    getCurrentUser: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description `Bearer <token>` from POST /api/auth/login */
+                Authorization?: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The account named by the token */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MeResponse"];
+                };
+            };
+            /** @description Not signed in, or the token expired */
+            401: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -2220,8 +2460,8 @@ export interface operations {
         parameters: {
             query?: never;
             header?: {
-                /** @description Role-switch stub (S18 replaces this with a real principal) */
-                "X-Demo-Role"?: "security_analyst" | "system_admin" | "evaluator";
+                /** @description `Bearer <token>` from POST /api/auth/login */
+                Authorization?: string;
             };
             path?: never;
             cookie?: never;
@@ -2237,14 +2477,23 @@ export interface operations {
                     "application/json": components["schemas"]["GuardrailConfig"];
                 };
             };
+            /** @description Not signed in, or the token expired */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
         };
     };
     updateGuardrailConfig: {
         parameters: {
             query?: never;
             header?: {
-                /** @description Role-switch stub (S18 replaces this with a real principal) */
-                "X-Demo-Role"?: "security_analyst" | "system_admin" | "evaluator";
+                /** @description `Bearer <token>` from POST /api/auth/login */
+                Authorization?: string;
             };
             path?: never;
             cookie?: never;
@@ -2273,6 +2522,15 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
+            /** @description Not signed in, or the token expired */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
             /** @description Role not permitted */
             403: {
                 headers: {
@@ -2291,8 +2549,8 @@ export interface operations {
                 limit?: number;
             };
             header?: {
-                /** @description Role-switch stub (S18 replaces this with a real principal) */
-                "X-Demo-Role"?: "security_analyst" | "system_admin" | "evaluator";
+                /** @description `Bearer <token>` from POST /api/auth/login */
+                Authorization?: string;
             };
             path?: never;
             cookie?: never;
@@ -2317,14 +2575,23 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
+            /** @description Not signed in, or the token expired */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
         };
     };
     getDashboardSummary: {
         parameters: {
             query?: never;
             header?: {
-                /** @description Role-switch stub (S18 replaces this with a real principal) */
-                "X-Demo-Role"?: "security_analyst" | "system_admin" | "evaluator";
+                /** @description `Bearer <token>` from POST /api/auth/login */
+                Authorization?: string;
             };
             path?: never;
             cookie?: never;
@@ -2340,14 +2607,23 @@ export interface operations {
                     "application/json": components["schemas"]["DashboardSummary"];
                 };
             };
+            /** @description Not signed in, or the token expired */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
         };
     };
     startDetectionRun: {
         parameters: {
             query?: never;
             header?: {
-                /** @description Role-switch stub (S18 replaces this with a real principal) */
-                "X-Demo-Role"?: "security_analyst" | "system_admin" | "evaluator";
+                /** @description `Bearer <token>` from POST /api/auth/login */
+                Authorization?: string;
             };
             path?: never;
             cookie?: never;
@@ -2369,6 +2645,15 @@ export interface operations {
             };
             /** @description Validation failed */
             400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not signed in, or the token expired */
+            401: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -2403,8 +2688,8 @@ export interface operations {
                 limit?: number;
             };
             header?: {
-                /** @description Role-switch stub (S18 replaces this with a real principal) */
-                "X-Demo-Role"?: "security_analyst" | "system_admin" | "evaluator";
+                /** @description `Bearer <token>` from POST /api/auth/login */
+                Authorization?: string;
             };
             path: {
                 /** @description An IPv4 or IPv6 address */
@@ -2432,6 +2717,15 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
+            /** @description Not signed in, or the token expired */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
             /** @description Not found */
             404: {
                 headers: {
@@ -2447,8 +2741,8 @@ export interface operations {
         parameters: {
             query?: never;
             header?: {
-                /** @description Role-switch stub (S18 replaces this with a real principal) */
-                "X-Demo-Role"?: "security_analyst" | "system_admin" | "evaluator";
+                /** @description `Bearer <token>` from POST /api/auth/login */
+                Authorization?: string;
             };
             path?: never;
             cookie?: never;
@@ -2467,14 +2761,23 @@ export interface operations {
                     };
                 };
             };
+            /** @description Not signed in, or the token expired */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
         };
     };
     getEvaluationRun: {
         parameters: {
             query?: never;
             header?: {
-                /** @description Role-switch stub (S18 replaces this with a real principal) */
-                "X-Demo-Role"?: "security_analyst" | "system_admin" | "evaluator";
+                /** @description `Bearer <token>` from POST /api/auth/login */
+                Authorization?: string;
             };
             path: {
                 /** @description Evaluation run id, e.g. 20260912T032022Z */
@@ -2493,6 +2796,15 @@ export interface operations {
                     "application/json": components["schemas"]["EvaluationComparison"];
                 };
             };
+            /** @description Not signed in, or the token expired */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
             /** @description Not found */
             404: {
                 headers: {
@@ -2508,8 +2820,8 @@ export interface operations {
         parameters: {
             query?: never;
             header?: {
-                /** @description Role-switch stub (S18 replaces this with a real principal) */
-                "X-Demo-Role"?: "security_analyst" | "system_admin" | "evaluator";
+                /** @description `Bearer <token>` from POST /api/auth/login */
+                Authorization?: string;
             };
             path: {
                 /** @description Evaluation run id, e.g. 20260912T032022Z */
@@ -2528,6 +2840,15 @@ export interface operations {
                     "application/json": components["schemas"]["EvaluationDetectionMetrics"];
                 };
             };
+            /** @description Not signed in, or the token expired */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
             /** @description Not found */
             404: {
                 headers: {
@@ -2543,8 +2864,8 @@ export interface operations {
         parameters: {
             query?: never;
             header?: {
-                /** @description Role-switch stub (S18 replaces this with a real principal) */
-                "X-Demo-Role"?: "security_analyst" | "system_admin" | "evaluator";
+                /** @description `Bearer <token>` from POST /api/auth/login */
+                Authorization?: string;
             };
             path?: never;
             cookie?: never;
@@ -2561,6 +2882,15 @@ export interface operations {
                         items: components["schemas"]["EvaluationScenarioOut"][];
                         page: components["schemas"]["PageInfo"];
                     };
+                };
+            };
+            /** @description Not signed in, or the token expired */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
         };

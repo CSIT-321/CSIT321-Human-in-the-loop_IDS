@@ -11,7 +11,7 @@
 import type { Schemas } from "../../../api/client";
 import type { Session } from "../../../session/SessionContext";
 
-export const ADMIN: Session = { username: "a.admin", role: "system_admin" };
+export const ADMIN: Session = { username: "a.admin", displayName: "System Administrator", role: "system_admin", token: "test-token" };
 
 export const SUMMARY: Schemas["DashboardSummary"] = {
   generatedAt: "2026-09-12T10:00:00.000000Z",
