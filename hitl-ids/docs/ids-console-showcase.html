@@ -964,7 +964,11 @@
         </table>
       </div>
       <div class="note"><b>Every flow becomes an alert</b> — all 5,000. The 1,000 flagged sit in the evidence bands; the 4,000 nobody flagged are the queue's bottom band and the evaluation's denominator. There is no cherry-picked alert list.</div>
-      <div class="proves"><span>Shows</span><span class="tag">dataset provenance</span><span class="tag">class balance</span><span class="tag">why 2018 improved</span></div>
+      <h3>What kind of IDS produces data like this</h3>
+      <div class="prose">
+        <p>Our unit of detection is the <strong>network flow with a feature vector</strong> — the CICFlowMeter schema (duration, packets, bytes, ports, protocol, plus the derived CIC features). That lineage matters: it is the same family of data produced by <strong>flow-based sensors</strong> — CICFlowMeter itself, NetFlow/IPFIX collectors, Argus, and the flow records behind commercial NDR/traffic-analytics platforms. It is <em>not</em> the alert stream a signature IDS emits, nor Zeek's scriptable logs — and §13 says exactly how we sit beside those.</p>
+      </div>
+      <div class="proves"><span>Shows</span><span class="tag">dataset provenance</span><span class="tag">class balance</span><span class="tag">why 2018 improved</span><span class="tag">flow-sensor lineage</span></div>
     </section>
 
     <section class="part" id="analysis">
@@ -1009,7 +1013,25 @@
           </tbody>
         </table>
       </div>
-      <div class="proves"><span>Shows</span><span class="tag">decision log</span><span class="tag">experiment-chosen constants</span><span class="tag">withdrawn assumptions on record</span></div>
+      <h3>Deep dive: what the notebooks actually tested</h3>
+      <div class="prose">
+        <p>The notebooks in <code>hitl-ids/notebooks/</code> are decision records, not results pages — every number is recomputed from artifact files, and superseded conclusions are shown rather than deleted. Three things they established:</p>
+      </div>
+      <h4>How the data was split — and why the first split was wrong</h4>
+      <div class="prose">
+        <p><strong>The original split was a single 1,000-row sample, 50/50 benign/attack</strong> — <strong>15× more attack-dense than reality</strong>, so any verdict-reordering experiment on it would be measuring a queue that never exists. Decision <strong>Q20</strong> replaced it: a <strong>disjoint</strong> training sample of <strong>250,655 rows</strong> and a <strong>5,000-row demo sample</strong> (seed 20260911, stratified: 4,000 Benign + 7 attack classes) — disjoint, so the demo can never be a memorisation test. The tuned rules were then <strong>held-out re-tested over the 250,655 unseen rows</strong>: precision <strong>0.9999</strong>, recall <strong>0.1993</strong>, two false positives in 30,025 hits — the re-test that established the rules were not overfit to their tuning set.</p>
+      </div>
+      <h4>Why this model — what the tests said</h4>
+      <div class="prose">
+        <p><strong>The retrain was forced by the labels, not chosen for taste.</strong> The old 6-class model was trained on mislabelled data — it called SSH brute force “Benign” at 0.78 confidence, and it could not emit <em>Infiltration</em> at all, which is 8.3% of the demo data. The corrected labels plus Q19 (Port Scan split out: 99.6% of “Infiltration” was NMAP Portscan) forced the <strong>8-class retrain</strong>; on corrected data the new model “catches those flows easily — a strong classifier subsumes weak rules”.</p>
+        <p><strong>Near-perfect scores were treated as an accusation.</strong> In this testbed each attack class targets a fixed port (Botnet 100% on 8080, DoS/DDoS/Web Attack 100% on port 80), so a majority-class-per-port lookup alone scores ~83% accuracy — the model could just be reading the port. <strong>The port-shortcut hypothesis was tested by ablation and rejected: removing the port signal cost only −0.0011 macro F1.</strong> The model reads behaviour, not the port.</p>
+        <p><strong>And the model family earns its place two ways:</strong> XGBoost on tabular flow features, and — decisively for a human-in-the-loop console — native <strong>TreeSHAP</strong>, which is what makes the toward-and-away evidence panels possible. The notebooks validated the retrained model by ablation and correction; they did not re-litigate the family, and we say so rather than invent a bake-off.</p>
+      </div>
+      <h4>The ranking experiment: three runs, pre-registered</h4>
+      <div class="prose">
+        <p>Notebooks 05–06 chose the feedback formula the queue runs on. Four candidates (C0 fixed-step, C1 severity-weighted, <strong>C2 Elo-style</strong>, C3 Elo + uncertainty) × two movement rules (M1 one class at a time, M2 straight to top). <strong>Run 2 failed instructively:</strong> single verdicts were moving whole families — one correct dismissal of a benign flow the model scored 99.89 collided with real attacks. That failure <em>produced</em> decision <strong>Q30</strong> (the agreement gate: ≥ 3 verdicts, dominant ≥ 0.67, no tie). <strong>Run 3 was pre-registered</strong> — selection rule <code>sel-3</code> was committed to git before any run-3 number existed (the notebook dates the commit against the run's start), and it picked <strong>C2 + M1</strong>. The Elo property that won it: confirming a near-certain alert adds almost nothing, while dismissing one is the biggest surprise available — a formula that trusts surprises acts strongly exactly where the analyst disagreed, and the gate keeps any one surprise from reordering the queue alone.</p>
+      </div>
+      <div class="proves"><span>Shows</span><span class="tag">decision log</span><span class="tag">experiment-chosen constants</span><span class="tag">withdrawn assumptions on record</span><span class="tag">the split, the ablation, the three runs</span></div>
     </section>
 
     <section class="part" id="different">
@@ -1054,7 +1076,24 @@
         <li><strong>Per-customer configuration.</strong> Guardrail settings and the severity chart are admin-configurable at runtime and snapshotted per run; model and rule versions are recorded on every run, so any past decision is replayable.</li>
         <li><strong>Rollout pattern.</strong> Replay the customer's historical flows first (shadow mode), tune the guardrails on their traffic, then put Tier 1 on the console <em>beside</em> the incumbent IDS — the ranked queue and the two score columns make the cutover observable, not a leap of faith.</li>
       </ol>
-      <div class="proves"><span>Shows</span><span class="tag">deployment shape</span><span class="tag">data stays on site</span><span class="tag">shadow-mode rollout</span><span class="tag">versioned replay</span></div>
+      <h3>Replacing the layer — or sitting beside whatever they already run</h3>
+      <div class="prose">
+        <p><strong>The layer we replace is not the sensor; it is the detection-and-triage layer</strong> — the ranked queue the analyst actually works. And the integration decision that matters most was made by refusing to write a parser per vendor: <strong>we read the wire, not the other IDS's output.</strong> Every IDS has a different output format, but they all watch the same packets; our exporter (S17, a CICFlowMeter fork) taps the same SPAN/TAP mirror and emits exactly the feature schema the model was trained on. The integration surface is the mirror port, not a vendor SDK.</p>
+        <p>Where an incumbent tool's output <em>does</em> add value, it enters through the channel the fusion layer already understands:</p>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Incumbent IDS</th><th>What it outputs</th><th>How it coexists</th></tr></thead>
+          <tbody>
+            <tr><td><strong>Flow-based</strong> — NetFlow/IPFIX collectors, Argus, CICFlowMeter, NDR platforms</td><td>Flow records with feature fields — our closest cousins</td><td><strong>Direct.</strong> Map their records to the CIC schema (a field-mapping adapter); or bypass them and read the wire with our own exporter</td></tr>
+            <tr><td><strong>Signature IDS</strong> — Snort, Suricata</td><td>Alerts / EVE JSON — a totally different data type from flows</td><td><strong>Their alerts are evidence, not input.</strong> A rule hit maps onto our signature-evidence channel (a checkable claim with clauses), and their alerts appear as triage context. They do <em>not</em> feed the model — plan deviation D-1 records that Suricata as a model stream was <strong>rejected</strong>: it cannot emit CIC flow features, so it cannot feed the classifier</td></tr>
+            <tr><td><strong>Metadata IDS</strong> — Zeek</td><td><code>conn.log</code> and scriptable logs — close kin to a flow record</td><td><strong>Adapter.</strong> Zeek's connection records convert to the flow schema the same way NetFlow does</td></tr>
+            <tr><td><strong>SIEM / aggregator</strong> — Splunk, QRadar</td><td>They consume everything, produce dashboards</td><td><strong>We feed them.</strong> Our API, audit trail and CSV export are their inputs, not the other way round</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="note"><b>The one-sentence answer to "every IDS outputs different data":</b> we don't translate their outputs into our model — we give the model the same wire they watched, in the schema it was trained on, and let their alerts join as signature evidence where a human can check them.</div>
+      <div class="proves"><span>Shows</span><span class="tag">deployment shape</span><span class="tag">data stays on site</span><span class="tag">shadow-mode rollout</span><span class="tag">versioned replay</span><span class="tag">coexists with Snort/Suricata/Zeek/SIEM</span></div>
     </section>
 
     <section class="part" id="reset">
@@ -1151,6 +1190,6 @@
   </main>
 
   <footer>
-    Version 8 · 15 Sep 2026 — real accounts (S18a), and five new sections: the dataset, analysis before and after, the decision log, what makes this different, and shipping. Every screenshot was taken from the running console, against a disposable copy of the demo database (<code>GUIDE_CAPTURE=1 npx playwright test capture-guide</code>). The spoken script is <code>hitl-ids/docs/demo-script.md</code>; the automated gate is <code>npm run e2e</code>.
+    Version 9 · 15 Sep 2026 — adds the flow-sensor lineage, the coexistence table (Snort/Suricata/Zeek/SIEM), and the notebooks deep dive: the Q20 split, the 8-class retrain and port ablation, and the three pre-registered ranking runs. Version 8 added real accounts (S18a) and the dataset, analysis, decisions, differentiation and shipping sections. Every screenshot was taken from the running console, against a disposable copy of the demo database (<code>GUIDE_CAPTURE=1 npx playwright test capture-guide</code>). The spoken script is <code>hitl-ids/docs/demo-script.md</code>; the automated gate is <code>npm run e2e</code>.
   </footer>
 </div>
