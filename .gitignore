@@ -29,10 +29,37 @@ stage-5/evaluation/feedback-evaluation-records.json
 # regenerable inference output (16 MB)
 hitl-ids/data/processed/demo_ml_predictions_shap.json
 
+# regenerable synthetic stress predictions - rebuild with scripts/build_stress_detection.py
+hitl-ids/data/processed/stress_ml_predictions.json
+
 # regenerable demo database - rebuild with scripts/run_detection.py (S9)
 hitl-ids/data/*.db
 hitl-ids/data/*.db-journal
 .pytest_cache/
+# pytest --basetemp scratch dir, needed when the session sandbox blocks the OS temp dir
+hitl-ids/.pytest-tmp/
 
 # Generated deliverable - rebuild with: python scripts/build_user_manual.py
 hitl-ids/docs/~$*.docx
+
+# --- agent / AI state: never tracked -----------------------------------------
+# The omc rules above cover .omc/; this closes the other agent home, which was
+# the one gap. Session transcripts and replay logs must not reach the repo.
+.claude/
+**/.claude/
+
+# --- editor and Office lock files -------------------------------------------
+# Word and PowerPoint drop a ~$ owner file beside any open document. They are
+# transient, machine-specific, and were showing up as untracked noise.
+~$*
+
+# --- backups and scratch ----------------------------------------------------
+# *.bak matches both a file (build_deck.py.bak) and a directory of stale
+# screenshots (docs/img/demo-guide.bak/), so one rule covers both.
+*.bak
+
+# --- local Pages build ------------------------------------------------------
+# site/serve.py and the Pages workflow both assemble the site here. It is a build
+# artifact: generated from tracked sources, never committed.
+_site/
+hitl-ids/_site/

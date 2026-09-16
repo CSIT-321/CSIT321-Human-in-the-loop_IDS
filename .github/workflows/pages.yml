@@ -1,0 +1,73 @@
+name: Publish project pages
+
+# Publishes the three reader-facing documents as a static site:
+#
+#   index.html        the landing page (hitl-ids/site/index.html, committed)
+#   showcase.html     the console walkthrough
+#   pipeline-map.html the detection pipeline, node by node
+#   user-manual.html  the Preliminary User Manual, rendered from its Markdown source
+#
+# The manual is generated at build time rather than committed as HTML, so the published page and
+# the submitted .docx are always rendered from the same source and cannot drift apart.
+#
+# Only these files are published. The repository's internal records — HANDOVER.md, the plan
+# changelog, the deviations register — stay in the repo and are deliberately not copied here.
+
+on:
+  push:
+    branches:
+      # feat/demo-build is the working branch and holds everything — it is a strict superset of
+      # main (48 commits ahead, 0 behind), so pushing there publishes immediately while you
+      # iterate. main is listed too, so the site also updates when that branch fast-forwards.
+      # Remove the feat/ entry once the work is merged and main is the only source of truth.
+      - feat/demo-build
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: github-pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install the Markdown renderer
+        run: python -m pip install --quiet markdown
+
+      - name: Assemble the site
+        # The same script you run locally with --serve, so the preview and the published site
+        # cannot drift. --check fails the build on a broken local link rather than shipping one.
+        run: python hitl-ids/site/build_site.py --check --out hitl-ids/_site
+
+      - name: Configure Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: hitl-ids/_site
+
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

@@ -1,0 +1,1368 @@
+<title>HITL IDS Pipeline Map</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap">
+
+<style>
+  /* Rendered in the console's own design tokens (apps/web/src/index.css) — square panels,
+     1px rules, no shadows, data carrying the colour. Committed to the dark ground the product
+     itself uses, so every colour is painted explicitly rather than inherited. */
+  :root{
+    --bg:#0b0d10; --surface:#111418; --raised:#171b21; --raise2:#1c2128;
+    --border:#242a33; --border-strong:#333b47;
+    --text:#e6e8eb; --muted:#8f97a3; --dim:#656d79;
+    --accent:#58a6ff; --primary:#2f81f7; --violet:#bc8cff;
+    --warn:#f0883e; --ok:#3fb950; --danger:#f85149; --medium:#e3b341;
+    --sev-critical:#f85149; --sev-high:#f0883e; --sev-medium:#e3b341;
+    --sev-low:#3fb950; --sev-info:#58a6ff;
+    --mono:"JetBrains Mono","Cascadia Mono",ui-monospace,monospace;
+    --sans:"IBM Plex Sans","Segoe UI",system-ui,-apple-system,sans-serif;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0; background:var(--bg); color:var(--text);
+    font-family:var(--sans); font-size:14px; line-height:1.6;
+    font-feature-settings:"tnum" 1; -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:1180px; margin:0 auto; padding-block:0 72px; padding-inline:16px}
+
+  header.top{border-bottom:1px solid var(--border); padding-block:34px 22px}
+  .eyebrow{font-family:var(--mono); font-size:11px; letter-spacing:.1em; text-transform:uppercase; color:var(--dim)}
+  h1{font-size:30px; line-height:1.2; margin:10px 0 8px; font-weight:600; text-wrap:balance; letter-spacing:-.01em}
+  .lede{margin:0; color:var(--muted); max-width:70ch}
+  .meta{display:flex; flex-wrap:wrap; gap:0; margin-top:22px; border:1px solid var(--border); background:var(--surface)}
+  .meta div{flex:1 1 150px; padding:10px 14px; border-right:1px solid var(--border)}
+  .meta div:last-child{border-right:0}
+  .meta dt{font-family:var(--mono); font-size:10px; letter-spacing:.09em; text-transform:uppercase; color:var(--dim); margin:0 0 3px}
+  .meta dd{margin:0; font-family:var(--mono); font-size:12px; color:var(--text)}
+
+  section{padding-top:44px}
+  h2{font-size:19px; font-weight:600; margin:0 0 6px; letter-spacing:-.005em; text-wrap:balance}
+  h2 .num{font-family:var(--mono); font-size:12px; color:var(--dim); margin-right:9px; font-weight:500}
+  .sub{color:var(--muted); margin:0 0 20px; max-width:76ch}
+  h3{font-size:14px; font-weight:600; margin:26px 0 8px; color:var(--text)}
+  p{margin:0 0 12px; max-width:76ch}
+  code{font-family:var(--mono); font-size:12.5px; background:var(--raised); border:1px solid var(--border); padding:1px 5px; color:var(--text)}
+  .mono{font-family:var(--mono)}
+
+  .legend{display:grid; grid-template-columns:repeat(auto-fit,minmax(215px,1fr)); gap:1px; background:var(--border); border:1px solid var(--border)}
+  .legend > div{background:var(--surface); padding:11px 13px}
+  .legend dt{display:flex; align-items:center; gap:8px; font-family:var(--mono); font-size:11px; letter-spacing:.07em; text-transform:uppercase; color:var(--muted); margin:0 0 5px}
+  .legend dd{margin:0; font-size:12.5px; color:var(--muted); line-height:1.5}
+  .swatch{width:11px; height:11px; flex:0 0 auto; border:1px solid var(--border-strong)}
+
+  figure{margin:0; border:1px solid var(--border); background:var(--surface)}
+  .figscroll{overflow-x:auto}
+  figure svg{display:block; width:100%; min-width:780px; height:auto}
+  figcaption{border-top:1px solid var(--border); padding:10px 14px; font-size:12.5px; color:var(--muted); font-family:var(--mono); line-height:1.55}
+
+  .nd{fill:var(--raised); stroke:var(--border-strong); stroke-width:1}
+  .nd-title{fill:var(--text); font-family:var(--sans); font-size:12.5px; font-weight:600}
+  .nd-sub{fill:var(--muted); font-family:var(--mono); font-size:10px}
+  .nd-id{fill:var(--dim); font-family:var(--mono); font-size:9.5px; letter-spacing:.08em}
+  .lane-sig{stroke:var(--violet)} .lane-ml{stroke:var(--accent)}
+  .lane-fuse{stroke:var(--text)} .lane-place{stroke:var(--primary)}
+  .lane-store{stroke:var(--border-strong)} .lane-fb{stroke:var(--ok)}
+  .lane-guard{stroke:var(--warn)}
+  .ar{stroke:var(--border-strong); stroke-width:1.4; fill:none}
+  .ar-accent{stroke:var(--primary)} .ar-fb{stroke:var(--ok)} .ar-guard{stroke:var(--warn)}
+  .ar-dash{stroke-dasharray:4 3}
+  .ar-lbl{fill:var(--muted); font-family:var(--mono); font-size:9.5px}
+  .zone{fill:none; stroke:var(--border); stroke-dasharray:3 4}
+  .zone-lbl{fill:var(--dim); font-family:var(--mono); font-size:10px; letter-spacing:.09em}
+  .axis{stroke:var(--border-strong); stroke-width:1}
+  .tick{stroke:var(--border-strong); stroke-width:1}
+  .band-lbl{font-family:var(--mono); font-size:10.5px}
+
+  pre.f{font-family:var(--mono); font-size:12.5px; line-height:1.75; background:var(--surface);
+        border:1px solid var(--border); border-left:2px solid var(--primary);
+        padding:13px 16px; margin:0 0 14px; overflow-x:auto; white-space:pre; color:var(--text)}
+  pre.f b{color:var(--accent); font-weight:600}
+  pre.f i{color:var(--dim); font-style:normal}
+  pre.f em{color:var(--ok); font-style:normal}
+
+  .scroll{overflow-x:auto; border:1px solid var(--border)}
+  table{border-collapse:collapse; width:100%; font-size:12.5px; min-width:560px; background:var(--surface)}
+  th,td{text-align:left; padding:9px 13px; border-bottom:1px solid var(--border); vertical-align:top}
+  thead th{font-family:var(--mono); font-size:10.5px; letter-spacing:.08em; text-transform:uppercase;
+           color:var(--muted); font-weight:500; background:var(--raised); white-space:nowrap}
+  tbody tr:last-child td{border-bottom:0}
+  td.m{font-family:var(--mono); font-size:12px; white-space:nowrap}
+  td.k{font-family:var(--mono); font-size:12px; color:var(--accent); white-space:nowrap}
+
+  .chip{display:inline-flex; align-items:center; gap:5px; font-family:var(--mono); font-size:10.5px;
+        padding:2px 7px; border:1px solid; letter-spacing:.05em; text-transform:uppercase; white-space:nowrap}
+  .c-critical{color:var(--sev-critical); border-color:var(--sev-critical); background:rgba(248,81,73,.1)}
+  .c-high{color:var(--sev-high); border-color:var(--sev-high); background:rgba(240,136,62,.1)}
+  .c-medium{color:var(--sev-medium); border-color:var(--sev-medium); background:rgba(227,179,65,.1)}
+  .c-low{color:var(--sev-low); border-color:var(--sev-low); background:rgba(63,185,80,.1)}
+  .c-info{color:var(--sev-info); border-color:var(--sev-info); background:rgba(88,166,255,.1)}
+  .stat{display:inline-flex; align-items:baseline; gap:7px; font-family:var(--mono); font-size:12px;
+        border:1px solid var(--border); background:var(--raised); padding:3px 9px; margin:0 6px 6px 0}
+  .stat b{color:var(--accent); font-weight:600}
+  .stat s{color:var(--dim); text-decoration:none}
+
+  .note{border:1px solid var(--border); border-left:2px solid var(--warn); background:var(--surface);
+        padding:12px 15px; margin:0 0 14px; font-size:13px; color:var(--muted)}
+  .note b{color:var(--text)}
+  .note.ok{border-left-color:var(--ok)}
+  .note.bad{border-left-color:var(--danger)}
+  ul{margin:0 0 14px; padding-left:20px; max-width:76ch} li{margin-bottom:5px; color:var(--muted)}
+  li b{color:var(--text)}
+  .cols{display:grid; grid-template-columns:repeat(auto-fit,minmax(280px,1fr)); gap:1px; background:var(--border); border:1px solid var(--border)}
+  .cols > div{background:var(--surface); padding:14px 16px}
+  .cols h4{margin:0 0 8px; font-size:12px; font-family:var(--mono); letter-spacing:.07em; text-transform:uppercase; color:var(--muted); font-weight:500}
+  .cols ul{padding-left:17px; margin:0} .cols li{font-size:12.5px}
+  footer{margin-top:52px; padding-top:18px; border-top:1px solid var(--border); color:var(--dim); font-size:12px; font-family:var(--mono)}
+  @media (max-width:640px){ h1{font-size:23px} .wrap{padding-inline:16px} }
+</style>
+
+<div class="wrap">
+
+<header class="top">
+  <div class="eyebrow">FYP-26-S3-13 · CSIT321 · Human-in-the-Loop IDS</div>
+  <h1>The pipeline as it actually runs today</h1>
+  <p class="lede">Every node below is read out of the working tree, not from a summary of it: the
+  fusion branch that decides how a signature and the model combine, the score arithmetic on each
+  branch, the ranking that orders the queue, and the feedback loop that reorders future alerts.
+  Formulas are transcribed from the source functions that execute them.</p>
+  <dl class="meta">
+    <div><dt>Branch</dt><dd>feat/demo-build</dd></div>
+    <div><dt>HEAD</dt><dd>650d844</dd></div>
+    <div><dt>Fusion scheme</dt><dd>cef-trust-v1.8</dd></div>
+    <div><dt>Learning scheme</dt><dd>s7b-c1-m1-category-gate</dd></div>
+    <div><dt>Severity chart</dt><dd>sev-1</dd></div>
+    <div><dt>Demo database</dt><dd>5,000 alerts</dd></div>
+  </dl>
+</header>
+
+<section>
+  <h2><span class="num">01</span>How to read this map</h2>
+  <p class="sub">Nodes carry a lane colour so the eye can follow one subsystem through a diagram that
+  crosses several. Severity is the one thing that gets a reserved colour set, and it is always
+  paired with its word — the console's own rule (WCAG 1.4.1), kept here.</p>
+
+  <dl class="legend">
+    <div>
+      <dt><span class="swatch" style="background:#bc8cff"></span>Signature lane</dt>
+      <dd>Rule matching. 7 rules authored, 2 enabled — FTP and SSH brute force.</dd>
+    </div>
+    <div>
+      <dt><span class="swatch" style="background:#58a6ff"></span>Model lane</dt>
+      <dd>8-class XGBoost + native TreeSHAP, 82 features.</dd>
+    </div>
+    <div>
+      <dt><span class="swatch" style="background:#2f81f7"></span>Placement lane</dt>
+      <dd>Where an alert lands: family lookup, score, queue band.</dd>
+    </div>
+    <div>
+      <dt><span class="swatch" style="background:#3fb950"></span>Feedback lane</dt>
+      <dd>Verdict, guardrails, family learning, re-placement.</dd>
+    </div>
+    <div>
+      <dt><span class="swatch" style="background:#f0883e"></span>Guardrail lane</dt>
+      <dd>The gates that stand between a verdict and a score.</dd>
+    </div>
+    <div>
+      <dt><span class="swatch" style="background:#333b47"></span>Store lane</dt>
+      <dd>SQLite tables. Detection writes; feedback rewrites.</dd>
+    </div>
+  </dl>
+
+  <h3>Severity chips are never colour alone</h3>
+  <p>Each chip carries its word, so the five severity levels survive greyscale and colour-blind
+  readers. Values in the rest of the page are the committed ones.</p>
+  <p>
+    <span class="chip c-critical">Critical</span>
+    <span class="chip c-high">High</span>
+    <span class="chip c-medium">Medium</span>
+    <span class="chip c-low">Low</span>
+    <span class="chip c-info">Informational</span>
+  </p>
+</section>
+
+<section>
+  <h2><span class="num">02</span>The spine: flow in, alert out, verdict back</h2>
+  <p class="sub">Detection is an <b>offline batch</b>, never inline in the API (decision D3). Every flow in
+  the source becomes an alert — including the flows no detector flagged, which are the queue's bottom
+  band and the evaluation's denominator. After detection the flow runs right-to-left: a human verdict
+  writes to a family, and the family's learning is what a <i>future</i> alert reads.</p>
+
+  <figure>
+    <div class="figscroll">
+      <svg viewBox="0 0 1300 700" role="img" aria-label="End-to-end pipeline: flows pass through the signature engine and the ML classifier in parallel into fusion, then placement, then the alerts store; the analyst reads the queue, gives a verdict, which passes the guardrail gates into family learning, whose stored adjustment is read back by placement.">
+        <defs>
+          <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+            <path d="M 0 0 L 10 5 L 0 10 z" fill="#333b47"/>
+          </marker>
+          <marker id="ap" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+            <path d="M 0 0 L 10 5 L 0 10 z" fill="#2f81f7"/>
+          </marker>
+          <marker id="ag" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+            <path d="M 0 0 L 10 5 L 0 10 z" fill="#3fb950"/>
+          </marker>
+          <marker id="aw" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+            <path d="M 0 0 L 10 5 L 0 10 z" fill="#f0883e"/>
+          </marker>
+        </defs>
+
+        <rect class="zone" x="8" y="14" width="1284" height="232"/>
+        <text class="zone-lbl" x="20" y="32">DETECTION — ONE TRANSACTION, OFFLINE</text>
+
+        <rect class="zone" x="8" y="396" width="1284" height="160"/>
+        <text class="zone-lbl" x="20" y="414">REVIEW + LEARNING — PER VERDICT, ONLINE</text>
+
+        <rect class="nd lane-store" x="20" y="86" width="175" height="112"/>
+        <text class="nd-title" x="36" y="118">Flow source</text>
+        <text class="nd-sub" x="36" y="138">S3 seam · FlowSource</text>
+        <text class="nd-sub" x="36" y="154">5,000 demo flows</text>
+        <text class="nd-sub" x="36" y="170">project_record()</text>
+
+        <rect class="nd lane-sig" x="235" y="52" width="185" height="80"/>
+        <text class="nd-title" x="251" y="80">Signature engine</text>
+        <text class="nd-sub" x="251" y="99">match_all() → matches</text>
+        <text class="nd-sub" x="251" y="115">2 rules enabled</text>
+
+        <rect class="nd lane-ml" x="235" y="152" width="185" height="80"/>
+        <text class="nd-title" x="251" y="180">ML classifier</text>
+        <text class="nd-sub" x="251" y="199">8-class XGBoost</text>
+        <text class="nd-sub" x="251" y="215">+ native TreeSHAP</text>
+
+        <rect class="nd lane-fuse" x="460" y="86" width="185" height="112" stroke-width="2"/>
+        <text class="nd-title" x="476" y="118">Fusion · CEF</text>
+        <text class="nd-sub" x="476" y="138">fuse(matches,</text>
+        <text class="nd-sub" x="476" y="154">     prediction)</text>
+        <text class="nd-sub" x="476" y="174">→ 4 evidence classes</text>
+
+        <rect class="nd lane-place" x="685" y="86" width="200" height="112" stroke-width="2"/>
+        <text class="nd-title" x="701" y="118">Placement</text>
+        <text class="nd-sub" x="701" y="138">family_key_of()</text>
+        <text class="nd-sub" x="701" y="154">+ stored family</text>
+        <text class="nd-sub" x="701" y="174">→ score, band, review</text>
+
+        <rect class="nd lane-store" x="925" y="86" width="185" height="112"/>
+        <text class="nd-title" x="941" y="118">alerts · flow_data</text>
+        <text class="nd-sub" x="941" y="138">detection_score</text>
+        <text class="nd-sub" x="941" y="154">combined_score</text>
+        <text class="nd-sub" x="941" y="170">queue_class</text>
+
+        <rect class="nd lane-place" x="1148" y="86" width="132" height="112"/>
+        <text class="nd-title" x="1160" y="118">Queue</text>
+        <text class="nd-sub" x="1160" y="138">read by</text>
+        <text class="nd-sub" x="1160" y="154">ORDER BY</text>
+        <text class="nd-sub" x="1160" y="174">severity first</text>
+
+        <line class="ar" x1="195" y1="142" x2="231" y2="100" marker-end="url(#a)"/>
+        <line class="ar" x1="195" y1="142" x2="231" y2="184" marker-end="url(#a)"/>
+        <line class="ar" x1="420" y1="92"  x2="456" y2="122" marker-end="url(#a)"/>
+        <line class="ar" x1="420" y1="192" x2="456" y2="162" marker-end="url(#a)"/>
+        <line class="ar" x1="645" y1="142" x2="681" y2="142" marker-end="url(#a)"/>
+        <text class="ar-lbl" x="649" y="134">FusionDecision</text>
+        <line class="ar" x1="885" y1="142" x2="921" y2="142" marker-end="url(#a)"/>
+        <line class="ar" x1="1110" y1="142" x2="1144" y2="142" marker-end="url(#a)"/>
+        <text class="ar-lbl" x="1078" y="134">alerts</text>
+
+        <line class="ar ar-accent" x1="1214" y1="198" x2="1214" y2="424" marker-end="url(#ap)"/>
+        <text class="ar-lbl" x="1222" y="316">analyst works</text>
+
+        <rect class="nd lane-fb" x="1110" y="424" width="170" height="112"/>
+        <text class="nd-title" x="1124" y="456">Analyst verdict</text>
+        <text class="nd-sub" x="1124" y="476">5 categories</text>
+        <text class="nd-sub" x="1124" y="492">→ requested delta</text>
+        <text class="nd-sub" x="1124" y="512">+10 −30 −15 0 +15</text>
+
+        <rect class="nd lane-guard" x="870" y="424" width="200" height="112"/>
+        <text class="nd-title" x="884" y="452">Guardrails</text>
+        <text class="nd-sub" x="884" y="472">6 gates, in order</text>
+        <text class="nd-sub" x="884" y="488">cap [−30, +20]</text>
+        <text class="nd-sub" x="884" y="504">floors 70 / 75</text>
+        <text class="nd-sub" x="884" y="520">I3 freezes override</text>
+
+        <rect class="nd lane-fb" x="600" y="424" width="230" height="112"/>
+        <text class="nd-title" x="614" y="452">Family learning</text>
+        <text class="nd-sub" x="614" y="472">replay effective verdicts</text>
+        <text class="nd-sub" x="614" y="488">formula C1 · movement M1</text>
+        <text class="nd-sub" x="614" y="504">then the agreement gate</text>
+        <text class="nd-sub" x="614" y="520">→ applied adjustment</text>
+
+        <rect class="nd lane-store" x="350" y="424" width="210" height="112"/>
+        <text class="nd-title" x="364" y="456">alert_families</text>
+        <text class="nd-sub" x="364" y="476">learned_adjustment</text>
+        <text class="nd-sub" x="364" y="492">learned_offset</text>
+        <text class="nd-sub" x="364" y="508">applied_* (gated)</text>
+        <text class="nd-sub" x="364" y="524">gate_open / reason</text>
+
+        <line class="ar ar-guard" x1="1110" y1="480" x2="1074" y2="480" marker-end="url(#aw)"/>
+        <text class="ar-lbl" x="1044" y="472">delta</text>
+        <line class="ar ar-fb" x1="870" y1="480" x2="834" y2="480" marker-end="url(#ag)"/>
+        <text class="ar-lbl" x="806" y="472">guarded Δ</text>
+        <line class="ar" x1="600" y1="480" x2="564" y2="480" marker-end="url(#a)"/>
+        <text class="ar-lbl" x="574" y="472">store</text>
+
+        <polyline class="ar ar-fb" points="455,424 455,362 785,362 785,202" marker-end="url(#ag)"/>
+        <text class="ar-lbl" x="470" y="354">stored family learning is read by placement when a later alert arrives</text>
+
+        <polyline class="ar ar-fb" points="715,424 715,394 1005,394 1005,232 1017,232" marker-end="url(#ag)"/>
+        <text class="ar-lbl" x="722" y="386">every member without its own verdict is re-scored now</text>
+
+        <rect class="nd lane-store" x="870" y="588" width="200" height="64"/>
+        <text class="nd-title" x="884" y="614">audit_log</text>
+        <text class="nd-sub" x="884" y="633">append-only · 3 entry types</text>
+        <line class="ar ar-dash" x1="970" y1="536" x2="970" y2="584" marker-end="url(#a)"/>
+        <line class="ar ar-dash" x1="700" y1="536" x2="700" y2="560" marker-end="none"/>
+        <polyline class="ar ar-dash" points="700,560 940,560 940,584" marker-end="url(#a)"/>
+      </svg>
+    </div>
+    <figcaption>Fig 1 — The whole loop. Detection (top, one offline transaction) writes alerts;
+    the queue is read from those; a human verdict passes the guardrails, updates its family, and the
+    family's adjustment is read back by placement — both immediately, for the family's existing
+    members, and at ingest, for alerts that arrive later.</figcaption>
+  </figure>
+
+  <div class="note ok" style="margin-top:16px">
+    <b>The return arrow is the whole thesis.</b> Feedback does not change the alert the analyst
+    judged and stop. It writes to <code>alert_families</code>, and <code>runner._place</code> consults
+    that table before banding a newly detected alert — so a verdict on Monday reorders the alerts a
+    Tuesday batch produces. That is the confirmed project goal, and it is the only edge on this
+    diagram that makes the system more than a review tool.
+  </div>
+</section>
+
+<section>
+  <h2><span class="num">03</span>How a signature and the model combine</h2>
+  <p class="sub">This is the node the project re-specified. The original design fused the two detectors
+  with a weighted sum; that was <b>rejected</b>, because scores from different evidence classes are not
+  commensurable. What replaced it is a <b>branch</b>: the two detectors are combined by a rule about
+  agreement, not by arithmetic across their scores.</p>
+
+  <h3>Inputs, per flow</h3>
+  <pre class="f">sig = max( severity_scores[match.severity] )   <i>over every matching rule; 0 when none matched</i>
+      severity_scores: Low <b>0.40</b> · Medium <b>0.60</b> · High <b>0.80</b> · Critical <b>0.95</b>
+
+ml  = 1 - P(Benign)                            <i>the model's malicious probability; 0 when unavailable</i></pre>
+
+  <div class="note">
+    <b>Two corrections that live in this step.</b> The model's contribution is
+    <code>1 − P(Benign)</code>, not the predicted class's confidence — the notebook's version
+    understated it whenever probability was split across attack classes. And
+    <code>corroborated</code> requires the model to agree on the <b>class</b>, not merely to also
+    flag the flow: 23 NMAP probes of TCP/21 matched the FTP brute-force rule, which is a disagreeing
+    claim, not corroboration.
+  </div>
+
+  <figure>
+    <div class="figscroll">
+      <svg viewBox="0 0 1120 560" role="img" aria-label="Fusion decision tree: if a rule matched and the model predicts that rule's class the result is corroborated with an agreement bonus; if a rule matched but the model disagrees it is signature_override; if no rule matched but the model predicts an attack it is ml_only; otherwise none.">
+        <defs>
+          <marker id="b" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+            <path d="M 0 0 L 10 5 L 0 10 z" fill="#333b47"/>
+          </marker>
+        </defs>
+
+        <rect class="nd" x="400" y="16" width="320" height="58" stroke-width="2"/>
+        <text class="nd-title" x="560" y="40" text-anchor="middle">fuse( matches, prediction )</text>
+        <text class="nd-sub" x="560" y="60" text-anchor="middle">a rule matched?</text>
+
+        <line class="ar" x1="470" y1="74" x2="270" y2="112" marker-end="url(#b)"/>
+        <text class="ar-lbl" x="330" y="96">yes</text>
+        <line class="ar" x1="650" y1="74" x2="850" y2="112" marker-end="url(#b)"/>
+        <text class="ar-lbl" x="762" y="96">no</text>
+
+        <rect class="nd" x="110" y="116" width="320" height="58"/>
+        <text class="nd-sub" x="270" y="140" text-anchor="middle">does the model predict any matching rule's class?</text>
+        <text class="nd-id" x="270" y="160" text-anchor="middle">match.attack_category == predicted_class</text>
+
+        <rect class="nd" x="690" y="116" width="320" height="58"/>
+        <text class="nd-sub" x="850" y="140" text-anchor="middle">does the model predict an attack?</text>
+        <text class="nd-id" x="850" y="160" text-anchor="middle">predicted not in (None, "Benign")</text>
+
+        <line class="ar" x1="190" y1="174" x2="180" y2="222" marker-end="url(#b)"/>
+        <text class="ar-lbl" x="126" y="202">yes</text>
+        <line class="ar" x1="350" y1="174" x2="360" y2="222" marker-end="url(#b)"/>
+        <text class="ar-lbl" x="366" y="202">no</text>
+
+        <line class="ar" x1="770" y1="174" x2="760" y2="222" marker-end="url(#b)"/>
+        <text class="ar-lbl" x="712" y="202">yes</text>
+        <line class="ar" x1="930" y1="174" x2="940" y2="222" marker-end="url(#b)"/>
+        <text class="ar-lbl" x="946" y="202">no</text>
+
+        <rect class="nd lane-fb" x="40" y="226" width="280" height="150" stroke-width="2"/>
+        <text class="nd-title" x="60" y="254">corroborated</text>
+        <text class="nd-id" x="60" y="274">EVIDENCE PRIORITY 0</text>
+        <text class="nd-sub" x="60" y="300">category = predicted_class</text>
+        <text class="nd-sub" x="60" y="320">score = min(100,</text>
+        <text class="nd-sub" x="60" y="336">   max(sig, ml)*100 + 5)</text>
+        <text class="nd-sub" x="60" y="360">review when score ≥ 80</text>
+
+        <rect class="nd lane-sig" x="340" y="226" width="280" height="150" stroke-width="2"/>
+        <text class="nd-title" x="360" y="254">signature_override</text>
+        <text class="nd-id" x="360" y="274">EVIDENCE PRIORITY 1</text>
+        <text class="nd-sub" x="360" y="300">category = severest match</text>
+        <text class="nd-sub" x="360" y="320">score = sig * 100</text>
+        <text class="nd-sub" x="360" y="344">ALWAYS review (I2)</text>
+        <text class="nd-sub" x="360" y="362">frozen against feedback</text>
+
+        <rect class="nd lane-ml" x="640" y="226" width="280" height="150" stroke-width="2"/>
+        <text class="nd-title" x="660" y="254">ml_only</text>
+        <text class="nd-id" x="660" y="274">EVIDENCE PRIORITY 2</text>
+        <text class="nd-sub" x="660" y="300">category = predicted_class</text>
+        <text class="nd-sub" x="660" y="320">score = ml * 100</text>
+        <text class="nd-sub" x="660" y="344">review when score ≥ 80</text>
+
+        <rect class="nd lane-store" x="940" y="226" width="150" height="150" stroke-width="2"/>
+        <text class="nd-title" x="958" y="254">none</text>
+        <text class="nd-id" x="958" y="274">PRIORITY 3</text>
+        <text class="nd-sub" x="958" y="300">category = null</text>
+        <text class="nd-sub" x="958" y="320">score = ml*100</text>
+        <text class="nd-sub" x="958" y="344">never flagged</text>
+        <text class="nd-sub" x="958" y="362">still an alert</text>
+
+        <line class="ar" x1="180" y1="376" x2="180" y2="410" marker-end="none"/>
+        <line class="ar" x1="480" y1="376" x2="480" y2="410" marker-end="none"/>
+        <line class="ar" x1="780" y1="376" x2="780" y2="410" marker-end="none"/>
+        <line class="ar" x1="1015" y1="376" x2="1015" y2="410" marker-end="none"/>
+        <polyline class="ar" points="180,410 1015,410" marker-end="none"/>
+        <line class="ar" x1="560" y1="410" x2="560" y2="438" marker-end="url(#b)"/>
+
+        <rect class="nd" x="330" y="442" width="460" height="96"/>
+        <text class="nd-title" x="560" y="468" text-anchor="middle">severity_for( score, attack_class )</text>
+        <text class="nd-sub" x="560" y="490" text-anchor="middle">band the score, then cap it by the class ceiling</text>
+        <text class="nd-sub" x="560" y="508" text-anchor="middle">is_critical = score ≥ 80   ·   evidence_priority = fixed per branch</text>
+        <text class="nd-sub" x="560" y="526" text-anchor="middle">score rounded to 2 places, as DECIMAL(5,2) stores it</text>
+      </svg>
+    </div>
+    <figcaption>Fig 2 — <code>fuse()</code> in <code>packages/detection/fusion/cef.py</code>. The
+    branch is decided by agreement between the two detectors, then every branch falls through one
+    shared severity function — so the label, <code>is_critical</code> and the review flag can never
+    disagree with each other.</figcaption>
+  </figure>
+
+  <h3>What the branches actually produce</h3>
+  <p>Measured on the 1,000-malicious-flow sample the project reports from:</p>
+  <p>
+    <span class="stat"><s>ml_only</s><b>794</b></span>
+    <span class="stat"><s>corroborated</s><b>200</b></span>
+    <span class="stat"><s>signature_only</s><b>0</b></span>
+    <span class="stat"><s>missed by both</s><b>6</b></span>
+  </p>
+  <div class="note bad">
+    <b>Read that third number carefully — it is the finding that reshaped the project.</b>
+    The retuned signature rules reach precision 1.000 at recall 20%, but they add
+    <b>zero unique coverage</b>. The signature layer's value is not that it catches what the model
+    misses; it is that it gives a human a <b>checkable reason</b> (decision Q21: trust and
+    explainability, not coverage). Any design that assumes the two detectors are complementary is
+    building on a claim this data withdrew.
+  </div>
+</section>
+
+<section>
+  <h2><span class="num">04</span>Severity: the band, then the ceiling</h2>
+  <p class="sub">Confidence answers <i>how sure is the model?</i>. It cannot answer <i>how bad is this?</i>
+  The project answers the second question from the severity chart (decision Q27), and caps the band
+  by it — so a confidently-detected port scan cannot outrank an uncertain botnet.</p>
+
+  <div class="cols" style="margin-bottom:18px">
+    <div>
+      <h4>Step 1 — band the score</h4>
+      <pre class="f" style="margin:0; border-left-color:var(--text)">Informational   score &lt;  1
+Low             score ≥  1
+Medium          score ≥ 40
+High            score ≥ 70
+Critical        score ≥ 80  <i>= critical_alert_threshold</i></pre>
+    </div>
+    <div>
+      <h4>Step 2 — cap by the attack class</h4>
+      <pre class="f" style="margin:0; border-left-color:var(--warn)">severity = min( band, CEILING[class] )
+
+<i>the chart's CVSS score ÷ 10, read
+from config/severity-chart.json</i></pre>
+    </div>
+  </div>
+
+  <figure>
+    <div class="figscroll">
+      <svg viewBox="0 0 1120 200" role="img" aria-label="A score axis from 0 to 100 divided into Informational, Low, Medium, High and Critical bands, with the critical threshold at 80 and the informational floor at 1.">
+        <line class="axis" x1="60" y1="96" x2="1060" y2="96"/>
+        <rect x="60" y="72" width="12" height="24" fill="#58a6ff" opacity="0.5"/>
+        <rect x="72" y="72" width="372" height="24" fill="#3fb950" opacity="0.45"/>
+        <rect x="444" y="72" width="290" height="24" fill="#e3b341" opacity="0.45"/>
+        <rect x="734" y="72" width="106" height="24" fill="#f0883e" opacity="0.45"/>
+        <rect x="840" y="72" width="220" height="24" fill="#f85149" opacity="0.45"/>
+
+        <line class="tick" x1="60" y1="60" x2="60" y2="108"/>
+        <line class="tick" x1="72" y1="60" x2="72" y2="108"/>
+        <line class="tick" x1="444" y1="60" x2="444" y2="108"/>
+        <line class="tick" x1="734" y1="60" x2="734" y2="108"/>
+        <line class="tick" x1="840" y1="60" x2="840" y2="108"/>
+        <line class="tick" x1="1060" y1="60" x2="1060" y2="108"/>
+
+        <text class="band-lbl" x="66" y="132" fill="#58a6ff" text-anchor="middle">0</text>
+        <text class="band-lbl" x="72" y="132" fill="#3fb950" text-anchor="middle">1</text>
+        <text class="band-lbl" x="444" y="132" fill="#e3b341" text-anchor="middle">40</text>
+        <text class="band-lbl" x="734" y="132" fill="#f0883e" text-anchor="middle">70</text>
+        <text class="band-lbl" x="840" y="132" fill="#f85149" text-anchor="middle">80</text>
+        <text class="band-lbl" x="1060" y="132" fill="#8f97a3" text-anchor="middle">100</text>
+
+        <text class="band-lbl" x="250" y="46" fill="#3fb950" text-anchor="middle">LOW</text>
+        <text class="band-lbl" x="589" y="46" fill="#e3b341" text-anchor="middle">MEDIUM</text>
+        <text class="band-lbl" x="787" y="46" fill="#f0883e" text-anchor="middle">HIGH</text>
+        <text class="band-lbl" x="950" y="46" fill="#f85149" text-anchor="middle">CRITICAL</text>
+        <text class="band-lbl" x="66" y="46" fill="#58a6ff" text-anchor="middle">INFO</text>
+
+        <line class="tick" x1="840" y1="108" x2="840" y2="156" stroke="#f85149"/>
+        <text class="band-lbl" x="840" y="172" fill="#f85149" text-anchor="middle">critical_threshold = 80</text>
+        <text class="band-lbl" x="840" y="186" fill="#656d79" text-anchor="middle">is_critical · review flag · Critical floor</text>
+      </svg>
+    </div>
+    <figcaption>Fig 3a — One number, three consequences. Before the ceiling existed, <b>994 of 996</b>
+    flagged demo alerts read Critical — every one of the seven attack classes among them.</figcaption>
+  </figure>
+
+  <h3>The ceilings, read from the chart</h3>
+  <div class="scroll" style="margin-bottom:14px">
+    <table>
+      <thead>
+        <tr><th>Attack class</th><th>CVSS</th><th>Ceiling</th><th>What it means in the queue</th></tr>
+      </thead>
+      <tbody>
+        <tr><td class="m">Port Scan</td><td class="m">3.0</td><td><span class="chip c-low">Low</span></td><td>A confident scan still cannot outrank a real intrusion.</td></tr>
+        <tr><td class="m">Brute Force</td><td class="m">5.0</td><td><span class="chip c-medium">Medium</span></td><td>FTP/SSH attempts — the two enabled rules land here.</td></tr>
+        <tr><td class="m">DoS</td><td class="m">6.5</td><td><span class="chip c-medium">Medium</span></td><td>&nbsp;</td></tr>
+        <tr><td class="m">DDoS</td><td class="m">7.5</td><td><span class="chip c-high">High</span></td><td>Clears the Tier 2 severity bar (≥ 7.0).</td></tr>
+        <tr><td class="m">Web Attack</td><td class="m">8.0</td><td><span class="chip c-high">High</span></td><td>Clears the Tier 2 bar; the family the S15 finding turned on.</td></tr>
+        <tr><td class="m">Botnet</td><td class="m">9.0</td><td><span class="chip c-critical">Critical</span></td><td>&nbsp;</td></tr>
+        <tr><td class="m">Infiltration</td><td class="m">9.5</td><td><span class="chip c-critical">Critical</span></td><td>Also guarded by its own score floor of 75.</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>An unrecognised class is treated as the worst rather than the mildest — the ceiling map
+  defaults to <code>Critical</code>, so a class the chart does not cover is never silently downgraded.</p>
+</section>
+
+<section>
+  <h2><span class="num">05</span>What orders the queue</h2>
+  <p class="sub">One definition, in <code>db.queue_order(alias)</code>, from which the queue, the API,
+  the metrics module, the scenario module and <code>cef.queue_key</code> all derive. It had been
+  written out in five places before this.</p>
+
+  <pre class="f">ORDER BY  <b>severity</b>   worst-first   <i>Critical → High → Medium → Low → Informational</i>
+       ,  <b>combined_score</b>  DESC          <i>the operational score feedback moves</i>
+       ,  <b>id</b>              ASC           <i>stable tie-break</i></pre>
+
+  <div class="note bad">
+    <b>This changed, and the change is a correction.</b> The order used to lead with
+    <code>queue_priority</code> — the band. Because the band put Tier 2 candidates first, and a Tier 2
+    candidate need not be severe, <b>the entire top 50 was <code>Medium</code></b>. Triage is urgency,
+    so severity now leads.
+  </div>
+
+  <div class="cols">
+    <div>
+      <h4>Before — band-first</h4>
+      <ul>
+        <li>The band was the first sort key</li>
+        <li>Top 50: all <code>Medium</code></li>
+        <li>A benign alert sat at <b>rank 1</b></li>
+        <li>precision@50 fell to <b>0.980</b></li>
+      </ul>
+    </div>
+    <div>
+      <h4>After — severity-first</h4>
+      <ul>
+        <li>Severity leads, score breaks ties</li>
+        <li>Precision@50 held at <b>1.000</b></li>
+        <li><b>Zero</b> false positives in the top 50, every arm</li>
+        <li>That benign alert moved to <b>rank 186</b></li>
+      </ul>
+    </div>
+    <div>
+      <h4>What the band still does</h4>
+      <ul>
+        <li>Labels a <b>Tier 2 escalation candidate</b></li>
+        <li>Orders the band tabs in the console</li>
+        <li>No longer decides queue position</li>
+        <li>Invariant <b>I5 retired</b> with it</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="note" style="margin-top:16px">
+    <b>Honest caveat, and the measurement behind it.</b> Six candidate orders were compared on both
+    databases. <code>data/demo.db</code> <b>cannot judge an order</b> — it scores precision 1.000 at
+    every cut-off because its 996 flagged alerts hold only 2 false positives, so the test is
+    saturated. <code>data/stress.db</code> can, and it prefers <b>evidence-first</b> (precision@100
+    1.000 vs 0.770). Severity-first stays the default anyway: it costs nothing on the real detector,
+    and the contract gained an <b><code>evidence</code> sort</b> so the suspect-model case is one
+    click away. Remaining deltas are small and negative (precision@200 −0.010, mean rank −0.515) and
+    are reported as measured.
+  </div>
+</section>
+
+<section>
+  <h2><span class="num">06</span>One verdict's journey</h2>
+  <p class="sub">A verdict reaches a score only through the guardrail gates, and reaches other alerts
+  only through the family. Both paths are below. The base is always the alert's
+  <code>detection_score</code>: <b>feedback does not stack</b>, so an alert's score is its detection
+  score plus the guarded change of its one effective verdict.</p>
+
+  <h3>The five categories and what each asks for</h3>
+  <div class="scroll" style="margin-bottom:16px">
+    <table>
+      <thead><tr><th>Category</th><th>Requested Δ</th><th>Forces review</th><th>Teaches the family</th></tr></thead>
+      <tbody>
+        <tr><td class="k">confirm_true_positive</td><td class="m">+10</td><td class="m">yes</td><td class="m">as a confirmation</td></tr>
+        <tr><td class="k">escalate</td><td class="m">+15</td><td class="m">yes</td><td class="m">as a confirmation <span style="color:var(--dim)">(see note)</span></td></tr>
+        <tr><td class="k">needs_investigation</td><td class="m">0</td><td class="m">yes</td><td class="m">no — teaches nothing</td></tr>
+        <tr><td class="k">mark_expected_activity</td><td class="m">−15</td><td class="m">—</td><td class="m">only past a stricter gate</td></tr>
+        <tr><td class="k">mark_false_positive</td><td class="m">−30</td><td class="m">—</td><td class="m">as a dismissal</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p><code>uncertain</code> is folded into <code>needs_investigation</code> (identical effect), and
+  <code>duplicate</code> is a <b>queue action</b> (<code>alerts.is_duplicate_of</code>), not a score
+  adjustment. The docs' "six categories" folds a queue action into the scoring set.</p>
+
+  <figure>
+    <div class="figscroll">
+      <svg viewBox="0 0 1140 500" role="img" aria-label="Guardrail gates applied in order to a requested score change: the active switch, a finiteness check, the I3 signature-override freeze, the plus-or-minus cap, the critical and infiltration floors, and the zero-to-one-hundred range clamp.">
+        <defs>
+          <marker id="c" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+            <path d="M 0 0 L 10 5 L 0 10 z" fill="#f0883e"/>
+          </marker>
+          <marker id="cr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+            <path d="M 0 0 L 10 5 L 0 10 z" fill="#f85149"/>
+          </marker>
+        </defs>
+
+        <rect class="nd" x="20" y="196" width="170" height="86" stroke-width="2"/>
+        <text class="nd-title" x="36" y="226">Requested Δ</text>
+        <text class="nd-sub" x="36" y="246">from the category</text>
+        <text class="nd-sub" x="36" y="264">+10 −30 −15 0 +15</text>
+
+        <line class="ar" x1="190" y1="239" x2="222" y2="239" marker-end="url(#c)"/>
+
+        <rect class="nd lane-guard" x="226" y="30" width="300" height="60"/>
+        <text class="nd-sub" x="240" y="52">0 · switch</text>
+        <text class="nd-sub" x="240" y="72">active=False → raw, only 0–100 binds</text>
+
+        <rect class="nd lane-guard" x="226" y="104" width="300" height="60"/>
+        <text class="nd-sub" x="240" y="126">1 · finite</text>
+        <text class="nd-sub" x="240" y="146">a non-finite request is rejected</text>
+
+        <rect class="nd lane-guard" x="226" y="178" width="300" height="60"/>
+        <text class="nd-sub" x="240" y="200">2 · I3 freeze</text>
+        <text class="nd-sub" x="240" y="220">signature_override → Δ 0, review kept</text>
+
+        <rect class="nd lane-guard" x="226" y="252" width="300" height="60"/>
+        <text class="nd-sub" x="240" y="274">3 · cap</text>
+        <text class="nd-sub" x="240" y="294">clamp to [−30, +20]</text>
+
+        <rect class="nd lane-guard" x="226" y="326" width="300" height="60"/>
+        <text class="nd-sub" x="240" y="348">4 · floors</text>
+        <text class="nd-sub" x="240" y="368">Critical ≥70 · Infiltration ≥75</text>
+
+        <rect class="nd lane-guard" x="226" y="400" width="300" height="60"/>
+        <text class="nd-sub" x="240" y="422">5 · range</text>
+        <text class="nd-sub" x="240" y="442">clamp to 0–100</text>
+
+        <line class="ar ar-guard" x1="376" y1="90" x2="376" y2="100" marker-end="url(#c)"/>
+        <line class="ar ar-guard" x1="376" y1="164" x2="376" y2="174" marker-end="url(#c)"/>
+        <line class="ar ar-guard" x1="376" y1="238" x2="376" y2="248" marker-end="url(#c)"/>
+        <line class="ar ar-guard" x1="376" y1="312" x2="376" y2="322" marker-end="url(#c)"/>
+        <line class="ar ar-guard" x1="376" y1="386" x2="376" y2="396" marker-end="url(#c)"/>
+
+        <line class="ar ar-guard" x1="526" y1="430" x2="620" y2="430" marker-end="url(#c)"/>
+
+        <rect class="nd" x="624" y="392" width="230" height="76" stroke-width="2"/>
+        <text class="nd-title" x="640" y="420">Guarded Δ applied</text>
+        <text class="nd-sub" x="640" y="440">score = detection_score + Δ</text>
+        <text class="nd-sub" x="640" y="458">never stacks</text>
+
+        <line class="ar ar-guard" x1="854" y1="430" x2="890" y2="430" marker-end="url(#c)"/>
+        <rect class="nd lane-fb" x="894" y="392" width="226" height="76" stroke-width="2"/>
+        <text class="nd-title" x="910" y="420">Verdict placed</text>
+        <text class="nd-sub" x="910" y="440">band + review flag</text>
+        <text class="nd-sub" x="910" y="458">audit entry written</text>
+
+        <rect class="nd" x="624" y="178" width="496" height="150"/>
+        <text class="nd-title" x="640" y="206">When a gate intervenes</text>
+        <text class="nd-sub" x="640" y="230">The outcome carries an intervention record — the code,</text>
+        <text class="nd-sub" x="640" y="248">the configured value, the requested value, the applied one.</text>
+        <text class="nd-sub" x="640" y="274">e.g. maximum_negative_adjustment_capped</text>
+        <text class="nd-sub" x="640" y="292">     critical_alert_floor   infiltration_alert_floor</text>
+        <text class="nd-sub" x="640" y="310">     signature_override_feedback_immune</text>
+
+        <line class="ar ar-dash" x1="620" y1="252" x2="604" y2="290" marker-end="url(#cr)"/>
+        <text class="ar-lbl" x="490" y="326">any gate firing also raises the review flag</text>
+      </svg>
+    </div>
+    <figcaption>Fig 3b — <code>apply_guardrails()</code> in <code>guardrail/policy.py</code>. Two
+    deliberate departures from the collaborator's JS engine: a floor protects an alert only when its
+    base score is at or above the floor (<b>a "false positive" verdict must never raise a score</b>),
+    and <code>signature_override</code> is frozen rather than merely review-flagged.</figcaption>
+  </figure>
+
+  <h3>Then the family learns</h3>
+  <p>The verdict is replayed over the family's <b>effective</b> verdicts — each member's latest,
+  oldest first, so an amended verdict counts once. Alerts already carrying their own verdict are
+  skipped, and a <code>signature_override</code> alert neither teaches its family nor learns from it.</p>
+
+  <pre class="f"><i>formula C1 — severity-weighted.  k = 30,  w = chart severity ÷ 10</i>
+
+    confirming verdict     Δ = <b>+k · w</b>
+    dismissing verdict     Δ = <b>−k · (1 − w)</b>
+    family adjustment      clamped to [−30, +20]        <i>the guardrail caps, applied to the family</i>
+
+<i>movement M1 — one band at a time</i>
+
+    a confirmation         promotes the family one band
+    a dismissal            demotes one band, but only after <b>2</b> dismissals   <i>hysteresis</i>
+
+<i>the agreement gate (Q30 — the collaborator's checkAdaptationEligibility)</i>
+
+    open  ⇔  ≥ <b>3</b> learning verdicts
+         and  no tie
+         and  dominant category holds ≥ <b>0.67</b> of them
+
+    then only learning pointing the dominant way is applied.
+    expected activity needs <b>5</b> verdicts at ≥ <b>0.90</b>, and only when it is enabled.</pre>
+
+  <div class="note">
+    <b>The gate is strict at exactly the boundary you would test.</b> Agreement is rounded to 4
+    places, as the collaborator's engine rounds it — so <b>2 of 3 is 0.6667, which fails a 0.67
+    gate</b>. A family needs a clean 3-of-3, or 4-of-5, to move anything.
+  </div>
+
+  <h3>Worked through, with real chart values</h3>
+  <p>A <b>Web Attack</b> family (CVSS 8.0, so <em>w = 0.8</em>) with three
+  <code>confirm_true_positive</code> verdicts:</p>
+  <pre class="f">each confirmation   Δ = +30 × 0.8              = <b>+24.0</b>
+after three         adjustment = 24 × 3        = +72.0
+clamped to the cap  adjustment                 = <b>+20.0</b>   <i>[−30, +20]</i>
+
+gate               3 verdicts, no tie, share 1.000 ≥ 0.67  → <em>OPEN</em>
+movement M1        3 confirmations             → offset <b>−3</b> bands
+
+every member with no verdict of its own is re-scored:
+    score = detection_score + 20.0   <i>inside the guardrails, so a Critical member holds at 70</i></pre>
+  <p>Note that the cap binds after three verdicts — more confirmations past that point change the
+  band, not the score. That is the guardrail doing its job: without the positive cap, repeated
+  "confirm true positive" would inflate a family's score without bound.</p>
+</section>
+
+<section>
+  <h2><span class="num">07</span>How the formula was chosen — and how thin the win is</h2>
+  <p class="sub">Section 06 said <i>what</i> the learning formula does. This section is about <i>why
+  that one</i> — because it was not picked by preference. Sixteen candidate designs were simulated
+  against a fixed set of metrics, and a rule written down <b>before</b> the run chose the winner.
+  This is the part of the project an examiner will press on, so it is worth understanding properly.</p>
+
+  <h3>The question being asked</h3>
+  <p>When an analyst confirms or dismisses an alert, how much should that move the alert's family?
+  Too little and feedback does nothing; too much and one mistake floods the queue. The project wrote
+  four candidate answers, then tested them.</p>
+
+  <div class="scroll" style="margin-bottom:16px">
+    <table>
+      <thead><tr><th>Formula</th><th>The idea in plain words</th><th>The arithmetic</th></tr></thead>
+      <tbody>
+        <tr>
+          <td class="k">C0 · fixed step</td>
+          <td>Every verdict moves the score the same amount, regardless of what kind of attack it is.
+          The simplest possible rule.</td>
+          <td class="m">+10 / +15 / −30 / −15<br><i>by category, always</i></td>
+        </tr>
+        <tr>
+          <td class="k">C1 · severity-weighted</td>
+          <td>A confirmation of a <b>serious</b> attack should count for more than one on a port scan.
+          So the step is scaled by how bad the attack type is.</td>
+          <td class="m">up: <b>+k·w</b><br>down: <b>−k·(1−w)</b><br><i>w = severity ÷ 10</i></td>
+        </tr>
+        <tr>
+          <td class="k">C2 · Elo-style</td>
+          <td>Borrowed from chess ratings. An <i>unexpected</i> verdict moves more than an expected
+          one — confirming an alert that already scored 95 is no surprise, so it should move little.</td>
+          <td class="m">d = k<sub>dir</sub>·(1 − score/100)<br>k<sub>dir</sub> = k·(0.5 + 0.5w)</td>
+        </tr>
+        <tr>
+          <td class="k">C3 · Elo + uncertainty</td>
+          <td>Same as C2, but a family with only one verdict behind it is treated as untrustworthy and
+          moves less than a family with twenty.</td>
+          <td class="m">C2 × max(0.4, 1/√(1+n/3))<br><i>n = prior verdicts</i></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <p>Each formula was also tested under two <b>movements</b> — how far the family moves between queue
+  bands — and two <b>family keys</b> — how loosely "similar alerts" is defined:</p>
+  <div class="cols" style="margin-bottom:16px">
+    <div>
+      <h4>M1 — one band at a time</h4>
+      <p style="font-size:12.5px;margin:0;color:var(--muted)">A confirmation promotes the family one
+      band. A dismissal demotes one band, but only after <b>two</b> dismissals (a safety margin, like
+      a cooling-off period). Cautious.</p>
+    </div>
+    <div>
+      <h4>M2 — straight to the top</h4>
+      <p style="font-size:12.5px;margin:0;color:var(--muted)">A single confirmation jumps the family
+      all the way to the top band. Fast — and riskier, because one verdict has immediate maximum
+      effect.</p>
+    </div>
+    <div>
+      <h4>coarse family key</h4>
+      <p style="font-size:12.5px;margin:0;color:var(--muted)">Groups by attack class + port + protocol
+      + rule. Broad: many alerts per family, so learning spreads widely.</p>
+    </div>
+    <div>
+      <h4>fine family key</h4>
+      <p style="font-size:12.5px;margin:0;color:var(--muted)">The same, plus more qualifying fields.
+      Narrower: fewer alerts per family, so learning spreads less but is more specific.</p>
+    </div>
+  </div>
+
+  <p><b>4 formulas × 2 movements × 2 family keys = 16 candidate designs.</b> All 16 were simulated;
+  the table further down shows the result.</p>
+
+  <h3>How the test was run</h3>
+  <p>The simulation splits the alerts in half. A <b>Tier 1 analyst</b> works the first half only —
+  confirming and dismissing — and the machine learns from those verdicts. The <b>second half is then
+  scored using what was learned</b>. That second half is the whole point: it is made of alerts the
+  analyst never saw, so any improvement there is real learning, not memorisation.</p>
+  <p>Two complications were built in deliberately, because a perfect analyst is not the realistic case:</p>
+  <ul>
+    <li><b>Analyst error</b> — the simulated analyst is given wrong beliefs at <b>5%</b> and <b>15%</b>
+    error rates; the results below are quoted at 5%. A design that only works for an infallible human
+    is not a design.</li>
+    <li><b>Three seeds</b> — the whole experiment is repeated three times with different random
+    choices, and the numbers are averaged. One lucky run proves nothing.</li>
+  </ul>
+
+  <h3>The metrics — what each measures, and what it would miss</h3>
+  <p>These are the words the results table uses. Each was chosen for a reason; each has a blind spot.
+  Knowing the blind spots is what makes the conclusion honest.</p>
+
+  <div class="scroll" style="margin-bottom:16px">
+    <table>
+      <thead><tr><th>Metric</th><th>Plain-English definition</th><th>Why it was chosen</th><th>What it misses</th></tr></thead>
+      <tbody>
+        <tr>
+          <td class="k">precision@k</td>
+          <td>Look at the top <i>k</i> alerts in the queue. What fraction are genuinely attacks?
+          Quoted here at k = 50, 100, 200.</td>
+          <td>The queue is worked top-down, so the top of the list is what actually costs the analyst
+          time. A detector can be 99% accurate overall and still be useless if the top 50 are junk.</td>
+          <td>It says nothing below rank 200, and it is brutally insensitive when the detector is
+          already near-perfect — a score of 1.000 cannot improve.</td>
+        </tr>
+        <tr>
+          <td class="k">mean attack position</td>
+          <td>Take every real attack. Where does it sit in the queue, as a fraction of the whole list?
+          Average those. <b>Lower is better.</b> 0.0828 means the average attack sits about 8.3% of
+          the way down.</td>
+          <td>precision@k only counts the very top. This measures the <i>whole</i> queue, so it can
+          still detect an improvement when precision is pinned at 1.000 — which is exactly the
+          situation here.</td>
+          <td>The differences involved are tiny, so it is easy to over-read them. It also averages:
+          moving one attack from rank 900 to 800 looks the same as moving one from 10 to 9.</td>
+        </tr>
+        <tr>
+          <td class="k">attacks demoted under error</td>
+          <td>How many genuine attacks did wrong analyst feedback push <b>down</b> the queue? Measured
+          at 5% and 15% analyst error, and summed.</td>
+          <td>This is the safety question. Learning that improves the average while burying real
+          attacks is a failure, not a success.</td>
+          <td>It only counts attacks; it does not care how far they were pushed.</td>
+        </tr>
+        <tr>
+          <td class="k">Tier 2 precision</td>
+          <td>Of the alerts flagged as "escalate to Tier 2", what fraction are real attacks?</td>
+          <td>Tier 2 is a scarce human resource. Sending false alarms there wastes the expensive
+          analyst — the worst place to be wrong.</td>
+          <td>It ignores volume entirely — see the next row.</td>
+        </tr>
+        <tr>
+          <td class="k">Tier 2 load</td>
+          <td>How many alerts land in Tier 2 at all. The control (no feedback) produces <b>243</b>.</td>
+          <td>Precision alone can be gamed by escalating almost nothing. Load is the counterweight:
+          read alongside precision it says "how much work, how well aimed".</td>
+          <td>Meaningless on its own. Low load with low precision is as bad as high load with low
+          precision.</td>
+        </tr>
+        <tr>
+          <td class="k">class_changes</td>
+          <td>How many times an alert's queue <b>band</b> changed while learning was applied. A
+          stability measure.</td>
+          <td>A queue where alerts keep jumping between bands is confusing to work from — the analyst
+          loses their place.</td>
+          <td><b>This is not a triage-quality metric.</b> It measures churn, not correctness. A design
+          that moved nothing at all would score perfectly here — which is precisely why it sits
+          <i>below</i> every outcome metric in the decision rule.</td>
+        </tr>
+        <tr>
+          <td class="k">floor violations</td>
+          <td>How many times feedback pushed a Critical (or Infiltration) alert below its protected
+          minimum score. Should be <b>zero</b>.</td>
+          <td>A hard safety property. Any non-zero value disqualifies a candidate outright.</td>
+          <td>Nothing — it is a pass/fail gate, not a ranking metric.</td>
+        </tr>
+        <tr>
+          <td class="k">false positives in top 50</td>
+          <td>How many benign alerts reached the top 50. Should be <b>zero</b>.</td>
+          <td>The most visible failure mode: a false alarm at rank 1 destroys trust in the whole
+          console.</td>
+          <td>Again a gate rather than a gradient — but see section 11, where one design failed it.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>The decision rule — a ladder, not a score</h3>
+  <p>The selection rule is called <code>sel-3</code> and was fixed <b>before</b> the run. Crucially it
+  is <b>lexicographic</b>: it compares candidates on the first criterion, and only if they are exactly
+  tied does it look at the second, and so on. It is not a weighted sum. That matters, because it means
+  a difference of 0.0001 can decide the winner when nothing else separates two candidates.</p>
+
+  <pre class="f"><i>sel-3 — applied in this order, stopping at the first difference</i>
+
+  <b>1</b>  Q27 conformity   does the step scale with attack severity?   <i>C0 fails: fixed steps</i>
+  <b>2</b>  safety           no floor violation, no attack demoted at 0% error
+  <b>3</b>  robustness       fewest true attacks demoted under analyst error
+  <b>4</b>  escalation       highest Tier 2 precision
+  <b>5</b>  triage           lowest mean attack position
+  <b>6</b>  stability        fewest class changes
+  <b>7</b>  parsimony        simplest formula, then movement, then family key</pre>
+
+  <div class="note">
+    <b>Read criterion 1 carefully.</b> It is not a performance measure at all — it is a
+    <i>policy</i> requirement (decision Q27: the adjustment must scale with how bad the attack type
+    is). This single line is what eliminates C0, even though C0 performs as well as any candidate.
+  </div>
+
+  <figure>
+    <div class="figscroll">
+      <svg viewBox="0 0 1160 500" role="img" aria-label="Decision ladder: sixteen candidates are filtered by Q27 conformity leaving twelve; safety and robustness and escalation precision all tie; mean attack position separates C1 from C2 by 0.0001, so the later stability and parsimony criteria are never reached between them.">
+        <defs>
+          <marker id="e" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+            <path d="M 0 0 L 10 5 L 0 10 z" fill="#333b47"/>
+          </marker>
+        </defs>
+
+        <rect class="nd" x="20" y="30" width="230" height="66" stroke-width="2"/>
+        <text class="nd-title" x="36" y="58">16 candidates</text>
+        <text class="nd-sub" x="36" y="78">4 formulas × 2 movements × 2 keys</text>
+
+        <line class="ar" x1="250" y1="63" x2="292" y2="63" marker-end="url(#e)"/>
+        <rect class="nd lane-guard" x="296" y="30" width="250" height="66"/>
+        <text class="nd-sub" x="312" y="54">1 · Q27 conformity</text>
+        <text class="nd-sub" x="312" y="74">drop C0 — fixed steps</text>
+        <text class="nd-sub" x="312" y="90" fill="#f85149">−4 candidates</text>
+
+        <line class="ar" x1="546" y1="63" x2="588" y2="63" marker-end="url(#e)"/>
+        <rect class="nd" x="592" y="30" width="250" height="66"/>
+        <text class="nd-sub" x="608" y="54">2 · safety</text>
+        <text class="nd-sub" x="608" y="74">0 floor violations anywhere</text>
+        <text class="nd-sub" x="608" y="90" fill="#3fb950">12 survive, no change</text>
+
+        <line class="ar" x1="842" y1="63" x2="884" y2="63" marker-end="url(#e)"/>
+        <rect class="nd" x="888" y="30" width="252" height="66"/>
+        <text class="nd-sub" x="904" y="54">3 · robustness</text>
+        <text class="nd-sub" x="904" y="74">demotions under error</text>
+        <text class="nd-sub" x="904" y="90" fill="#e3b341">all tie at 0.00</text>
+
+        <line class="ar" x1="1014" y1="96" x2="1014" y2="128" marker-end="url(#e)"/>
+
+        <rect class="nd" x="888" y="132" width="252" height="66"/>
+        <text class="nd-sub" x="904" y="156">4 · escalation fidelity</text>
+        <text class="nd-sub" x="904" y="176">Tier 2 precision</text>
+        <text class="nd-sub" x="904" y="192" fill="#e3b341">all tie at 1.0000</text>
+
+        <line class="ar" x1="888" y1="165" x2="846" y2="165" marker-end="url(#e)"/>
+        <rect class="nd lane-fuse" x="592" y="132" width="250" height="66" stroke-width="2"/>
+        <text class="nd-sub" x="608" y="156">5 · triage efficiency</text>
+        <text class="nd-sub" x="608" y="176">mean attack position</text>
+        <text class="nd-sub" x="608" y="192" fill="#f0883e">THE DECIDING LINE</text>
+
+        <line class="ar" x1="592" y1="165" x2="550" y2="165" marker-end="url(#e)"/>
+        <rect class="nd lane-fb" x="296" y="104" width="250" height="62" stroke-width="2"/>
+        <text class="nd-title" x="312" y="130">C1 wins</text>
+        <text class="nd-sub" x="312" y="152">0.0828 vs 0.0829</text>
+
+        <rect class="nd" x="296" y="180" width="250" height="62"/>
+        <text class="nd-sub" x="312" y="206">C2 / C3 runner-up</text>
+        <text class="nd-sub" x="312" y="228">0.0829 — equal to control</text>
+
+        <line class="ar" x1="421" y1="242" x2="421" y2="286" marker-end="url(#e)"/>
+        <rect class="nd lane-guard" x="296" y="290" width="250" height="62"/>
+        <text class="nd-sub" x="316" y="316">6 · stability</text>
+        <text class="nd-sub" x="316" y="338">never reached between C1 and C2</text>
+
+        <line class="ar" x1="421" y1="352" x2="421" y2="396" marker-end="url(#e)"/>
+        <rect class="nd" x="296" y="400" width="250" height="62"/>
+        <text class="nd-sub" x="316" y="426">7 · parsimony</text>
+        <text class="nd-sub" x="316" y="448">would prefer C1 anyway</text>
+
+        <rect class="nd lane-store" x="592" y="290" width="548" height="172"/>
+        <text class="nd-title" x="610" y="318">Why step 6 is never consulted between C1 and C2</text>
+        <text class="nd-sub" x="610" y="344">Every metric above it ties exactly: 0.00 demotions,</text>
+        <text class="nd-sub" x="610" y="362">1.0000 Tier 2 precision, 1.000 precision@100.</text>
+        <text class="nd-sub" x="610" y="390">The only thing separating them is mean attack position,</text>
+        <text class="nd-sub" x="610" y="408">and it separates them by 0.0001.</text>
+        <text class="nd-sub" x="610" y="436">class_changes would have favoured C1 too (13 vs 16.33) —</text>
+        <text class="nd-sub" x="610" y="454">but the ladder never gets that far.</text>
+      </svg>
+    </div>
+    <figcaption>Fig 5 — sel-3 as a filter chain. Twelve of sixteen candidates survive the policy gate;
+    several criteria then tie; one that does not tie — mean attack position — decides between C1 and C2
+    by 0.0001.</figcaption>
+  </figure>
+
+  <h3>The result — all sixteen, as selected</h3>
+  <div class="scroll" style="margin-bottom:14px">
+    <table>
+      <thead><tr><th>#</th><th>Formula</th><th>Movement</th><th>Family key</th><th>Q27</th><th>Demoted @ error</th><th>Tier 2 prec</th><th>Mean position</th><th>Class changes</th></tr></thead>
+      <tbody>
+        <tr style="background:rgba(63,185,80,.07)"><td class="m">1</td><td class="k">C1</td><td class="m">M2</td><td class="m">coarse</td><td class="m">✓</td><td class="m">0.00</td><td class="m">1.0000</td><td class="m"><b>0.0828</b></td><td class="m">13.00</td></tr>
+        <tr><td class="m">2</td><td class="k">C1</td><td class="m">M2</td><td class="m">fine</td><td class="m">✓</td><td class="m">0.00</td><td class="m">1.0000</td><td class="m"><b>0.0828</b></td><td class="m">14.00</td></tr>
+        <tr style="background:rgba(88,166,255,.07)"><td class="m">3</td><td class="k">C1</td><td class="m">M1</td><td class="m">coarse</td><td class="m">✓</td><td class="m">0.00</td><td class="m">1.0000</td><td class="m"><b>0.0828</b></td><td class="m">25.33</td></tr>
+        <tr><td class="m">4</td><td class="k">C1</td><td class="m">M1</td><td class="m">fine</td><td class="m">✓</td><td class="m">0.00</td><td class="m">1.0000</td><td class="m"><b>0.0828</b></td><td class="m">30.33</td></tr>
+        <tr><td class="m">5</td><td class="k">C2</td><td class="m">M2</td><td class="m">coarse</td><td class="m">✓</td><td class="m">0.00</td><td class="m">1.0000</td><td class="m">0.0829</td><td class="m">16.33</td></tr>
+        <tr><td class="m">6</td><td class="k">C3</td><td class="m">M2</td><td class="m">coarse</td><td class="m">✓</td><td class="m">0.00</td><td class="m">1.0000</td><td class="m">0.0829</td><td class="m">16.33</td></tr>
+        <tr><td class="m">7–8</td><td class="k">C2 / C3</td><td class="m">M2</td><td class="m">fine</td><td class="m">✓</td><td class="m">0.00</td><td class="m">1.0000</td><td class="m">0.0829</td><td class="m">17.33</td></tr>
+        <tr><td class="m">9–10</td><td class="k">C2 / C3</td><td class="m">M1</td><td class="m">coarse</td><td class="m">✓</td><td class="m">0.00</td><td class="m">1.0000</td><td class="m">0.0829</td><td class="m">26.00</td></tr>
+        <tr><td class="m">11–12</td><td class="k">C2 / C3</td><td class="m">M1</td><td class="m">fine</td><td class="m">✓</td><td class="m">0.00</td><td class="m">1.0000</td><td class="m">0.0829</td><td class="m">31.00</td></tr>
+        <tr style="opacity:.55"><td class="m">13–16</td><td class="k">C0</td><td class="m">M1/M2</td><td class="m">both</td><td class="m">✗</td><td class="m">0.00</td><td class="m">1.0000</td><td class="m">0.0828</td><td class="m">13.00–30.33</td></tr>
+        <tr style="border-top:2px solid var(--border-strong)"><td class="m">—</td><td class="k">control</td><td class="m">none</td><td class="m">—</td><td class="m">—</td><td class="m">0.00</td><td class="m">1.0000</td><td class="m"><b>0.0829</b></td><td class="m">0.00</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p><span class="chip c-low">Row 1 — selected by sel-3</span> &nbsp;
+     <span class="chip c-info">Row 3 — what actually ships</span> &nbsp;
+     <span class="chip c-medium">Control — no feedback at all</span></p>
+
+  <h3>What this actually proves — and what it does not</h3>
+
+  <div class="note bad">
+    <b>Do not present C1 as the measured best.</b> The honest reading of the table is that the
+    experiment <b>could not distinguish</b> these designs. Look at the control row: with <i>no
+    feedback whatsoever</i>, mean attack position is 0.0829 and Tier 2 precision is 1.0000. Every
+    candidate sits within 0.0001 of that. There is almost nothing for feedback to improve, because
+    the detector is already near-perfect on this sample — only 2 false positives in 996 flagged
+    alerts. A test whose baseline is already perfect cannot rank improvements to it.
+  </div>
+
+  <div class="cols">
+    <div>
+      <h4>What is solid</h4>
+      <ul>
+        <li>The rule was fixed <b>before</b> the run, so the choice is not post-hoc</li>
+        <li>C1 is selected, and it is the simplest severity-scaled formula</li>
+        <li>Nothing was demoted, no floor was breached, no false positive reached the top 50</li>
+        <li>Every candidate is <b>safe</b> — the guardrails held in all sixteen</li>
+      </ul>
+    </div>
+    <div>
+      <h4>What is weak</h4>
+      <ul>
+        <li>The margin is <b>0.0001</b> — one ten-thousandth</li>
+        <li>C2 does not lose on merit; it loses on a rounding-level difference</li>
+        <li><b>C0 would win on raw numbers</b> and is excluded only by policy</li>
+        <li>The sample is <b>saturated</b>, so the test has almost no discriminating power</li>
+      </ul>
+    </div>
+    <div>
+      <h4>What would settle it</h4>
+      <ul>
+        <li>A detector with a realistic error rate — the stress database</li>
+        <li>Then the metrics would have room to separate candidates</li>
+        <li>Designed already (<code>ranking-and-escalation-design.md</code> §8)</li>
+        <li><b>Not run</b> — needs the project lead's go-ahead, and must be reported as a separate
+        experiment</li>
+      </ul>
+    </div>
+  </div>
+
+  <h3>The movement choice is a deliberate override</h3>
+  <p>One more thing a reader of the table will notice: <b>sel-3's rank 1 is C1+M2</b>, but the system
+  runs <b>C1+M1</b> (row 3). That is not an error — it is a recorded decision by the project lead,
+  and it should always be described as an override rather than hidden.</p>
+  <p>The reason is a safety asymmetry. M2's <i>only</i> advantage here is <code>class_changes</code>
+  (13.00 against M1's 25.33) — a measure of queue churn, not of triage quality, and it sits at
+  criterion 6, below every outcome metric. Against that, an earlier run predating the agreement gate
+  measured M2 at <b>Tier 2 precision 0.7418 against M1's 1.0000</b>, with double the Tier 2 load
+  (504 against 243). M2 is only safe <i>because</i> the agreement gate restrains it; M1 does not
+  depend on the gate to be safe. When a design's safety rests on a second mechanism, and its only
+  measured benefit is queue tidiness, the cautious option is the defensible one.</p>
+
+  <div class="note ok">
+    <b>The sentence to use in the viva.</b> "The formula was chosen by a rule fixed before the run,
+    not by preference. On this sample the severity-scaled candidates are statistically
+    indistinguishable — 0.0001 apart on the only metric that separates them — because the control
+    queue is already saturated. C0 would score best and is excluded by design decision Q27. The
+    movement was overridden by the project lead on safety grounds, and the stress test is the
+    experiment that would separate these designs."
+  </div>
+</section>
+
+<section>
+  <h2><span class="num">08</span>Escalation and the family key</h2>
+  <p class="sub">Two definitions the loop depends on: what makes an alert a Tier 2 candidate, and
+  what counts as "the alerts like it".</p>
+
+  <div class="cols">
+    <div>
+      <h4>E1 — detector-driven</h4>
+      <p style="font-size:12.5px; margin:0; color:var(--muted)">
+      <code>evidence_class == corroborated</code> <b>and</b> <code>is_critical</code>. A checkable rule
+      and the model agreeing on a severe verdict. All 200 demo corroborated alerts are real attacks.</p>
+    </div>
+    <div>
+      <h4>E2 — analyst-driven</h4>
+      <p style="font-size:12.5px; margin:0; color:var(--muted)">
+      The verdict <code>escalate</code>, or <code>confirm_true_positive</code> on an attack type whose
+      chart severity is ≥ <b>7.0</b>. This is how a human escalates; it acts through promotion.</p>
+    </div>
+    <div>
+      <h4>E3 — score-driven</h4>
+      <p style="font-size:12.5px; margin:0; color:var(--muted)">
+      Current score ≥ <b>90</b> <b>and</b> chart severity ≥ <b>7.0</b>. High confidence on a severe
+      type. A dismissal withdraws the candidacy.</p>
+    </div>
+  </div>
+
+  <div class="note" style="margin-top:16px">
+    <b>Automatic escalation is post-demo (decision Q25).</b> In the demo the console shows which
+    alerts <i>would</i> go to Tier 2. Moving them is not built.
+  </div>
+
+  <h3>The family key — the coarse grouping</h3>
+  <pre class="f">["Web Attack", 80, "tcp", "-"]
+ <i>attack class · dst_port · protocol (canonicalised: 6 → "tcp") · first matched rule id</i>
+
+<i>plus the destination IP, appended only when evidence_class == "none" — so a verdict on one</i>
+<i>unflagged flow cannot spread across all benign traffic on a port.</i></pre>
+
+  <p>Weighted similarity (the collaborator's engine, threshold 0.7) was <b>not ported</b>: the
+  experiment that chose the formula and the gate grouped by exact family, which scores 1.0 under
+  those weights. S15 later gave the coarse key a concrete cost — see section 11.</p>
+</section>
+
+<section>
+  <h2><span class="num">09</span>The decisions this map encodes</h2>
+  <p class="sub">Each of these was confirmed by the project lead and is load-bearing somewhere above.
+  The reasoning and the evidence behind each is in <code>plan-changelog.md</code>.</p>
+  <div class="scroll">
+    <table>
+      <thead><tr><th>ID</th><th>Decision</th><th>Where it shows up</th></tr></thead>
+      <tbody>
+        <tr><td class="m">Q18</td><td>Attempted attacks are <b>malicious</b>, flagged by <code>is_attempted</code></td><td>FTP brute force is 100% <code>Attempted</code> and still counts</td></tr>
+        <tr><td class="m">Q19</td><td><b>Port Scan</b> is an 8th class, split out of Infiltration</td><td>Its own ceiling (Low), its own family</td></tr>
+        <tr><td class="m">Q20</td><td>Disjoint train (250,655) + demo (5,000) samples, seed <code>20260911</code></td><td>Reproducibility of every published figure</td></tr>
+        <tr><td class="m">Q21</td><td>Signature layer = <b>trust / explainability</b>, not coverage</td><td>The zero-unique-coverage finding does not break the design</td></tr>
+        <tr><td class="m">Q22</td><td>Evidence priority: corroborated → override → ml_only → none</td><td><code>EVIDENCE_PRIORITY</code>; the band tabs</td></tr>
+        <tr><td class="m">Q23</td><td>Fusion combination <b>accepted for the demo</b> at current defaults</td><td>Tuning deferred to realistic traffic</td></tr>
+        <tr><td class="m">Q24</td><td>Feedback moves an alert into a higher <b>queue class</b>; review is an extra feature</td><td>Movement is a separate offset; evidence class never changes</td></tr>
+        <tr><td class="m">Q25</td><td>Automatic tier escalation is <b>post-demo</b>; the demo shows <i>which would</i></td><td>E1/E2/E3 mark, they do not move</td></tr>
+        <tr><td class="m">Q26</td><td>The ranking formula is <b>chosen by testing</b> game-inspired candidates</td><td>C0/C1/C2/C3 — the experiment, not a preference</td></tr>
+        <tr><td class="m">Q27</td><td>False positives drop a class, scaled by the <b>attack-type severity chart</b></td><td><code>w = severity ÷ 10</code> in C1; the score ceilings</td></tr>
+        <tr><td class="m">Q28</td><td>The chart is <b>configuration</b>: <code>config/severity-chart.json</code>, versioned, validated on load</td><td>Never edit values in code</td></tr>
+        <tr><td class="m">Q29</td><td>Ranking <b>formula C1</b> (severity-weighted), chosen by the pre-registered rule sel-3</td><td><code>learning.ranking_params()</code> passes <code>formula="C1"</code></td></tr>
+        <tr><td class="m">Q30</td><td>The collaborator's <b>agreement gate</b> is adopted for similar-alert learning</td><td>≥3 verdicts, no tie, ≥0.67 agreement</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section>
+  <h2><span class="num">10</span>Reversed, rejected, retired</h2>
+  <p class="sub">These were believed and then disproved, or designed and then rejected. Each one is
+  a cycle that does not need to be spent again.</p>
+  <div class="scroll">
+    <table>
+      <thead><tr><th>Claim</th><th>Status</th><th>Why</th></tr></thead>
+      <tbody>
+        <tr><td>"The detectors are <b>complementary</b>"</td><td><span class="chip c-critical">Withdrawn</span></td><td><code>signature_only = 0</code> on corrected data</td></tr>
+        <tr><td>"<b>Zero co-occurrence</b>" between detectors</td><td><span class="chip c-critical">Withdrawn</span></td><td>It occurs 200 times</td></tr>
+        <tr><td>Signature + ML <b>agreement</b> is the strongest evidence</td><td><span class="chip c-medium">Partially restored</span></td><td>Withdrawn on old data; agreement does occur, 200×</td></tr>
+        <tr><td><b>Weighted-sum fusion</b> (TDM §6.2.7)</td><td><span class="chip c-critical">Rejected</span></td><td>Scores from different evidence classes are not commensurable</td></tr>
+        <tr><td><b>Retune the fusion weights</b> to fix coverage</td><td><span class="chip c-critical">Rejected</span></td><td>Mathematically inert while co-occurrence is low; hides the problem</td></tr>
+        <tr><td><b>Retune rules</b> to restore complementarity</td><td><span class="chip c-high">Tested, closed</span></td><td>Precision reached 1.000, <code>signature_only</code> stayed 0</td></tr>
+        <tr><td><b>Suricata</b> as the prefix module</td><td><span class="chip c-critical">Rejected</span></td><td>Cannot emit CIC flow features</td></tr>
+        <tr><td>A <b>curated demo slice</b> where both detectors fire</td><td><span class="chip c-critical">Rejected</span></td><td>Would conceal real recall; fails viva scrutiny</td></tr>
+        <tr><td>Demo on <b>static JSON</b> with no persistence</td><td><span class="chip c-critical">Rejected</span></td><td>Feedback that dies on refresh cannot demonstrate the thesis</td></tr>
+        <tr><td>Invariant <b>I5</b> — no override ranks below any <code>ml_only</code></td><td><span class="chip c-low">Retired</span></td><td>A property of the band order; the band no longer orders. I2 still forces review</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section>
+  <h2><span class="num">11</span>The finding the project reports against itself</h2>
+  <p class="sub">The three-arm evaluation did not produce the result the project wanted, and the honest
+  version is the one to present.</p>
+  <div class="note bad">
+    <b>Similar-alert learning works and does not leak — but on this sample it lowered precision.</b>
+    The control queue was already perfect (precision 1.000 out to k=200, with 2 false positives in 996
+    flagged alerts), so feedback could only break it. And it did: the coarse family key
+    <b>promoted a benign alert from rank 639 to rank 1</b>, because its family was dominated by
+    confirmed Web Attacks. Learning reached <b>198 untouched true positives</b> and leaked onto
+    <b>0</b> alerts outside judged families.
+  </div>
+
+  <div class="cols">
+    <div>
+      <h4>What this does not invalidate</h4>
+      <ul>
+        <li>The mechanism is sound and bounded</li>
+        <li>It leaked onto nothing outside judged families</li>
+        <li>Under the corrected v1.31 order, feedback <b>no longer costs a top-50 place</b></li>
+        <li>Precision@50 holds at 1.000 in every arm</li>
+      </ul>
+    </div>
+    <div>
+      <h4>What it does expose</h4>
+      <ul>
+        <li>The <b>coarse family key</b> is the attack surface</li>
+        <li>A single family can carry a benign alert to the top</li>
+        <li>Arm C has <b>no power</b> as pre-registered — no dismissals occurred</li>
+        <li>The efficiency claim is <b>still untested</b>: a near-perfect control queue cannot show it</li>
+      </ul>
+    </div>
+    <div>
+      <h4>The experiment that would answer it</h4>
+      <ul>
+        <li>A stress test with a weaker or drifting detector</li>
+        <li>Designed in <code>ranking-and-escalation-design.md</code> §8</li>
+        <li><b>Not run</b> — needs the project lead's go-ahead</li>
+        <li>Must be reported as a separate, clearly-labelled experiment</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2><span class="num">12</span>Where the build stands</h2>
+  <p class="sub">Status is from the plan's own <i>Step status</i> table, which is canonical for what
+  to build next. Phase numbering is the plan's and is not negotiable.</p>
+
+  <figure>
+    <div class="figscroll">
+      <svg viewBox="0 0 1300 300" role="img" aria-label="Step status by phase: Phase 0 partial, Phases 1 through 5 done, Phase 6 with S17 next and S18 not started.">
+        <defs>
+          <marker id="d" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+            <path d="M 0 0 L 10 5 L 0 10 z" fill="#333b47"/>
+          </marker>
+        </defs>
+
+        <rect class="zone" x="14"  y="60" width="176" height="150"/>
+        <rect class="zone" x="196" y="60" width="176" height="150"/>
+        <rect class="zone" x="378" y="60" width="176" height="150"/>
+        <rect class="zone" x="560" y="60" width="176" height="150"/>
+        <rect class="zone" x="742" y="60" width="176" height="150"/>
+        <rect class="zone" x="924" y="60" width="176" height="150"/>
+        <rect class="zone" x="1106" y="60" width="180" height="150" stroke="#2f81f7"/>
+
+        <text class="zone-lbl" x="24"  y="50">PHASE 0</text>
+        <text class="zone-lbl" x="206" y="50">PHASE 1</text>
+        <text class="zone-lbl" x="388" y="50">PHASE 2</text>
+        <text class="zone-lbl" x="570" y="50">PHASE 3</text>
+        <text class="zone-lbl" x="752" y="50">PHASE 4</text>
+        <text class="zone-lbl" x="934" y="50">PHASE 5</text>
+        <text class="zone-lbl" x="1116" y="50" fill="#2f81f7">PHASE 6</text>
+
+        <rect x="26"  y="74"  width="152" height="34" fill="#171b21" stroke="#e3b341" stroke-width="1"/>
+        <text class="nd-sub" x="36" y="96">S1 scaffold — PARTIAL</text>
+
+        <rect x="208" y="74"  width="152" height="34" fill="#171b21" stroke="#3fb950" stroke-width="1"/>
+        <text class="nd-sub" x="218" y="96">S2 contracts · DONE</text>
+        <rect x="208" y="116" width="152" height="34" fill="#171b21" stroke="#3fb950" stroke-width="1"/>
+        <text class="nd-sub" x="218" y="138">S3 dataset · DONE</text>
+        <rect x="208" y="158" width="152" height="34" fill="#171b21" stroke="#3fb950" stroke-width="1"/>
+        <text class="nd-sub" x="218" y="180">S4 model+SHAP · DONE</text>
+
+        <rect x="390" y="74"  width="152" height="34" fill="#171b21" stroke="#3fb950" stroke-width="1"/>
+        <text class="nd-sub" x="400" y="96">S5 + S4b rules · DONE</text>
+        <rect x="390" y="116" width="152" height="34" fill="#171b21" stroke="#3fb950" stroke-width="1"/>
+        <text class="nd-sub" x="400" y="138">S6 fusion CEF · DONE</text>
+        <rect x="390" y="158" width="152" height="34" fill="#171b21" stroke="#3fb950" stroke-width="1"/>
+        <text class="nd-sub" x="400" y="180">S7a/S7b/S8 · DONE</text>
+
+        <rect x="572" y="74"  width="152" height="34" fill="#171b21" stroke="#3fb950" stroke-width="1"/>
+        <text class="nd-sub" x="582" y="96">S9 persistence · DONE</text>
+        <rect x="572" y="116" width="152" height="34" fill="#171b21" stroke="#3fb950" stroke-width="1"/>
+        <text class="nd-sub" x="582" y="138">S10a contract · DONE</text>
+        <rect x="572" y="158" width="152" height="34" fill="#171b21" stroke="#3fb950" stroke-width="1"/>
+        <text class="nd-sub" x="582" y="180">S10b handlers · DONE</text>
+
+        <rect x="754" y="74"  width="152" height="34" fill="#171b21" stroke="#3fb950" stroke-width="1"/>
+        <text class="nd-sub" x="764" y="96">S11 web shell · DONE</text>
+        <rect x="754" y="116" width="152" height="34" fill="#171b21" stroke="#3fb950" stroke-width="1"/>
+        <text class="nd-sub" x="764" y="138">S12/13/14 paths</text>
+        <text class="nd-sub" x="764" y="152" font-size="9">DONE · analyst+admin+eval</text>
+
+        <rect x="936" y="74"  width="152" height="34" fill="#171b21" stroke="#3fb950" stroke-width="1"/>
+        <text class="nd-sub" x="946" y="96">S15 evaluation · DONE</text>
+        <rect x="936" y="116" width="152" height="34" fill="#171b21" stroke="#3fb950" stroke-width="1"/>
+        <text class="nd-sub" x="946" y="138">S16 demo gate · PASSED</text>
+        <rect x="936" y="158" width="152" height="34" fill="#171b21" stroke="#3fb950" stroke-width="1"/>
+        <text class="nd-sub" x="946" y="180">S18a real login · DONE</text>
+
+        <rect x="1118" y="74"  width="156" height="34" fill="#171b21" stroke="#2f81f7" stroke-width="2"/>
+        <text class="nd-sub" x="1128" y="96" fill="#58a6ff">S17 exporter · NEXT</text>
+        <rect x="1118" y="116" width="156" height="34" fill="#171b21" stroke="#333b47" stroke-width="1"/>
+        <text class="nd-sub" x="1128" y="138">S18 backend · TODO</text>
+
+        <line class="ar" x1="186" y1="135" x2="202" y2="135" marker-end="url(#d)"/>
+        <line class="ar" x1="368" y1="135" x2="384" y2="135" marker-end="url(#d)"/>
+        <line class="ar" x1="550" y1="135" x2="566" y2="135" marker-end="url(#d)"/>
+        <line class="ar" x1="732" y1="135" x2="748" y2="135" marker-end="url(#d)"/>
+        <line class="ar" x1="914" y1="135" x2="930" y2="135" marker-end="url(#d)"/>
+        <line class="ar" x1="1096" y1="135" x2="1112" y2="135" marker-end="url(#d)"/>
+
+        <text class="band-lbl" x="26" y="246" fill="#8f97a3">Off the S-graph, also complete:</text>
+        <text class="band-lbl" x="26" y="266" fill="#656d79">Console rebuild R1–R6 (v1.22–v1.26) · user-testing prep batch · data + presentation validation (650d844)</text>
+        <text class="band-lbl" x="1116" y="246" fill="#58a6ff">S18 is equally unblocked.</text>
+        <text class="band-lbl" x="1116" y="266" fill="#656d79">S17 is NEXT only because it comes first in the</text>
+        <text class="band-lbl" x="1116" y="282" fill="#656d79">graph — confirm the order before starting either.</text>
+      </svg>
+    </div>
+    <figcaption>Fig 4 — Phases 0–5 done; the S16 demo gate passed. Phase 6 has not started.</figcaption>
+  </figure>
+</section>
+
+<section>
+  <h2><span class="num">13</span>Still open</h2>
+  <div class="cols">
+    <div>
+      <h4>Ranking</h4>
+      <ul>
+        <li><b>M1 or M2</b> — the data cannot separate them; M1 stands unless M2 is chosen</li>
+        <li><b>Fine family key</b> as defence in depth — S15 gives this a concrete cost</li>
+        <li><b>The stress test</b> — the only way to answer the efficiency claim; needs a go-ahead</li>
+      </ul>
+    </div>
+    <div>
+      <h4>Evaluation</h4>
+      <ul>
+        <li><b>Arm C has no power</b> as pre-registered. A second rule drawing from the queue's false positives would give it something to measure — but changing it after seeing the result is what plan v0.3 forbids</li>
+        <li><b>Band names collide</b> with evidence-class names: five <code>ml_only</code> alerts sit in a band called <code>signature_override</code>. Rename, or accept it knowingly</li>
+      </ul>
+    </div>
+    <div>
+      <h4>Project</h4>
+      <ul>
+        <li><b>Figma "Product screens"</b> — blocked; the Desktop Bridge plugin is not running</li>
+        <li><b>File-ownership boundary</b> with the collaborator, before the next merge</li>
+        <li><b>Two S7b judgement calls</b>, each reversible in one line: <code>escalate</code> counts as a confirmation, and a dismissal withdraws an alert's Tier 2 marker</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<footer>
+  Transcribed from the working tree at <span style="color:var(--text)">650d844</span> ·
+  cef.py · formulas.py · learning.py · service.py · policy.py · severity.py · runner.py · db.py ·
+  severity-chart.json · the plan's Step status table
+</footer>
+
+</div>

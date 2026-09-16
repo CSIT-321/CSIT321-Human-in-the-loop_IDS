@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>HITL IDS — Project Pages</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+  :root{
+    --bg:#0b0d10; --surface:#111418; --raised:#171b21;
+    --border:#242a33; --border-strong:#333b47;
+    --text:#e6e8eb; --muted:#8f97a3; --dim:#656d79;
+    --accent:#58a6ff; --primary:#2f81f7;
+    --mono:"JetBrains Mono",ui-monospace,monospace;
+    --sans:"IBM Plex Sans","Segoe UI",system-ui,sans-serif;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--text);font-family:var(--sans);
+       font-size:15px;line-height:1.6;-webkit-font-smoothing:antialiased}
+  main{max-width:940px;margin:0 auto;padding-block:0 72px;padding-inline:20px}
+  header{padding-block:56px 30px;border-bottom:1px solid var(--border)}
+  .eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.1em;
+           text-transform:uppercase;color:var(--dim)}
+  h1{font-size:33px;line-height:1.18;margin:12px 0 10px;font-weight:600;
+     letter-spacing:-.01em;text-wrap:balance}
+  .lede{margin:0;color:var(--muted);max-width:64ch}
+  h2{font-size:12px;font-family:var(--mono);letter-spacing:.09em;text-transform:uppercase;
+     color:var(--muted);font-weight:500;margin:0 0 14px}
+  section{padding-top:38px}
+  .cards{display:grid;gap:1px;background:var(--border);border:1px solid var(--border)}
+  a.card{display:block;background:var(--surface);padding:20px 22px;text-decoration:none;
+         color:inherit;transition:background .12s}
+  a.card:hover,a.card:focus-visible{background:var(--raised)}
+  a.card:focus-visible{outline:2px solid var(--primary);outline-offset:-2px}
+  .card h3{margin:0 0 6px;font-size:17px;font-weight:600}
+  .card h3 span{color:var(--accent);font-family:var(--mono);font-size:13px;font-weight:500}
+  .card p{margin:0;color:var(--muted);font-size:13.5px}
+  .facts{display:flex;flex-wrap:wrap;gap:0;border:1px solid var(--border);background:var(--surface);margin-top:14px}
+  .facts div{flex:1 1 130px;padding:11px 14px;border-right:1px solid var(--border)}
+  .facts div:last-child{border-right:0}
+  .facts dt{font-family:var(--mono);font-size:10px;letter-spacing:.09em;text-transform:uppercase;
+            color:var(--dim);margin:0 0 3px}
+  .facts dd{margin:0;font-family:var(--mono);font-size:12.5px}
+  footer{margin-top:46px;padding-top:18px;border-top:1px solid var(--border);
+         color:var(--dim);font-size:12.5px;font-family:var(--mono);line-height:1.7}
+  @media (max-width:600px){ h1{font-size:26px} main{padding-inline:16px} }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <div class="eyebrow">FYP-26-S3-13 · CSIT321 · School of Computing and Information Technology</div>
+    <h1>Human-in-the-Loop Intrusion Detection Dashboard</h1>
+    <p class="lede">A network IDS that fuses signature rules with a machine-learning classifier, then
+    lets an analyst's verdict reorder the alerts that follow — inside guardrails, with every decision
+    audited. These are the project's published pages.</p>
+  </header>
+
+  <section>
+    <h2>Pages</h2>
+    <div class="cards">
+      <a class="card" href="showcase.html">
+        <h3>Console Showcase <span>→</span></h3>
+        <p>The guided walkthrough: how the system works, every screen, the demo narrative, and the
+        evidence behind each decision — including the results that went against us.</p>
+      </a>
+      <a class="card" href="pipeline-map.html">
+        <h3>Pipeline Map <span>→</span></h3>
+        <p>The detection pipeline as it actually runs: how a signature and the model combine, the
+        score arithmetic, the queue order, and the feedback loop that reorders future alerts.</p>
+      </a>
+      <a class="card" href="user-manual.html">
+        <h3>Preliminary User Manual <span>→</span></h3>
+        <p>Installation, sign-in, and every console screen with its procedures — for a tester
+        working through the system for the first time.</p>
+      </a>
+    </div>
+    <dl class="facts">
+      <div><dt>Detection</dt><dd>8-class XGBoost</dd></div>
+      <div><dt>Explainability</dt><dd>Native TreeSHAP</dd></div>
+      <div><dt>Guardrails</dt><dd>Caps &amp; floors</dd></div>
+      <div><dt>Audit</dt><dd>Append-only</dd></div>
+    </dl>
+  </section>
+
+  <section>
+    <h2>What this is</h2>
+    <p style="margin:0;color:var(--muted);max-width:70ch">
+    Detection is an offline batch over recorded CIC flow data. Every flow becomes an alert —
+    including the ones no detector flagged, which form the queue's bottom band and the evaluation's
+    denominator. An analyst works the queue, records a verdict, and the verdict does not merely
+    re-score that one alert: it updates the alert's <em>family</em>, and the family's learned
+    adjustment is read by alerts that arrive later. The safety claim is the guardrails — a bounded
+    score change, floors that protect critical findings, and an append-only trail of who decided what.</p>
+  </section>
+
+  <footer>
+    Built from the repository at <span style="color:var(--text)">hitl-ids/</span>.<br>
+    <span style="color:var(--dim)">Source documents: docs/ids-console-showcase.html ·
+    docs/pipeline-map.html · docs/preliminary-user-manual.md</span>
+  </footer>
+</main>
+</body>
+</html>
