@@ -3,16 +3,23 @@
 **Purpose.** Carry the full state of this project into a fresh session with zero loss of context
 and minimal token cost. Everything a new session needs is here or one link away.
 
-**Last updated:** 2026-09-15 (rev 17) · **Branch:** `feat/demo-build` — **pushed to origin** at
-`b534db6` and tracking `origin/feat/demo-build` (not merged to `main`; no PR opened) ·
-`feat/s2-contracts` and `feat/s6-fusion` pushed earlier as view-only progress branches ·
+**Last updated:** 2026-09-16 (rev 18) · **Branch:** `feat/demo-build` — tracking
+`origin/feat/demo-build`, now **11 commits ahead** (the R4→showcase-v9 work is unpushed; push again
+only when asked) · `feat/s2-contracts` and `feat/s6-fusion` pushed earlier as view-only progress
+branches ·
 **Phases 2–5 DONE · the S16 demo gate PASSED** (S12, S13, S14, S16 in changelog v1.21) ·
 **Console rebuild** (user request, `docs/console-rebuild-proposal.md`): R1–R6 DONE, **complete** ·
 **S18a account separation landed** (user request): real sign-in — the seeded accounts
 `g.ang`/`analyst-demo`, `admin`/`admin-demo`, `evaluator`/`evaluator-demo` (one per view); bcrypt +
 8-hour JWT bearer; `X-Demo-Role` and the role dropdown/chips are gone; next is the plan's S17 (the
 S18 remainder equally unblocked — confirm the order with the user) —
-changelog v1.27 · **426 tests, 0 skipped** (Python, in `.venv`) + **128 web tests** (`apps/web`, `npm test`) +
+changelog v1.27 · **User-testing prep batch landed (2026-09-15/16, in the unpushed commits):** PUM
+v0.3 with the real sign-in section, `docs/tier1-analyst-workflow.md`,
+`docs/workflow-test-cases.md` (the A–L hand-test protocol for the tester), showcase v8/v9
+(`docs/ids-console-showcase.html`), and the **model bake-off** `notebooks/07_model_bakeoff.ipynb`
+(LR collapses to 0.51 macro F1 at 78.7% accuracy; RF 0.962; XGBoost 0.966 ± 0.015 vs HistGB
+0.969 ± 0.011 — a tie; XGBoost retained on the native-TreeSHAP tiebreak; decisions B1–B3; the
+notebook is still untracked) · **426 tests, 0 skipped** (Python, in `.venv`) + **128 web tests** (`apps/web`, `npm test`) +
 the browser narrative (`npm run e2e`, passes with three real sign-ins) ·
 **Python runs from `hitl-ids\.venv` (3.11) — see §0b before running anything** ·
 `python scripts/run_detection.py` builds the demo database · `python -m uvicorn apps.api.main:app`
@@ -51,7 +58,8 @@ anything. Then confirm the ground you are standing on:
 
 ```
 cd hitl-ids && .venv\Scripts\activate  # every terminal; python --version must print 3.11.x (§0b)
-python -m pytest                      # expect 411 passed, 0 skipped
+python -m pytest                      # expect 426 passed, 0 skipped (sandbox blocking the temp
+                                       # dir? add -p no:cacheprovider --basetemp=<scratchpad>)
 python scripts/run_detection.py       # rebuilds data/demo.db: 5,000 flows -> 5,000 alerts, ~21 s
 python scripts/rehearse_demo.py       # the S16 narrative through the API on a copy: 41 checks
 cd apps/web && npm test && npm run e2e && cd ../..   # 128 web tests; the narrative in a browser
@@ -124,19 +132,26 @@ From Claude's Bash tool, call the environment directly: `.venv/Scripts/python.ex
   `_v0.2.docx` beside it is committed), `docs/FYP-26-S3-13_PUM.pdf` or
   `hitl-ids/Screenshot 2026-09-13 210609.png` (the design reference). All three are uncommitted by design.
 
-### Open when the last session ended
+### Open now (verified 2026-09-16)
 
-1. **Figma "Product screens" page** — full-fidelity designs of every *real* screen from login (Login,
-   Workstation, Dashboard, Alert Queue, alert detail, Investigations, Feedback Impact, System Status,
-   Guardrails, Audit Trail, Scenarios, Evaluation run, Detection Metrics) plus a wireframe for each. Requested,
-   not built: blocked by the plugin disconnect. Mark or replace the stale proposals on the Screens page.
-2. **Console rebuild — complete.** R4 (v1.24), R5 (v1.25), R6 (v1.26): rehearsal holds, guide recaptured with Overview /
-   IP shots, showcase republished (version 7), PUM v0.2 built to `docs/FYP-26-S3-13_PrelimUserManual_v0.2.docx` from real
-   screenshots. Build the PUM with `C:\ProgramData\miniconda3\python.exe` (python-docx is not in `.venv`) and **always
-   pass `--out`**. Not built: verdicts per analyst (proposal §4) — no endpoint.
-3. **Not yet run:** `ruff` (now installed in `.venv`). `rehearse_demo.py` was re-run after R5 (v1.26) and holds.
-4. **Plan tracking:** the rebuild is not an S-step in `plans/hitl-ids-demo-build.md`, and it is now finished; the
-   plan's S17 `NEXT` stands. S18 is equally unblocked — confirm the order with the user before starting either.
+1. **Figma "Product screens" page** — still requested, still blocked: the Desktop Bridge plugin is
+   not running (probed 2026-09-16). The user must open Figma Desktop → Plugins → Development →
+   Figma Desktop Bridge → Run; then the page can be built from `docs/img/demo-guide/` as vector layers.
+2. **User-testing prep batch (5 commits, unpushed).** PUM v0.3 (`FYP-26-S3-13_PrelimUserManual_v0.3.docx`,
+   guide recaptured 2026-09-15), `docs/tier1-analyst-workflow.md`, `docs/workflow-test-cases.md`,
+   showcase v8/v9 (`docs/ids-console-showcase.html`). Uncommitted **by design**: the user's edited
+   `.docx`, `PUM.pdf`, the design-reference screenshot. Uncommitted **pending a decision**:
+   `notebooks/07_model_bakeoff.ipynb` (untracked) and the showcase's one-line bake-off paragraph —
+   commit both before the presentation, or they exist only on this machine.
+3. **`ruff` — first run 2026-09-16:** ~140 findings, mostly style (RUF100 44, F811 18, I001 17,
+   B008 10 — FastAPI `Depends`, a known false positive for this pattern). Nothing blocking; no
+   cleanup pass has been done.
+4. **Plan tracking unchanged:** the rebuild and the prep batch are not S-steps; the plan's S17
+   `NEXT` stands. S18 is equally unblocked — confirm the order with the user before starting either.
+5. **Verified this session on the working tree:** 426 Python tests passed (the sandbox blocks the
+   default pytest temp dir — use `-p no:cacheprovider --basetemp=<scratchpad>`), `rehearse_demo.py`
+   holds end to end, `npm test` and `npm run e2e` pass, and `data/demo.db` is pristine (5,000
+   alerts, 0 verdicts, 3 seeded users, 1 run) — ready for a tester pass or a demo as-is.
 
 ---
 
