@@ -13,6 +13,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router";
 
 import { useSession } from "../../session/SessionContext";
+import { ThemeToggle } from "../../theme/ThemeToggle";
 
 /** "g.ang" -> "GA": the initials an avatar shows, ignoring anything that is not a letter or digit. */
 function initials(username: string): string {
@@ -57,6 +58,7 @@ export function TopBar() {
         </span>
       </div>
       <div className="flex items-center gap-3">
+        <ThemeToggle compact />
         <Clock />
         <span
           aria-hidden

@@ -42,7 +42,7 @@ const EXPORT_PAGE_SIZE = 500;
 const CONTROL_CLASS = "rounded-sm border border-border bg-raised px-3 py-1.5 text-sm text-text";
 /** The console's one primary button, as the verdict form's "Record verdict" draws it. */
 const PRIMARY_CLASS =
-  "rounded-sm bg-primary px-4 py-1.5 text-sm font-semibold text-white hover:bg-primary-hover disabled:cursor-not-allowed disabled:opacity-40";
+  "rounded-sm bg-primary px-4 py-1.5 text-sm font-semibold text-on-primary hover:bg-primary-hover disabled:cursor-not-allowed disabled:opacity-40";
 const LABEL_CLASS = "block text-xs text-dim";
 const TH_CLASS = "px-2 py-1.5 font-medium";
 const TD_CLASS = "px-2 py-1.5 text-text";

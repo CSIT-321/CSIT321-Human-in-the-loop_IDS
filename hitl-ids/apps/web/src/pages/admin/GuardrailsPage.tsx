@@ -169,7 +169,7 @@ function FeedbackLimitsCard({
           <button
             type="submit"
             disabled={saving}
-            className="rounded-sm bg-primary px-4 py-2 text-sm font-semibold text-white hover:bg-primary-hover disabled:cursor-not-allowed disabled:opacity-40"
+            className="rounded-sm bg-primary px-4 py-2 text-sm font-semibold text-on-primary hover:bg-primary-hover disabled:cursor-not-allowed disabled:opacity-40"
           >
             Save changes
           </button>
