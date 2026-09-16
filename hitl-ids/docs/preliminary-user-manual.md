@@ -127,7 +127,7 @@ Activate the environment in every new terminal before running Python commands.
 python -m pytest
 ```
 
-Expect **411 passed, 0 skipped**.
+Expect **426 passed, 0 skipped**.
 
 **Build the demo database**
 

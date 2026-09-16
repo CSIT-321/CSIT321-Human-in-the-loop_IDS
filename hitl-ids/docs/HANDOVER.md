@@ -152,6 +152,20 @@ From Claude's Bash tool, call the environment directly: `.venv/Scripts/python.ex
    default pytest temp dir — use `-p no:cacheprovider --basetemp=<scratchpad>`), `rehearse_demo.py`
    holds end to end, `npm test` and `npm run e2e` pass, and `data/demo.db` is pristine (5,000
    alerts, 0 verdicts, 3 seeded users, 1 run) — ready for a tester pass or a demo as-is.
+6. **Full data + presentation validation (2026-09-16, commit 54e067d):** a fresh
+   `run_detection.py` rebuild is **content-identical** to the previous database (same hash over all
+   5,000 alerts' semantic fields); `run_evaluation.py` reproduced the pre-registered run
+   **metric-for-metric** (new record `20260916T032933Z` beside `20260912T032022Z` in
+   `history.jsonl`; the only differences are run id, commit and the UUID-bound `sequence_digest` —
+   the 40-verdict sequence is semantically identical, so the digest proves same-database fidelity
+   only); `build_openapi.py --check` clean; **all seven notebooks execute with zero errors** in
+   `.venv` after adding dev-only tooling (`nbclient`, `ipykernel`, `matplotlib`, `shap` —
+   `requirements.txt` untouched; the notebooks previously ran only in the user's miniconda Jupyter);
+   every headline figure quoted in the docs matches the data (644 Tier 2 candidates, 200
+   corroborated, 0 signature overrides, 4,004 not flagged; showcase bake-off numbers match
+   notebook 07's stored outputs exactly). Fixed: PUM expected-test count 411 → 426. Known cosmetic:
+   the showcase HTML has no `<!DOCTYPE html>` (quirks mode) — it has always been styled that way;
+   do not add a doctype without re-checking every section.
 
 ---
 
