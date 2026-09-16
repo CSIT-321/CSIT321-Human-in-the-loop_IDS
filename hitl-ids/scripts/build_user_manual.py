@@ -64,7 +64,21 @@ TEAM = [
 ]
 
 DOC_TITLE = "User Manual"
+#: Fallback only — the name actually rendered is read from the source Markdown by document_name().
 DOC_NAME = "FYP-26-S3-13 User Manual, Version 0.2"
+DOC_NAME_ROW = re.compile(r"^\|\s*Document name\s*\|\s*(?P<name>.+?)\s*\|", re.MULTILINE)
+
+
+def document_name(markdown: str) -> str:
+    """The Document Control table's own 'Document name' row, version included.
+
+    Read from the Markdown rather than held as a constant. The constant said "Version 0.2" while
+    the source had reached v0.4, so the generated cover mislabelled itself for two releases — and
+    because a rebuild replaces the .docx wholesale, nothing surfaced the error. The module docstring
+    calls the Markdown the one source of truth, so the version comes from it too.
+    """
+    found = DOC_NAME_ROW.search(markdown)
+    return found.group("name").strip() if found else DOC_NAME
 
 INK = RGBColor(0x1F, 0x1F, 0x1F)
 ACCENT = RGBColor(0x1F, 0x4E, 0x79)
@@ -385,7 +399,7 @@ def build_document_control(document: Document, markdown: str, width: float) -> N
     document.add_page_break()
     heading = document.add_heading(level=1)
     write_runs(heading, "Document Control", size=16, colour=ACCENT)
-    for label, value in (("Title", DOC_TITLE), ("Document Name", DOC_NAME)):
+    for label, value in (("Title", DOC_TITLE), ("Document Name", document_name(markdown))):
         paragraph = document.add_paragraph()
         write_runs(paragraph, f"**{label}:** {value}", size=11)
 

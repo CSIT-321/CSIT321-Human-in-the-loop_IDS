@@ -6,7 +6,10 @@ CSIT321 Project · School of Computing and Information Technology
 > **This file is the source; the submitted document is generated from it.** Edit the text here,
 > then rebuild:
 >
-> `python scripts/build_user_manual.py --out docs/FYP-26-S3-13_PrelimUserManual_v0.2.docx`
+> `python scripts/build_user_manual.py --out docs/FYP-26-S3-13_PrelimUserManual_v0.4.docx`
+>
+> **Run this with an interpreter that has `python-docx`** — the project `.venv` does not install it.
+> `C:/ProgramData/miniconda3/python.exe` (3.11.11) does, and is what built v0.2–v0.4.
 >
 > Always pass `--out` when an earlier `.docx` holds edits made in Word: a rebuild replaces the file
 > it writes wholesale. The cover page still needs the assessor, supervisor, topic code and team rows
@@ -19,7 +22,7 @@ CSIT321 Project · School of Computing and Information Technology
 | | |
 |---|---|
 | Title | Preliminary User Manual |
-| Document name | FYP-26-S3-13 Preliminary User Manual, Version 0.3 |
+| Document name | FYP-26-S3-13 Preliminary User Manual, Version 0.4 |
 | Status | Draft for team review |
 
 ### Record of revision
@@ -29,6 +32,7 @@ CSIT321 Project · School of Computing and Information Technology
 | 12 Sep 2026 | First draft: introduction, installation, key features, and the sixteen initial GUIs | 1–4 | Glenn | 0.1 |
 | 14 Sep 2026 | Updated from the built console: the web interface is running, so section 4 shows screenshots of the real screens (workstation, overview and IP address page added); installation uses the pinned Python 3.11 environment | 1–4 | Glenn | 0.2 |
 | 15 Sep 2026 | Sign-in is now real: three accounts with passwords replace the role picker, section 4.1 and the login screenshot updated | 4.1 | Glenn | 0.3 |
+| 16 Sep 2026 | Test counts corrected against the suites as actually run. Python suite: the built v0.3 said 411 and the source had since been edited to 427; the suite reports **445**. Interface suite: stated as 126, measured at **132**. Both counts verified by running `python -m pytest` and `npm test`. No screen or procedure changed. | 1, 5 | Claude | 0.4 |
 
 ---
 
@@ -127,7 +131,7 @@ Activate the environment in every new terminal before running Python commands.
 python -m pytest
 ```
 
-Expect **426 passed, 0 skipped**.
+Expect **445 passed, 0 skipped**.
 
 **Build the demo database**
 
@@ -164,7 +168,7 @@ Open **http://localhost:5173**. The development server forwards `/api` to the AP
 both servers must be running: if the API is not, the pages load but every panel reports that it
 cannot reach the API.
 
-Optional checks, from the same folder: `npm test` runs the 126 interface tests, and `npm run e2e`
+Optional checks, from the same folder: `npm test` runs the 132 interface tests, and `npm run e2e`
 plays the whole demonstration in a real browser against its own copy of the database.
 
 ---
@@ -424,9 +428,11 @@ be tuned after it was seen.
 The reason the project can make claims rather than assertions. Three arms run over identical data,
 model, rules and seed; only the feedback and the guardrails differ.
 
-The deltas are shown **as measured, in whichever direction they went**. On this sample precision@50
-fell from 1.000 to 0.980 under feedback, because the control queue was already almost perfect — and the
-screen says so before the reader reaches the table.
+The deltas are shown **as measured, in whichever direction they went**. On this sample the remaining
+deltas are negative but small — precision@200 −0.010 and mean true-positive rank −0.515 — because the
+control queue was already almost perfect. The precision@50 fall of 0.020 that an earlier build reported
+is gone: the severity-first queue order removed it. The screen says so before the reader reaches the
+table.
 
 ### (4.22) Evaluator — detection metrics
 
