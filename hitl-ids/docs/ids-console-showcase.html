@@ -152,6 +152,34 @@
   .pair { display: grid; gap: 20px; grid-template-columns: minmax(0, 1fr); }
   @media (min-width: 900px) { .pair { grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start; } }
 
+  /* ---- Annotations drawn over a screenshot -------------------------------------------------
+     The guide has to say "click here", and burning arrows into the PNGs would rot the moment the
+     console changes. An overlay of numbered pins plus a legend keeps the instruction as real,
+     selectable text. Positions are percentages of the image, so they survive any frame width. */
+  figure.screen .frame { position: relative; }
+  .anno { position: absolute; inset: 0; pointer-events: none; }
+  .anno .spot {
+    position: absolute; border: 2px solid var(--accent); border-radius: 8px;
+    background: rgb(31 111 214 / 0.16);
+    background: color-mix(in srgb, var(--accent) 16%, transparent);
+  }
+  .anno .pin {
+    position: absolute; transform: translate(-50%, -50%); display: grid; place-items: center;
+    min-width: 25px; height: 25px; padding: 0 5px; border-radius: 999px;
+    background: var(--accent); color: #fff; border: 2px solid var(--surface);
+    font-family: var(--font-mono); font-size: 13px; font-weight: 500;
+    box-shadow: 0 2px 8px rgb(0 0 0 / 0.45);
+  }
+  ol.callouts { list-style: none; margin: 2px 0 0; padding: 0; display: grid; gap: 6px; font-size: 14.5px; }
+  ol.callouts li { display: grid; grid-template-columns: 24px minmax(0, 1fr); gap: 10px; align-items: start; }
+  ol.callouts .n {
+    display: grid; place-items: center; min-width: 22px; height: 22px; border-radius: 999px;
+    background: var(--accent); color: #fff; font-family: var(--font-mono); font-size: 12px;
+    font-weight: 500; margin-top: 1px;
+  }
+  ol.callouts b { color: var(--ink); }
+  .click { font-weight: 600; color: var(--ink); }
+
   .band { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 500; padding: 1px 10px; border-radius: 999px; white-space: nowrap; }
   .band::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
   .b-tier2 { color: var(--tier2); background: var(--tier2-soft); }
@@ -214,7 +242,7 @@
       <div class="fact"><b>996</b><span>flagged for review</span></div>
       <div class="fact"><b>644</b><span>Tier 2 candidates at start</span></div>
       <div class="fact"><b>3</b><span>accounts: analyst, admin, evaluator</span></div>
-      <div class="fact"><b>41</b><span>rehearsal checks, all passing</span></div>
+      <div class="fact"><b>46</b><span>rehearsal checks, all passing</span></div>
     </div>
   </header>
 
@@ -574,9 +602,29 @@
         <p>SOC consoles put the queue beside the alert, rather than a page per alert. The workstation has three columns: the <strong>alert queue</strong> on the left, the <strong>selected alert</strong> in the centre, and its <strong>context</strong> on the right. Above them, the top bar shows a UTC clock and a <strong>Recorded flows</strong> badge (these are recorded lab flows, not a live feed). The KPI strip counts Critical, Tier 2 candidates, Needs review, Unresolved, Verdicts, False positives, Guardrail actions and Total alerts.</p>
       </div>
       <figure class="screen">
-        <div class="frame"><img src="img/demo-guide/01b-workstation.png" alt="The workstation: KPI strip with 996 Critical and 644 Tier 2 candidates, the alert queue with band tabs and Brute Force cards, AL-01958 open in the centre with Claim, Start work, Resolve and Dismiss, and the context rail with the flow diagram and address details" width="1440" height="900"></div>
-        <figcaption><span class="path">/analyst/workstation</span><span>The first alert in queue order opens automatically.</span></figcaption>
+        <div class="frame">
+          <img src="img/demo-guide/01b-workstation.png" alt="The workstation: KPI strip with 185 Critical and 644 Tier 2 candidates, the alert queue leading with Infiltration alerts at 100.00, AL-01707 open in the centre with Claim, Start work, Resolve and Dismiss, and the context rail with the flow diagram and address details" width="1440" height="900">
+          <div class="anno" aria-hidden="true">
+            <span class="pin" style="left:5.5%;top:11.2%">1</span>
+            <span class="pin" style="left:18.3%;top:12.4%">2</span>
+            <span class="pin" style="left:18.3%;top:22.8%">3</span>
+            <span class="pin" style="left:26.5%;top:37%">4</span>
+            <span class="pin" style="left:41.5%;top:29.1%">5</span>
+            <span class="pin" style="left:41.7%;top:43.7%">6</span>
+            <span class="pin" style="left:88.9%;top:75.3%">7</span>
+          </div>
+        </div>
+        <figcaption><span class="path">/analyst/workstation</span><span>The first alert in <em>severity</em> order opens automatically — <code>AL-01707</code>, an Infiltration at Critical. Search <code>AL-01958</code> for the rule-and-model alert this act used to open on.</span></figcaption>
       </figure>
+      <ol class="callouts">
+        <li><span class="n">1</span><span><b>Left navigation.</b> <span class="click">The whole demo walks down this list in order:</span> Workstation, Overview, Dashboard, Alert Queue, Investigations, Feedback Impact. Click it to move between acts.</span></li>
+        <li><span class="n">2</span><span><b>The KPI strip.</b> Eight counters that change as verdicts are recorded — the fastest way to show that a verdict had an effect. <em>Critical</em> reads <b>185</b> here, not 996: the count answers "how many are Critical", and severity is now capped by the attack class, so only Botnet and Infiltration reach it. <em>Verdicts</em> and <em>False positives</em> both read 0.</span></li>
+        <li><span class="n">3</span><span><b>The band tabs.</b> <span class="click">Click one to filter the queue without leaving the workstation.</span> These are the bands — <em>Tier 2 candidate</em>, <em>Rule + model</em>, <em>Rule only</em>, <em>Model only</em>, <em>Not flagged</em>. They <strong>label and filter</strong>; they no longer order the queue, which ranks by severity. Tabs only appear when the counts are non-zero.</span></li>
+        <li><span class="n">4</span><span><b>The queue itself.</b> Cards, not rows. <span class="click">Click any card to open it in the centre.</span> This is the same 5,000-alert queue as the Alert Queue page, ranked identically.</span></li>
+        <li><span class="n">5</span><span><b>The four actions.</b> <span class="click">Claim</span> takes ownership — the alert then shows under <em>Mine</em>. <span class="click">Start work</span> moves it to In progress. <span class="click">Resolve</span> and <span class="click">Dismiss</span> are shortcuts into the verdict form below.</span></li>
+        <li><span class="n">6</span><span><b>The detail tabs.</b> <span class="click">Verdict is the one that matters</span> — it holds the form you record against. Overview carries the combined explanation, Flow record the raw flow, Notes the analyst's own text, History every verdict ever recorded.</span></li>
+        <li><span class="n">7</span><span><b>The context rail.</b> Addresses in the recording, then the <b>family</b> panel. Here it reads <code>Infiltration · port 443 · tcp</code> with <b>8 members</b> and the learning gate <em>Closed</em>, because nobody has judged this family yet. <span class="click">This is the panel to point at during the family act</span> — after the third agreeing verdict it shows the gate opening and the members moving.</span></li>
+      </ol>
       <ol class="steps">
         <li><strong>Band tabs</strong> filter the queue: All · Tier 2 · Needs review · Rule + model · Rule only · Model only · Not flagged, each with its count.</li>
         <li><strong>Search</strong> a record, IP or rule id (press <kbd>/</kbd> to jump there). Search <code>AL-00478</code> and click its card.</li>
@@ -639,9 +687,23 @@
         <figcaption><span class="path">/analyst/dashboard</span><span>"Moved by feedback" reads 0 until someone records a verdict.</span></figcaption>
       </figure>
       <figure class="screen">
-        <div class="frame"><img src="img/demo-guide/03-queue.png" alt="The alert queue: search, band, evidence, severity, attack class, needs review, sort and direction filters above a ranked table" width="1440" height="900"></div>
-        <figcaption><span class="path">/analyst/queue</span><span>Ranked by band, then operational score. "Showing 1–50 of 5,000".</span></figcaption>
+        <div class="frame">
+          <img src="img/demo-guide/03-queue.png" alt="The alert queue: search, band, evidence, severity, attack class, needs review, sort and direction filters above a ranked table" width="1440" height="900">
+          <div class="anno" aria-hidden="true">
+            <span class="pin" style="left:50%;top:21%">1</span>
+            <span class="pin" style="left:41.7%;top:50%">2</span>
+            <span class="pin" style="left:68%;top:50%">3</span>
+            <span class="pin" style="left:20.8%;top:55%">4</span>
+          </div>
+        </div>
+        <figcaption><span class="path">/analyst/queue</span><span>Ranked by severity, then operational score. "Showing 1–50 of 5,000".</span></figcaption>
       </figure>
+      <ol class="callouts">
+        <li><span class="n">1</span><span><b>The toolbar.</b> The same controls as the workstation's band tabs, plus search, evidence, severity, attack class, the two score ceilings, sort, direction and judged. <span class="click">Everything in it writes to the address bar</span>, so a filtered view is a link you can paste.</span></li>
+        <li><span class="n">2</span><span><b>Severity — the ranking's first sort key.</b> Severity runs <em>Critical · High · Medium · Low · Informational</em>, and the operational score orders within each. <strong>The band is a label now, not a key:</strong> <span class="band b-tier2">Tier 2 candidate</span> marks an alert the Tier 2 criteria selected for escalation, and it orders the band tabs. It no longer decides position — until v1.31 the whole top 50 was made of Tier 2 candidates at <em>Medium</em>, which is not what a Tier 1 analyst should open first.</span></li>
+        <li><span class="n">3</span><span><b>Operational score — what analysts move.</b> Beside it sits <em>Detection score</em>, which is what the detectors said and never changes. Two columns, one immutable, one edited by people: that contrast is the design.</span></li>
+        <li><span class="n">4</span><span><b>The rows.</b> <span class="click">Click a reference to open the alert.</span> Note "1–50 of 5,000": every flow is in this queue, including the 4,004 nobody flagged. The queue is the whole recording, ranked — not just the alerts.</span></li>
+      </ol>
       <blockquote class="say"><p>Every flow becomes an alert, including the four thousand nobody flagged. There are two score columns. <em>Detection</em> is what the detectors said, and it never changes. <em>Operational</em> is what analysts move, and it is how you see a human's effect.</p></blockquote>
       <h3>Every filter, with the count you will see</h3>
       <div class="table-wrap">
@@ -664,6 +726,86 @@
         <div class="frame"><img src="img/demo-guide/04-queue-filtered.png" alt="The queue filtered to the Model only band, showing 1–50 of 352" width="1440" height="900"></div>
         <figcaption><span class="path">/analyst/queue?queueClass=ml_only</span><span>Filters live in the address bar, so Refresh and Back keep the view.</span></figcaption>
       </figure>
+      <h3>The toolbar: what to click to change what the queue shows</h3>
+      <div class="prose">
+        <p><strong>The demo runs on the defaults: Sort = Queue order, Judged = Any, Direction disabled.</strong> The rest of the toolbar exists so an analyst can check one specific claim, and so you can answer a challenge from the panel on the spot. Every control writes to the address bar, so a refresh, a Back, or a pasted link restores exactly what was on screen.</p>
+      </div>
+      <figure class="screen">
+        <div class="frame">
+          <img src="img/demo-guide/04d-queue-toolbar.png" alt="The Alert Queue toolbar: a Search box and Search button; then Band, Evidence, Severity, Attack class and Detection score selects with a Needs review only checkbox; then Sort, Direction and Judged selects and a Clear filters button" width="1332" height="316">
+          <div class="anno" aria-hidden="true">
+            <span class="pin" style="left:7%;top:91%">1</span>
+            <span class="pin" style="left:22%;top:91%">2</span>
+            <span class="pin" style="left:36%;top:91%">3</span>
+            <span class="pin" style="left:64%;top:64%">4</span>
+          </div>
+        </div>
+        <figcaption><span class="path">/analyst/queue · filters and sort</span><span>Captured with Sort = Detection score, Direction = Ascending and the Below 100 ceiling, so all four behave visibly.</span></figcaption>
+      </figure>
+      <ol class="callouts">
+        <li><span class="n">1</span><span><b>Sort</b> — what the queue is ordered by. <span class="click">Leave it on Queue order for the narrative:</span> that is the contract order — <strong>severity worst-first, then the operational score</strong>. Six options follow: <em>Operational score</em>, <em>Detection score</em>, <em>Newest</em>, <em>Severity</em> and <em>Evidence</em>. The last one earns its place: <span class="click">choose <b>Evidence</b>, ascending</span> when you suspect the model, and the queue leads with alerts a rule can substantiate. On the weakened-detector stress database that order reaches precision@100 <b>1.000</b> where the contract order reaches <b>0.000</b> — on a detector whose false positives carry an attack's full confidence, the rule layer is the only thing that separates them.</span></li>
+        <li><span class="n">2</span><span><b>Direction</b> — <span class="click">disabled while Sort is Queue order</span>, deliberately: the contract order has no direction, and its tooltip says so. Choose an inspection sort such as Detection score and it becomes live — ascending reads <em>oldest capture first</em>, descending reads newest first.</span></li>
+        <li><span class="n">3</span><span><b>Judged</b> — the "verdict done" view. <span class="click">True Positive shows what has been confirmed</span>; False Positive and Benign Positive show what was dismissed; Escalate shows what went to Tier 2; <em>Not yet judged</em> shows what nobody has touched. The demo leaves it on Any.</span></li>
+        <li><span class="n">4</span><span><b>Detection score</b> — the ceiling. <span class="click">Choose "Below 100 — not saturated"</span> to hide the 975 alerts pinned at exactly 100.0. On its own it leaves 4,025 of the 5,000.</span></li>
+      </ol>
+      <div class="note"><b>Why the ceiling earns its place.</b> 975 of the 996 flagged alerts sit at exactly 100.0, and a confirmation on an alert already at 100 clamps — nothing moves, so nothing is demonstrated. With the evidence filter set to <em>Model only</em>, the <em>Below 100</em> preset isolates exactly <b>21</b> flagged alerts that still have headroom. That is the view where <code>AL-00576</code> visibly climbs 81.30 → 91.30 — the widest headroom in the set, and a genuine Infiltration, so the confirmation asserts something true.</div>
+      <h3>Before you present: the false positives, by reference</h3>
+      <div class="prose">
+        <p><strong>The console cannot list its own false positives, and it must not pretend to.</strong> Ground truth is joined only by the evaluation harness — <code>packages/evaluation/truth.py</code> refuses to score a flow it cannot check — so on a real network the system would not know which of its alerts were wrong. These references come from the capture's labels. They are for <em>your</em> preparation: search one in the queue, and you have an alert that is genuinely wrong to work a verdict, a guardrail and family learning on.</p>
+        <p><strong>False positives are one niche case, not the story.</strong> The demo's subject is the ranking and the feedback loop. This list exists so the false-positive beat is <em>available on demand</em> rather than something the ranking has to surface for you.</p>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <caption>This capture's false positives and missed attacks — <code>python scripts/list_false_positives.py</code></caption>
+          <thead><tr><th>Reference</th><th>Class the system assigned</th><th class="num">Detection</th><th>Capture says</th><th>Use it for</th></tr></thead>
+          <tbody>
+            <tr><td><code>AL-00478</code></td><td>Web Attack · High</td><td class="num">99.89</td><td><b>Benign</b></td><td>Act 3 — dismiss it; the guardrail holds the floor at 70 and the family learns</td></tr>
+            <tr><td><code>AL-02717</code></td><td>Web Attack · High</td><td class="num">88.48</td><td><b>Benign</b></td><td>A second dismissal, if you want one. <strong>Never confirm it</strong></td></tr>
+            <tr><td><code>AL-03086</code></td><td>nothing flagged it</td><td class="num">36.94</td><td>Web Attack (attempted)</td><td>Act 4 — confirm the attack both detectors missed</td></tr>
+            <tr><td><code>AL-04260</code></td><td>nothing flagged it</td><td class="num">14.06</td><td>Infiltration</td><td>A second missed attack, if you want one</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="note"><b>The capture holds 2 false positives and 6 missed attacks in total.</b> The other four missed attacks sit at severity <em>Informational</em> with a score of 0 or 0.05, so they are poor demonstration material — a confirmation barely moves them. The script prints every one, for either database, with <code>--database data/stress.db</code> for the weakened detector's 600.</div>
+      <h3>Severity: how bad it is, not only how sure the model is</h3>
+      <div class="prose">
+        <p><strong>Five labels, and since 16 Sep 2026 all five occur.</strong> Severity is the band the operational score falls in — <em>Informational</em> below 1, <em>Low</em> from 1, <em>Medium</em> from 40, <em>High</em> from 70, <em>Critical</em> from 80 — and then <strong>capped by what the alert's attack class can reach</strong>. That second step matters. Confidence answers "how sure is the model?". It cannot answer "how bad is this?".</p>
+        <p><strong>The ceiling is not a second opinion. It is the severity chart this project already keeps.</strong> <code>config/severity-chart.json</code> (decision Q27) gives every model class a CVSS v3.1 score, and that chart already decides Tier 2 candidacy and scales family movement. The ceilings are <em>read from it</em>: <code>cef.ceilings_from_chart()</code> maps each class's CVSS band onto the severity label. Edit the chart for one purpose and the severity ceiling moves with it. The two cannot disagree, because there is only one of them.</p>
+        <p><strong>Until the ceiling existed, only two labels ever appeared — and that was a defect, not a property of the data.</strong> Severity was a function of the model's confidence alone, and the model is confident about everything it flags: the lowest malicious probability in the demo is 0.813, so every flagged alert cleared the Critical threshold. Measured on the old build, <strong>994 of 996 flagged alerts read Critical</strong>, every one of the seven attack classes among them. A reconnaissance sweep and an intrusion were indistinguishable in the severity filter. The rebuild proposal had recorded the symptom — "severity in this data is only Critical or Informational" — without a cause.</p>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <caption>What each attack class can reach — read from <code>config/severity-chart.json</code></caption>
+          <thead><tr><th>Attack class</th><th class="num">Chart</th><th>CVSS band</th><th>Ceiling</th><th class="num">Alerts</th><th>Severity now</th></tr></thead>
+          <tbody>
+            <tr><td>Port Scan</td><td class="num">3.0</td><td>Low</td><td><b>Low</b></td><td class="num">150</td><td>Low</td></tr>
+            <tr><td>Brute Force</td><td class="num">5.0</td><td>Medium</td><td><b>Medium</b></td><td class="num">200</td><td>Medium</td></tr>
+            <tr><td>DoS</td><td class="num">6.5</td><td>Medium</td><td><b>Medium</b></td><td class="num">200</td><td>Medium</td></tr>
+            <tr><td>DDoS</td><td class="num">7.5</td><td>High</td><td><b>High</b></td><td class="num">200</td><td>High</td></tr>
+            <tr><td>Web Attack</td><td class="num">8.0</td><td>High</td><td><b>High</b></td><td class="num">61</td><td>High</td></tr>
+            <tr><td>Botnet</td><td class="num">9.0</td><td>Critical</td><td><b>Critical</b></td><td class="num">150</td><td>Critical</td></tr>
+            <tr><td>Infiltration</td><td class="num">9.5</td><td>Critical</td><td><b>Critical</b></td><td class="num">35</td><td>Critical</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="prose">
+        <p><strong>The cap can only lower a label, never raise one</strong> — a class that could raise one would let a quiet finding outrank a loud one. That property is tested directly, over every class in the contract and every band edge. A reconnaissance sweep now reaches <em>Low</em> while an intrusion reaches <em>Critical</em>, and the severity filter can separate them at last.</p>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <caption>The demo sample, 5,000 flows, before and during</caption>
+          <thead><tr><th>Severity</th><th class="num">Old build</th><th class="num">Confidence-only bands</th><th class="num">Now, chart-capped</th></tr></thead>
+          <tbody>
+            <tr><td>Informational</td><td class="num">4,004</td><td class="num">3,986</td><td class="num">3,986</td></tr>
+            <tr><td>Low</td><td class="num">0</td><td class="num">17</td><td class="num">167</td></tr>
+            <tr><td>Medium</td><td class="num">0</td><td class="num">351</td><td class="num">401</td></tr>
+            <tr><td>High</td><td class="num">0</td><td class="num">461</td><td class="num">261</td></tr>
+            <tr><td>Critical</td><td class="num">996</td><td class="num">185</td><td class="num">185</td></tr>
+            <tr><td><b>Total</b></td><td class="num"><b>5,000</b></td><td class="num"><b>5,000</b></td><td class="num"><b>5,000</b></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="note"><b>Say this plainly if asked.</b> <em>Informational</em> is not a level of danger — it is the absence of a detection. 4,004 of the 5,000 flows have no evidence class at all, and the label says so. And a label is never written once and left: severity is a function of the operational score, so a verdict that moves the score recomputes the label in the same transaction. An earlier build proved why that matters — two alerts whose score had fallen to 70 still read Critical.</div>
       <h3>Overview: who talked, and when</h3>
       <ol class="steps">
         <li>Click <strong>Overview</strong> in the left navigation, before any verdict is recorded.</li>
@@ -695,7 +837,7 @@
         <span class="route">/analyst/alerts/8f22e741-c776-4999-b347-17a0c42aca6a</span>
       </div>
       <ol class="steps">
-        <li>In the Alert Queue, click <strong>Clear filters</strong>, search <code>AL-00478</code> and open it (or use <em>Open full page</em> from the workstation). It is a <span class="band b-tier2">Tier 2 candidate</span> at <strong>99.89</strong>, rank 639 of 5,000.</li>
+        <li>In the Alert Queue, click <strong>Clear filters</strong>, search <code>AL-00478</code> and open it (or use <em>Open full page</em> from the workstation). It is a <span class="band b-tier2">Tier 2 candidate</span> at <strong>99.89</strong>, rank 442 of 5,000.</li>
         <li>Walk the four evidence panels: <strong>Flow</strong>, <strong>Signature rules</strong>, <strong>Model prediction</strong>, <strong>Combined explanation</strong>.</li>
         <li>Show <strong>Similar alerts (family)</strong>: Web Attack · port 80 · tcp, 61 members, learning gate closed.</li>
         <li>In <strong>Record a verdict</strong>, choose <strong>False Positive</strong> (requests −30.00), optionally add a note, and click <strong>Record verdict</strong>.</li>
@@ -746,18 +888,33 @@
           <figcaption><span class="path">Verdict history</span><span>Oldest first. A newer verdict supersedes an older one, and both stay listed.</span></figcaption>
         </figure>
       </div>
-      <h3>For contrast: an alert a rule can explain</h3>
-      <div class="prose"><p>Open <code>AL-01958</code>, a Brute Force alert where the rule <code>SIG-FTP-BRUTE-FORCE</code> and the model agree (<span class="band b-corrob">Corroborated</span> evidence). The signature panel lists each clause beside the value this flow actually had, so anyone can check the match.</p></div>
-      <div class="pair">
-        <figure class="screen">
-          <div class="frame"><img src="img/demo-guide/12-signature-rule.png" alt="Signature rules panel for AL-01958 listing SIG-FTP-BRUTE-FORCE clauses: protocol TCP, destination port 21, flow packets per second at least 10, total forward packets at least 1, flow duration at most 5,000,000"></div>
-          <figcaption><span class="path">AL-01958 · Signature rules</span><span>Required against observed, clause by clause.</span></figcaption>
-        </figure>
-        <figure class="screen">
-          <div class="frame"><img src="img/demo-guide/13-combined-explanation.png" alt="Combined explanation for AL-01958: a signature rule and the model agree on Brute Force"></div>
-          <figcaption><span class="path">AL-01958 · Combined explanation</span><span>A sentence an analyst can repeat in a handover.</span></figcaption>
-        </figure>
+      <h3>What a "Rule" means — and why the detail panel explains it better than the queue does</h3>
+      <div class="prose">
+        <p><strong>A rule is a signature: a small set of conditions on fields of the flow.</strong> When every condition holds, the rule <em>matches</em>, and the match is stored with the value the flow actually carried. Nothing about it is statistical — <code>destinationPort = 21</code> is either true of this flow or it is not, and an analyst can check it by hand.</p>
+        <p><strong>The queue's Rule column shows only the rule's id.</strong> A queue row carries <code>matchedRuleIds</code> and nothing else, so the column reads <code>SIG-FTP-BRUTE-FORCE</code> — or <em>no rule matched (model only)</em>. That is a fair criticism: a bare id explains less than the model's predicted class beside it. <strong>The full description is one click away, in this panel</strong>, which names the rule in words, gives its severity, the class it asserts, and every clause against the observed value.</p>
+        <p><strong>Read the four labels on the panel's header row:</strong> the rule's <em>name</em> is its plain-language title — the direct equivalent of the model's predicted class; the <em>pill</em> is its severity; the <em>id</em> is the stable identifier used in the audit trail and in <code>rules/rule-set-s4b-1.json</code>; and the last word is the <em>attack class the rule asserts</em>, which is what fusion compares against the model's prediction to decide corroboration.</p>
       </div>
+      <figure class="screen">
+        <div class="frame">
+          <img src="img/demo-guide/12-signature-rule.png" alt="The Signature rules panel for AL-01958: the rule name FTP Brute Force Flow Pattern, a MEDIUM severity pill, the id SIG-FTP-BRUTE-FORCE, the asserted class Brute Force, and a table of Condition, Required and Observed covering protocol, destinationPort, flowPacketsPerSecond, totalFwdPackets and flowDuration">
+          <div class="anno" aria-hidden="true">
+            <span class="pin" style="left:16%;top:22.5%">1</span>
+            <span class="pin" style="left:63%;top:22.5%">2</span>
+            <span class="pin" style="left:50%;top:71%">3</span>
+          </div>
+        </div>
+        <figcaption><span class="path">AL-01958 · Signature rules</span><span>The rule as the analyst reads it: name, severity, id, asserted class, then every clause against the value observed.</span></figcaption>
+      </figure>
+      <ol class="callouts">
+        <li><span class="n">1</span><span><b>The rule's name — "FTP Brute Force Flow Pattern".</b> This is the rule's own title, the direct equivalent of the model's predicted class. It is what the queue's Rule column <em>would</em> show if the row carried it; today the column shows the id instead.</span></li>
+        <li><span class="n">2</span><span><b>Its severity, its id, and the class it asserts.</b> <span class="band b-model">Medium</span> is worth 0.60 to fusion. <code>SIG-FTP-BRUTE-FORCE</code> is the stable id that appears in the audit trail. <em>Brute Force</em> is the class fusion compares with the model's prediction — when the two agree the alert is <b>corroborated</b>, the one evidence class a human can verify end to end.</span></li>
+        <li><span class="n">3</span><span><b>Every clause, against the value this flow carried.</b> The rule requires at least 10 packets per second and this flow ran at <b>666,666.667</b>; it requires at least 1 forward packet and saw <b>1</b>; it allows up to 5,000,000 microseconds and the flow lasted <b>3</b>. Anyone can check those numbers against the flow record — and that checkability is the whole reason the signature layer is in this system. The model's TreeSHAP panel explains the model, not the traffic.</span></li>
+      </ol>
+      <div class="note"><b>Say this before you are asked:</b> in the queue the Rule column is an id; in the detail it is an explanation. Showing the readable name in the list would mean the queue row carrying the rule's name and class — a contract change, not a display change.</div>
+      <figure class="screen">
+        <div class="frame"><img src="img/demo-guide/13-combined-explanation.png" alt="Combined explanation for AL-01958: a signature rule and the model agree on Brute Force"></div>
+        <figcaption><span class="path">AL-01958 · Combined explanation</span><span>A sentence an analyst can repeat in a handover.</span></figcaption>
+      </figure>
       <div class="proves"><span>Shows</span><span class="tag">four evidence panels</span><span class="tag">TreeSHAP towards / away</span><span class="tag">rule clauses vs observed</span><span class="tag">verdict form</span><span class="tag">score-adjustment chain</span><span class="tag">Critical floor guardrail</span><span class="tag">persistence across refresh</span><span class="tag">verdict history</span></div>
     </section>
 
@@ -806,6 +963,32 @@
         <figcaption><span class="path">/analyst/queue?search=AL-03044</span><span>Moved by its family's learning, not by a verdict of its own.</span></figcaption>
       </figure>
       <blockquote class="say"><p>One analyst cannot move a family; three who agree can. Nothing outside the family moved, and all five alerts are real Port Scans. The same mechanism can go wrong, though, and the evaluator view shows where it did.</p></blockquote>
+      <h3>The "verdict done" view: the queue, filtered to what has been judged</h3>
+      <div class="prose">
+        <p><strong>A verdict moves the alert, and it moves the queue with it.</strong> That is the mechanism working — but it means the alert you just judged is no longer where you left it. Two things keep it findable: <strong>every judged row carries a "Verdict recorded" pill</strong>, and the new <strong>Judged</strong> filter turns the same queue into the list of work already done.</p>
+        <p><span class="click">Click Judged and choose True Positive</span> once the family act is over. Four confirmations are in force by then — <code>AL-03086</code>, <code>AL-01696</code>, <code>AL-03873</code> and <code>AL-03153</code> — and <code>AL-00478</code>'s dismissal is correctly absent, because the filter reads the verdict currently <em>in force</em>. Switch it to <em>Not yet judged</em> for the opposite list: everything nobody has touched.</p>
+      </div>
+      <figure class="screen">
+        <div class="frame">
+          <img src="img/demo-guide/18b-queue-judged.png" alt="The Alert Queue filtered to Judged = True Positive, showing 1–4 of 4 rows each with a green Verdict recorded pill; three carry the Signature override band with Model only evidence, and AL-03086 carries the Model only band with Nothing flagged evidence" width="1440" height="900">
+          <div class="anno" aria-hidden="true">
+            <span class="pin" style="left:38.5%;top:39.2%">1</span>
+            <span class="pin" style="left:22.5%;top:56.8%">2</span>
+            <span class="pin" style="left:33%;top:54%">3</span>
+            <span class="pin" style="left:68%;top:54.2%">4</span>
+            <span class="pin" style="left:17%;top:91.5%">5</span>
+          </div>
+        </div>
+        <figcaption><span class="path">/analyst/queue?judged=confirm_true_positive</span><span>The same ranked queue, read as a record of what has already been decided.</span></figcaption>
+      </figure>
+      <ol class="callouts">
+        <li><span class="n">1</span><span><b>The Judged filter.</b> Set to <em>True Positive</em> here. This is the one control that answers "what have we done?", and it is why a judged alert no longer has to be hunted for.</span></li>
+        <li><span class="n">2</span><span><b>The "Verdict recorded" pill.</b> Every judged row carries it, in the queue and on the workstation. It reads the same condition the filter does, so a pill and a filter can never disagree.</span></li>
+        <li><span class="n">3</span><span><b>Band says "Signature override" while Evidence says "Model only".</b> Expect this question. The queue <em>bands</em> reuse the evidence-class names, and family learning has already promoted these three one band; their <code>evidence_class</code> — the detector's permanent record — is unchanged. It is the nomenclature collision the evaluation report lists as finding 7.</span></li>
+        <li><span class="n">4</span><span><b>Where the movement shows.</b> <span class="mono">100.00 +0.01</span> is a learned adjustment this alert received from <em>other</em> members' verdicts — it carries no verdict of its own. Compare <code>AL-03086</code>, judged directly, at <span class="mono">36.94 → 46.94, +10.00</span>.</span></li>
+        <li><span class="n">5</span><span><b>"Showing 1–4 of 4".</b> The queue is now four rows deep. Set Judged back to <em>Any</em> to return to all 5,000 before moving on.</span></li>
+      </ol>
+      <div class="note"><b>The question the panel will ask: does a verdict reach traffic the analyst never saw?</b> <strong>Within one dataset, yes.</strong> A verdict re-places every member of the same family that carries no verdict of its own — the family is the same attack class, destination port, protocol and rule. And the gate bounds it: nothing moves until three verdicts agree at two thirds or better, so one analyst cannot move a family alone. <strong>For genuinely new findings, ingest now carries the learning.</strong> As each alert is placed, detection reads the family's stored <code>applied_adjustment</code> and applies it inside the guardrails, so an alert that arrives after the verdicts begins where its family has learned it should. Before this, that value sat unread in <code>alert_families</code> and every new alert started at its raw detection score — the learning only ever reached alerts already in the database.</div>
       <h3>The analyst's other two views</h3>
       <div class="pair">
         <figure class="screen">
@@ -887,42 +1070,42 @@
       <div class="part-head">
         <span class="act">Act 8 · close on this</span>
         <h2>The evaluator, including the result that went the wrong way</h2>
-        <span class="route">/evaluator/scenarios · /evaluator/runs/20260912T032022Z · /evaluator/metrics</span>
+        <span class="route">/evaluator/scenarios · /evaluator/runs/&lt;newest&gt; · /evaluator/metrics</span>
       </div>
       <ol class="steps">
-        <li><strong>Sign out</strong>, then sign in as <code>evaluator</code> / <code>evaluator-demo</code>. Show run <code>20260912T032022Z</code>, its pre-registration (rule <code>s15-preregistration-1</code>, 40 verdicts fixed before any arm ran), and <strong>Newest run at a glance</strong>: the three arms side by side, with precision@50 already showing its <span class="neg">−0.020</span> fall against control.</li>
+        <li><strong>Sign out</strong>, then sign in as <code>evaluator</code> / <code>evaluator-demo</code>. Show the <strong>newest</strong> run — the list is newest-first, so it is the top row; the id is deliberately not pinned here, because the evaluation re-runs and a hard-coded id goes stale — its pre-registration (rule <code>s15-preregistration-1</code>, 40 verdicts fixed before any arm ran), and <strong>Newest run at a glance</strong>: thethree arms side by side, with precision@50 already showing its <span class="neg">−0.020</span> fall against control.</li>
         <li>Click <strong>Open run →</strong>. Read the banner aloud, then the figures row, <strong>What was compared</strong> beside <strong>What the guardrails prevented</strong>, and the <strong>Arms</strong>, <strong>Deltas</strong> and <strong>Who moved</strong> tables.</li>
         <li>Click <strong>Detection Metrics</strong>: the testbed caution, the figures row, the per-class table and a precision / recall / F1 panel for each class, then precision at k and score saturation.</li>
       </ol>
       <figure class="screen">
-        <div class="frame"><img src="img/demo-guide/25-eval-scenarios.png" alt="Evaluation scenarios listing run 20260912T032022Z, the newest run at a glance with arms A-control at precision@50 1.000 and B-treatment and C-guardrails-off at 0.980, a −0.020 change each, and the pre-registration"></div>
+        <div class="frame"><img src="img/demo-guide/25-eval-scenarios.png" alt="Evaluation runs table listing four runs newest-first with the current run at the top, each row showing 40 verdicts, three arms and detection identical; below it the newest run at a glance, showing precision at 50 of 1.000 with zero change and zero false positives in the top 50 for all three arms, beside the pre-registration panel"></div>
         <figcaption><span class="path">/evaluator/scenarios</span><span>Three arms with the same data, model, rules and seed; only feedback and guardrails differ.</span></figcaption>
       </figure>
       <figure class="screen">
-        <div class="frame"><img src="img/demo-guide/26-eval-run.png" alt="Evaluation run page with an amber banner saying precision fell under feedback, a figures row of 40 verdicts, 3 arms, detection identical and the commit, and the comparison beside what the guardrails prevented"></div>
-        <figcaption><span class="path">/evaluator/runs/20260912T032022Z</span><span>The banner comes before the table.</span></figcaption>
+        <div class="frame"><img src="img/demo-guide/26-eval-run.png" alt="Evaluation run page for the newest run, with an amber banner reading that deltas are shown as measured including those that went the wrong way, a figures row of 40 verdicts, 3 arms, detection identical and the commit, and What was compared beside What the guardrails prevented — zero floor breaches, zero suppressions and 40 capped actions in each of B and C"></div>
+        <figcaption><span class="path">/evaluator/runs/&lt;newest&gt;</span><span>The banner comes before the table.</span></figcaption>
       </figure>
       <div class="table-wrap">
         <table>
           <thead><tr><th>Arm</th><th>Feedback</th><th>Guardrails</th><th class="num">Precision@50</th><th class="num">FPs in top 50</th><th class="num">Mean rank of attacks</th><th>Guardrail actions</th></tr></thead>
           <tbody>
-            <tr><td class="mono">A-control</td><td>Off</td><td>On</td><td class="num">1.000</td><td class="num">0</td><td class="num">510.20</td><td>none</td></tr>
-            <tr><td class="mono">B-treatment</td><td>On</td><td>On</td><td class="num">0.980</td><td class="num">1</td><td class="num">511.43</td><td>capped 40</td></tr>
-            <tr><td class="mono">C-guardrails-off</td><td>On</td><td>Off</td><td class="num">0.980</td><td class="num">1</td><td class="num">511.43</td><td>capped 40</td></tr>
+            <tr><td class="mono">A-control</td><td>Off</td><td>On</td><td class="num">1.000</td><td class="num">0</td><td class="num">511.09</td><td>none</td></tr>
+            <tr><td class="mono">B-treatment</td><td>On</td><td>On</td><td class="num">1.000</td><td class="num">0</td><td class="num">511.61</td><td>capped 40</td></tr>
+            <tr><td class="mono">C-guardrails-off</td><td>On</td><td>Off</td><td class="num">1.000</td><td class="num">0</td><td class="num">511.61</td><td>capped 40</td></tr>
           </tbody>
         </table>
       </div>
       <div class="pair">
         <figure class="screen">
-          <div class="frame"><img src="img/demo-guide/27-eval-deltas.png" alt="Deltas card: treatment minus control, precision at 10 −0.100, precision at 50 −0.020, false positives in top 50 −1"></div>
-          <figcaption><span class="path">Deltas</span><span>Treatment − Control: precision@10 <span class="neg">−0.100</span>, precision@50 <span class="neg">−0.020</span>, shown as measured.</span></figcaption>
+          <div class="frame"><img src="img/demo-guide/27-eval-deltas.png" alt="Deltas card: treatment minus control, false positives in the top 50 at 0, precision at 200 −0.010, mean true-positive rank −0.515"></div>
+          <figcaption><span class="path">Deltas</span><span>Treatment − Control: false positives in the top 50 <b>0</b>, precision@200 <span class="neg">−0.010</span>, mean rank <span class="neg">−0.515</span> — shown as measured.</span></figcaption>
         </figure>
         <figure class="screen">
-          <div class="frame"><img src="img/demo-guide/28-eval-who-moved.png" alt="Who moved card: 805 same-family alerts with 200 promoted and 2 benign promoted, one benign alert reaching rank 1, and 4,155 unrelated alerts that did not move"></div>
-          <figcaption><span class="path">Who moved</span><span>None of the 4,155 unrelated alerts moved. Two benign alerts were promoted, and one reached <b>rank 1</b>.</span></figcaption>
+          <div class="frame"><img src="img/demo-guide/28-eval-who-moved.png" alt="Who moved card: 805 same-family alerts with 205 adjusted and 681 rank changes, 2 benign alerts promoted with the best reaching rank 186, and 4,155 unrelated alerts that did not move"></div>
+          <figcaption><span class="path">Who moved</span><span>None of the 4,155 unrelated alerts moved. Two benign alerts were promoted; the best of them reached <b>rank 186</b>.</span></figcaption>
         </figure>
       </div>
-      <blockquote class="say"><p>Detection is identical across all three arms: feedback reordered the queue and never touched the detector. The control queue was already near-perfect, so feedback could only disturb it, and precision fell. Family learning also promoted a benign alert to rank 1. We report that, not just the numbers that flatter the design. And the guardrails didn't bind on this sequence, because it had no dismissals; that's a result too.</p></blockquote>
+      <blockquote class="say"><p>Detection is identical across all three arms: feedback reordered the queue and never touched the detector. <strong>Under the severity-first queue, feedback no longer costs a top-50 place</strong> — under the old band order it did, and that is the number the previous build shipped. Family learning still promoted two benign alerts, but the best of them only reached rank 186. The remaining deltas are still small and negative, and we report them as measured. No guardrail <em>policy</em> bound on this sequence — but the <strong>100 score ceiling</strong> did, on all 40 verdicts, because 975 of 996 flagged alerts already sit at the maximum score and the sequence is entirely positive verdicts. That ceiling applies whether the guardrails are on or off, which is exactly why arm C came out identical to arm B. That is a result too.</p></blockquote>
       <figure class="screen">
         <div class="frame"><img src="img/demo-guide/29-eval-metrics.png" alt="Detection Metrics page with the testbed caution, a figures row of macro F1 0.988, 5,000 alerts, 1,000 attacks and the run id, and the per-class table"></div>
         <figcaption><span class="path">/evaluator/metrics</span><span>Macro F1 0.988, measured against ground truth the system never sees.</span></figcaption>
@@ -985,7 +1168,8 @@
       <h3>After we built — what the evaluation measured</h3>
       <div class="prose">
         <p><strong>S15, the three-arm evaluation</strong> (control · family learning · guardrails-off) is the post-analysis, and the evaluator account shows it:</p>
-        <p><strong>Detection never moved.</strong> Per-class metrics are identical across all three arms — feedback reorders the queue and cannot touch the detector. <strong>Learning works and does not leak:</strong> similar-alert learning moved family members and no ground truth escaped. <strong>And the result that went the wrong way:</strong> precision@50 fell <strong>1.000 → 0.980</strong> (Δ −0.020) under feedback, because family learning promoted a benign alert to rank 1 — the control queue was already perfect, so feedback could only disturb it. We ship that number as the headline, not a footnote. Macro F1 0.99, stated as a property of the testbed.</p>
+        <p><strong>Detection never moved.</strong> Per-class metrics are identical across all three arms — feedback reorders the queue and cannot touch the detector. <strong>Learning works and does not leak:</strong> similar-alert learning moved 681 family members' ranks and no ground truth escaped. <strong>And the result that used to go the wrong way is gone.</strong> Under the old band order, feedback pushed a benign alert into the top 50 and precision@50 fell 1.000 → 0.980 (Δ −0.020). Under the severity-first order that <strong>no longer happens</strong>: precision@50 holds at 1.000 and the count of false positives in the top 50 is <strong>0</strong> in every arm. What remains is small and still negative — precision@200 Δ <span class="neg">−0.010</span>, mean true-positive rank Δ <span class="neg">−0.515</span> — and we report those as measured rather than dropping them. Macro F1 0.99, stated as a property of the testbed.</p>
+        <p><strong>And what actually ranks the queue.</strong> The 0.99 detector has a third consequence, measured on the demo database rather than assumed: the scores <em>saturate</em>. <strong>975 of the 996 flagged alerts sit at exactly 100.0</strong>, and 3,635 of the 4,004 unflagged sit at exactly 0.0 — only <strong>68 distinct scores across 5,000 alerts</strong>, so <strong>4,789 of 5,000 (95.8%) share a score with more than a page of other alerts</strong>. A tie is the normal case, not the exception, so the tie-break <em>is</em> the visible ranking. It was a hard-coded <code>a.id ASC</code>, which ignored the direction the analyst asked for: sorting the 975 alerts at 100.0 descending and then ascending returned the <strong>identical page</strong>. It now orders by evidence class, review flag, capture time and id — each following the requested direction — so <em>ascending</em> reads oldest traffic first, the FIFO order for a queue nobody has worked yet. Three regression tests pin it, and two of them fail against the old code.</p>
       </div>
       <div class="proves"><span>Shows</span><span class="tag">pre-analysis findings</span><span class="tag">withdrawn assumption</span><span class="tag">three-arm result</span><span class="tag">the wrong-way delta, shown</span></div>
     </section>
@@ -1003,10 +1187,10 @@
             <tr><td>Q18</td><td>Attempted attacks are malicious (<code>is_attempted</code>)</td><td>A failed attack is still an attack to triage</td></tr>
             <tr><td>Q19</td><td>Port Scan split from Infiltration as its own class</td><td>Different intent, different response</td></tr>
             <tr><td>Q20</td><td>Training and demo samples are disjoint</td><td>The demo must not be a memorisation test</td></tr>
-            <tr><td>Q22</td><td>Evidence priority: corroborated &gt; signature override &gt; model-only</td><td>A rule the model disputes outranks a bare model call — it is checkable (invariant I5)</td></tr>
+            <tr><td>Q22</td><td>Evidence priority: corroborated &gt; signature override &gt; model-only</td><td>A rule the model disputes outranks a bare model call — it is checkable. (This row used to cite invariant I5, that no override ranks below a model-only alert. <strong>I5 was retired in v1.31</strong>, when the band stopped ordering the queue; I2 still forces every override to review.)</td></tr>
             <tr><td>Q23</td><td>Accept the fusion defaults</td><td>The 42.77–81.3 score gap: any threshold in it gives the identical queue</td></tr>
-            <tr><td>Q24/Q25</td><td>Five queue bands, Tier 2 candidates on top</td><td>Escalation must be visible before evidence class</td></tr>
-            <tr><td>Q29</td><td>Formula C2 (Elo-style) for family learning</td><td>Chosen by experiment over fixed-step, weighted and uncertainty variants</td></tr>
+            <tr><td>Q24/Q25</td><td>Five queue bands; Tier 2 candidacy is a label</td><td>Escalation must be visible. Since <strong>v1.31</strong> the band labels an alert and orders the band tabs but no longer sets queue position — <strong>severity leads</strong>, so a Tier 2 candidate that is not severe cannot sit at the top</td></tr>
+            <tr><td>Q29</td><td>Formula C1 (severity-weighted) for family learning, with movement M1</td><td>Chosen by experiment over the fixed-step, Elo-style and Elo+uncertainty candidates. C1 is the one that scales movement by attack-type severity, and it leads on mean attack position — 0.0828 against 0.0829 for the Elo forms</td></tr>
             <tr><td>Q30</td><td>Agreement gate: ≥ 3 verdicts, dominant ≥ 0.67, no tie</td><td>Run 2 showed a single verdict moving a whole family — that is one analyst's opinion re-ranking the queue</td></tr>
             <tr><td>E2</td><td>An explicit <em>Escalate to Tier 2</em> verdict</td><td>Tier 1's escalation must be a recorded decision, not a side effect</td></tr>
             <tr><td>S18a</td><td>Three real accounts replace the role-switch stub</td><td>A view is a person: identity comes from the account, enforcement from the server</td></tr>
@@ -1020,6 +1204,7 @@
       <h4>How the data was split — and why the first split was wrong</h4>
       <div class="prose">
         <p><strong>The original split was a single 1,000-row sample, 50/50 benign/attack</strong> — <strong>15× more attack-dense than reality</strong>, so any verdict-reordering experiment on it would be measuring a queue that never exists. Decision <strong>Q20</strong> replaced it: a <strong>disjoint</strong> training sample of <strong>250,655 rows</strong> and a <strong>5,000-row demo sample</strong> (seed 20260911, stratified: 4,000 Benign + 7 attack classes) — disjoint, so the demo can never be a memorisation test. The tuned rules were then <strong>held-out re-tested over the 250,655 unseen rows</strong>: precision <strong>0.9999</strong>, recall <strong>0.1993</strong>, two false positives in 30,025 hits — the re-test that established the rules were not overfit to their tuning set.</p>
+        <p><strong>Two splits, not one.</strong> The Q20 split is between the two <em>samples</em>. The model was then trained and tested on a second, internal split of the training sample: of its <strong>250,655 rows</strong>, the model fitted on <strong>200,524</strong> and was tested on <strong>50,131</strong> it had never seen — an 80/20 stratified hold-out, seed <strong>20260911</strong>, over <strong>82 features</strong>. That held-out half is where every per-class figure comes from, and it is why they can be quoted at all: the demo sample played no part in training, and the held-out rows played no part in fitting. Eleven fields are refused to the model outright — <code>Label</code>, <code>attack_class</code>, <code>is_attempted</code>, <code>Attempted Category</code>, the source and destination addresses and ports, <code>Flow ID</code> and <code>Timestamp</code> — so the answer key cannot reach a detector even by accident. Precision 1.000 and recall 1.000 on six of the eight classes is therefore a genuine held-out result, not a memorised one; the two classes that are not perfect are the two the testbed barely contains — <strong>Infiltration</strong> (F1 0.913 on 55 held-out rows) and <strong>Web Attack</strong> (F1 0.993 on 76).</p>
       </div>
       <h4>Why this model — what the tests said</h4>
       <div class="prose">
@@ -1027,11 +1212,33 @@
         <p><strong>Near-perfect scores were treated as an accusation.</strong> In this testbed each attack class targets a fixed port (Botnet 100% on 8080, DoS/DDoS/Web Attack 100% on port 80), so a majority-class-per-port lookup alone scores ~83% accuracy — the model could just be reading the port. <strong>The port-shortcut hypothesis was tested by ablation and rejected: removing the port signal cost only −0.0011 macro F1.</strong> The model reads behaviour, not the port.</p>
         <p><strong>And the model family earns its place two ways:</strong> XGBoost on tabular flow features, and — decisively for a human-in-the-loop console — native <strong>TreeSHAP</strong>, which is what makes the toward-and-away evidence panels possible. The family was later confirmed by a recorded bake-off (notebook 07, identical features, folds and protocol: Logistic Regression collapses to <strong>0.51 macro F1</strong> at 78.7% accuracy — accuracy hides the rare classes; Random Forest 0.962; <strong>XGBoost 0.966 ± 0.015</strong> and HistGradientBoosting <strong>0.969 ± 0.011</strong>, a statistical tie) — the incumbent retained on the tiebreak that matters: explainability native to the family.</p>
       </div>
+      <h4>A second, weaker model — so the false positives are real</h4>
+      <div class="prose">
+        <p><strong>Why we built one.</strong> The strong model is the problem as much as the achievement. On this testbed it is so accurate that the demo queue holds <strong>2 false positives in 996 flagged alerts</strong>, and precision is <strong>1.000 at every cut-off to k = 200</strong>. Analyst feedback therefore has nothing to correct and can only disturb a perfect ordering — which is exactly what S15 measured under the old band-first order, when precision@50 fell 1.000 → 0.980. The <strong>v1.31 severity-first order removed that specific harm</strong> — precision@50 now holds at 1.000 in every arm — but the underlying problem stands: what feedback costs on this sample is a small shift in mean rank, not a gain in precision. The efficiency claim our thesis rests on cannot be tested against a queue that is already perfect, and <code>ranking-and-escalation-design.md</code> §8 has said so since v1.13.</p>
+        <p><strong>What we did.</strong> We built a deliberately weaker detector and ran the <em>real</em> pipeline over it, into a separate database (<code>data/stress.db</code>) so the pristine demo is untouched. <strong>Nothing about it is invented.</strong> For every flow it degrades, the builder copies the <em>complete prediction record of a real attack flow</em> from the committed inference output. Every class, probability, confidence, margin and TreeSHAP attribution in it is an unfabricated output of the same committed model — only the association between a flow and a prediction is synthetic, which is precisely what "a detector that is struggling" means: the detector reports on this flow what it really said about a different one.</p>
+        <p><strong>The degradation is seeded and reproducible</strong> (<code>scripts/build_stress_detection.py</code>, seed <strong>20260916</strong>): <strong>600 false positives</strong>, 15% of the 4,000 benign flows, each given a real attack's record and spread evenly across the seven classes; and <strong>300 false negatives</strong>, 30% of the real attacks, each given a real benign flow's record, so the detector also misses what it used to catch. The builder prints its own manifest, and the file it writes carries a notice that it must never be presented as a measurement of the model.</p>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th></th><th>The strong model — <code>data/demo.db</code></th><th>The weakened detector — <code>data/stress.db</code></th></tr></thead>
+          <tbody>
+            <tr><td>Flagged alerts</td><td class="mono">996</td><td class="mono">1,346</td></tr>
+            <tr><td>True positives</td><td class="mono">994</td><td class="mono">746</td></tr>
+            <tr><td><strong>False positives</strong></td><td class="mono">2</td><td class="mono"><strong>600</strong></td></tr>
+            <tr><td>Precision among flagged</td><td class="mono">0.998</td><td class="mono">0.554</td></tr>
+            <tr><td><strong>Precision @ 10</strong></td><td class="mono">1.000 — nothing to correct</td><td class="mono"><strong>0.400</strong> — 6 of the top 10 are wrong</td></tr>
+            <tr><td>Precision @ 50 / @ 200</td><td class="mono">1.000 / 1.000</td><td class="mono">0.780 / 0.730</td></tr>
+            <tr><td>Score saturated at exactly 100.0</td><td class="mono">975 of 996 (97.9%)</td><td class="mono">1,255 of 1,346 (93.2%)</td></tr>
+            <tr><td>Evidence classes present</td><td class="mono">corroborated 200 · model-only 796</td><td class="mono">corroborated 148 · model-only 1,146 · <strong>signature override 52</strong></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="note"><b>Two things this proves.</b> <b>(1) The ranking now has work to do:</b> the top ten went from perfect to 4-of-10 correct, so analyst dismissals finally have something to correct — the efficiency claim becomes testable. <b>(2) The score is still saturated:</b> 93.2% still sits at exactly 100.0, because a real attack record carries about 1.0 confidence. So what actually ranks the queue is the <em>tie-break</em>, not the score. <b>A bonus:</b> the weakened detector produced <b>52 signature-override alerts</b> — the evidence class that has <em>zero</em> instances on the real data, so invariant I3 (a disputed rule's score is frozen) becomes testable for the first time.</div>
       <h4>The ranking experiment: three runs, pre-registered</h4>
       <div class="prose">
-        <p>Notebooks 05–06 chose the feedback formula the queue runs on. Four candidates (C0 fixed-step, C1 severity-weighted, <strong>C2 Elo-style</strong>, C3 Elo + uncertainty) × two movement rules (M1 one class at a time, M2 straight to top). <strong>Run 2 failed instructively:</strong> single verdicts were moving whole families — one correct dismissal of a benign flow the model scored 99.89 collided with real attacks. That failure <em>produced</em> decision <strong>Q30</strong> (the agreement gate: ≥ 3 verdicts, dominant ≥ 0.67, no tie). <strong>Run 3 was pre-registered</strong> — selection rule <code>sel-3</code> was committed to git before any run-3 number existed (the notebook dates the commit against the run's start), and it picked <strong>C2 + M1</strong>. The Elo property that won it: confirming a near-certain alert adds almost nothing, while dismissing one is the biggest surprise available — a formula that trusts surprises acts strongly exactly where the analyst disagreed, and the gate keeps any one surprise from reordering the queue alone.</p>
+        <p>Notebooks 05–06 chose the feedback formula the queue runs on. Four candidates (C0 fixed-step, C1 severity-weighted, <strong>C2 Elo-style</strong>, C3 Elo + uncertainty) × two movement rules (M1 one class at a time, M2 straight to top). <strong>Run 2 failed instructively:</strong> single verdicts were moving whole families — one correct dismissal of a benign flow the model scored 99.89 collided with real attacks. That failure <em>produced</em> decision <strong>Q30</strong> (the agreement gate: ≥ 3 verdicts, dominant ≥ 0.67, no tie). <strong>Run 3 was pre-registered</strong> — selection rule <code>sel-3</code> was committed to git before any run-3 number existed (the notebook dates the commit against the run's start), and it named <strong>C1 + M2</strong>. The project lead adopted <strong>C1 + M1</strong> instead, because <code>sel-3</code>'s movement pick rested on a metric the analyst never sees — each family's internal class state, including changes the gate withholds from the queue. Every metric the analyst does see is identical for M1 and M2 under the gate. <strong>C1</strong> won on three counts: it is the candidate that satisfies the severity requirement, it leads the field on mean attack position (0.0828 against 0.0829 for the Elo forms, about a quarter of one queue position), and it is the simplest of the severity-scaled options. Say the honest version too: its edge rests as much on the requirement and on simplicity as on measured performance, because on this testbed the detector is too good for the formulas to separate.</p>
       </div>
-      <div class="proves"><span>Shows</span><span class="tag">decision log</span><span class="tag">experiment-chosen constants</span><span class="tag">withdrawn assumptions on record</span><span class="tag">the split, the ablation, the three runs</span></div>
+      <div class="proves"><span>Shows</span><span class="tag">decision log</span><span class="tag">experiment-chosen constants</span><span class="tag">withdrawn assumptions on record</span><span class="tag">the two splits</span><span class="tag">the strong model's train / held-out split</span><span class="tag">the ablation</span><span class="tag">the weakened detector</span><span class="tag">the three runs</span></div>
     </section>
 
     <section class="part" id="different">
@@ -1140,11 +1347,14 @@
             <tr><td>Accounts are seeded and their passwords are committed</td><td>It is an offline demo; real user management and provisioning are S18</td></tr>
             <tr><td>Detection is an offline batch; "Check again" only reports the latest run</td><td>A 21-second job doesn't belong inside a web request</td></tr>
             <tr><td>The workstation shows recorded flows only: no live feed, geolocation, threat intelligence or response actions</td><td>The recording holds none of that data, so the console does not invent it</td></tr>
-            <tr><td>Families are a coarse key (class, port, protocol, rule)</td><td>That coarseness promoted a benign alert to rank 1 in the evaluation</td></tr>
+            <tr><td>Families are a coarse key (class, port, protocol, rule)</td><td>That coarseness promoted a benign alert in the evaluation. Under the band order it reached rank 1; under the v1.31 severity order it reaches rank 186</td></tr>
             <tr><td>The 0.99 macro F1 is a property of the testbed</td><td>A single tool generated each attack class</td></tr>
             <tr><td>Feedback could not raise precision on this sample</td><td>The control queue already had precision 1.000 up to k = 200</td></tr>
             <tr><td><code>AL-03086</code> climbs only one rank</td><td>One confirmation moves one band, and it already led its band</td></tr>
             <tr><td>The refusal guardrail can't be shown</td><td>The dataset contains no rule-only alerts</td></tr>
+            <tr><td><strong>The stress database is a simulation, and it says so</strong></td><td><code>data/stress.db</code> re-attributes real attack predictions to benign flows, so an injected alert's TreeSHAP panel describes its <em>donor</em> flow. Every number in it is a real model output, but it is not a measurement of the model — <code>data/demo.db</code> is. The builder writes that notice into the file</td></tr>
+            <tr><td><strong>The contract queue order was changed in v1.31</strong></td><td><code>db.QUEUE_ORDER_BY</code> used to order by band, then score, then id. v1.28 held that change back because it re-baselines the recorded three-arm evaluation and moves the demo's printed ranks. v1.31 made it: the band put Tier 2 candidates that are not severe at the top, so the queue now orders by severity, then score. The evaluation was re-run (<code>20260916T063856Z</code>) and the ranks in this guide are the new ones</td></tr>
+            <tr><td>The score still saturates at 100.0</td><td>A real attack record carries about 1.0 confidence, so 93.2% of the weakened detector's flagged alerts still sit at exactly 100.0. What ranks the queue is the tie-break; de-saturating the score would change the fusion contract</td></tr>
           </tbody>
         </table>
       </div>
@@ -1190,6 +1400,6 @@
   </main>
 
   <footer>
-    Version 9 · 15 Sep 2026 — adds the flow-sensor lineage, the coexistence table (Snort/Suricata/Zeek/SIEM), and the notebooks deep dive: the Q20 split, the 8-class retrain and port ablation, and the three pre-registered ranking runs. Version 8 added real accounts (S18a) and the dataset, analysis, decisions, differentiation and shipping sections. Every screenshot was taken from the running console, against a disposable copy of the demo database (<code>GUIDE_CAPTURE=1 npx playwright test capture-guide</code>). The spoken script is <code>hitl-ids/docs/demo-script.md</code>; the automated gate is <code>npm run e2e</code>.
+    Version 16 · 16 Sep 2026 — corrects the evaluator comparison to the <strong>v1.31 severity-first run</strong> (precision@50 holds at <strong>1.000</strong> in all three arms, 0 false positives in the top 50; the old 0.980/1-FP row was the band-first order); retires <strong>invariant I5</strong> from the Q22 row and records it; corrects the Q24/Q25 row, since the band no longer sets queue position; and replaces "the guardrails didn't bind" with the accurate mechanism — the <strong>100 score ceiling</strong> clamped all 40 verdicts, in both arms alike. Version 15 added the <strong>false-positive shortlist</strong> (<code>scripts/list_false_positives.py</code>: 2 false positives and 6 missed attacks on the demo capture, 600 on the stress database) so the false-positive beat is available on demand rather than something the ranking must surface, and <strong>corrects a demo error the list caught</strong> — step 4 confirmed <code>AL-02717</code> as a True Positive, and <code>AL-02717</code> is <em>Benign</em> in the capture; it is now <code>AL-00576</code> (81.30 → 91.30), a genuine Infiltration with the widest headroom in the set. The queue order stays <strong>severity-first in both databases</strong>: the stress run is a rehearsal of the same contract, not a variant of it. Version 14 changed the queue to rank by <strong>severity, then operational score</strong>, demoting the band to a label, retiring invariant I5, unifying the order into one definition (<code>db.queue_order</code>) and re-baselining the three-arm evaluation. Version 13 added the severity ceiling reading the attack-type severity chart, and ingest applying what a family has already learned. Version 12 added the class-aware severity model. Version 11 added the annotated screenshots, the <strong>Judged filter</strong>, and the section on <strong>what "Rule" means</strong>. Every screenshot was taken from the running console, against a disposable copy of the demo database (<code>GUIDE_CAPTURE=1 npx playwright test capture-guide</code>). The spoken script is <code>hitl-ids/docs/demo-script.md</code>; the automated gate is <code>npm run e2e</code>.
   </footer>
 </div>

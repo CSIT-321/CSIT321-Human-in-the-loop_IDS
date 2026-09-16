@@ -51,7 +51,7 @@ async function recordVerdict(page: Page, verdict: RegExp) {
 
 async function signIn(page: Page, username: string, password: string, home: string) {
   await page.getByLabel("Username").fill(username);
-  await page.getByLabel("Password").fill(password);
+  await page.getByLabel("Password", { exact: true }).fill(password);
   await page.getByRole("button", { name: "Sign in" }).click();
   await expect(page).toHaveURL(new RegExp(`${home}$`));
 }
@@ -70,7 +70,7 @@ test("capture the demo guide", async ({ page }) => {
   // Act 1 — sign in.
   await page.goto("/login");
   await page.getByLabel("Username").fill("g.ang");
-  await page.getByLabel("Password").fill("analyst-demo");
+  await page.getByLabel("Password", { exact: true }).fill("analyst-demo");
   await shot(page, "01-login");
   await page.getByRole("button", { name: "Sign in" }).click();
   await expect(page.getByText("5,000 alerts")).toBeVisible();
@@ -113,6 +113,17 @@ test("capture the demo guide", async ({ page }) => {
   await page.getByLabel("Band").selectOption({ label: "Model only" });
   await expect(page.getByText(/Showing 1–50 of 352/)).toBeVisible();
   await shot(page, "04-queue-filtered");
+
+  // The toolbar an analyst uses to change what the queue shows, captured with a mix of scores on
+  // screen so each control's effect is legible: Sort, Direction, the detection-score ceiling, and
+  // Judged. Detection score with 4,025 alerts below the saturation ceiling is the widest mix.
+  await page.goto("/analyst/queue");
+  await page.getByLabel("Sort").selectOption({ value: "detection_score" });
+  await page.getByLabel("Direction").selectOption({ value: "asc" });
+  await page.getByLabel("Detection score").selectOption({ value: "99.999" });
+  await expect(page.getByText(/Showing 1–50 of 4,025/)).toBeVisible();
+  await page.waitForTimeout(400);
+  await shot(page.getByRole("search"), "04d-queue-toolbar");
 
   // Act 2b — the overview and one address (R4), before any verdict changes the mixes.
   await page.getByRole("navigation", { name: "Main" }).getByRole("link", { name: "Overview" }).click();
@@ -168,6 +179,14 @@ test("capture the demo guide", async ({ page }) => {
   await searchQueue(page, "AL-03044");
   await shot(page, "17-untouched-promoted");
 
+  // The "verdict done" view: the same queue, filtered to what has already been judged. Four
+  // confirmations are in force by now (AL-03086, AL-01696, AL-03873, AL-03153); AL-00478's
+  // dismissal is excluded, which is the point of a filter that reads the verdict in force.
+  await page.goto("/analyst/queue");
+  await page.getByLabel("Judged").selectOption({ value: "confirm_true_positive" });
+  await expect(page.getByText(/Showing 1–4 of 4/)).toBeVisible();
+  await shot(page, "18b-queue-judged");
+
   await page.goto("/analyst/investigations");
   await expect(page.getByRole("heading", { level: 1, name: "Investigations" })).toBeVisible();
   await expect(page.getByRole("table")).toBeVisible();
@@ -211,10 +230,18 @@ test("capture the demo guide", async ({ page }) => {
 
   // Act 8 — evaluator.
   await signInAs(page, "evaluator", "evaluator-demo", "/evaluator/scenarios");
-  await expect(page.getByRole("link", { name: "20260912T032022Z" })).toBeVisible();
+  // The runs list is newest-first, so the top data row is the current run. This used to be a
+  // hard-coded run id, which meant every evaluator screenshot kept showing the pre-v1.31 band-order
+  // run long after the queue order changed — the images silently contradicted the captions beside
+  // them. Pin the *position*, never the id: the evaluation is re-run, and ids go stale.
+  const newestRun = page.getByRole("row").nth(1).getByRole("link").first();
+  await expect(newestRun).toBeVisible();
   await shot(page, "25-eval-scenarios");
-  await page.getByRole("link", { name: "20260912T032022Z" }).click();
-  await expect(page.getByText(/Precision fell under feedback/)).toBeVisible();
+  await newestRun.click();
+  // The banner's first line is unconditional; its second ("Precision fell under feedback") only
+  // renders when some precision@k delta is negative. Assert the stable line — the conditional one
+  // is a property of the data, not of the page.
+  await expect(page.getByText(/Deltas are shown as measured/)).toBeVisible();
   await shot(page, "26-eval-run");
   await shot(card(page, "Deltas"), "27-eval-deltas");
   await shot(card(page, "Who moved"), "28-eval-who-moved");

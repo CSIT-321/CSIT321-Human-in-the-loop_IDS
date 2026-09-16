@@ -17,7 +17,7 @@ like it.
 :: terminal 1 — from hitl-ids
 .venv\Scripts\activate                     :: the project's Python 3.11; python --version must say 3.11
 python scripts/run_detection.py            :: rebuild data/demo.db from scratch: 5,000 flows, ~21 s
-python scripts/rehearse_demo.py            :: 41 checks on a throwaway copy; must end "holds end to end"
+python scripts/rehearse_demo.py            :: 46 checks on a throwaway copy; must end "holds end to end"
 python -m uvicorn apps.api.main:app        :: API on :8000 — leave this terminal open
 
 :: terminal 2 — from hitl-ids\apps\web
@@ -43,7 +43,8 @@ never `py -m venv`, which picks 3.12 on this machine. `npm run e2e` starts its o
 *Sign in* → username `g.ang`, password `analyst-demo` → lands on the **Workstation** (queue, alert and context in
 one view, "5,000 alerts"). Click **Alert Queue** in the sidebar for the full table, "Showing 1–50 of 5,000".
 
-> Every flow becomes an alert — 5,000 of them. They are ranked by band first, then by score. Two score
+> Every flow becomes an alert — 5,000 of them. They are ranked by severity first (worst at the top),
+> then by the operational score. Two score
 > columns: *Detection* is what the detectors said and never changes; *Operational* is what analysts
 > move. Sign-in is real: three seeded accounts, one per view, and the role travels inside the token.
 
@@ -81,7 +82,33 @@ Choose **True Positive** (requests +10) → **Record verdict** → **Applied as 
 > Say this plainly: it leaves the bottom band, but it only climbs from rank 998 to 997, because it was
 > already the highest-scoring unflagged alert. One confirmation moves one band — that is the design (M1).
 
-### 4. Similar-alert learning — alerts nobody touched move
+### 4. The saturation filter — a climb with full headroom
+
+**Alert Queue** → Evidence **Model only** → Detection score **Below 100 — not saturated** → Sort
+**Detection score**, **Ascending**. The queue narrows to **21 alerts of 5,000** — every other
+flagged alert sits at *exactly* 100.0, where a confirming verdict clamps and no climb is visible.
+This is score saturation, a property of the testbed the evaluation already reports (S15,
+finding 4). Ascending puts the widest headroom on top: **`AL-00576` at 81.30 is the first row** —
+in queue order it would be the last, buried under twelve 99.9xs that read as 100.00.
+
+Search `AL-00576` → open it. **Model only**, detection **81.30** — the widest headroom below 100.
+
+Choose **True Positive** (requests +10) → **Record verdict** → **Applied as requested**:
+81.30 → **91.30**, band **Model only → Tier 2 candidate** — a True Positive on a severity ≥ 7 class
+(Infiltration, 9.5) earns Tier 2 by the escalation rule E2.
+
+> Two lessons in one verdict: the score climbs by the full +10 — no clamp — and the same click
+> escalates, because confirming a high-severity class is itself an escalation trigger.
+>
+> **Why `AL-00576` and not `AL-02717`.** Both sit in this 21-alert set with headroom, and the
+> ascending sort puts the *widest* headroom first — which is `AL-00576` at 81.30, not `AL-02717` at
+> 88.48. And `AL-02717` is **benign** in the capture: confirming it would have the demo assert a
+> true positive on a false positive. `AL-00576` is a genuine Infiltration, so the same two lessons
+> are shown without the claim being false. `AL-02717` is the right alert for a **dismissal** —
+> `system-workflow.md` records it as one, held at the floor of 70. Run
+> `python scripts/list_false_positives.py` to see both lists before you present.
+
+### 5. Similar-alert learning — alerts nobody touched move
 
 Confirm three members of the **Port Scan / port 445** family: `AL-01696`, `AL-03873`, `AL-03153`.
 
@@ -94,23 +121,28 @@ Ground truth: all five are Port Scans.
 
 > One analyst cannot move a family. Three who agree can. Nothing outside the family moved.
 
-### 5. The administrator
+### 6. The administrator
 
 **Sign out** → sign in as `admin` / `admin-demo` → *Guardrails*. The guardrail log shows the cap on `AL-00478`
 with the same sentence. *Audit Trail* shows every verdict, guardrail action and family-learning event,
 exportable as CSV.
 
-### 6. The evaluator — including the result that went the wrong way
+### 7. The evaluator — including the result that went the wrong way
 
-**Sign out** → sign in as `evaluator` / `evaluator-demo` → run `20260912T032022Z`.
+**Sign out** → sign in as `evaluator` / `evaluator-demo` → open the **newest** evaluation run
+(the list is newest-first, so it is the top row; it is *not* pinned to a fixed run id — the
+evaluation re-runs, and a hard-coded id goes stale).
 
 - Detection metrics are **identical across all three arms**: feedback reordered the queue and never
   touched the detector.
-- **Precision@50 fell from 1.000 to 0.980 under feedback** (Δ −0.020). The banner says so.
+- **Precision@50 holds at 1.000 under feedback** (Δ 0.000). The severity-first queue removed the fall
+  the old band order caused; the deltas that remain are small and still negative, and the banner shows
+  them as measured.
 
-> The control queue was already near-perfect, so feedback could only disturb it — and in the recorded
-> run, family learning promoted a benign alert to rank 1. We report that, rather than only the deltas
-> that flatter the design.
+> The control queue was already near-perfect, so feedback had almost nothing to gain — and under the
+> severity-first order it no longer costs a top-50 place either. Family learning still promoted a
+> benign alert, but only to rank 186. We report the deltas that remain as measured, negatives and all,
+> rather than only the ones that flatter the design.
 
 ---
 
@@ -124,6 +156,7 @@ exportable as CSV.
 | The 0.99 macro F1 is a property of the testbed | Each attack class was generated by a single tool; not a real-world claim |
 | Feedback could not improve precision on this sample | The control queue was already at precision 1.000 to k = 200 |
 | `AL-03086` climbs one rank | One confirmation moves one band (M1); it was already top of its band |
+| A confirming verdict on a saturated (100.0) alert clamps | 975 of 996 flagged alerts sit at exactly 100.0 (S15 finding 4); the not-saturated filter exists to find the 21 that do not |
 
 ## Why the narrative changed from the plan's v1.1 text
 
