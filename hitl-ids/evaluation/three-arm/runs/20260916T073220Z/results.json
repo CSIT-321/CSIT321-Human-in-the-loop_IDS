@@ -1,0 +1,827 @@
+{
+  "arms": [
+    {
+      "arm": "A-control",
+      "critical_floor_breaches": 0,
+      "critical_preservation_rate": 1.0,
+      "false_positives_in_top_50": 0,
+      "feedback": false,
+      "guardrail_actions": {},
+      "guardrail_pass": true,
+      "guardrails": true,
+      "mean_rank_true_positives": 511.091,
+      "mrr_true_positives": 0.00748043,
+      "precision_at_50": 1.0,
+      "signature_override_alerts": 0,
+      "verdicts": 0
+    },
+    {
+      "arm": "B-treatment",
+      "critical_floor_breaches": 0,
+      "critical_preservation_rate": 1.0,
+      "false_positives_in_top_50": 0,
+      "feedback": true,
+      "guardrail_actions": {
+        "capped": 40
+      },
+      "guardrail_pass": true,
+      "guardrails": true,
+      "mean_rank_true_positives": 511.606,
+      "mrr_true_positives": 0.00747421,
+      "precision_at_50": 1.0,
+      "signature_override_alerts": 0,
+      "verdicts": 40
+    },
+    {
+      "arm": "C-guardrails-off",
+      "critical_floor_breaches": 0,
+      "critical_preservation_rate": 1.0,
+      "false_positives_in_top_50": 0,
+      "feedback": true,
+      "guardrail_actions": {
+        "capped": 40
+      },
+      "guardrail_pass": true,
+      "guardrails": false,
+      "mean_rank_true_positives": 511.606,
+      "mrr_true_positives": 0.00747421,
+      "precision_at_50": 1.0,
+      "signature_override_alerts": 0,
+      "verdicts": 40
+    }
+  ],
+  "baseline_database": "C:\\Users\\Glenn Ang\\Desktop\\SIM Assignments\\FYP\\CSIT321-Human-in-the-loop_IDS\\hitl-ids\\data\\demo.db",
+  "commit": "650d844",
+  "deltas": {
+    "B_minus_A": {
+      "critical_floor_breaches": 0,
+      "false_positives_in_top_50": 0,
+      "macro_f1_detection": 0.0,
+      "mean_rank_true_positives": -0.515,
+      "mrr_true_positives": -6.22e-06,
+      "precision_at_10": 0.0,
+      "precision_at_100": 0.0,
+      "precision_at_200": -0.01,
+      "precision_at_25": 0.0,
+      "precision_at_50": 0.0,
+      "true_positives_suppressed": 0
+    },
+    "C_minus_A": {
+      "critical_floor_breaches": 0,
+      "false_positives_in_top_50": 0,
+      "macro_f1_detection": 0.0,
+      "mean_rank_true_positives": -0.515,
+      "mrr_true_positives": -6.22e-06,
+      "precision_at_10": 0.0,
+      "precision_at_100": 0.0,
+      "precision_at_200": -0.01,
+      "precision_at_25": 0.0,
+      "precision_at_50": 0.0,
+      "true_positives_suppressed": 0
+    },
+    "C_minus_B": {
+      "critical_floor_breaches": 0,
+      "false_positives_in_top_50": 0,
+      "macro_f1_detection": 0.0,
+      "mean_rank_true_positives": 0.0,
+      "mrr_true_positives": 0.0,
+      "precision_at_10": 0.0,
+      "precision_at_100": 0.0,
+      "precision_at_200": 0.0,
+      "precision_at_25": 0.0,
+      "precision_at_50": 0.0,
+      "true_positives_suppressed": 0
+    }
+  },
+  "detection_metrics_identical_across_arms": true,
+  "full_metrics": {
+    "A-control": {
+      "detection": {
+        "alerts": 5000,
+        "attacks": 1000,
+        "flagged_vs_benign": {
+          "f1": 0.995992,
+          "fnr": 0.006,
+          "fpr": 0.0005,
+          "precision": 0.997992,
+          "predicted": 996,
+          "recall": 0.994,
+          "support": 1000
+        },
+        "macro_f1": 0.988443,
+        "per_class": {
+          "Benign": {
+            "f1": 0.999,
+            "fnr": 0.0005,
+            "fpr": 0.006,
+            "precision": 0.998501,
+            "predicted": 4004,
+            "recall": 0.9995,
+            "support": 4000
+          },
+          "Botnet": {
+            "f1": 1.0,
+            "fnr": 0.0,
+            "fpr": 0.0,
+            "precision": 1.0,
+            "predicted": 150,
+            "recall": 1.0,
+            "support": 150
+          },
+          "Brute Force": {
+            "f1": 1.0,
+            "fnr": 0.0,
+            "fpr": 0.0,
+            "precision": 1.0,
+            "predicted": 200,
+            "recall": 1.0,
+            "support": 200
+          },
+          "DDoS": {
+            "f1": 1.0,
+            "fnr": 0.0,
+            "fpr": 0.0,
+            "precision": 1.0,
+            "predicted": 200,
+            "recall": 1.0,
+            "support": 200
+          },
+          "DoS": {
+            "f1": 1.0,
+            "fnr": 0.0,
+            "fpr": 0.0,
+            "precision": 1.0,
+            "predicted": 200,
+            "recall": 1.0,
+            "support": 200
+          },
+          "Infiltration": {
+            "f1": 0.933333,
+            "fnr": 0.125,
+            "fpr": 0.0,
+            "precision": 1.0,
+            "predicted": 35,
+            "recall": 0.875,
+            "support": 40
+          },
+          "Port Scan": {
+            "f1": 1.0,
+            "fnr": 0.0,
+            "fpr": 0.0,
+            "precision": 1.0,
+            "predicted": 150,
+            "recall": 1.0,
+            "support": 150
+          },
+          "Web Attack": {
+            "f1": 0.975207,
+            "fnr": 0.016667,
+            "fpr": 0.000405,
+            "precision": 0.967213,
+            "predicted": 61,
+            "recall": 0.983333,
+            "support": 60
+          }
+        }
+      },
+      "queue": {
+        "attacks": 1000,
+        "attacks_below_flagged_bands": 6,
+        "by_queue_class": {
+          "ml_only": 352,
+          "none": 4004,
+          "tier2_candidate": 644
+        },
+        "false_positives_in_top_50": 0,
+        "mean_rank_true_positives": 511.091,
+        "mrr_true_positives": 0.00748043,
+        "precision_at": {
+          "10": {
+            "attacks": 10,
+            "false_positives": 0,
+            "precision": 1.0
+          },
+          "100": {
+            "attacks": 100,
+            "false_positives": 0,
+            "precision": 1.0
+          },
+          "200": {
+            "attacks": 200,
+            "false_positives": 0,
+            "precision": 1.0
+          },
+          "25": {
+            "attacks": 25,
+            "false_positives": 0,
+            "precision": 1.0
+          },
+          "50": {
+            "attacks": 50,
+            "false_positives": 0,
+            "precision": 1.0
+          }
+        },
+        "saturation": {
+          "at_maximum_score": 975,
+          "distinct_scores_among_flagged": 13,
+          "flagged_alerts": 996,
+          "share_at_maximum": 0.978916
+        },
+        "worst_rank_true_positive": 4297
+      },
+      "safety": {
+        "audit_guardrail_events": {},
+        "critical_alerts": 996,
+        "critical_floor_breaches": 0,
+        "critical_preservation_rate": 1.0,
+        "critical_preserved": 996,
+        "feedback_events": 0,
+        "guardrail_actions": {},
+        "guardrail_codes": {},
+        "signature_override": {
+          "alerts": 0,
+          "changed": 0,
+          "note": "no signature_override alert exists in this database (signature_only = 0 on the corrected dataset); I3 is guaranteed by S7's unit tests, not measured here",
+          "preservation_rate": null
+        },
+        "true_positives_suppressed": 0
+      }
+    },
+    "B-treatment": {
+      "detection": {
+        "alerts": 5000,
+        "attacks": 1000,
+        "flagged_vs_benign": {
+          "f1": 0.995992,
+          "fnr": 0.006,
+          "fpr": 0.0005,
+          "precision": 0.997992,
+          "predicted": 996,
+          "recall": 0.994,
+          "support": 1000
+        },
+        "macro_f1": 0.988443,
+        "per_class": {
+          "Benign": {
+            "f1": 0.999,
+            "fnr": 0.0005,
+            "fpr": 0.006,
+            "precision": 0.998501,
+            "predicted": 4004,
+            "recall": 0.9995,
+            "support": 4000
+          },
+          "Botnet": {
+            "f1": 1.0,
+            "fnr": 0.0,
+            "fpr": 0.0,
+            "precision": 1.0,
+            "predicted": 150,
+            "recall": 1.0,
+            "support": 150
+          },
+          "Brute Force": {
+            "f1": 1.0,
+            "fnr": 0.0,
+            "fpr": 0.0,
+            "precision": 1.0,
+            "predicted": 200,
+            "recall": 1.0,
+            "support": 200
+          },
+          "DDoS": {
+            "f1": 1.0,
+            "fnr": 0.0,
+            "fpr": 0.0,
+            "precision": 1.0,
+            "predicted": 200,
+            "recall": 1.0,
+            "support": 200
+          },
+          "DoS": {
+            "f1": 1.0,
+            "fnr": 0.0,
+            "fpr": 0.0,
+            "precision": 1.0,
+            "predicted": 200,
+            "recall": 1.0,
+            "support": 200
+          },
+          "Infiltration": {
+            "f1": 0.933333,
+            "fnr": 0.125,
+            "fpr": 0.0,
+            "precision": 1.0,
+            "predicted": 35,
+            "recall": 0.875,
+            "support": 40
+          },
+          "Port Scan": {
+            "f1": 1.0,
+            "fnr": 0.0,
+            "fpr": 0.0,
+            "precision": 1.0,
+            "predicted": 150,
+            "recall": 1.0,
+            "support": 150
+          },
+          "Web Attack": {
+            "f1": 0.975207,
+            "fnr": 0.016667,
+            "fpr": 0.000405,
+            "precision": 0.967213,
+            "predicted": 61,
+            "recall": 0.983333,
+            "support": 60
+          }
+        }
+      },
+      "movement": {
+        "family_untouched": {
+          "adjusted": 205,
+          "alerts": 805,
+          "attacks_promoted": 9,
+          "band_changed": 197,
+          "benign_demoted": 0,
+          "benign_promoted": 2,
+          "best_rank_reached_by_a_benign_alert": 186,
+          "demoted": 194,
+          "mean_rank_change": 0.118,
+          "promoted": 11,
+          "rank_changed": 681,
+          "score_changed": 11
+        },
+        "judged": {
+          "adjusted": 6,
+          "alerts": 40,
+          "attacks_promoted": 1,
+          "band_changed": 5,
+          "benign_demoted": 0,
+          "benign_promoted": 0,
+          "best_rank_reached_by_a_benign_alert": null,
+          "demoted": 3,
+          "mean_rank_change": -2.5,
+          "promoted": 1,
+          "rank_changed": 26,
+          "score_changed": 1
+        },
+        "unrelated": {
+          "adjusted": 0,
+          "alerts": 4155,
+          "attacks_promoted": 0,
+          "band_changed": 0,
+          "benign_demoted": 0,
+          "benign_promoted": 0,
+          "best_rank_reached_by_a_benign_alert": null,
+          "demoted": 0,
+          "mean_rank_change": 0.0012,
+          "promoted": 0,
+          "rank_changed": 1,
+          "score_changed": 0
+        }
+      },
+      "queue": {
+        "attacks": 1000,
+        "attacks_below_flagged_bands": 6,
+        "by_queue_class": {
+          "ml_only": 150,
+          "none": 4004,
+          "signature_override": 5,
+          "tier2_candidate": 841
+        },
+        "false_positives_in_top_50": 0,
+        "mean_rank_true_positives": 511.606,
+        "mrr_true_positives": 0.00747421,
+        "precision_at": {
+          "10": {
+            "attacks": 10,
+            "false_positives": 0,
+            "precision": 1.0
+          },
+          "100": {
+            "attacks": 100,
+            "false_positives": 0,
+            "precision": 1.0
+          },
+          "200": {
+            "attacks": 198,
+            "false_positives": 2,
+            "precision": 0.99
+          },
+          "25": {
+            "attacks": 25,
+            "false_positives": 0,
+            "precision": 1.0
+          },
+          "50": {
+            "attacks": 50,
+            "false_positives": 0,
+            "precision": 1.0
+          }
+        },
+        "saturation": {
+          "at_maximum_score": 987,
+          "distinct_scores_among_flagged": 4,
+          "flagged_alerts": 996,
+          "share_at_maximum": 0.990964
+        },
+        "worst_rank_true_positive": 4297
+      },
+      "safety": {
+        "audit_guardrail_events": {
+          "GUARDRAIL_INTERVENTION": 40
+        },
+        "critical_alerts": 996,
+        "critical_floor_breaches": 0,
+        "critical_preservation_rate": 1.0,
+        "critical_preserved": 996,
+        "feedback_events": 40,
+        "guardrail_actions": {
+          "capped": 40
+        },
+        "guardrail_codes": {
+          "score_range_clamped": 40
+        },
+        "signature_override": {
+          "alerts": 0,
+          "changed": 0,
+          "note": "no signature_override alert exists in this database (signature_only = 0 on the corrected dataset); I3 is guaranteed by S7's unit tests, not measured here",
+          "preservation_rate": null
+        },
+        "true_positives_suppressed": 0
+      }
+    },
+    "C-guardrails-off": {
+      "detection": {
+        "alerts": 5000,
+        "attacks": 1000,
+        "flagged_vs_benign": {
+          "f1": 0.995992,
+          "fnr": 0.006,
+          "fpr": 0.0005,
+          "precision": 0.997992,
+          "predicted": 996,
+          "recall": 0.994,
+          "support": 1000
+        },
+        "macro_f1": 0.988443,
+        "per_class": {
+          "Benign": {
+            "f1": 0.999,
+            "fnr": 0.0005,
+            "fpr": 0.006,
+            "precision": 0.998501,
+            "predicted": 4004,
+            "recall": 0.9995,
+            "support": 4000
+          },
+          "Botnet": {
+            "f1": 1.0,
+            "fnr": 0.0,
+            "fpr": 0.0,
+            "precision": 1.0,
+            "predicted": 150,
+            "recall": 1.0,
+            "support": 150
+          },
+          "Brute Force": {
+            "f1": 1.0,
+            "fnr": 0.0,
+            "fpr": 0.0,
+            "precision": 1.0,
+            "predicted": 200,
+            "recall": 1.0,
+            "support": 200
+          },
+          "DDoS": {
+            "f1": 1.0,
+            "fnr": 0.0,
+            "fpr": 0.0,
+            "precision": 1.0,
+            "predicted": 200,
+            "recall": 1.0,
+            "support": 200
+          },
+          "DoS": {
+            "f1": 1.0,
+            "fnr": 0.0,
+            "fpr": 0.0,
+            "precision": 1.0,
+            "predicted": 200,
+            "recall": 1.0,
+            "support": 200
+          },
+          "Infiltration": {
+            "f1": 0.933333,
+            "fnr": 0.125,
+            "fpr": 0.0,
+            "precision": 1.0,
+            "predicted": 35,
+            "recall": 0.875,
+            "support": 40
+          },
+          "Port Scan": {
+            "f1": 1.0,
+            "fnr": 0.0,
+            "fpr": 0.0,
+            "precision": 1.0,
+            "predicted": 150,
+            "recall": 1.0,
+            "support": 150
+          },
+          "Web Attack": {
+            "f1": 0.975207,
+            "fnr": 0.016667,
+            "fpr": 0.000405,
+            "precision": 0.967213,
+            "predicted": 61,
+            "recall": 0.983333,
+            "support": 60
+          }
+        }
+      },
+      "movement": {
+        "family_untouched": {
+          "adjusted": 205,
+          "alerts": 805,
+          "attacks_promoted": 9,
+          "band_changed": 197,
+          "benign_demoted": 0,
+          "benign_promoted": 2,
+          "best_rank_reached_by_a_benign_alert": 186,
+          "demoted": 194,
+          "mean_rank_change": 0.118,
+          "promoted": 11,
+          "rank_changed": 681,
+          "score_changed": 11
+        },
+        "judged": {
+          "adjusted": 6,
+          "alerts": 40,
+          "attacks_promoted": 1,
+          "band_changed": 5,
+          "benign_demoted": 0,
+          "benign_promoted": 0,
+          "best_rank_reached_by_a_benign_alert": null,
+          "demoted": 3,
+          "mean_rank_change": -2.5,
+          "promoted": 1,
+          "rank_changed": 26,
+          "score_changed": 1
+        },
+        "unrelated": {
+          "adjusted": 0,
+          "alerts": 4155,
+          "attacks_promoted": 0,
+          "band_changed": 0,
+          "benign_demoted": 0,
+          "benign_promoted": 0,
+          "best_rank_reached_by_a_benign_alert": null,
+          "demoted": 0,
+          "mean_rank_change": 0.0012,
+          "promoted": 0,
+          "rank_changed": 1,
+          "score_changed": 0
+        }
+      },
+      "queue": {
+        "attacks": 1000,
+        "attacks_below_flagged_bands": 6,
+        "by_queue_class": {
+          "ml_only": 150,
+          "none": 4004,
+          "signature_override": 5,
+          "tier2_candidate": 841
+        },
+        "false_positives_in_top_50": 0,
+        "mean_rank_true_positives": 511.606,
+        "mrr_true_positives": 0.00747421,
+        "precision_at": {
+          "10": {
+            "attacks": 10,
+            "false_positives": 0,
+            "precision": 1.0
+          },
+          "100": {
+            "attacks": 100,
+            "false_positives": 0,
+            "precision": 1.0
+          },
+          "200": {
+            "attacks": 198,
+            "false_positives": 2,
+            "precision": 0.99
+          },
+          "25": {
+            "attacks": 25,
+            "false_positives": 0,
+            "precision": 1.0
+          },
+          "50": {
+            "attacks": 50,
+            "false_positives": 0,
+            "precision": 1.0
+          }
+        },
+        "saturation": {
+          "at_maximum_score": 987,
+          "distinct_scores_among_flagged": 4,
+          "flagged_alerts": 996,
+          "share_at_maximum": 0.990964
+        },
+        "worst_rank_true_positive": 4297
+      },
+      "safety": {
+        "audit_guardrail_events": {
+          "GUARDRAIL_INTERVENTION": 40
+        },
+        "critical_alerts": 996,
+        "critical_floor_breaches": 0,
+        "critical_preservation_rate": 1.0,
+        "critical_preserved": 996,
+        "feedback_events": 40,
+        "guardrail_actions": {
+          "capped": 40
+        },
+        "guardrail_codes": {
+          "score_range_clamped": 40
+        },
+        "signature_override": {
+          "alerts": 0,
+          "changed": 0,
+          "note": "no signature_override alert exists in this database (signature_only = 0 on the corrected dataset); I3 is guaranteed by S7's unit tests, not measured here",
+          "preservation_rate": null
+        },
+        "true_positives_suppressed": 0
+      }
+    }
+  },
+  "guardrails_prevented": {
+    "critical_floor_breaches_in_B": 0,
+    "critical_floor_breaches_in_C": 0,
+    "extra_breaches_without_guardrails": 0,
+    "extra_suppressions_without_guardrails": 0,
+    "guardrail_actions_in_B": {
+      "capped": 40
+    },
+    "guardrail_actions_in_C": {
+      "capped": 40
+    },
+    "guardrail_pass": {
+      "B-treatment": true,
+      "C-guardrails-off": true
+    },
+    "signature_override_changed_in_C": 0,
+    "true_positives_suppressed_in_B": 0,
+    "true_positives_suppressed_in_C": 0
+  },
+  "movement": {
+    "B-treatment": {
+      "family_untouched": {
+        "adjusted": 205,
+        "alerts": 805,
+        "attacks_promoted": 9,
+        "band_changed": 197,
+        "benign_demoted": 0,
+        "benign_promoted": 2,
+        "best_rank_reached_by_a_benign_alert": 186,
+        "demoted": 194,
+        "mean_rank_change": 0.118,
+        "promoted": 11,
+        "rank_changed": 681,
+        "score_changed": 11
+      },
+      "judged": {
+        "adjusted": 6,
+        "alerts": 40,
+        "attacks_promoted": 1,
+        "band_changed": 5,
+        "benign_demoted": 0,
+        "benign_promoted": 0,
+        "best_rank_reached_by_a_benign_alert": null,
+        "demoted": 3,
+        "mean_rank_change": -2.5,
+        "promoted": 1,
+        "rank_changed": 26,
+        "score_changed": 1
+      },
+      "unrelated": {
+        "adjusted": 0,
+        "alerts": 4155,
+        "attacks_promoted": 0,
+        "band_changed": 0,
+        "benign_demoted": 0,
+        "benign_promoted": 0,
+        "best_rank_reached_by_a_benign_alert": null,
+        "demoted": 0,
+        "mean_rank_change": 0.0012,
+        "promoted": 0,
+        "rank_changed": 1,
+        "score_changed": 0
+      }
+    },
+    "C-guardrails-off": {
+      "family_untouched": {
+        "adjusted": 205,
+        "alerts": 805,
+        "attacks_promoted": 9,
+        "band_changed": 197,
+        "benign_demoted": 0,
+        "benign_promoted": 2,
+        "best_rank_reached_by_a_benign_alert": 186,
+        "demoted": 194,
+        "mean_rank_change": 0.118,
+        "promoted": 11,
+        "rank_changed": 681,
+        "score_changed": 11
+      },
+      "judged": {
+        "adjusted": 6,
+        "alerts": 40,
+        "attacks_promoted": 1,
+        "band_changed": 5,
+        "benign_demoted": 0,
+        "benign_promoted": 0,
+        "best_rank_reached_by_a_benign_alert": null,
+        "demoted": 3,
+        "mean_rank_change": -2.5,
+        "promoted": 1,
+        "rank_changed": 26,
+        "score_changed": 1
+      },
+      "unrelated": {
+        "adjusted": 0,
+        "alerts": 4155,
+        "attacks_promoted": 0,
+        "band_changed": 0,
+        "benign_demoted": 0,
+        "benign_promoted": 0,
+        "best_rank_reached_by_a_benign_alert": null,
+        "demoted": 0,
+        "mean_rank_change": 0.0012,
+        "promoted": 0,
+        "rank_changed": 1,
+        "score_changed": 0
+      }
+    }
+  },
+  "pinned": {
+    "dataset_id": 1,
+    "detection_run_id": 1,
+    "fusion_weights": {
+      "agreement_bonus": 5.0,
+      "class_ceilings": {
+        "Benign": "Informational",
+        "Botnet": "Critical",
+        "Brute Force": "Medium",
+        "DDoS": "High",
+        "DoS": "Medium",
+        "Infiltration": "Critical",
+        "Port Scan": "Low",
+        "Web Attack": "High"
+      },
+      "critical_threshold": 80.0,
+      "evidence_priority": {
+        "corroborated": 0,
+        "ml_only": 2,
+        "none": 3,
+        "signature_override": 1
+      },
+      "scheme": "cef-trust-v1.8",
+      "severity_scores": {
+        "Critical": 0.95,
+        "High": 0.8,
+        "Low": 0.4,
+        "Medium": 0.6
+      }
+    },
+    "guardrail_config": {
+      "aggregation_min_agreement_ratio": 0.67,
+      "aggregation_min_feedback_count": 3.0,
+      "aggregation_strong_agreement_ratio": 0.8,
+      "critical_alert_floor": 70.0,
+      "critical_alert_threshold": 80.0,
+      "high_risk_threshold": 70.0,
+      "infiltration_alert_floor": 75.0,
+      "learned_exception_min_confidence": 60.0,
+      "learned_exception_min_occurrences": 3.0,
+      "max_feedback_increase": 20.0,
+      "max_feedback_reduction": 30.0,
+      "review_threshold": 70.0
+    },
+    "model_version": "xgb-8class-20260911",
+    "rule_set_version": "s4b-1",
+    "seed": 20260911
+  },
+  "preregistration": {
+    "escalate_at": 7.0,
+    "max_per_family": 5,
+    "min_family_size": 8,
+    "rule": "s15-preregistration-1",
+    "size": 40
+  },
+  "run_id": "20260916T073220Z",
+  "sequence_digest": "079a194282a6324e026d720d819d1df4a7a159c62fb93eb6b4551fd6c40496d0",
+  "sequence_length": 40
+}

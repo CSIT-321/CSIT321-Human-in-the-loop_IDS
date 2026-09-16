@@ -3,9 +3,10 @@
 **Purpose.** Carry the full state of this project into a fresh session with zero loss of context
 and minimal token cost. Everything a new session needs is here or one link away.
 
-**Last updated:** 2026-09-16 (rev 18) · **Branch:** `feat/demo-build` — tracking
-`origin/feat/demo-build`, now **11 commits ahead** (the R4→showcase-v9 work is unpushed; push again
-only when asked) · `feat/s2-contracts` and `feat/s6-fusion` pushed earlier as view-only progress
+**Last updated:** 2026-09-16 (rev 23 — ranking provenance resolved, four stale claims corrected;
+see §0b item 7) · **Branch:** `feat/demo-build` — tracking
+`origin/feat/demo-build`, in sync with `origin/feat/demo-build` (**0 ahead, 0 behind** — verified 2026-09-16; the
+R4→showcase-v9 work was pushed after rev 22, so the old "11 commits ahead" is stale) · `feat/s2-contracts` and `feat/s6-fusion` pushed earlier as view-only progress
 branches ·
 **Phases 2–5 DONE · the S16 demo gate PASSED** (S12, S13, S14, S16 in changelog v1.21) ·
 **Console rebuild** (user request, `docs/console-rebuild-proposal.md`): R1–R6 DONE, **complete** ·
@@ -13,13 +14,52 @@ branches ·
 `g.ang`/`analyst-demo`, `admin`/`admin-demo`, `evaluator`/`evaluator-demo` (one per view); bcrypt +
 8-hour JWT bearer; `X-Demo-Role` and the role dropdown/chips are gone; next is the plan's S17 (the
 S18 remainder equally unblocked — confirm the order with the user) —
-changelog v1.27 · **User-testing prep batch landed (2026-09-15/16, in the unpushed commits):** PUM
+changelog v1.31 · **The queue now ranks by severity, and the band is a label (v1.31):**
+`db.QUEUE_ORDER_BY` was `queue_priority, combined_score, id`. The band's first key put Tier 2 candidates
+that are not severe at the top — **the whole top 50 was `Medium`** — so the queue now orders by
+**severity worst-first, then operational score**. The order is defined once, in `db.queue_order(alias)`,
+and the queue, the API, the metrics module, the scenario module and `cef.queue_key` all derive from it;
+it had been written out in five places. **Invariant I5 is retired** (a disputed rule no longer outranks
+a more severe finding; I2 still review-flags every override). `queue_class`/`queue_priority` remain as
+the Tier 2 escalation label and the band tabs. **The three-arm evaluation was re-baselined** (run
+`20260916T063856Z`): under the new order **feedback no longer costs a top-50 place** — precision@50
+holds at 1.000 with **zero** false positives in the top 50 in every arm, where the band order fell to
+0.980 and pushed a benign alert to **rank 1** (now rank 186). Remaining deltas are small and still
+negative (precision@200 −0.010, mean rank −0.515) and are reported as measured. **Caveat, and the
+measurement behind it:** six candidate orders were compared on both databases. **`data/demo.db` cannot
+judge an order** — every candidate scores precision 1.000 at every cut-off, because its 996 flagged
+alerts hold only 2 false positives and both sit far down, so the test is saturated. **`data/stress.db`
+can**, and it prefers **evidence-first**, which with Tier 2 as a label reaches precision@100 **1.000**
+against **0.770** for the band order it replaced. Severity carries no signal there (flat: Critical
+0.447, Medium 0.661) because every injected false positive lands in `ml_only` — the degradation copies
+a real attack's record onto a benign flow. It is a paired comparison, so the *relative* result is sound
+even though the absolute precision is not. **Response:** severity-first stays the default (triage is
+urgency, and it costs nothing on the real detector), and the contract gains an **`evidence` sort** so
+the suspect-model case is one click away. Also in v1.29–v1.30: severity capped by the attack class's
+ceiling read from `config/severity-chart.json`; ingest applying a family's stored learning; the
+`unjudged` queue filter with a **Judged** control; 23 annotation callouts over the showcase screenshots;
+and a showcase section on what "Rule" means · **User-testing prep batch landed (2026-09-15/16, in the unpushed commits):** PUM
 v0.3 with the real sign-in section, `docs/tier1-analyst-workflow.md`,
 `docs/workflow-test-cases.md` (the A–L hand-test protocol for the tester), showcase v8/v9
 (`docs/ids-console-showcase.html`), and the **model bake-off** `notebooks/07_model_bakeoff.ipynb`
 (LR collapses to 0.51 macro F1 at 78.7% accuracy; RF 0.962; XGBoost 0.966 ± 0.015 vs HistGB
 0.969 ± 0.011 — a tie; XGBoost retained on the native-TreeSHAP tiebreak; decisions B1–B3; the
-notebook is still untracked) · **426 tests, 0 skipped** (Python, in `.venv`) + **128 web tests** (`apps/web`, `npm test`) +
+notebook is still untracked) · **Two 2026-09-16 demo features (uncommitted unless noted below): the
+login password eye (hold-to-peek, auto-hides when the pointer leaves) and the queue's
+`detectionMinScore`/`detectionMaxScore` filters** — the "not saturated" preset
+(`evidence=ml_only + detectionMaxScore=99.999` → exactly 21 alerts) exists because 975 of 996
+flagged alerts sit at exactly 100.0 and a confirming verdict there clamps; `AL-00576` (81.30 → 91.30,
+Model only → Tier 2 by E2) is the demo beat, rehearsed as step 4. **Corrected 2026-09-16:** the beat
+used `AL-02717` (88.48 → 98.48), which is **benign** in the capture and not even the first row under
+an ascending detection-score sort — `AL-00576` at 81.30 is. Confirming a false positive as a True
+Positive would have had the demo assert something false. `AL-02717` is the right alert for a
+*dismissal*, which is how `system-workflow.md` already recorded it. Run
+`python scripts/list_false_positives.py` before presenting to see both lists · **The queue's
+inspection-sort tie-break fixed (v1.28):** it was a direction-blind `a.id ASC`, so a page whose
+scores all tied came back identical ascending and descending — and 4,789 of 5,000 alerts (95.8%)
+tie on their score. It now orders by evidence class, review flag, capture time and id, each
+following the requested direction ·
+**445 tests, 0 skipped** (Python, in `.venv`) + **132 web tests** (`apps/web`, `npm test`) +
 the browser narrative (`npm run e2e`, passes with three real sign-ins) ·
 **Python runs from `hitl-ids\.venv` (3.11) — see §0b before running anything** ·
 `python scripts/run_detection.py` builds the demo database · `python -m uvicorn apps.api.main:app`
@@ -58,10 +98,10 @@ anything. Then confirm the ground you are standing on:
 
 ```
 cd hitl-ids && .venv\Scripts\activate  # every terminal; python --version must print 3.11.x (§0b)
-python -m pytest                      # expect 426 passed, 0 skipped (sandbox blocking the temp
+python -m pytest                      # expect 445 passed, 0 skipped (sandbox blocking the temp
                                        # dir? add -p no:cacheprovider --basetemp=<scratchpad>)
 python scripts/run_detection.py       # rebuilds data/demo.db: 5,000 flows -> 5,000 alerts, ~21 s
-python scripts/rehearse_demo.py       # the S16 narrative through the API on a copy: 41 checks
+python scripts/rehearse_demo.py       # the S16 narrative through the API on a copy: 46 checks
 cd apps/web && npm test && npm run e2e && cd ../..   # 128 web tests; the narrative in a browser
 python scripts/run_evaluation.py      # the three arms over that database, ~3 s
 python scripts/build_openapi.py --check   # the committed API contract is in step with the models
@@ -137,18 +177,19 @@ From Claude's Bash tool, call the environment directly: `.venv/Scripts/python.ex
 1. **Figma "Product screens" page** — still requested, still blocked: the Desktop Bridge plugin is
    not running (probed 2026-09-16). The user must open Figma Desktop → Plugins → Development →
    Figma Desktop Bridge → Run; then the page can be built from `docs/img/demo-guide/` as vector layers.
-2. **User-testing prep batch (5 commits, unpushed).** PUM v0.3 (`FYP-26-S3-13_PrelimUserManual_v0.3.docx`,
+2. **User-testing prep batch (5 commits).** PUM v0.3 (`FYP-26-S3-13_PrelimUserManual_v0.3.docx`,
    guide recaptured 2026-09-15), `docs/tier1-analyst-workflow.md`, `docs/workflow-test-cases.md`,
    showcase v8/v9 (`docs/ids-console-showcase.html`). Uncommitted **by design**: the user's edited
-   `.docx`, `PUM.pdf`, the design-reference screenshot. Uncommitted **pending a decision**:
-   `notebooks/07_model_bakeoff.ipynb` (untracked) and the showcase's one-line bake-off paragraph —
-   commit both before the presentation, or they exist only on this machine.
+   `.docx`, `PUM.pdf`, the design-reference screenshot. **Correction (2026-09-16):** this item used
+   to list `notebooks/07_model_bakeoff.ipynb` and the showcase's bake-off paragraph as "untracked,
+   pending a decision". Both were **already committed** — `git ls-files` confirms the notebook is
+   tracked and clean, and the paragraph landed in `54e067d`. Nothing exists only on this machine.
 3. **`ruff` — first run 2026-09-16:** ~140 findings, mostly style (RUF100 44, F811 18, I001 17,
    B008 10 — FastAPI `Depends`, a known false positive for this pattern). Nothing blocking; no
    cleanup pass has been done.
 4. **Plan tracking unchanged:** the rebuild and the prep batch are not S-steps; the plan's S17
    `NEXT` stands. S18 is equally unblocked — confirm the order with the user before starting either.
-5. **Verified this session on the working tree:** 426 Python tests passed (the sandbox blocks the
+5. **Verified this session on the working tree:** 445 Python tests passed (the sandbox blocks the
    default pytest temp dir — use `-p no:cacheprovider --basetemp=<scratchpad>`), `rehearse_demo.py`
    holds end to end, `npm test` and `npm run e2e` pass, and `data/demo.db` is pristine (5,000
    alerts, 0 verdicts, 3 seeded users, 1 run) — ready for a tester pass or a demo as-is.
@@ -163,9 +204,41 @@ From Claude's Bash tool, call the environment directly: `.venv/Scripts/python.ex
    `requirements.txt` untouched; the notebooks previously ran only in the user's miniconda Jupyter);
    every headline figure quoted in the docs matches the data (644 Tier 2 candidates, 200
    corroborated, 0 signature overrides, 4,004 not flagged; showcase bake-off numbers match
-   notebook 07's stored outputs exactly). Fixed: PUM expected-test count 411 → 426. Known cosmetic:
+   notebook 07's stored outputs exactly). Fixed: PUM expected-test count 411 → 445 (this line said 426 until 2026-09-16;
+the suite is 445 — see §0b item 5). Known cosmetic:
    the showcase HTML has no `<!DOCTYPE html>` (quirks mode) — it has always been styled that way;
    do not add a doctype without re-checking every section.
+7. **Ranking provenance — resolved 2026-09-16, and a defect fixed.** The formula question has a
+   deterministic answer: **sel-3 selected C1**, and the code has always run C1. The `"formula": "C2"`
+   that appeared in every `evaluation/ranking/runs/*/config.json` was a **serialisation artefact**:
+   `experiment.py` wrote `asdict(RankingParams())` — the dataclass's own *defaults* (C2/M1) — under a
+   key named `params`, which read as "the parameters used" while describing nothing that ran. The
+   arms executed are enumerated in the same file (`for formula in FORMULAS` → C0/C1/C2/C3), each
+   records its own values in `runs[]`, and the winner is `selection[0]`. **Fixed:** the key is now
+   `candidate_space` (`{formulas, movements, family_keys, chosen_by_rule}`); nothing anywhere read
+   the old key, so no consumer changed. The three 2026-09-11 runs are left untouched as history;
+   a fresh run `20260916T073135Z` carries the corrected record and **reproduced run 3 exactly** —
+   identical ordering and identical values — so the selection is stable, not a seed artefact.
+   **How thin C1's win is, which the docs must not overstate:** C1 beat C2 on
+   `mean_attack_position` by **0.0001** (0.0828 vs 0.0829) — the *only* metric separating them;
+   demotions, Tier 2 precision and precision@100 tie exactly. The **control (no feedback) is
+   0.0829**, so C1's feedback improves triage position over doing nothing by 0.0001. **C0 would
+   rank #1 on raw performance** (same 0.0828, and the lowest class churn of any arm at 13.00) and is
+   disqualified *only* by `meets_q27` — its fixed steps do not scale with attack severity. The
+   selection is therefore policy-driven at the top, not evidence-driven, and the honest claim is
+   "chosen by a pre-registered rule", never "measured best".
+   **Movement is a deliberate lead override, and must be recorded as one:** sel-3's #1 pick is
+   **C1+M2+coarse**; the code runs **C1+M1**. M2's sole advantage is `class_changes` (13.00 vs
+   25.33) — internal band churn, not a triage outcome; every metric ranked above it ties. The
+   evidence supports retaining M1 on risk grounds: in run 2, **before the agreement gate existed,
+   M2 scored Tier 2 precision 0.7418 against M1's 1.0000 and doubled Tier 2 load (504 vs 243)**.
+   M2 is safe only because the gate contains it; M1 does not depend on the gate to be safe.
+   **Arm C's explanation corrected:** §0b item 6 and the S15 narrative said "the sequence had no
+   dismissals, so no guardrail could bind". The mechanism is better stated: no guardrail *policy*
+   bound — the **100 ceiling** did. 975 of 996 flagged alerts sit at exactly 100.0 and the
+   pre-registered sequence emits only positive verdicts, so every one of the 40 verdicts clamped at
+   the top of the range. That clamp is active in **both** arms, which is *why* arm C could not
+   diverge from B (`C_minus_B` is all zeros, `extra_breaches_without_guardrails: 0`).
 
 ---
 

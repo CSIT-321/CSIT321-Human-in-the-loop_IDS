@@ -20,3 +20,18 @@ Design: `docs/ranking-and-escalation-design.md` §6. Code: `packages/detection/r
    fewest class changes; then the simpler formula and movement.
    *sel-1* (run 20260911T111249Z) ranked on precision in the top 100 first; the control already
    scores 1.0 there, so it could not discriminate. sel-2 was written after seeing that run.
+
+---
+
+**Note added 2026-09-16 — `config.json`'s `params` key is a serialisation artefact.**
+This run's `config.json` contains `"params": {"formula": "C2", "movement": "M1", ...}`. That block is
+**not** a record of what ran: the experiment wrote `asdict(RankingParams())`, which dumps the
+dataclass's own *defaults*, under a key that reads as "the parameters used". Every arm here ran its
+own formula — the arms are enumerated in `experiment.py` (`for formula in FORMULAS` → C0/C1/C2/C3),
+each run entry in `results.json` records its own `formula` and `movement`, and the selection outcome
+is `results.json.selection`, whose winner for this run is recorded there.
+
+The formula actually in force is **C1** (chosen by `sel-3`; the code passes `formula="C1"`
+explicitly in `packages/detection/feedback/learning.py`). **Do not read `params.formula` as a
+decision.** The block was replaced by `candidate_space` in the next run (`20260916T073135Z`), which
+reproduced this run's selection exactly. This file is left unedited as the historical record.

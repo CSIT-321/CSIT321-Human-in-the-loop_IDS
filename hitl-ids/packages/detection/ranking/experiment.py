@@ -333,7 +333,15 @@ def run_experiment(processed: Path, chart: SeverityChart, *, seeds=SEEDS,
                    "gate": {"min_feedback": GATE_MIN_FEEDBACK,
                             "min_agreement": GATE_MIN_AGREEMENT,
                             "source": "stage-5/config/adaptation-config.json, aggregation"},
-                   "params": asdict(RankingParams()),
+                   # The space that was searched, not a set of defaults. This key used to hold
+                   # ``asdict(RankingParams())`` — the dataclass's own defaults (C2/M1) — which read
+                   # as "the parameters used" while describing nothing that ran: the arms executed
+                   # are enumerated above, each records its own values in ``runs[]``, and the winner
+                   # is ``selection[0]``. Recorded per run so a reader can see what was compared.
+                   "candidate_space": {
+                       "formulas": list(FORMULAS), "movements": list(MOVEMENTS),
+                       "family_keys": list(FAMILY_KEYS),
+                       "chosen_by_rule": "selection[0]; see METHOD.md for any lead override"},
                    "evidence_to_class": EVIDENCE_TO_CLASS},
         "control": evaluate(future, {}, True),
         "runs": runs,
