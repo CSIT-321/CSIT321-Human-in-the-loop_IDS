@@ -19,13 +19,35 @@ from . import models as m
 
 SCHEMA_PATH = Path(__file__).with_name("schema.sql")
 
-# Queue order is part of the fusion contract (plan S6, invariant I5): queue band first, score
-# second, id as a deterministic tiebreak. Ordering by score alone ranked the key detections #414
-# of 417 (plan-changelog v1.0 FIX). Since S7b the band is queue_priority: the evidence class's band
-# until the Tier 2 criteria or analyst feedback move the alert (changelog v1.14).
-# The column names are unqualified, so this drops into any query over alerts alone (as
-# pipeline.store.queue does). A query that JOINs a table with its own `id` must alias and qualify.
-QUEUE_ORDER_BY = "queue_priority ASC, combined_score DESC, id ASC"
+# Queue order is part of the fusion contract (plan S6). It has had three forms, and each change is
+# recorded. Ordering by score alone ranked the key detections #414 of 417 (v1.0 FIX), so the queue
+# band went first. v1.31 replaced the band with severity: the band put Tier 2 candidates that are not
+# severe at the top of the queue (measured - the whole top 50 was Medium), and on the demo sample
+# severity tracks detection precision almost monotonically (Critical 1.000, High 0.992, Medium 0.998,
+# Low 0.910, Informational 0.001), so it leads with the alerts an analyst should work first.
+#
+# `queue_class` and `queue_priority` remain, as the Tier 2 *label* and the band tabs, but they no
+# longer order the queue. This retired invariant I5.
+#
+# The column names are unqualified, so this drops into any query over `alerts` alone (as
+# `pipeline.store.queue` does). A query that JOINs a table with its own `id` must alias: call
+# `queue_order("a")`.
+SEVERITY_ORDER = ("CASE {q}severity WHEN 'Critical' THEN 4 WHEN 'High' THEN 3 "
+                  "WHEN 'Medium' THEN 2 WHEN 'Low' THEN 1 ELSE 0 END DESC")
+
+
+def queue_order(alias: str = "") -> str:
+    """The analyst queue's order: severity worst-first, then the operational score, then id.
+
+    One definition, qualified on request, so the queue, the API's read queries and the evaluation
+    harness cannot drift apart. ``alias`` is a table alias such as ``"a"``, or empty for a query over
+    ``alerts`` alone.
+    """
+    q = f"{alias}." if alias else ""
+    return f"{SEVERITY_ORDER.format(q=q)}, {q}combined_score DESC, {q}id ASC"
+
+
+QUEUE_ORDER_BY = queue_order()
 
 TABLE_MODELS: dict[str, type[m.Contract]] = {
     "users": m.User,

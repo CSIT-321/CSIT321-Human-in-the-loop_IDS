@@ -112,7 +112,13 @@ class Actor(ApiModel):
 #: What a client may sort the queue by. `queue` is the contract order and the default; the others
 #: exist because an analyst checking a specific claim needs them. **`queue` is what the demo
 #: shows** — the rest are inspection tools, not alternative rankings.
-QueueSort = Literal["queue", "combined_score", "detection_score", "created_at", "severity"]
+#:
+#: `evidence` is the one that earns its place. When a detector's false positives carry an attack's
+#: full confidence, no score-based key can separate them and only the rule layer can; measured on
+#: `data/stress.db`, evidence-first reaches precision@100 1.000 where the contract order reaches
+#: 0.000. It is offered rather than imposed, because the default should lead with urgency.
+QueueSort = Literal["queue", "combined_score", "detection_score", "created_at", "severity",
+                    "evidence"]
 
 SortDirection = Literal["asc", "desc"]
 
@@ -142,12 +148,24 @@ class QueueQuery(ApiModel):
     requires_review: bool | None = None
     min_score: m.Score | None = Field(default=None, description="On combined_score")
     max_score: m.Score | None = None
+    detection_min_score: m.Score | None = Field(
+        default=None,
+        description="On detection_score, the immutable column. With evidence filters, "
+        "`detectionMaxScore=99.999` isolates flagged alerts a confirming verdict can still "
+        "visibly raise — 975 of the 996 flagged alerts sit at exactly 100.0, and the rest are "
+        "all below 99.999")
+    detection_max_score: m.Score | None = None
     search: str | None = Field(
         default=None, max_length=200,
         description="Substring of source IP, destination IP, or matched rule id")
     run_id: int | None = Field(default=None, description="Restrict to one detection run")
     verdict: list[m.FeedbackCategory] | None = Field(
         default=None, description="Filter by the verdict currently in force")
+    unjudged: bool | None = Field(
+        default=None,
+        description="`true`: only alerts with no verdict recorded at all — the complement of the "
+        "`verdict` filter, which asks about the verdict currently in force. The queue row's "
+        "`hasFeedback` reports the same condition, so a filter and its row pill never disagree")
     owner: QueueOwner | None = Field(
         default=None, description="`me`: owned by the caller's demo user; `unassigned`: no owner")
     flow_from: str | None = Field(

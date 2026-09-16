@@ -5,7 +5,7 @@ tester. Every case states exactly what to do, what should happen, and what it sh
 so a failure is either "it does not work" or "it does not look right", and both are recordable.
 Companion documents: [`tier1-analyst-workflow.md`](tier1-analyst-workflow.md) (what the workflow
 *is*), [`demo-script.md`](demo-script.md) (the presentation narrative), and the automated suites
-(426 Python tests, 128 web tests, the e2e narrative) — this file covers what only a human can
+(427 Python tests, 129 web tests, the e2e narrative) — this file covers what only a human can
 judge.
 
 ## How to run these
@@ -38,6 +38,7 @@ The three accounts: `g.ang`/`analyst-demo` (analyst) · `admin`/`admin-demo` (ad
 | A6 | Sign in as `admin` / `admin-demo` | Lands on `/admin/status` (System Status) |
 | A7 | Sign out, sign in as `evaluator` / `evaluator-demo` | Lands on `/evaluator/scenarios` |
 | A8 | As `evaluator`, manually open `/analyst/workstation` | Redirected to `/evaluator/scenarios` — an account cannot reach another view's pages |
+| A9 | Type into the Password field, then hold the pointer over the **eye** icon inside the field | The typed password is visible as plain text only while the pointer (or a press) is on the eye; the icon switches to a struck-through eye; the password is masked again the instant the pointer leaves — for checking a mistyped password by eye without leaving it revealed |
 
 ## B. The workstation shell
 
@@ -60,6 +61,7 @@ The three accounts: `g.ang`/`analyst-demo` (analyst) · `admin`/`admin-demo` (ad
 | C6 | Open **Alert Queue** (sidebar) | The full table: band, reference, **two score columns** (Detection, Operational), predicted class, flow, rule; filters for band / evidence / severity / class; the chosen filter appears in the address bar |
 | C7 | Apply a filter, then F5 | The filtered view survives the refresh |
 | C8 | In the queue page click an IP address in a row | The IP entity page for that address opens |
+| C9 | Queue page: Evidence **Model only** + Detection score **Below 100 — not saturated** | Exactly **21 of 5,000** alerts — the flagged ones not saturated at 100.0; `AL-02717` (88.48) and `AL-00576` (81.30) are among them; the filter sits in the address bar and survives F5 |
 
 ## D. One alert's evidence
 
@@ -140,7 +142,7 @@ The three accounts: `g.ang`/`analyst-demo` (analyst) · `admin`/`admin-demo` (ad
 | K2 | Supply a reason and save a valid change | Applied; the Audit Trail records what changed and why |
 | K3 | Try an inconsistent change (floor above the critical threshold) | Refused by the form before it is sent |
 | K4 | As `admin`, try to open `/analyst/workstation` | Redirected to `/admin/status` |
-| K5 | As `evaluator` → run `20260912T032022Z` | The three arms; the banner reports **Precision fell under feedback (−0.020)** — the wrong-way result is shown, not hidden |
+| K5 | As `evaluator` → the newest run (`20260916T063856Z`) | The three arms; false positives in the top 50 is **0** in every arm, and the remaining deltas are still shown as measured (precision@200 −0.010, mean true-positive rank −0.515) |
 | K6 | As `evaluator`, try to record a verdict or claim an alert | No analyst actions are offered anywhere in the evaluator view |
 
 ## L. Looks — how it should look

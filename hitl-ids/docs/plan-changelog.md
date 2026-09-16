@@ -1179,7 +1179,7 @@ contents and page numbers are unverified until it is; the cover still carries th
 
 ---
 
-## v1.27 — S18a landed: real accounts replace the role-switch stub (2026-09-15) ← **current**
+## v1.27 — S18a landed: real accounts replace the role-switch stub (2026-09-15)
 
 User request: *"the console shows 3 different users' views as a drop-down menu — enforce account
 separation and have them log in from their own account to their own views."* That is the auth core
@@ -1224,6 +1224,379 @@ that is correct, not a bug.
 | Re-run notebooks 01–03 against corrected data | Depends on retrain | Claude |
 | Apply v0.3 + v1.0 changes to `plans/hitl-ids-demo-build.md` | none | Claude |
 | `gh` PR/CI workflow steps | `gh auth login` not run | User |
+
+## v1.31 — The queue ranks by severity, and the band becomes a label (2026-09-16) ← **current**
+
+Asked by the user: *"keep band tier 2 candidate as a label only and rank by severity - operational
+instead"*, because *"tier 2 candidates are meant to be automatically escalated to the next tier and not
+shown in the alert queue for tier 1 at all"*. Then, having looked at the running console: *"tier 2
+candidate is listed but they are not severe, so that defeats the idea of pushing what the tier 1
+analyst should be reviewing first at the top of the queue."*
+
+The second message is the finding. Measured on `data/demo.db` before any change: **the whole top 50 was
+`tier2_candidate` at severity `Medium`** (Brute Force). The band's first key put a Tier 2 group that is
+not severe above everything else.
+
+### The measurement that decided it
+
+Severity tracks detection precision on the demo sample almost monotonically, so it is a sound first key:
+
+| Severity | Alerts | Malicious | Precision |
+|---|---:|---:|---:|
+| Critical | 185 | 185 | **1.000** |
+| High | 261 | 259 | 0.992 |
+| Medium | 401 | 400 | 0.998 |
+| Low | 167 | 152 | 0.910 |
+| Informational | 3,986 | 4 | 0.001 |
+
+| Order | P@10 | P@50 | P@100 | Mean attack rank |
+|---|---:|---:|---:|---:|
+| Band first (old) | 1.000 | 1.000 | 1.000 | 510.2 |
+| Score only | 1.000 | 1.000 | 1.000 | 509.8 |
+| **Severity first (new)** | 1.000 | 1.000 | 1.000 | **511.1** |
+
+Detection quality is unchanged; what changes is *which* alerts lead. The top 50 goes from 50 Medium
+alerts to 50 Critical ones. **997 of 5,000 alerts (19.9%) change position**; the largest move is 811
+places.
+
+| | Change | Rationale |
+|---|---|---|
+| CHG | `db.QUEUE_ORDER_BY` is `severity (worst first), combined_score DESC, id ASC` | The band put non-severe Tier 2 candidates first |
+| ADD | `db.queue_order(alias)` — one definition, qualified on request | The order had been written out in **five** places (the contract, the API's read queries, the metrics module, the scenario module and `cef.queue_key`). That duplication is why v1.28 could not change it safely. All five now derive from one function |
+| RET | **Invariant I5** — "no `signature_override` alert ranks below any `ml_only` alert" | It was a property of the band order. A disputed Port Scan now recedes below a confident Botnet, which is the intent. I2 still review-flags every override, so it cannot be missed |
+| DEC | `queue_class` and `queue_priority` **remain** | They are the Tier 2 escalation label and the band tabs. They no longer order the queue |
+| DEC | The three-arm evaluation is **re-baselined** | v1.28 held this change back for exactly this reason; the user took the decision |
+
+### The re-baseline, and what it revealed
+
+The evaluation's own metrics order by the queue, so the recorded run had to be re-run. It was, as run
+`20260916T063856Z` (preserved alongside the old one, `20260912T032022Z` — nothing was deleted).
+
+**The wrong-way result is gone.**
+
+| | Band order (old run) | Severity order (new run) |
+|---|---|---|
+| Precision@50, treatment | 0.980 | **1.000** |
+| False positives in the top 50 | **1** | **0** |
+| Best rank reached by a benign alert | **1** | **186** |
+| Precision@50 delta, B − A | **−0.020** | **0.000** |
+
+Under the band order, a verdict could promote an alert into the Tier 2 band and push a benign flow into
+the top 50. Under severity, a promotion cannot do that: **a `Web Attack` cannot be graded above High**,
+so the cap contains it. The remaining deltas stay small and negative — precision@200 −0.010, mean
+true-positive rank −0.515, MRR −6.2e−06 — and are still reported as measured.
+
+This was not the change's stated purpose, and it is the strongest evidence for it.
+
+### The honest limit, and the analysis behind it
+
+Six candidate orders were measured against ground truth on both databases before this was settled:
+
+| Order | demo P@10/50/100 | stress P@10/50/100 |
+|---|---|---|
+| A band-first (the one replaced) | 1.000 / 1.000 / 1.000 | 0.400 / 0.780 / 0.770 |
+| B severity-first (adopted) | 1.000 / 1.000 / 1.000 | **0.000 / 0.000 / 0.000** |
+| C evidence-first, Tier 2 as a label only | 1.000 / 1.000 / 1.000 | **1.000 / 1.000 / 1.000** |
+| D severity, then evidence | 1.000 / 1.000 / 1.000 | 0.000 / 0.000 / 0.000 |
+| E evidence, then severity | 1.000 / 1.000 / 1.000 | 1.000 / 1.000 / 1.000 |
+| F severity, then evidence, then score | 1.000 / 1.000 / 1.000 | 0.000 / 0.000 / 0.000 |
+
+**Three conclusions, and the second is uncomfortable.**
+
+**1 — `demo.db` cannot judge an order at all.** Every candidate scores 1.000 at every cut-off. The
+demo's 996 flagged alerts hold 2 false positives and both sit far down the queue, so the first 100 rows
+are true attacks under *any* sort. The test is saturated: it cannot fail, so it cannot discriminate.
+**The demo's perfect precision therefore endorses no order in particular.** Severity-first costs
+nothing there, and that is all it shows — what it changes is *which* alerts lead, which is a triage
+judgement, not a measurable accuracy gain.
+
+**2 — the old order was losing on the stress database, and not for the reason assumed.** `data/stress.db`
+is the only one here with the power to separate the orders: they disagree from 0.000 to 1.000. It
+prefers **evidence-first**, and evidence-first without the Tier 2 promotion is *better than the order
+it replaced* — 0.770 → **1.000**. So the Tier 2 promotion was hurting the band order too, which is the
+same defect the user reported from the console.
+
+**3 — severity carries no signal on that artifact.** Precision by severity is flat there (Critical
+0.447, High 0.496, Medium 0.661, Low 0.512), while precision by evidence class is decisive:
+
+| Database | Evidence-class precision |
+|---|---|
+| demo | corroborated **1.000** (200) · ml_only 0.997 (796) · none 0.001 (4,004) |
+| stress | corroborated **1.000** (148) · signature_override **1.000** (52) · ml_only **0.476** (1,146) · none 0.070 (3,654) |
+
+Every injected false positive lands in `ml_only`, because the builder copies a real attack's complete
+prediction record — confidence 1.0 and all — onto a benign flow. **On that artifact the rule layer is
+the only signal that separates them**, and no score-based or severity-based key can.
+
+A paired-comparison caveat, stated because it matters: the builder warns that the file must never be
+used as a measurement of the model, and that is right for **absolute** numbers — its false positives
+are invented. This is a **paired** comparison, where every order faces the identical 5,000 alerts and
+identical ground truth, so the *difference between orders* is valid even though the absolute precision
+is not. That is why it can judge an order while it cannot judge the model.
+
+### What was done about it
+
+| | Change | Rationale |
+|---|---|---|
+| DEC | Severity-first **stays the default** | Triage is about urgency, and on the real detector it costs nothing. On the demo it leads with Infiltration at Critical rather than Brute Force at Medium, which is what the user asked for |
+| ADD | An **`evidence` sort** — `QueueSort` gains `"evidence"`, `store.SORT_COLUMNS` gains the column, and the console's sort control gains the option | The suspect-model case is now one click away instead of a contract argument. Ascending puts a checkable rule first, which reaches precision@100 1.000 on `data/stress.db` where the contract order reaches 0.000 |
+| DEC | The order is **not** reverted to band-first | It scores 0.770 on the only database that can judge, against 1.000 for both evidence-first and the new severity key at demo parity |
+
+The remaining disagreement is real and is recorded rather than hidden: **severity answers "what should
+I open first?", evidence answers "what can I prove?"** The default answers the first; the new sort
+answers the second.
+
+### Decided with the project lead: the order is uniform, and the false positives get a list
+
+The stress database is a *weakened detector under the same contract*, so it takes the same order as the
+demo. A different sort for it would make it useless as a rehearsal, and it is not re-sorted. The real
+world has one queue order; so does this.
+
+The false-positive beat is therefore served differently: **a shortlist, not a ranking.** The demo
+preparation aid `scripts/list_false_positives.py` prints every flagged-but-benign alert, and every
+unflagged attack, with its reference so a presenter can search it. On `data/demo.db` that is **2 false
+positives and 6 missed attacks**; on `data/stress.db`, **600**. False positives are one niche case, not
+the story — the demo's subject is the ranking and the feedback loop — so the beat is available on demand
+rather than something the ranking must surface.
+
+The script's docstring states plainly that this is **not a product capability**: the system never sees
+ground truth, and the console cannot list its own false positives. Presenting it as one would be a lie.
+
+**The list immediately caught a demo error.** Step 4 of the demo script told the presenter to search
+`AL-02717` and record a **True Positive** on it (88.48 → 98.48). `AL-02717` is **Benign** in the
+capture, and `system-workflow.md` already recorded that same alert as a *false positive held at the
+floor of 70* — so two documents contradicted each other, and one of them had the demo assert a true
+positive on a false positive. It was not the alert the step described either: the step says the
+ascending sort puts the widest headroom first, and the widest headroom is **`AL-00576` at 81.30**. Both
+mentions now read `AL-00576`, verified by recording the verdict against a copy of the database:
+**81.30 → 91.30, `ml_only` → `tier2_candidate`, +10 applied with no clamp.** The same two lessons,
+asserting something true.
+
+| | Change | Rationale |
+|---|---|---|
+| ADD | `scripts/list_false_positives.py` — the shortlist, for either database | The demo needs to find a false positive without the ranking having to put one on top |
+| FIX | The demo's step 4 uses `AL-00576`, not `AL-02717` | `AL-02717` is benign, and is not the first row under an ascending detection-score sort |
+| DEC | The queue order stays severity-first in both databases | One contract, one order; the stress run is a rehearsal of the same system, not a variant of it |
+
+**Red-capable by construction.** `test_queue_orders_by_severity_then_score` inserts a Critical alert at
+score 40 and a Medium one at score 100 and asserts the Critical one leads — which the band order
+reversed, and which fails against it. `test_the_queue_band_no_longer_orders_the_queue` asserts a
+`ml_only` Critical alert leads a `corroborated` Low one. `test_the_queue_is_returned_in_contract_order`
+now checks severities descend and scores descend within each. `test_the_queue_band_no_longer_affects_
+position` and `test_retiring_i5_cannot_hide_a_disputed_rule` replace the I5 test. **444 Python tests
+pass, 0 skipped**; 132 web tests; the rehearsal passes end to end, with its wrong-way assertion
+rewritten to check that feedback adds no false positive to the top 50 and that the remaining negatives
+are still shown.
+
+## v1.30 — The ceiling reads the severity chart, and ingest carries the family's learning (2026-09-16)
+
+Two corrections, both prompted by the user reviewing the ranking. The first question — *"first
+confirm if my understanding is correct"* — found that severity was not the queue's first sort key at
+all. The second — *"how does the operational score help change any new incoming data of the similar
+type?"* — found a stored learning that nothing read.
+
+### Correction 1 — the ceiling was a second table, and it disagreed with the chart
+
+v1.29 added `CLASS_SEVERITY_CEILING`, a hand-written map from each attack class to the worst severity
+it may reach. The project already keeps that judgement in `config/severity-chart.json` (decision
+Q27), where every model class carries a CVSS v3.1 score that decides Tier 2 candidacy and scales
+family movement. **The two disagreed on two of the seven classes:**
+
+| Class | Chart | The v1.29 table |
+|---|---:|---|
+| Port Scan | 3.0 → **Low** | Medium |
+| DoS | 6.5 → **Medium** | High |
+
+| | Change | Rationale |
+|---|---|---|
+| DEL | `cef.CLASS_SEVERITY_CEILING` is deleted (v1.29, withdrawn) | A second source for a value the project already owns is a defect waiting to appear |
+| ADD | `cef.ceilings_from_chart(chart)` derives every ceiling from the chart's CVSS band | One source of truth: edit the chart for Tier 2 candidacy and the severity ceiling moves with it |
+| ADD | `cef.CVSS_TO_SEVERITY` maps the chart's qualitative bands onto the severity labels | The chart's `band()` returns "None" for 0.0; that band means Informational here |
+| CHG | `FusionConfig` gains `class_ceilings`, read from the committed chart and snapshotted into `detection_runs.fusion_weights` | A replayed run must grade severity the way it did |
+
+**Effect on the demo sample:** 150 Port Scan alerts Medium → **Low**; 200 DoS alerts High → **Medium**.
+
+| Severity | Old build | v1.29 | v1.30 |
+|---|---:|---:|---:|
+| Informational | 4,004 | 3,986 | 3,986 |
+| Low | **0** | 17 | **167** |
+| Medium | **0** | 351 | 401 |
+| High | **0** | 461 | 261 |
+| Critical | 996 | 185 | 185 |
+
+### Correction 2 — a family's learning never reached a new alert
+
+`refresh_family` has exactly one production caller, `submit_feedback`. Its own docstring claimed
+otherwise: *"Detection (S9) calls it too, so an alert that arrives after the verdicts takes its
+family's adjustment."* That claim was false. `runner._place` ran `detection_placement`, which passes
+`adjustment = 0.0, offset = 0`, and the family's `applied_adjustment` sat unread in `alert_families`.
+
+| | Change | Rationale |
+|---|---|---|
+| FIX | `runner._place` reads `store.family_by_key` and places a new alert with the family's applied adjustment and offset | The learning existed and was stored; only the read was missing |
+| CHG | `_place` now writes `combined_score`, `severity`, `requires_review`, `queue_class` and `queue_priority` from the placement, and takes `conn` and the config | An applied adjustment must move the label with the score |
+| FIX | The S6/S7b agreement assertion applies only when no learning was applied | It catches fusion and placement disagreeing *before any feedback exists*; with learning applied they are meant to differ |
+| FIX | `refresh_family`'s docstring now states what the code does | The claim had been false since it was written |
+
+**Why the evaluation passed while the defect was present.** `run_arm` copies a database in which all
+5,000 flows are already ingested, so the "future half" is reached by `refresh_family` as ordinary
+members. The recorded result — *"feedback reorders future alerts"* — is sound. It simply never
+exercised the path a new detection run takes. The defect was invisible in a batch pipeline and would
+have been visible the first time the system met a second batch.
+
+**Red-capable by construction.** `test_a_new_alert_takes_what_its_family_already_learned` asserts a
+new alert's `combined_score` falls from 100 to 70 once its family has learned, and fails on the
+pre-fix code, where it stayed at 100. `test_the_ceilings_are_the_severity_chart_and_nothing_else`
+pins the two classes the deleted table got wrong. Two shared-spec rows moved with the chart (*model
+only, confident* and *model only, unsure*: DoS High → Medium). **441 Python tests pass, 0 skipped.**
+The rehearsal passes end to end (46 checks, 0 failures).
+
+## v1.29 — The attack class now caps severity, and the label follows the score (2026-09-16)
+
+Reported by the user: *"the current data still doesnt show a good spread from critical to
+informational, we only have critical and informational."* Reproduced against `data/demo.db` before
+anything was changed, then traced to three separate causes. `console-rebuild-proposal.md` had
+recorded the symptom — *"severity in this data is only Critical or Informational"* — as a property
+of the data. It was not a property. It was three defects.
+
+### The measurement
+
+| Severity | `demo.db` before | `demo.db` now | `stress.db` now |
+|---|---:|---:|---:|
+| Informational | 4,004 | 3,986 | 3,332 |
+| Low | **0** | 17 | 16 |
+| Medium | **0** | 351 | 474 |
+| High | **0** | 461 | 562 |
+| Critical | 996 | 185 | 311 |
+
+### Defect 1 — severity was a function of the model's confidence alone
+
+The bands were correct; the signal they read was not. `combined_score = min(100, max(sig, ml) * 100
++ agreement_bonus)`, so "Critical" needs `max(sig, ml) >= 0.75` — and the **lowest** malicious
+probability among the demo's 996 flagged alerts is **0.813**. Every flagged alert cleared the bar by
+construction, because the model only flags what it is sure about.
+
+Measured: all seven attack classes read Critical. A Port Scan (150 alerts, reconnaissance) and an
+Infiltration (35 alerts, an adversary inside the network) were indistinguishable in the severity
+filter, which is the only place an analyst would look to separate them.
+
+| | Change | Rationale |
+|---|---|---|
+| ADD | `cef.CLASS_SEVERITY_CEILING` — Port Scan and Brute Force cap at Medium; Web Attack, DoS and DDoS at High; Botnet and Infiltration at Critical | Confidence answers *how sure is the model?*. It cannot answer *how bad is this?*. Adopted by the project lead from two proposed mappings (Q31). **Withdrawn in v1.30** — the values now come from the severity chart, and this table disagreed with it on Port Scan and DoS |
+| ADD | `cef.CLASS_SEVERITY_UNCAPPED = "Critical"` — an unnamed class is not capped | An unrecognised finding is treated as the worst, not the mildest |
+| ADD | `cef.severity_for(score, predicted_class, critical_threshold)` — the rule, public and pure | Fusion and feedback must reach the same answer or they drift; one function makes that structural |
+| CHG | The cap **only ever lowers** a severity | A cap that could raise one would let a quiet finding outrank a loud one. Tested across every class and every band edge |
+
+### Defect 2 — `evidence == "none"` overrode the score entirely
+
+`_severity` returned `"Informational"` the moment `evidence_class == "none"`, **before it read the
+score**. 4,004 of the 5,000 alerts are `none`, so four fifths of the queue was Informational by
+definition — including 369 alerts carrying a non-zero score. One of those sat at **45**: a
+Medium-band signal flattened to a label that means nothing happened.
+
+| | Change | Rationale |
+|---|---|---|
+| FIX | The band decides on the score; the evidence class no longer enters severity at all | `evidence_class` already carries "no detector fired" and is exposed on every row. It is not a severity |
+| ADD | `cef.INFORMATIONAL_BAND = 1.0` — Informational is `score < 1.0` | The score is `max(sig, ml) * 100`, so 1.0 is a malicious probability of 0.01: the model's noise floor, not a finding |
+
+### Defect 3 — the label did not follow the score
+
+`severity` was written once at detection and never revisited, while feedback moves `combined_score`.
+Two alerts in `data/demo.db` proved the drift: `detection_score` 100, `combined_score` **70** — the
+maximum reduction of 30, held there by `critical_alert_floor` — still labelled **Critical**. A
+High-band score wearing a Critical label.
+
+| | Change | Rationale |
+|---|---|---|
+| FIX | Both `UPDATE alerts` sites in `feedback/service.py` recompute `severity` through `severity_for` | The judged alert's own write, and the family refresh's write. Two writers, one rule |
+| DEC | The ceiling reads `attack_category`, not `ml_predicted_class` | For a `signature_override` the model *disputes* the rule's class; the alert's assigned class is the finding being graded |
+
+**Red-capable by construction.** Three of the four original `test_specification` rows changed
+expectation and failed on the pre-fix code: *rule and model agree, confident* (Critical → Medium),
+*model only, confident* (Critical → High), *nothing fired* (Informational → Low). Five further tests
+were added — the class ceiling, the cap-only-lowers property, the band edges, the recompute through
+`submit_feedback`, and the label/score invariant after verdicts — and
+`test_a_verdict_that_moves_the_score_moves_the_label_with_it` fails on the pre-fix code, where the
+label stayed Critical. **439 Python tests pass, 0 skipped.** The demo rehearsal still passes end to
+end (46 checks, 0 failures).
+
+**Two honest limits, both stated in the showcase.** *Low* is thin — 17 alerts on the demo sample, 16
+on the stress sample — because the model does not produce mid-range probabilities: it rejects a flow
+at 0.9999 or flags it at 0.8 and above, so almost nothing lands between 1 and 40. Filling that band
+is a model-calibration job, not a banding choice. And *Informational* is not a level of danger; it
+is the absence of a detection.
+
+### Also in this version
+
+| | Change | Rationale |
+|---|---|---|
+| ADD | The `unjudged` queue filter, and a **Judged** control in the console | The API's `verdict` filter asked about the verdict *in force* and could not express "no verdict at all". Adds the "verdict done" view; the row's "Verdict recorded" pill and the filter read the same condition |
+| ADD | Annotations over the showcase screenshots — 23 numbered callouts across five screens | Drawn as an HTML overlay, so the PNGs stay unedited and the pins survive a recapture |
+| ADD | A showcase section on **what "Rule" means** | The queue column carries only `matchedRuleIds`, so it shows an id where the model column shows a class. The detail panel names the rule, its severity, its id and its asserted class. Documented as a contract limit, not a display fault |
+
+## v1.28 — The queue's tie-break was direction-blind, and the saturation is wider than recorded (2026-09-16)
+
+Reported by the user: *"the ascending/descending doesn't seem to flip the order as it should … if
+almost everything is 100 and critical then that defeats the purpose of the ranking."* Both halves
+were reproduced against `data/demo.db` before anything was changed.
+
+### The measurement
+
+| Measure | Value |
+|---|---:|
+| Alerts at exactly `detection_score = 100.0` | **975** |
+| Alerts at exactly `0.0` | **3,635** |
+| Distinct `detection_score` values across 5,000 alerts | **68** |
+| Alerts sharing a score with more than one 50-row page | **4,789 (95.8%)** |
+| Distinct flow capture times inside the 975-way tie | **975** |
+
+### Defect 1 — the tie-break ignored the requested direction
+
+`store.SORT_COLUMNS` applied `{d}` to the primary key only; the tie-break was the literal
+`a.id ASC`. Because a tie is the normal case here, the secondary key *was* the visible order — and
+it never moved. Measured: filtering to `detection_score = 100` and sorting descending then
+ascending returned the **identical page** — ids `100, 103, 105, 106, 108 …` both ways; at positions
+401–410, ids `1628, 1630, 1631 …` both ways. No test pinned it.
+
+| | Change | Rationale |
+|---|---|---|
+| FIX | A named `TIE_BREAK` replaces `a.id ASC` on every inspection sort: `evidence_priority ASC, requires_review DESC, <capture time> {d}, a.id {d}` | The tie *is* the ranking. Evidence class and capture time are the only keys that vary inside a tied group — 200 corroborated against 775 model-only, and 975 distinct capture times |
+| FIX | The capture-time key follows `{d}`; it is **not** pinned to `ASC` | Caught while verifying the fix: capture times are unique, so a fixed-ASC time key determined the whole order, the `id` key never engaged, and the identical page came back. Ascending therefore means oldest traffic first (FIFO); descending means newest first |
+| DEC | `db.QUEUE_ORDER_BY` is **unchanged** | Changing it re-baselines the recorded three-arm evaluation and the demo's printed ranks. Held for a separate decision, with the diff shown to the user |
+
+**Red-capable by construction.** The three new tests were run against the pre-fix behaviour and two
+failed — `test_the_direction_flips_a_page_whose_scores_all_tie` on the identical-page assertion, and
+`test_a_tied_page_reads_oldest_first_when_ascending` on the descending order — then passed with the
+fix. The third, `test_paging_a_tied_group_never_repeats_or_skips_an_alert`, passes either way,
+because the old key was still a total order; it is kept as the guard that the new one stays one.
+**430 Python tests pass, 0 skipped.**
+
+### Defect 2 — the saturation, now quantified rather than noted
+
+`evaluation-report.md` finding 4 recorded *"975 of 996 flagged alerts sit at exactly 100.0"*. This
+entry records the rest of the shape: **4,789 of 5,000 alerts (95.8%) share a score with more than a
+page of others**, so ordering by score alone cannot rank the queue — which is what the user
+observed. The cause is `fusion/cef.py` line 160: `ml = 1 − P(Benign)` is ≈0.99999854 on this
+testbed, so `ml × 100` rounds to `100.00`, and `corroborated` adds the +5 agreement bonus before the
+`min(100, …)` clamp flattens it.
+
+**Not changed.** The user chose to keep the scores and rank by tie-break. De-saturating the score
+would change the fusion contract (Q23 accepted the combination at its current defaults), so it
+remains an open option rather than a silent edit.
+
+### Still open — recorded, not silently dropped
+
+1. **`db.QUEUE_ORDER_BY`** could gain `evidence_priority ASC` ahead of its `id` key, so the *default*
+   queue also ranks inside a tied band and score. Cost: it re-baselines `evaluation/three-arm/`, the
+   OpenAPI description and `tests/test_api_contract.py`, and moves the demo's printed ranks. Diff
+   prepared and shown; not applied.
+2. **A stress detection database** — the weaker-detector run `ranking-and-escalation-design.md` §8
+   has asked for since v1.13, and which S15 confirmed is the only way to answer the efficiency
+   question. Design agreed with the user: a **separate** file, leaving `data/demo.db` pristine, with
+   the feedback sequence **pre-registered** and reported as its own labelled experiment. Not yet
+   built.
+
+---
 
 ## Provenance
 

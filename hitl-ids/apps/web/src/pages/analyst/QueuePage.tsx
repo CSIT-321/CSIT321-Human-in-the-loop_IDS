@@ -66,11 +66,45 @@ const SORTS: readonly { readonly value: SortKey; readonly label: string }[] = [
   { value: "detection_score", label: "Detection score" },
   { value: "created_at", label: "Newest" },
   { value: "severity", label: "Severity" },
+  { value: "evidence", label: "Evidence" },
 ];
 
 const DIRECTIONS: readonly { readonly value: Direction; readonly label: string }[] = [
   { value: "desc", label: "Descending" },
   { value: "asc", label: "Ascending" },
+];
+
+type VerdictCategory = NonNullable<
+  NonNullable<paths["/api/alerts"]["get"]["parameters"]["query"]>["verdict"]
+>[number];
+
+/**
+ * The "Judged" control: what an analyst has said about an alert, in the industry's own words.
+ *
+ * `unjudged` is not a verdict, it is the absence of one, so it travels as its own query parameter —
+ * the API's `verdict` filter asks about the verdict currently *in force*, which by definition no
+ * unjudged alert has. The two are complements, and the row's "Verdict recorded" pill reads the same
+ * condition, so a filter and its pill can never disagree.
+ */
+const JUDGED: readonly { readonly value: string; readonly label: string }[] = [
+  { value: "any", label: "Any" },
+  { value: "confirm_true_positive", label: "True Positive" },
+  { value: "mark_false_positive", label: "False Positive" },
+  { value: "mark_expected_activity", label: "Benign Positive" },
+  { value: "escalate", label: "Escalated to Tier 2" },
+  { value: "needs_investigation", label: "Needs investigation" },
+  { value: "unjudged", label: "Not yet judged" },
+];
+
+/**
+ * Detection-score ceilings. "Below 100" is the demo's saturation filter: 975 of the 996 flagged
+ * alerts sit at exactly 100.0, where a confirming verdict clamps and nothing visibly moves. The
+ * 99.999 bound (not 99.9) catches the alerts at 99.96–99.99 too — only an exact 100.0 is saturated.
+ */
+const DETECTION_CEILINGS: readonly { readonly value: string; readonly label: string }[] = [
+  { value: "99.999", label: "Below 100 — not saturated" },
+  { value: "90", label: "Below 90" },
+  { value: "50", label: "Below 50" },
 ];
 
 /** Narrow a raw search param to one of the values the contract accepts. Null means "no filter". */
@@ -112,8 +146,14 @@ export function QueuePage() {
   const severity = oneOf(SEVERITIES, searchParams.get("severity"));
   const attackCategory = oneOf(ATTACK_CATEGORIES, searchParams.get("attackCategory"));
   const requiresReview = searchParams.get("requiresReview") === "true";
+  const detectionMax = oneOf(DETECTION_CEILINGS.map((option) => option.value), searchParams.get("detectionMax"));
   const sort = oneOf(SORTS.map((option) => option.value), searchParams.get("sort")) ?? "queue";
   const direction = oneOf(DIRECTIONS.map((option) => option.value), searchParams.get("direction")) ?? "desc";
+  const judged = oneOf(JUDGED.map((option) => option.value), searchParams.get("judged"));
+  const judgedVerdict: VerdictCategory | null =
+    judged === null || judged === "any" || judged === "unjudged"
+      ? null
+      : (judged as VerdictCategory);
   const offsetParam = Number.parseInt(searchParams.get("offset") ?? "0", 10);
   const offset = Number.isFinite(offsetParam) && offsetParam > 0 ? offsetParam : 0;
 
@@ -152,13 +192,16 @@ export function QueuePage() {
               severity: severity === null ? null : [severity],
               attackCategory: attackCategory === null ? null : [attackCategory],
               requiresReview: requiresReview ? true : null,
+              detectionMaxScore: detectionMax === null ? null : Number(detectionMax),
+              verdict: judgedVerdict === null ? null : [judgedVerdict],
+              unjudged: judged === "unjudged" ? true : null,
               search: searchTerm === "" ? null : searchTerm,
             },
           },
           signal,
         }),
       ),
-    [searchTerm, queueClass, evidenceClass, severity, attackCategory, requiresReview, sort, direction, offset],
+    [searchTerm, queueClass, evidenceClass, severity, attackCategory, requiresReview, detectionMax, sort, direction, judged, judgedVerdict, offset],
   );
 
   const clearButton = (
@@ -271,6 +314,22 @@ export function QueuePage() {
               </select>
             </FilterField>
 
+            <FilterField label="Detection score" htmlFor="queue-detection-max">
+              <select
+                id="queue-detection-max"
+                value={detectionMax ?? ""}
+                onChange={(event) => apply({ detectionMax: event.target.value === "" ? null : event.target.value }, true)}
+                className={CONTROL}
+              >
+                <option value="">Any</option>
+                {DETECTION_CEILINGS.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+            </FilterField>
+
             <div className="flex items-center gap-2 pb-1.5">
               <input
                 id="queue-requires-review"
@@ -290,7 +349,14 @@ export function QueuePage() {
               <select
                 id="queue-sort"
                 value={sort}
-                onChange={(event) => apply({ sort: event.target.value === "queue" ? null : event.target.value }, true)}
+                onChange={(event) =>
+                  apply(
+                    event.target.value === "queue"
+                      ? { sort: null, direction: null } // the contract order carries no direction
+                      : { sort: event.target.value },
+                    true,
+                  )
+                }
                 className={CONTROL}
               >
                 {SORTS.map((option) => (
@@ -308,9 +374,31 @@ export function QueuePage() {
                 onChange={(event) =>
                   apply({ direction: event.target.value === "desc" ? null : event.target.value }, true)
                 }
+                disabled={sort === "queue"}
+                title={sort === "queue"
+                  ? "The queue order is the contract order — band first, then operational score — and has no direction. Choose an inspection sort (e.g. Detection score) to flip it."
+                  : undefined}
                 className={CONTROL}
               >
                 {DIRECTIONS.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+            </FilterField>
+
+            <FilterField label="Judged" htmlFor="queue-judged">
+              <select
+                id="queue-judged"
+                value={judged ?? "any"}
+                onChange={(event) =>
+                  apply({ judged: event.target.value === "any" ? null : event.target.value }, true)
+                }
+                title="What the analyst said. 'Not yet judged' is the absence of a verdict, so it is its own filter."
+                className={CONTROL}
+              >
+                {JUDGED.map((option) => (
                   <option key={option.value} value={option.value}>
                     {option.label}
                   </option>

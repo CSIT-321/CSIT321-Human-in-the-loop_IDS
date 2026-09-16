@@ -128,9 +128,12 @@ def list_alerts(
     requires_review: bool | None = Query(None, alias="requiresReview"),
     min_score: float | None = Query(None, alias="minScore"),
     max_score: float | None = Query(None, alias="maxScore"),
+    detection_min_score: float | None = Query(None, alias="detectionMinScore"),
+    detection_max_score: float | None = Query(None, alias="detectionMaxScore"),
     search: str | None = Query(None, max_length=200),
     run_id: int | None = Query(None, alias="runId"),
     verdict: list[m.FeedbackCategory] | None = Query(None),
+    unjudged: bool | None = Query(None),
     owner: Literal["me", "unassigned"] | None = Query(None),
     flow_from: str | None = Query(None, alias="flowFrom", pattern=FLOW_TIME_PATTERN),
     flow_to: str | None = Query(None, alias="flowTo", pattern=FLOW_TIME_PATTERN),
@@ -146,7 +149,9 @@ def list_alerts(
             queue_class=queue_class, evidence_class=evidence_class, severity=severity,
             status=status_filter, attack_category=attack_category,
             requires_review=requires_review, min_score=min_score, max_score=max_score,
-            search=search, run_id=run_id, verdict=verdict, owner_id=owner_id,
+            detection_min_score=detection_min_score, detection_max_score=detection_max_score,
+            search=search, run_id=run_id, verdict=verdict, unjudged=unjudged,
+            owner_id=owner_id,
             unassigned=owner == "unassigned", flow_from=flow_from,
             flow_to=None if flow_to is None
             else (f"{flow_to} 23:59:59.999999" if len(flow_to) == 10 else flow_to))

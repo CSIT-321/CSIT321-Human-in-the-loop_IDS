@@ -22,10 +22,21 @@ from packages.detection.feedback.service import (
     load_policy,
     submit_feedback,
 )
-from packages.detection.fusion.cef import EVIDENCE_PRIORITY
+from packages.detection.feedback.learning import family_key_of
+from packages.detection.fusion.cef import (
+    EVIDENCE_PRIORITY,
+    FusionConfig,
+    ceilings_from_chart,
+    severity_for,
+)
 from packages.detection.guardrail.policy import GuardrailPolicy, apply_guardrails
+from packages.detection.pipeline.runner import _place
+from packages.detection.ranking.severity import load_severity_chart
 
 T0 = datetime(2026, 9, 11, 12, 0, tzinfo=UTC)
+
+#: The ceilings the committed severity chart yields - the same ones detection and feedback use.
+CEILINGS = ceilings_from_chart(load_severity_chart())
 CATEGORIES = list(get_args(m.FeedbackCategory))
 
 
@@ -230,6 +241,84 @@ def test_false_positive_on_a_critical_alert_is_held_at_the_floor(conn, seeded):
     assert event.guardrail_action == "capped" and "critical_alert_floor" in event.guardrail_reason
     assert result.alert.requires_review
     assert audit_types(conn) == ["FEEDBACK", "GUARDRAIL_INTERVENTION"]
+
+
+def test_a_verdict_that_moves_the_score_moves_the_label_with_it(conn, seeded):
+    """Severity is a function of the operational score, so feedback has to recompute it.
+
+    Regression: severity was written once at detection and never revisited, so feedback moved the
+    score out from under the label. The demo database shipped two alerts whose score the maximum
+    reduction had pushed from 100 down to the floor of 70, still labelled "Critical" - a High-band
+    score wearing a Critical label.
+    """
+    run, dataset = conn.execute("SELECT run_id, dataset_id FROM alerts WHERE id = ?",
+                                (seeded["false_positive"],)).fetchone()
+    # An Infiltration reaches Critical, so a drop to 70 crosses a real band edge.
+    alert_id = db.insert(conn, alert(99.9, attack="Infiltration", dataset_id=dataset, run_id=run))
+    conn.commit()
+    assert severity_for(99.9, "Infiltration", CEILINGS) == "Critical"
+
+    result = submit_feedback(conn, alert_id=alert_id, user_id=seeded["user"],
+                             category="mark_false_positive", now=T0)
+
+    assert (result.alert.detection_score, result.alert.combined_score) == (99.9, 75.0)
+    # The Infiltration floor binds at 75 - above the critical floor of 70 - and 75 is the High band.
+    assert result.alert.severity == "High", "the label has to come down with the score"
+    assert result.alert.severity == severity_for(result.alert.combined_score,
+                                                 result.alert.attack_category, CEILINGS)
+
+
+def test_the_severity_label_matches_the_score_for_every_alert_after_verdicts(conn, seeded):
+    """The invariant on the feedback path: whatever the score and class, the stored label is what
+    they imply. A label written once at detection and never revisited cannot satisfy this."""
+    judged = ("false_positive", "override", "moderate")
+    for key in judged:
+        submit_feedback(conn, alert_id=seeded[key], user_id=seeded["user"],
+                        category="mark_false_positive", now=T0)
+
+    for key in judged:
+        row = conn.execute(
+            "SELECT combined_score, severity, attack_category FROM alerts WHERE id = ?",
+            (seeded[key],)).fetchone()
+        assert row[1] == severity_for(row[0], row[2], CEILINGS), (
+            f"{key}: score {row[0]} carries {row[1]}")
+
+
+def test_a_new_alert_takes_what_its_family_already_learned(conn, seeded):
+    """Ingest must apply a family's stored learning, or the learning never reaches new findings.
+
+    Regression: ``_place`` ran on a zero adjustment, so a detection run over new flows started every
+    alert at its raw detection score while the family's ``applied_adjustment`` sat unread in
+    ``alert_families``. ``refresh_family``'s docstring claimed detection called it. It did not.
+    """
+    run, dataset = conn.execute("SELECT run_id, dataset_id FROM alerts WHERE id = ?",
+                                (seeded["false_positive"],)).fetchone()
+    flow = m.FlowRecord(src_ip="10.0.0.9", dst_ip="18.221.219.4", src_port=4444, dst_port=21,
+                        protocol="tcp", duration=0.5, packets=6, bytes=3190, flow_features={},
+                        source_record_id="AL-99999")
+    fresh = alert(100.0, attack="Brute Force", dataset_id=dataset, run_id=run).model_copy(
+        update={"requires_review": True})  # what fuse() sets for a confident model-only alert
+    chart, policy, config = load_severity_chart(), GuardrailPolicy(), FusionConfig()
+
+    # Nothing learned yet, so the alert keeps its own detection score - the old behaviour.
+    before = _place(conn, fresh, flow, chart, policy, config)
+    assert before.combined_score == fresh.detection_score == 100.0
+    assert before.severity == "Medium"  # Brute Force tops out at Medium on the chart
+
+    # The family learns a dismissal. A new alert of the same kind must arrive adjusted.
+    key = family_key_of(fresh, flow)
+    db.insert(conn, m.AlertFamily(
+        family_key=key, attack_category="Brute Force", scheme="c1-m1", severity_version="v1",
+        weight=0.5, feedback_counts={"mark_false_positive": 3},
+        dominant_category="mark_false_positive", agreement_ratio=1.0, gate_open=True,
+        gate_reason="3 verdicts, none dissenting", learned_adjustment=-30.0, learned_offset=0,
+        applied_adjustment=-30.0, applied_offset=0))
+    conn.commit()
+
+    after = _place(conn, fresh, flow, chart, policy, config)
+    assert after.detection_score == 100.0, "the immutable record must not move"
+    assert after.combined_score == 70.0, "the family's learned adjustment must reach a new alert"
+    assert after.severity == severity_for(70.0, "Brute Force", CEILINGS) == "Medium"
 
 
 def test_a_confirmed_missed_attack_rises_and_is_reviewed(conn, seeded):

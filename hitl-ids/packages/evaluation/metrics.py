@@ -39,13 +39,14 @@ from collections import Counter
 from dataclasses import dataclass
 from typing import Any
 
+from packages.contracts import db
 from packages.evaluation.truth import GroundTruth
 
 #: The cut-offs the report quotes. 50 is the plan's headline ("Delta FP in top-50").
 PRECISION_AT = (10, 25, 50, 100, 200)
 
 #: The queue's order, qualified for a join against flow_data.
-QUEUE_ORDER_QUALIFIED = "a.queue_priority ASC, a.combined_score DESC, a.id ASC"
+QUEUE_ORDER_QUALIFIED = db.queue_order("a")
 
 
 @dataclass(frozen=True)

@@ -31,13 +31,18 @@ from apps.api import auth
 from apps.api.main import create_app
 from packages.contracts import db
 from packages.contracts import models as m
+from packages.detection.fusion.cef import ceilings_from_chart, severity_for
 from packages.detection.pipeline import store
 from packages.detection.pipeline.predictor import ReplayPredictor
 from packages.detection.pipeline.runner import open_database, run_detection
 from packages.detection.pipeline.source import CsvReplaySource
+from packages.detection.ranking.severity import load_severity_chart
 from conftest import FTP_RULE, ROWS  # the shared synthetic capture
 
 T0 = datetime(2026, 9, 12, 9, 0, tzinfo=UTC)
+
+#: The ceilings the committed severity chart yields - the same ones detection and feedback use.
+CEILINGS = ceilings_from_chart(load_severity_chart())
 
 
 @pytest.fixture
@@ -124,12 +129,29 @@ def test_a_missing_database_is_a_clear_error_not_a_stack_trace(tmp_path):
 # --------------------------------------------------------------------------------------------
 
 def test_the_queue_is_returned_in_contract_order(client):
+    """Severity worst-first, then the operational score (``db.QUEUE_ORDER_BY``, v1.31)."""
+    levels = {"Informational": 0, "Low": 1, "Medium": 2, "High": 3, "Critical": 4}
     items = rows(client, limit=50)
-    priorities = [item["queuePriority"] for item in items]
-    assert priorities == sorted(priorities), "the queue is not ordered by band"
+    severities = [levels[item["severity"]] for item in items]
+    assert severities == sorted(severities, reverse=True), "the queue is not ordered by severity"
     for earlier, later in zip(items, items[1:]):
-        if earlier["queuePriority"] == later["queuePriority"]:
+        if earlier["severity"] == later["severity"]:
             assert earlier["combinedScore"] >= later["combinedScore"]
+
+
+def test_the_evidence_sort_leads_with_a_checkable_rule(client):
+    """The one inspection sort that earns its place beside the contract order.
+
+    When a detector's false positives carry an attack's full confidence, no score-based key can
+    separate them and only the rule layer can. Measured on ``data/stress.db``, this order reaches
+    precision@100 1.000 where the contract order reaches 0.000.
+    """
+    order = {"corroborated": 0, "signature_override": 1, "ml_only": 2, "none": 3}
+    items = rows(client, limit=50, sort="evidence", direction="asc")
+    classes = [order[item["evidenceClass"]] for item in items]
+    assert classes == sorted(classes), "ascending must put the lowest evidence priority first"
+    assert any(item["evidenceClass"] == "corroborated" for item in items), (
+        "the fixture must produce at least one corroborated alert for this to mean anything")
 
 
 def test_every_queue_row_carries_both_scores(client):
@@ -154,10 +176,102 @@ def test_filters_narrow_the_queue(client):
     assert flagged and all(i["queueClass"] != "none" for i in flagged)
 
 
+def test_detection_score_range_filters_the_queue(client):
+    """``detectionMaxScore=99.999`` is the saturation filter: it isolates everything an exact
+    100.0 would hide. The 99.999 bound matters — a 99.9 ceiling would silently lose the alerts
+    at 99.96–99.99, which are precisely the flagged ones a verdict can still visibly raise."""
+    every = rows(client, limit=100)
+    unsaturated = rows(client, limit=100, detectionMaxScore=99.999)
+    expected = {i["alertRef"] for i in every if i["detectionScore"] < 100}
+    assert {i["alertRef"] for i in unsaturated} == expected
+    assert all(i["detectionScore"] <= 99.999 for i in unsaturated)
+
+    floored = rows(client, limit=100, detectionMinScore=90)
+    assert floored and all(i["detectionScore"] >= 90 for i in floored)
+    high = {i["alertRef"] for i in every if i["detectionScore"] >= 90}
+    assert {i["alertRef"] for i in floored} == high
+
+
+def test_the_unjudged_filter_is_the_complement_of_a_verdict(client):
+    """The "verdict done" view: an analyst needs to see what has been judged and what has not.
+
+    ``unjudged=true`` reads the same condition the row's "Verdict recorded" pill does, and it is the
+    complement of the ``verdict`` filter — which asks about the verdict currently *in force*.
+    """
+    unjudged = rows(client, limit=200, unjudged=True)
+    assert unjudged, "the fixture must start with alerts nobody has judged"
+    assert all(item["hasFeedback"] is False for item in unjudged)
+
+    target = unjudged[0]["alertRef"]
+    response = client.post(f"/api/alerts/{target}/feedback",
+                           json={"category": "confirm_true_positive"})
+    assert response.status_code == 200, response.text
+
+    assert target not in {item["alertRef"] for item in rows(client, limit=200, unjudged=True)}
+
+    confirmed = rows(client, limit=200, verdict=["confirm_true_positive"])
+    assert [item["alertRef"] for item in confirmed] == [target]
+    assert all(item["hasFeedback"] is True for item in confirmed)
+
+
 def test_an_unknown_sort_key_is_refused(client):
     response = client.get("/api/alerts", params={"sort": "whatever"})
     assert response.status_code == 400
     assert response.json()["error"]["code"] == "VALIDATION_FAILED"
+
+
+# --------------------------------------------------------------------------------------------
+# The tie-break (measured on 2026-09-16)
+#
+# Scores saturate: on the demo database 975 of the 996 flagged alerts sit at exactly 100.0 and
+# 3,635 at exactly 0.0, so 4,789 of 5,000 alerts share a score with more than a page of others. A
+# tie is therefore the normal case, and the tie-break *is* the visible ranking. It used to be a
+# hard-coded `a.id ASC`, which ignored the requested direction: sorting the 975 alerts at 100.0
+# descending and ascending returned the identical page. These three tests pin the fix.
+# --------------------------------------------------------------------------------------------
+
+
+def test_the_direction_flips_a_page_whose_scores_all_tie(client):
+    """The reported bug. Every alert in this page scores exactly 100.0, so the primary sort key is
+    constant and only the tie-break can distinguish the two directions."""
+    ascending = rows(client, limit=50, sort="detection_score", direction="asc",
+                     detectionMinScore=100)
+    descending = rows(client, limit=50, sort="detection_score", direction="desc",
+                      detectionMinScore=100)
+    assert len(ascending) > 1, "the fixture must produce a tied page"
+    assert len({item["detectionScore"] for item in ascending}) == 1, "the page must be all-tied"
+    assert [i["alertRef"] for i in ascending] != [i["alertRef"] for i in descending], (
+        "flipping the direction must flip the page, even though every score is equal")
+
+
+def test_a_tied_page_reads_oldest_first_when_ascending(client):
+    """The tie-break's semantic key is the flow's capture time, and it follows the direction:
+    ascending is oldest traffic first (the FIFO order for an unworked queue), descending is newest
+    first. A capture-time key pinned to ASC would leave the unique times in charge and the `id`
+    key unreached — which reproduced the identical page this fix removes."""
+    ascending = rows(client, limit=50, sort="detection_score", direction="asc",
+                     detectionMinScore=100)
+    descending = rows(client, limit=50, sort="detection_score", direction="desc",
+                      detectionMinScore=100)
+    up = [item["flowTime"] for item in ascending]
+    down = [item["flowTime"] for item in descending]
+    assert len(set(up)) == len(up), "the fixture's capture times are distinct"
+    assert up == sorted(up), "ascending must read oldest capture first"
+    assert down == sorted(down, reverse=True), "descending must read newest capture first"
+
+
+def test_paging_a_tied_group_never_repeats_or_skips_an_alert(client):
+    """A total order is what keeps paging honest. Without the final `id` key, two pages of a tied
+    group can repeat an alert or drop one."""
+    params = {"sort": "detection_score", "direction": "asc", "detectionMinScore": 100,
+              "limit": 5}
+    first = client.get("/api/alerts", params={**params, "offset": 0}).json()
+    second = client.get("/api/alerts", params={**params, "offset": 5}).json()
+    total = first["page"]["total"]
+    assert total > 5, "the fixture needs a tied group deeper than one page"
+    refs = [item["alertRef"] for item in first["items"]]
+    refs += [item["alertRef"] for item in second["items"]]
+    assert len(refs) == len(set(refs)) == total
 
 
 def test_page_size_is_bounded(client):
@@ -314,6 +428,34 @@ def test_an_open_gate_reaches_members_that_were_never_judged(client):
         "an open gate must apply something, or the learning reached nobody")
     assert family["note"], "the panel must explain why an unjudged alert carries an adjustment"
 
+
+def test_the_severity_label_agrees_with_the_score_after_a_verdict(client):
+    """The invariant behind the labels: severity is a function of the operational score.
+
+    Regression: severity was written once at detection and never revisited, so feedback moved the
+    score out from under it. The demo database shipped two alerts at combined_score 70 still labelled
+    "Critical" - a High-band score wearing a Critical label.
+    """
+    before = {i["alertRef"]: i["severity"] for i in rows(client, limit=200)}
+    targets = [i for i in rows(client, limit=100) if i["isCritical"]]
+    assert targets, "the fixture should produce at least one Critical alert"
+    for item in targets[:4]:
+        response = client.post(f"/api/alerts/{item['alertRef']}/feedback",
+                               json={"category": "mark_false_positive"})
+        assert response.status_code == 200, response.text
+
+    judged = [i for i in rows(client, limit=200) if i["hasFeedback"]]
+    assert judged, "the verdicts must show up in the queue"
+    for item in rows(client, limit=200):
+        expected = severity_for(item["combinedScore"], item["attackCategory"], CEILINGS)
+        assert item["severity"] == expected, (
+            f"{item['alertRef']}: score {item['combinedScore']} carries {item['severity']}, "
+            f"but that score's band is {expected}")
+
+
+# --------------------------------------------------------------------------------------------
+# The queue's verdict filter
+# --------------------------------------------------------------------------------------------
 
 def test_an_unknown_feedback_category_is_refused(client):
     item = rows(client, limit=1)[0]

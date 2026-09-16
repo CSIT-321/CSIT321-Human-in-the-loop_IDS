@@ -46,6 +46,7 @@ from packages.detection.feedback.learning import (
     member_placement,
     verdict_queue_class,
 )
+from packages.detection.fusion.cef import ceilings_from_chart, severity_for
 from packages.detection.guardrail.policy import GuardrailPolicy, apply_guardrails
 from packages.detection.ranking.severity import SeverityChart, load_severity_chart
 
@@ -132,8 +133,9 @@ def refresh_family(conn: sqlite3.Connection, family_key: str, *, policy: Guardra
     """Recompute one family's learning from its members' effective verdicts, store it, and
     re-place every member with no verdict of its own. Idempotent; the caller owns the transaction.
 
-    Detection (S9) calls it too, so an alert that arrives after the verdicts takes its family's
-    learning."""
+    Detection does not call this. It reads what this stored: ``runner._place`` consults
+    ``alert_families`` at ingest, so an alert that arrives after the verdicts takes its family's
+    learning without a wholesale replay."""
     members = {row["id"]: db.from_row(m.Alert, row) for row in conn.execute(
         "SELECT * FROM alerts WHERE family_key = ? ORDER BY id", (family_key,))}
     if not members:
@@ -169,6 +171,7 @@ def refresh_family(conn: sqlite3.Connection, family_key: str, *, policy: Guardra
     else:
         after = before
 
+    ceilings = ceilings_from_chart(chart)  # the chart's ceilings, so the label matches detection
     judged = {verdict.alert_id for verdict in verdicts}
     moved, interventions = 0, Counter()
     for alert in members.values():
@@ -181,9 +184,12 @@ def refresh_family(conn: sqlite3.Connection, family_key: str, *, policy: Guardra
         if ((place.score, place.queue_class, place.requires_review)
                 != (alert.combined_score, alert.queue_class, alert.requires_review)):
             conn.execute(
-                "UPDATE alerts SET combined_score = ?, queue_class = ?, queue_priority = ?, "
-                "requires_review = ?, updated_at = ? WHERE id = ?",
-                (place.score, place.queue_class, place.queue_priority, int(place.requires_review),
+                "UPDATE alerts SET combined_score = ?, severity = ?, queue_class = ?, "
+                "queue_priority = ?, requires_review = ?, updated_at = ? WHERE id = ?",
+                (place.score,
+                 severity_for(place.score, alert.attack_category, ceilings,
+                              critical_threshold=policy.critical_alert_threshold),
+                 place.queue_class, place.queue_priority, int(place.requires_review),
                  db.format_timestamp(now), alert.id))
             moved += 1
     return FamilyRefresh(before, after, moved, dict(sorted(interventions.items())))
@@ -224,9 +230,13 @@ def submit_feedback(conn: sqlite3.Connection, *, alert_id: int, user_id: int, ca
 
     with conn:  # one transaction: commits on success, rolls back on any exception
         feedback_id = db.insert(conn, event)
-        conn.execute("UPDATE alerts SET combined_score = ?, requires_review = ?, queue_class = ?, "
-                     "queue_priority = ?, updated_at = ? WHERE id = ?",
-                     (outcome.score_after, int(requires_review), band, m.QUEUE_PRIORITY[band],
+        conn.execute("UPDATE alerts SET combined_score = ?, severity = ?, requires_review = ?, "
+                     "queue_class = ?, queue_priority = ?, updated_at = ? WHERE id = ?",
+                     (outcome.score_after,
+                      severity_for(outcome.score_after, alert.attack_category,
+                                   ceilings_from_chart(chart),
+                                   critical_threshold=policy.critical_alert_threshold),
+                      int(requires_review), band, m.QUEUE_PRIORITY[band],
                       db.format_timestamp(now), alert_id))
         writer = AuditWriter(conn)
         audit = [writer.feedback(user_id, alert_id, feedback_id, category=category,

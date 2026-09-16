@@ -255,7 +255,7 @@ administrator. **Guardrails can be switched off** for the evaluation's third arm
 | ~~1~~ | ~~S7a direct feedback + guardrails~~ | **Done** — §5, changelog v1.10 |
 | ~~2~~ | ~~**S7b** similar-alert learning~~ | **Done** — §5, changelog v1.14: families, the agreement gate, C1 + M1, and the `queue_class` band |
 | ~~3~~ | ~~**S9** batch runner + the S3 `FlowSource` seam~~ | **Done** — `python scripts/run_detection.py`: 5,000 flows → 5,000 stored alerts in 21 s (changelog v1.15) |
-| ~~4~~ | ~~**S15** three-arm evaluation~~ | **Done** — changelog v1.16. Control · treatment · guardrails-off, pre-registered and reproducible. **Read [`evaluation-report.md`](evaluation-report.md) before quoting any feedback number**: S7b reached 198 untouched true positives and leaked onto none, but promoted a benign alert to rank 1 and precision@50 fell 1.000 → 0.980 |
+| ~~4~~ | ~~**S15** three-arm evaluation~~ | **Done** — changelog v1.16. Control · treatment · guardrails-off, pre-registered and reproducible. **Read [`evaluation-report.md`](evaluation-report.md) before quoting any feedback number**: S7b moved 681 family-member ranks and leaked onto no ground truth. Under the v1.31 severity-first order the promoted benign alert reaches only rank 186 and precision@50 holds at 1.000; the band order it replaced put that alert at rank 1 and cost 0.020 |
 | 1 | **S10a / S10b** API | The endpoints in §6. S10a is the contract S11 builds against |
 | 2 | **S11 – S14** interface | The analyst queue with both score columns; admin and evaluator views |
 | 3 | **S16** demo gate | End-to-end demonstration. **The narrative was rewritten in plan v1.1** — the old one opened on a `signature_override` alert, and none exist |

@@ -47,6 +47,7 @@ DEFAULT_DB = HITL / "data" / "demo.db"
 
 FALSE_POSITIVE = "AL-00478"
 MISSED_ATTACK = "AL-03086"
+CLIMB = "AL-02717"  # 88.48 -> 98.48: the largest fully-visible climb among the non-saturated alerts
 FAMILY_KEY = '["Port Scan",445,"tcp","-"]'
 FAMILY_JUDGED = ("AL-01696", "AL-03873", "AL-03153")
 FAMILY_UNTOUCHED = ("AL-03044", "AL-04526")
@@ -165,6 +166,23 @@ def rehearse(database: Path) -> None:
     check(missed_rank_after < missed_rank_before,
           f"it climbs the queue (rank {missed_rank_before} -> {missed_rank_after})")
 
+    print("\n3b. The saturation filter, and a climb that is fully visible")
+    filtered = ok(client.get("/api/alerts", params={
+        "evidenceClass": ["ml_only"], "detectionMaxScore": 99.999, "limit": 50}, headers=ANALYST))
+    check(filtered["page"]["total"] == 21,
+          "the not-saturated filter finds the 21 flagged alerts below 100.0")
+    climb = find(client, CLIMB)
+    check(climb["detectionScore"] == 88.48 and climb["queueClass"] == "ml_only",
+          f"{CLIMB} sits in Model only at 88.48 - the widest headroom below 100")
+    chain = verdict(client, climb["alertRef"], "confirm_true_positive",
+                    "Repeated SQL-injection probes against the web tier; confirm and escalate."
+                    )["feedback"]["adjustment"]
+    check(chain["action"] == "applied" and chain["actualDelta"] == 10.0,
+          "+10 is applied in full - nothing clamps at 100")
+    check(chain["scoreAfter"] == 98.48, "88.48 -> 98.48: the score visibly climbs")
+    check(chain["queueClassBefore"] == "ml_only" and chain["queueClassAfter"] == "tier2_candidate",
+          "a True Positive on a severity >= 7 class earns the Tier 2 band (E2)")
+
     print("\n4. Three agreeing verdicts teach a family; alerts nobody touched move")
     judged = [find(client, record) for record in FAMILY_JUDGED]
     untouched_before = {record: find(client, record) for record in FAMILY_UNTOUCHED}
@@ -207,9 +225,17 @@ def rehearse(database: Path) -> None:
     runs = ok(restarted.get("/api/evaluation/runs", headers=EVALUATOR))["items"]
     check(bool(runs), "the evaluator can find the three-arm run")
     run = ok(restarted.get(f"/api/evaluation/runs/{runs[0]['runId']}", headers=EVALUATOR))
-    delta = run["deltas"]["B_minus_A"]["precision_at_50"]
+    deltas = run["deltas"]["B_minus_A"]
     check(run["detectionMetricsIdenticalAcrossArms"], "detection is identical across all three arms")
-    check(delta < 0, f"the wrong-way delta is reported as measured: precision@50 {delta:+.3f}")
+    # S15: the deltas are rendered as measured, in whichever direction they went. Under the
+    # severity-first queue (v1.31) feedback no longer costs a top-50 place; the band order did, at
+    # precision@50 -0.020. The wrong-way evidence now lives in the slower metrics.
+    check(deltas["false_positives_in_top_50"] == 0,
+          "feedback adds no false positive to the top 50 (the band order added 1)")
+    negative = {key: value for key, value in deltas.items()
+                if isinstance(value, (int, float)) and value < 0}
+    check(bool(negative), "the remaining deltas are still reported as measured: "
+          + ", ".join(f"{key} {value:+g}" for key, value in sorted(negative.items())[:3]))
 
 
 def main() -> int:

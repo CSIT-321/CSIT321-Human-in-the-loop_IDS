@@ -13,7 +13,7 @@ export interface paths {
         };
         /**
          * The ranked analyst queue
-         * @description Ordered by `queue_priority ASC, combined_score DESC, id ASC` unless `sort` overrides it. `sort=queue` is the contract order and what the demo shows; the other keys are inspection tools, not alternative rankings. Maximum page size 200.
+         * @description Ordered by `CASE severity WHEN 'Critical' THEN 4 WHEN 'High' THEN 3 WHEN 'Medium' THEN 2 WHEN 'Low' THEN 1 ELSE 0 END DESC, combined_score DESC, id ASC` unless `sort` overrides it. `sort=queue` is the contract order and what the demo shows; the other keys are inspection tools, not alternative rankings. Maximum page size 200.
          */
         get: operations["listAlerts"];
         put?: never;
@@ -1793,8 +1793,8 @@ export interface operations {
                 limit?: number;
                 /** @description null */
                 offset?: number;
-                /** @description Default `queue` is the contract order: queue_priority ASC, combined_score DESC, id ASC */
-                sort?: "queue" | "combined_score" | "detection_score" | "created_at" | "severity";
+                /** @description Default `queue` is the contract order: CASE severity WHEN 'Critical' THEN 4 WHEN 'High' THEN 3 WHEN 'Medium' THEN 2 WHEN 'Low' THEN 1 ELSE 0 END DESC, combined_score DESC, id ASC */
+                sort?: "queue" | "combined_score" | "detection_score" | "created_at" | "severity" | "evidence";
                 /** @description null */
                 direction?: "asc" | "desc";
                 /** @description Filter to these queue bands */
@@ -1813,12 +1813,18 @@ export interface operations {
                 minScore?: number | null;
                 /** @description null */
                 maxScore?: number | null;
+                /** @description On detection_score, the immutable column. With evidence filters, `detectionMaxScore=99.999` isolates flagged alerts a confirming verdict can still visibly raise — 975 of the 996 flagged alerts sit at exactly 100.0, and the rest are all below 99.999 */
+                detectionMinScore?: number | null;
+                /** @description null */
+                detectionMaxScore?: number | null;
                 /** @description Substring of source IP, destination IP, or matched rule id */
                 search?: string | null;
                 /** @description Restrict to one detection run */
                 runId?: number | null;
                 /** @description Filter by the verdict currently in force */
                 verdict?: ("confirm_true_positive" | "mark_false_positive" | "mark_expected_activity" | "needs_investigation" | "escalate")[] | null;
+                /** @description `true`: only alerts with no verdict recorded at all — the complement of the `verdict` filter, which asks about the verdict currently in force. The queue row's `hasFeedback` reports the same condition, so a filter and its row pill never disagree */
+                unjudged?: boolean | null;
                 /** @description `me`: owned by the caller's demo user; `unassigned`: no owner */
                 owner?: ("me" | "unassigned") | null;
                 /** @description Earliest flow capture time, capture-local, e.g. 2018-02-14 12:00 */

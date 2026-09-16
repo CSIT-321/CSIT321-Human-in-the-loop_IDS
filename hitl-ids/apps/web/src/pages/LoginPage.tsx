@@ -16,6 +16,11 @@ export function LoginPage() {
   const navigate = useNavigate();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+  // Hold-to-peek: the password is shown only while the pointer is over the eye — or pressing it,
+  // which is how touch and keyboard users hold it — and is masked again the moment that ends.
+  const [pointerOverEye, setPointerOverEye] = useState(false);
+  const [pressingEye, setPressingEye] = useState(false);
+  const passwordVisible = pointerOverEye || pressingEye;
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
 
@@ -74,15 +79,37 @@ export function LoginPage() {
             <label htmlFor="password" className="block text-sm text-muted">
               Password
             </label>
-            <input
-              id="password"
-              name="password"
-              type="password"
-              autoComplete="current-password"
-              value={password}
-              onChange={(event) => setPassword(event.target.value)}
-              className="w-full rounded-sm border border-border bg-raised px-3 py-2 text-text"
-            />
+            <div className="relative">
+              <input
+                id="password"
+                name="password"
+                type={passwordVisible ? "text" : "password"}
+                autoComplete="current-password"
+                value={password}
+                onChange={(event) => setPassword(event.target.value)}
+                className="w-full rounded-sm border border-border bg-raised px-3 py-2 pr-12 text-text"
+              />
+              <button
+                type="button"
+                aria-label="Show password"
+                title="Hold to show password"
+                onMouseEnter={() => setPointerOverEye(true)}
+                onMouseLeave={() => setPointerOverEye(false)}
+                onPointerDown={() => setPressingEye(true)}
+                onPointerUp={() => setPressingEye(false)}
+                onPointerCancel={() => setPressingEye(false)}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter" || event.key === " ") setPressingEye(true);
+                }}
+                onKeyUp={(event) => {
+                  if (event.key === "Enter" || event.key === " ") setPressingEye(false);
+                }}
+                onBlur={() => setPressingEye(false)}
+                className="absolute inset-y-0 right-0 my-auto mr-2 flex h-7 w-7 items-center justify-center rounded-sm text-dim hover:text-text"
+              >
+                {passwordVisible ? <EyeOffIcon /> : <EyeIcon />}
+              </button>
+            </div>
           </div>
 
           {error !== null && (
@@ -105,5 +132,27 @@ export function LoginPage() {
         One account per view: the role you get is the role of the account you sign in as.
       </p>
     </div>
+  );
+}
+
+/** The eye as it appears while the password is masked — hold it to peek. */
+function EyeIcon() {
+  return (
+    <svg aria-hidden viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z" />
+      <circle cx="12" cy="12" r="3" />
+    </svg>
+  );
+}
+
+/** The eye struck through, shown only while the password is actually visible. */
+function EyeOffIcon() {
+  return (
+    <svg aria-hidden viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M9.88 9.88a3 3 0 1 0 4.24 4.24" />
+      <path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68" />
+      <path d="M6.61 6.61A13.526 13.526 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61" />
+      <line x1="2" x2="22" y1="2" y2="22" />
+    </svg>
   );
 }

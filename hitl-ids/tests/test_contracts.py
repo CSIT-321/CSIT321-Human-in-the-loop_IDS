@@ -429,16 +429,46 @@ def test_amendment_is_a_new_feedback_row(conn, graph):
 # --------------------------------------------------------------------------------------------
 
 
-def test_queue_orders_by_queue_band_then_score(conn, graph):
+def test_queue_orders_by_severity_then_score(conn, graph):
+    """v1.31: severity worst-first, then the operational score. The band is a label, not a key.
+
+    Regression: the queue led with the band, and measured against the demo database its whole top 50
+    was Medium - Tier 2 candidates that are not severe, the opposite of what a Tier 1 analyst should
+    open first.
+    """
     dataset, run = graph["dataset"].id, graph["run"].id
-    for band, score in [("signature_override", 99), ("tier2_candidate", 40), ("ml_only", 100),
-                        ("tier2_candidate", 95)]:
-        db.insert(conn, make_alert(dataset, run, queue_class=band, combined_score=score,
-                                   detection_score=score))
-    order = [(row["queue_priority"], row["combined_score"]) for row in conn.execute(
-        f"SELECT queue_priority, combined_score FROM alerts ORDER BY {db.QUEUE_ORDER_BY}")]
-    # The score-100 alert is last: score only orders within a queue band (invariant I5).
-    assert order == [(0, 95), (0, 40), (1, 92), (2, 99), (3, 100)]
+    db.insert(conn, make_alert(dataset, run, queue_class="ml_only", combined_score=100,
+                               detection_score=100, severity="Medium"))
+    db.insert(conn, make_alert(dataset, run, queue_class="tier2_candidate", combined_score=40,
+                               detection_score=40, severity="Critical"))
+    order = [(row["severity"], row["combined_score"]) for row in conn.execute(
+        f"SELECT severity, combined_score FROM alerts ORDER BY {db.QUEUE_ORDER_BY}")]
+    # The Critical alert leads although its band is not the top band and its score is far lower.
+    assert order.index(("Critical", 40)) < order.index(("Medium", 100))
+
+
+def test_a_higher_score_orders_within_a_severity(conn, graph):
+    """The second key: within one severity, the operational score decides."""
+    dataset, run = graph["dataset"].id, graph["run"].id
+    for score in (60, 90, 75):
+        db.insert(conn, make_alert(dataset, run, combined_score=score, detection_score=score,
+                                   severity="High"))
+    scores = [row["combined_score"] for row in conn.execute(
+        f"SELECT combined_score FROM alerts WHERE severity = 'High' ORDER BY {db.QUEUE_ORDER_BY}")]
+    assert scores == sorted(scores, reverse=True)
+
+
+def test_the_queue_band_no_longer_orders_the_queue(conn, graph):
+    """``queue_class`` marks a Tier 2 candidate and orders the band tabs; it is not a ranking key."""
+    dataset, run = graph["dataset"].id, graph["run"].id
+    db.insert(conn, make_alert(dataset, run, queue_class="corroborated", combined_score=50,
+                               detection_score=50, severity="Low"))
+    db.insert(conn, make_alert(dataset, run, queue_class="ml_only", combined_score=50,
+                               detection_score=50, severity="Critical"))
+    order = [(row["queue_class"], row["combined_score"]) for row in conn.execute(
+        f"SELECT queue_class, combined_score FROM alerts ORDER BY {db.QUEUE_ORDER_BY}")]
+    assert order.index(("ml_only", 50)) < order.index(("corroborated", 50)), (
+        "the worse finding leads, whatever band it sits in")
 
 
 def test_queue_band_defaults_to_the_evidence_band():

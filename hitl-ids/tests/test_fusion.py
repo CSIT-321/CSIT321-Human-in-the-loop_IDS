@@ -20,8 +20,18 @@ import pytest
 from packages.contracts import db
 from packages.contracts import models as m
 from packages.detection.feedback.service import FEEDBACK_EFFECTS
-from packages.detection.fusion.cef import EVIDENCE_PRIORITY, FusionConfig, fuse, queue_key
+from packages.detection.fusion.cef import (
+    CVSS_TO_SEVERITY,
+    EVIDENCE_PRIORITY,
+    SEVERITY_RANK,
+    FusionConfig,
+    ceilings_from_chart,
+    fuse,
+    queue_key,
+    severity_for,
+)
 from packages.detection.guardrail.policy import apply_guardrails
+from packages.detection.ranking.severity import band, load_severity_chart
 from packages.detection.signature.engine import match_all
 from packages.detection.signature.observable import OBSERVABLE_FIELDS, project_frame
 from packages.detection.signature.rule_set import load_rule_set
@@ -75,16 +85,21 @@ UNAVAILABLE = prediction("Benign", 0.0, available=False)
 # (case, matches, prediction, evidence class, score, requires_review, severity)
 SPEC = [
     ("rule and model agree, confident", [match()], prediction("Brute Force", 0.99),
-     "corroborated", 100.0, True, "Critical"),
+     "corroborated", 100.0, True, "Medium"),
     ("rule and model agree, unsure", [match()], prediction("Brute Force", 0.5),
      "corroborated", 65.0, False, "Medium"),
     ("model contradicts the rule's class", [match()], prediction("Port Scan", 0.99),
      "signature_override", 60.0, True, "Medium"),
     ("model calls the flow benign", [match()], prediction("Benign", 0.9),
      "signature_override", 60.0, True, "Medium"),
-    ("model only, confident", [], prediction("DoS", 0.95), "ml_only", 95.0, True, "Critical"),
-    ("model only, unsure", [], prediction("DoS", 0.7), "ml_only", 70.0, False, "High"),
-    ("nothing fired", [], prediction("Benign", 0.97), "none", 3.0, False, "Informational"),
+    ("model only, confident", [], prediction("DoS", 0.95), "ml_only", 95.0, True, "Medium"),
+    ("model only, unsure", [], prediction("DoS", 0.7), "ml_only", 70.0, False, "Medium"),
+    ("model only, a class that can reach Critical", [], prediction("Infiltration", 0.99),
+     "ml_only", 99.0, True, "Critical"),
+    ("nothing fired, a real low signal", [], prediction("Benign", 0.97), "none", 3.0, False,
+     "Low"),
+    ("nothing fired, at the noise floor", [], prediction("Benign", 0.9999), "none", 0.01, False,
+     "Informational"),
     ("model unavailable", [], UNAVAILABLE, "none", 0.0, True, "Informational"),
     ("model unavailable, rule fired", [match()], UNAVAILABLE,
      "signature_override", 60.0, True, "Medium"),
@@ -180,14 +195,28 @@ def test_i4_fusion_is_a_pure_function_of_its_inputs():
         assert fuse(matches, pred) == fuse(matches, pred) == fuse(*rebuilt)
 
 
-def test_i5_no_override_ranks_below_any_ml_only_alert():
-    decisions = sorted((fuse(matches, pred) for matches, pred in grid()), key=queue_key)
-    classes = [decision.evidence_class for decision in decisions]
-    last_override = max(i for i, c in enumerate(classes) if c == "signature_override")
-    first_ml_only = min(i for i, c in enumerate(classes) if c == "ml_only")
-    assert last_override < first_ml_only
-    # Q22: the whole queue runs corroborated -> signature_override -> ml_only -> none.
-    assert [EVIDENCE_PRIORITY[c] for c in classes] == sorted(EVIDENCE_PRIORITY[c] for c in classes)
+def test_the_queue_band_no_longer_affects_position():
+    """v1.31 retired I5, and with it the band key. ``queue_class`` still marks a Tier 2 candidate for
+    escalation and orders the band tabs; it no longer decides where an alert sits.
+
+    Measured before the change: the whole top 50 of the demo queue was Medium - Tier 2 candidates
+    that are not severe, the opposite of what a Tier 1 analyst should open first.
+    """
+    critical = fuse([], prediction("Botnet", 0.9))              # ml_only, Critical
+    medium = fuse([match()], prediction("Brute Force", 0.99))   # corroborated, 100, Medium
+    assert queue_key(critical) == (-SEVERITY_RANK["Critical"], -90.0)
+    assert queue_key(medium) == (-SEVERITY_RANK["Medium"], -100.0)
+    assert queue_key(critical) < queue_key(medium), (
+        "a Critical alert outranks a Medium one however high the Medium one scores")
+
+
+def test_retiring_i5_cannot_hide_a_disputed_rule():
+    """I5 said a signature_override outranks every ml_only alert. Dropping it is only safe because
+    I2 keeps the override review-flagged, and the console keeps a "Rule only" band tab."""
+    decisions = [fuse(matches, pred) for matches, pred in grid()]
+    overrides = [d for d in decisions if d.evidence_class == "signature_override"]
+    assert overrides, "the grid must produce signature_override cases"
+    assert all(decision.requires_review for decision in overrides)
 
 
 # --------------------------------------------------------------------------------------------
@@ -201,11 +230,72 @@ def test_parameters_change_behaviour_on_cases_that_occur():
     assert fuse(*unsure, FusionConfig(agreement_bonus=0)).combined_score == pytest.approx(60.0)
     lowered = fuse(*unsure, FusionConfig(critical_threshold=60))
     assert (lowered.requires_review, lowered.is_critical, lowered.severity) == (True, True,
-                                                                                "Critical")
+                                                                                "Medium")
 
 
 def test_critical_threshold_is_the_guardrail_setting():
     assert FusionConfig().critical_threshold == m.GUARDRAIL_DEFAULTS["critical_alert_threshold"][0]
+
+
+CEILINGS = ceilings_from_chart(load_severity_chart())
+
+
+def test_the_attack_class_caps_the_severity():
+    """Confidence says how sure the model is. The class says how much the finding is worth.
+
+    Before the cap existed, 994 of the demo's 996 flagged alerts read "Critical" - a Port Scan and an
+    Infiltration alike - because severity was a function of confidence alone, and the model is
+    confident about everything it flags. The ceilings come from the attack-type severity chart, so
+    this pins the chart rather than a second table. Each figure in the comment is ``severity`` in
+    ``config/severity-chart.json``.
+    """
+    assert severity_for(100.0, "Port Scan", CEILINGS) == "Low"           # 3.0
+    assert severity_for(100.0, "Brute Force", CEILINGS) == "Medium"      # 5.0
+    assert severity_for(100.0, "DoS", CEILINGS) == "Medium"              # 6.5
+    assert severity_for(100.0, "DDoS", CEILINGS) == "High"               # 7.5
+    assert severity_for(100.0, "Web Attack", CEILINGS) == "High"         # 8.0
+    assert severity_for(100.0, "Botnet", CEILINGS) == "Critical"         # 9.0
+    assert severity_for(100.0, "Infiltration", CEILINGS) == "Critical"   # 9.5
+
+
+def test_the_ceilings_are_the_severity_chart_and_nothing_else():
+    """One source of truth. A chart edited for Tier 2 candidacy moves the ceilings with it.
+
+    Regression: a hand-written ceiling table was added first, and it disagreed with the chart on two
+    classes - Port Scan (table: Medium, chart: Low) and DoS (table: High, chart: Medium). Both are
+    asserted below, so a second table cannot creep back in unnoticed.
+    """
+    chart = load_severity_chart()
+    ceilings = ceilings_from_chart(chart)
+    assert set(ceilings) == set(get_args(m.AttackClass))
+    for model_class, ceiling in ceilings.items():
+        assert ceiling == CVSS_TO_SEVERITY[band(chart.severity(model_class))]
+    assert ceilings["Port Scan"] == "Low"
+    assert ceilings["DoS"] == "Medium"
+
+
+def test_the_cap_only_lowers_and_never_raises():
+    """A ceiling that could raise a severity would let a quiet class outrank a loud one."""
+    for predicted in (*get_args(m.AttackClass), None, "Not A Class"):
+        for score in (0.0, 0.5, 1.0, 39.99, 40.0, 69.99, 70.0, 79.99, 80.0, 100.0):
+            capped = severity_for(score, predicted, CEILINGS)
+            uncapped = severity_for(score, None, CEILINGS)
+            assert SEVERITY_RANK[capped] <= SEVERITY_RANK[uncapped], (
+                f"{predicted} at score {score} gave {capped}, above the uncapped {uncapped}")
+
+
+def test_severity_is_the_band_the_score_falls_in():
+    """The bands at their boundaries, read through DDoS - a class the chart tops out at High."""
+    assert severity_for(0.0, "DDoS", CEILINGS) == "Informational"
+    assert severity_for(0.99, "DDoS", CEILINGS) == "Informational"
+    assert severity_for(1.0, "DDoS", CEILINGS) == "Low"
+    assert severity_for(39.99, "DDoS", CEILINGS) == "Low"
+    assert severity_for(40.0, "DDoS", CEILINGS) == "Medium"
+    assert severity_for(69.99, "DDoS", CEILINGS) == "Medium"
+    assert severity_for(70.0, "DDoS", CEILINGS) == "High"
+    assert severity_for(79.99, "DDoS", CEILINGS) == "High"
+    assert severity_for(100.0, "DDoS", CEILINGS) == "High"   # the ceiling, not the band
+    assert severity_for(80.0, "Botnet", CEILINGS) == "Critical"
 
 
 def test_config_snapshot_replays():

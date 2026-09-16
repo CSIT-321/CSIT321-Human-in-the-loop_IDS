@@ -197,7 +197,7 @@ an offline demonstration.
 
 | Screen | Control / element | What it does |
 |---|---|---|
-| Sign-in | Username, Password, **Sign in** | Real authentication; lands on the workstation |
+| Sign-in | Username, Password (hold the **eye** to peek at it — masked again the moment the pointer leaves), **Sign in** | Real authentication; lands on the workstation |
 | Top bar | avatar, account name, UTC clock, **Sign out** | Identity; no role switch exists — another view is another account |
 | Sidebar | Workstation · Overview · Dashboard · Alert Queue · Investigations · Feedback Impact | The analyst's six pages |
 | Workstation | Counts strip (8 figures) | Shift posture at a glance |
@@ -213,7 +213,7 @@ an offline demonstration.
 | Outcome region | score adjustment chain + guardrail sentence + family effect | What actually happened, and why |
 | Notes | note box, **Add note**, thread with author + time | Append-only record |
 | Alert detail page | the four panels + verdict history (oldest first, superseded kept) | The full record |
-| Alert Queue page | the full table + filters (band, evidence, severity, class), sorts, URL-persisted filters, paging | Deep triage |
+| Alert Queue page | the full table + filters (band, evidence, severity, class, detection-score ceiling), sorts, URL-persisted filters, paging | Deep triage |
 | IP entity page | counts, bands, classes, verdicts, top peers (clickable), ports, **All alerts for this address** | One address's story |
 | Dashboard | Queue composition · Needs a human · Moved by feedback | The run at a glance |
 | Overview | hourly histogram, talkers, ports, class mix, verdicts, triage status, guardrail actions | The capture window |

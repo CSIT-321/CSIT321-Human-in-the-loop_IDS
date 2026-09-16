@@ -64,6 +64,7 @@ and are not amended** (D10). A divergence from them is recorded, not fixed.
 | C11 | **Every flow becomes an alert**, including the 4,004 no detector flagged | They are the queue's bottom band and the evaluation's denominator; dropping them turns recall into precision | v1.15 |
 | C12 | **Schema departures from the TDM** are each marked `DEVIATION` inline in `schema.sql` and enumerated in changelog v1.5; a test fails on any unlogged column | The schema is the keystone; silent drift there is unrecoverable | v1.5 |
 | C13 | **The queue is ordered by `db.QUEUE_ORDER_BY` (`queue_priority, combined_score DESC, id ASC`)**, not by `evidence_priority` as plan v1.0's S10a note said | `evidence_priority` predates S7b. Feedback moves an alert between queue *bands* (Q24); sorting on evidence class would make the re-ranking invisible in the API — the one thing the demo exists to show | plan v1.1 |
+| C14 | **The inspection sorts tie-break on evidence class, review flag and flow capture time**, and the capture-time key follows the requested direction. `db.QUEUE_ORDER_BY` itself is unchanged | `a.id ASC` was direction-blind, so a page whose scores all tied returned identical ascending and descending — measured on the 975 alerts tied at exactly 100.0. A tie is 95.8% of the queue, so the tie-break *is* the visible ranking. Pinning capture time to ASC did not fix it: the times are unique, so the `id` key never engaged | v1.28 |
 
 ## D. Rejected, with the reason — do not re-propose
 

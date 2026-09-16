@@ -127,6 +127,30 @@ describe("shell: signing in as each account", () => {
     expect(await screen.findByRole("alert")).toHaveTextContent("Invalid username or password");
     expect(router.state.location.pathname).toBe("/login");
   });
+
+  it("reveals the password only while the eye is held, hiding it when the pointer leaves", async () => {
+    const user = userEvent.setup();
+    stubApi();
+    renderApp("/login");
+
+    const field = screen.getByLabelText("Password");
+    await user.type(field, "analyst-demo");
+    expect(field).toHaveAttribute("type", "password");
+
+    await user.hover(screen.getByRole("button", { name: "Show password" }));
+    expect(field).toHaveAttribute("type", "text");
+    expect(field).toHaveDisplayValue("analyst-demo");
+
+    await user.unhover(screen.getByRole("button", { name: "Show password" }));
+    expect(field).toHaveAttribute("type", "password");
+
+    // Touch and keyboard users press instead of hover: hold shows, release hides.
+    const eye = screen.getByRole("button", { name: "Show password" });
+    await user.pointer({ keys: "[MouseLeft>]", target: eye });
+    expect(field).toHaveAttribute("type", "text");
+    await user.pointer({ keys: "[/MouseLeft]", target: eye });
+    expect(field).toHaveAttribute("type", "password");
+  });
 });
 
 describe("shell: route guards", () => {

@@ -55,7 +55,7 @@ EPOCH = datetime(2026, 1, 1, 0, 0, 0, tzinfo=timezone.utc)
 
 #: The queue's order, qualified for a join against flow_data (both tables have an `id`), as
 #: db.QUEUE_ORDER_BY's own comment requires.
-QUEUE_ORDER_QUALIFIED = "a.queue_priority ASC, a.combined_score DESC, a.id ASC"
+QUEUE_ORDER_QUALIFIED = db.queue_order("a")
 
 #: The evaluator the scripted verdicts are attributed to. A real analyst's verdicts are S10's.
 EVALUATOR_USERNAME = "s15-evaluator"

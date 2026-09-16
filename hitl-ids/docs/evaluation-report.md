@@ -1,7 +1,17 @@
 # S15 — the three-arm evaluation: method and first result
 
-**Run** `20260912T032022Z` · commit `9fede24` · pre-registration `s15-preregistration-1`
-(digest `2ac2a4ffb5a7e681`) · 40 verdicts · **304 tests pass, 0 skipped**
+**Run** `20260916T063856Z` · commit `650d844` · pre-registration `s15-preregistration-1`
+(digest `079a194282a6324e`) · 40 verdicts · **444 tests pass, 0 skipped**
+
+> **Re-baselined in v1.31.** The queue order changed: it was band-then-score, and it is now
+> severity-then-score (changelog v1.30/v1.31). The band put Tier 2 candidates that are not severe at
+> the top of the queue, so it was demoted to a label. Every number below is the **new** run. The
+> previous run, `20260912T032022Z`, reported **precision@50 falling 1.000 → 0.980 under feedback, with
+> one false positive in the top 50 and a benign alert promoted to rank 1**. Under the new order
+> **none of that happens**: precision@50 holds at 1.000, the top 50 carries zero false positives in
+> every arm, and the promoted benign alert reaches only rank 186. That earlier result is preserved in
+> `evaluation/three-arm/runs/20260912T032022Z/` and in the changelog. Nothing was deleted — the
+> measurement changed because the product did.
 
 Reproduce with:
 
@@ -58,10 +68,10 @@ Botnet, Web Attack, and Infiltration on TCP/443 and TCP/31337. Categories: 25 `e
 | | A — control | B — treatment | C — guardrails off |
 |---|---|---|---|
 | Verdicts applied | 0 | 40 | 40 |
-| Precision @10 / @50 / @200 | 1.000 / 1.000 / 1.000 | 0.900 / **0.980** / 0.995 | 0.900 / 0.980 / 0.995 |
-| False positives in top 50 | **0** | **1** | **1** |
-| MRR of true positives | 0.0074825 | 0.0064826 | 0.0064826 |
-| Mean rank of true positives | 510.2 | 511.4 | 511.4 |
+| Precision @10 / @50 / @200 | 1.000 / 1.000 / 1.000 | 1.000 / **1.000** / 0.990 | 1.000 / 1.000 / 0.990 |
+| False positives in top 50 | **0** | **0** | **0** |
+| MRR of true positives | 0.0074804 | 0.0074742 | 0.0074742 |
+| Mean rank of true positives | 511.1 | 511.6 | 511.6 |
 | Critical preservation rate | 1.000 | 1.000 | 1.000 |
 | Critical floor breaches | 0 | **0** | **0** |
 | True positives suppressed | 0 | **0** | **0** |
@@ -74,25 +84,28 @@ the difference between reordering alerts and quietly retraining a model.
 ## 4. Findings
 
 **1 — Similar-alert learning works, and stays where it was taught.** All 8 judged families opened
-their gate at agreement 1.000. Of the 805 untouched members of those families, **205 were adjusted
-and 198 true positives were promoted**, 197 of them into a higher queue band. Of the **4,155 alerts
-outside any judged family, 0 were adjusted** — no score, no band. (151 of them changed *rank*, which
-is only other alerts moving past them; rank is relative, and that is not an effect on those alerts.)
-This is S7b's core claim, measured on a real database, and it holds.
+their gate at agreement 1.000. Of the 805 untouched members of those families, **205 were adjusted,
+681 changed rank, and 9 true positives were promoted**. Of the **4,155 alerts outside any judged
+family, 0 were adjusted** — no score, no band, and only 1 changed rank, which is other alerts moving
+past it. This is S7b's core claim, measured on a real database, and it holds.
 
-**2 — It promoted two false positives, one to rank 1.** Alert 11 — a genuinely benign flow the model
-classifies as `Web Attack` — sits at rank 639 in the control. Five `escalate` verdicts on *other*
-members of its family opened the gate, the family adjustment lifted it 99.89 → 100.0, and it
-surfaced at **rank 1**. This is the mechanism's cost, and it is intrinsic rather than a bug: a family
-is a coarse key, so a false positive sharing an attack family with confirmed attacks inherits their
-promotion. The queue's other false positive moved likewise.
+**2 — It promoted two benign alerts, the best of them only to rank 186.** Alert 11 — a genuinely
+benign flow the model classifies as `Web Attack` — sits at rank 442 in the control. Five `escalate`
+verdicts on *other* members of its family opened the gate, the family adjustment lifted it
+99.89 → 100.0, and it surfaced at **rank 186**. This is the mechanism's cost, and it is intrinsic
+rather than a bug: a family is a coarse key, so a false positive sharing an attack family with
+confirmed attacks inherits their promotion. **Under the band order this same alert reached rank 1**,
+which is the harm that re-ordering by severity removed: severity caps what a promotion can do,
+because a `Web Attack` cannot be graded above High.
 
-**3 — Precision fell in the treatment arm because the control had nowhere to go.** The control's
-precision is **1.000 at every cut-off to 200**; the flagged queue holds **2 false positives in 996
-alerts**. There was no false positive at the top to clean up, so feedback could only break a perfect
-ordering, never improve it. The −0.02 at 50 is finding 2 expressed as a rate. This is the testbed
-artefact the handover already flags, surfacing in a third place: a macro F1 of 0.9882 leaves the
-feedback loop nothing to correct.
+**3 — Feedback no longer damages the top of the queue.** The control's precision is **1.000 at every
+cut-off to 200**; the flagged queue holds **2 false positives in 996 alerts**. There was no false
+positive at the top to clean up, so feedback could only disturb a perfect ordering, never improve it.
+Under the band order it did: precision@50 fell to 0.980 and a benign alert reached rank 1. **Under
+the severity-first order the top 50 is untouched — 0 false positives in every arm, precision@50
+1.000** — and the disturbance is confined to the slow metrics (precision@200 −0.01, mean rank
+−0.515). This is the testbed artefact the handover already flags, surfacing in a third place: a macro
+F1 of 0.9882 leaves the feedback loop nothing to correct.
 
 **4 — Score saturation leaves the ranking formula no headroom.** **975 of 996** flagged alerts sit
 at exactly 100.0, across only **13 distinct scores**. A confirming verdict on an alert already at 100

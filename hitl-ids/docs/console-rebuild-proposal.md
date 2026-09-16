@@ -85,7 +85,7 @@ tooling. Each design element is handled one of three ways, and nothing is invent
 | a.kowalski · T2 | demo user and role label, marked as the auth stub | session |
 | KPI strip | Critical · Needs review · Tier 2 candidates · Unresolved · Escalated · False positives · Total alerts | dashboard + B1/B4 |
 | Threat level meter | **dropped** — a single "threat level" would be an invented composite | — |
-| Severity tabs | All · Tier 2 · Needs review · Corroborated · Model only · Nothing flagged. Queue bands carry the triage meaning, and severity in this data is only Critical or Informational. | queue filters |
+| Severity tabs | All · Tier 2 · Needs review · Corroborated · Model only · Nothing flagged. Queue bands carry the triage meaning. **Superseded in v1.29:** severity once read only Critical or Informational; the attack class now caps it, so all five labels occur. | queue filters |
 | Card: title · time ago · asset | predicted attack class (or "No detection") · flow timestamp · **dst IP:port** instead of an asset name | alert summary |
 | Detection confidence meter | **model confidence** (ML probability), with its band | ML panel |
 | False-positive probability meter | **dropped** — the model is not calibrated for this, and the research warns that uncalibrated confidence misleads analysts | — |

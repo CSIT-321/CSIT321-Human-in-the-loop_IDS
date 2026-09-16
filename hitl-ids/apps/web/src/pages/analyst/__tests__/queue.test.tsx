@@ -52,6 +52,51 @@ describe("Alert Queue", () => {
     });
   });
 
+  it("sends the not-saturated ceiling as detectionMaxScore", async () => {
+    const user = userEvent.setup();
+    const seen = stubQueue([CRITICAL_ALERT]);
+    renderApp("/analyst/queue", { session: ANALYST });
+
+    await screen.findByRole("link", { name: "AL-00478" });
+    await user.selectOptions(screen.getByLabelText("Detection score"), "99.999");
+
+    await waitFor(() => {
+      expect(
+        seen.some((request) => queryOf(request).get("detectionMaxScore") === "99.999"),
+      ).toBe(true);
+    });
+  });
+
+  it("sends the chosen verdict as the verdict parameter", async () => {
+    const user = userEvent.setup();
+    const seen = stubQueue([CRITICAL_ALERT]);
+    renderApp("/analyst/queue", { session: ANALYST });
+
+    await screen.findByRole("link", { name: "AL-00478" });
+    await user.selectOptions(screen.getByLabelText("Judged"), "mark_false_positive");
+
+    await waitFor(() => {
+      expect(
+        seen.some((request) => queryOf(request).get("verdict") === "mark_false_positive"),
+      ).toBe(true);
+    });
+  });
+
+  it("sends 'Not yet judged' as unjudged, never as a verdict", async () => {
+    const user = userEvent.setup();
+    const seen = stubQueue([CRITICAL_ALERT]);
+    renderApp("/analyst/queue", { session: ANALYST });
+
+    await screen.findByRole("link", { name: "AL-00478" });
+    await user.selectOptions(screen.getByLabelText("Judged"), "unjudged");
+
+    await waitFor(() => {
+      expect(seen.some((request) => queryOf(request).get("unjudged") === "true")).toBe(true);
+    });
+    // The absence of a verdict is not a verdict: the two parameters must never both be sent.
+    expect(seen.every((request) => queryOf(request).get("verdict") === null)).toBe(true);
+  });
+
   it("submits the search box as the search parameter", async () => {
     const user = userEvent.setup();
     const seen = stubQueue([UNFLAGGED_ALERT]);

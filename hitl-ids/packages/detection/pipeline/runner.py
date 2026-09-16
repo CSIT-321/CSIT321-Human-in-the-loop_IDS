@@ -26,8 +26,8 @@ from pathlib import Path
 from packages.contracts import db
 from packages.contracts import models as m
 from packages.detection.audit.writer import AuditWriter
-from packages.detection.feedback.learning import detection_placement, family_key_of
-from packages.detection.fusion.cef import FusionConfig, fuse
+from packages.detection.feedback.learning import family_key_of, member_placement
+from packages.detection.fusion.cef import FusionConfig, fuse, severity_for
 from packages.detection.guardrail.policy import GuardrailPolicy
 from packages.detection.pipeline import store
 from packages.detection.pipeline.predictor import Predictor
@@ -106,8 +106,9 @@ def run_detection(conn: sqlite3.Connection, source: FlowSource, predictor: Predi
                 record = project_record(flow.features)
                 decision = fuse(match_all(record, rules), prediction, config)
                 stored = flow_record(flow)
-                alert = _place(decision.to_alert(dataset_id=dataset_id, run_id=run_id,
-                                                 created_at=now), stored, chart, policy)
+                alert = _place(conn, decision.to_alert(dataset_id=dataset_id, run_id=run_id,
+                                                       created_at=now), stored, chart, policy,
+                               config)
                 store.insert_alert(conn, alert, stored)
                 alerts += 1
         run = store.finish_run(conn, run_id, alert_count=alerts, now=now)
@@ -124,17 +125,31 @@ def run_detection(conn: sqlite3.Connection, source: FlowSource, predictor: Predi
         explanations_computed=bool(getattr(predictor, "computes_explanations", False)))
 
 
-def _place(alert: m.Alert, flow: m.FlowRecord, chart: SeverityChart,
-           policy: GuardrailPolicy) -> m.Alert:
-    """Give a freshly fused alert its family and its detection-time queue band (S7b)."""
-    place = detection_placement(alert, chart, policy)
-    if place.score != alert.combined_score or place.requires_review != alert.requires_review:
+def _place(conn: sqlite3.Connection, alert: m.Alert, flow: m.FlowRecord, chart: SeverityChart,
+           policy: GuardrailPolicy, config: FusionConfig) -> m.Alert:
+    """Give a freshly fused alert its family, apply what that family has already learned, then band it.
+
+    A family's learning lives in ``alert_families``, and this is the path that carries it to a new
+    alert (S7b). Before this, placement ran on a zero adjustment: a detection run over new flows
+    started every alert at its raw detection score, and the family's stored learning sat unused.
+    """
+    key = family_key_of(alert, flow)
+    learned = store.family_by_key(conn, key)
+    adjustment = learned.applied_adjustment if learned is not None else 0.0
+    offset = learned.applied_offset if learned is not None else 0
+    place = member_placement(alert, adjustment, offset, chart, policy)
+    if not adjustment and not offset and (
+            place.score != alert.combined_score or place.requires_review != alert.requires_review):
         raise AssertionError(  # S6 and S7b must agree before any feedback exists
             f"detection placement disagrees with fusion for {flow.source_record_id}: "
             f"{(place.score, place.requires_review)} != "
             f"{(alert.combined_score, alert.requires_review)}")
     return m.Alert.model_validate({
-        **alert.model_dump(), "family_key": family_key_of(alert, flow),
+        **alert.model_dump(), "family_key": key,
+        "combined_score": place.score,
+        "severity": severity_for(place.score, alert.attack_category, config.class_ceilings,
+                                 critical_threshold=config.critical_threshold),
+        "requires_review": place.requires_review,
         "queue_class": place.queue_class, "queue_priority": place.queue_priority})
 
 

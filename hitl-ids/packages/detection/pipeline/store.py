@@ -125,27 +125,13 @@ def counts_by(conn: sqlite3.Connection, column: str, *,
 # --------------------------------------------------------------------------------------------
 # Reads the API adds (plan step S10b).
 #
-# The queue's order is `db.QUEUE_ORDER_BY` and is not negotiable here: feedback moves an alert
-# between queue *bands*, so a sort that ignores `queue_priority` hides the re-ranking the system
-# exists to perform (`deviations.md` C13). `db.QUEUE_ORDER_BY`'s columns are unqualified, and its
-# own comment warns that a query joining a table with its own `id` must qualify them — which every
-# query here does.
+# The queue's order is `db.QUEUE_ORDER_BY` and is not negotiable here: it is the order an analyst
+# works down. A sort that restates it would drift from it. `db.queue_order` qualifies the columns for
+# a join, which `QUEUE_ORDER_BY`'s own comment requires.
 # --------------------------------------------------------------------------------------------
 
 #: The contract order, qualified for a join against flow_data.
-QUEUE_ORDER_QUALIFIED = "a.queue_priority ASC, a.combined_score DESC, a.id ASC"
-
-#: What a client may sort by. `queue` is the contract order and the default; the rest are
-#: inspection tools. Every one ends in `a.id` so paging is stable — without a total order two
-#: pages can repeat an alert or skip one.
-SORT_COLUMNS: Mapping[str, str] = {
-    "queue": QUEUE_ORDER_QUALIFIED,
-    "combined_score": "a.combined_score {d}, a.id ASC",
-    "detection_score": "a.detection_score {d}, a.id ASC",
-    "created_at": "a.created_at {d}, a.id ASC",
-    "severity": ("CASE a.severity WHEN 'Critical' THEN 0 WHEN 'High' THEN 1 WHEN 'Medium' THEN 2 "
-                 "WHEN 'Low' THEN 3 ELSE 4 END {d}, a.combined_score DESC, a.id ASC"),
-}
+QUEUE_ORDER_QUALIFIED = db.queue_order("a")
 
 FILTERABLE = frozenset({"queue_class", "evidence_class", "severity", "status", "attack_category"})
 
@@ -153,6 +139,40 @@ FILTERABLE = frozenset({"queue_class", "evidence_class", "severity", "status", "
 #: '2018-02-14 12:28:54.334391', so text order is time order. Not the alert's created_at, which is
 #: the detection run's time and identical for every alert in a run.
 FLOW_TIME = "json_extract(f.flow_features, '$.Timestamp')"
+
+#: What orders rows when the sort key ties. A tie is the normal case on this data, not the
+#: exception: 4,789 of the 5,000 demo alerts share a score with more than a page of others — 975
+#: sit at exactly 100.0 and 3,635 at exactly 0.0. Row id alone is arbitrary, and because it did not
+#: take the requested direction it made the direction control look inert: sorting the 975 alerts at
+#: 100.0 descending and ascending returned the *identical* page (measured, not assumed).
+#:
+#: The evidence class and the flow's capture time are the two keys that actually vary inside a tied
+#: group: 200 corroborated against 775 model-only, and 975 distinct capture times. Capture time must
+#: itself follow `{d}`, not be pinned to ASC: the capture times are unique, so a fixed-ASC time key
+#: alone determines the order and the `id` key never engages — which reproduced the identical page
+#: this constant exists to prevent. Ascending therefore means oldest traffic first, the FIFO order
+#: for a queue nobody has worked yet; descending means newest first.
+#:
+#: `{d}` stays on `a.id` as the final key, so the result is always a total order and paging can
+#: never repeat or skip an alert.
+TIE_BREAK = ("a.evidence_priority ASC, a.requires_review DESC, "
+             + FLOW_TIME + " {d}, a.id {d}")
+
+#: What a client may sort by. `queue` is the contract order and the default; the rest are
+#: inspection tools. Every one ends in the tie-break above, so paging is stable — without a total
+#: order two pages can repeat an alert or skip one.
+SORT_COLUMNS: Mapping[str, str] = {
+    "queue": QUEUE_ORDER_QUALIFIED,
+    "combined_score": "a.combined_score {d}, " + TIE_BREAK,
+    "detection_score": "a.detection_score {d}, " + TIE_BREAK,
+    "created_at": "a.created_at {d}, " + TIE_BREAK,
+    "severity": ("CASE a.severity WHEN 'Critical' THEN 0 WHEN 'High' THEN 1 WHEN 'Medium' THEN 2 "
+                 "WHEN 'Low' THEN 3 ELSE 4 END {d}, " + TIE_BREAK),
+    #: A checkable rule before a model-only guess. The key for a detector whose false positives
+    #: carry an attack's full confidence, where no score-based key can separate them: measured on
+    #: data/stress.db, this order reaches precision@100 1.000 where the contract order reaches 0.000.
+    "evidence": "a.evidence_priority {d}, a.combined_score {d}, " + TIE_BREAK,
+}
 
 #: A detector flagged the alert: it sits in any band but the bottom one.
 FLAGGED = "(a.queue_class != 'none')"
@@ -191,6 +211,12 @@ def _queue_filters(filters: Mapping[str, Any]) -> tuple[str, list[Any]]:
         elif key == "max_score":
             clauses.append("a.combined_score <= ?")
             params.append(float(value))
+        elif key == "detection_min_score":
+            clauses.append("a.detection_score >= ?")
+            params.append(float(value))
+        elif key == "detection_max_score":
+            clauses.append("a.detection_score <= ?")
+            params.append(float(value))
         elif key == "search":
             clauses.append("(f.src_ip LIKE ? OR f.dst_ip LIKE ? OR a.signature_rules LIKE ? "
                            "OR f.source_record_id LIKE ?)")
@@ -202,6 +228,14 @@ def _queue_filters(filters: Mapping[str, Any]) -> tuple[str, list[Any]]:
                 continue
             clauses.append(f"{EFFECTIVE_VERDICT} IN ({', '.join('?' * len(values))})")
             params.extend(values)
+        elif key == "unjudged":
+            # "Not yet judged": no verdict has ever been recorded on this alert. Deliberately the
+            # same condition the queue row reports as `hasFeedback`, so the filter and the
+            # "Verdict recorded" pill on the row can never disagree. This is the complement of the
+            # `verdict` filter above, which asks about the verdict currently *in force*.
+            if value:
+                clauses.append("NOT EXISTS (SELECT 1 FROM feedback_events fe "
+                               "WHERE fe.alert_id = a.id)")
         elif key == "owner_id":
             clauses.append("a.owner_id = ?")
             params.append(int(value))

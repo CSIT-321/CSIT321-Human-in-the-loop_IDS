@@ -2906,7 +2906,7 @@
     }
   },
   "info": {
-    "description": "The demo API for the Human-in-the-Loop IDS dashboard (FYP-26-S3-13).\n\n**Deliberately narrow.** Only the endpoints the demo path exercises; the remaining TDM surface is\nS18. Adding endpoints \"while we're here\" is on the plan's anti-pattern list.\n\n**Authentication is real (S18a).** `POST /api/auth/login` with one of the three seeded accounts\nreturns a JWT bearer token; send it as `Authorization: Bearer <token>` on every other request. No\ntoken, a forged token or an expired one is a 401. The role gates only where a role genuinely gates\nan action, so `PUT /api/config/guardrails` refuses anything but `system_admin`.\n\n**Queue ordering is fixed by contract**: `queue_priority ASC, combined_score DESC, id ASC`. Feedback moves an alert between queue\n*bands*, never across evidence classes, so a client that re-sorts by `evidenceClass` will hide the\nre-ranking the system exists to perform.\n\n**Alerts are identified by `alertRef` (UUID).** Row ids are never exposed.\n\n**Every flow becomes an alert**, including flows no detector flagged. They are the queue's bottom\nband and the evaluation's denominator.",
+    "description": "The demo API for the Human-in-the-Loop IDS dashboard (FYP-26-S3-13).\n\n**Deliberately narrow.** Only the endpoints the demo path exercises; the remaining TDM surface is\nS18. Adding endpoints \"while we're here\" is on the plan's anti-pattern list.\n\n**Authentication is real (S18a).** `POST /api/auth/login` with one of the three seeded accounts\nreturns a JWT bearer token; send it as `Authorization: Bearer <token>` on every other request. No\ntoken, a forged token or an expired one is a 401. The role gates only where a role genuinely gates\nan action, so `PUT /api/config/guardrails` refuses anything but `system_admin`.\n\n**Queue ordering is fixed by contract**: `CASE severity WHEN 'Critical' THEN 4 WHEN 'High' THEN 3 WHEN 'Medium' THEN 2 WHEN 'Low' THEN 1 ELSE 0 END DESC, combined_score DESC, id ASC`. Feedback moves an alert between queue\n*bands*, never across evidence classes, so a client that re-sorts by `evidenceClass` will hide the\nre-ranking the system exists to perform.\n\n**Alerts are identified by `alertRef` (UUID).** Row ids are never exposed.\n\n**Every flow becomes an alert**, including flows no detector flagged. They are the queue's bottom\nband and the evaluation's denominator.",
     "title": "HITL IDS demo API",
     "version": "0.1.0"
   },
@@ -2914,7 +2914,7 @@
   "paths": {
     "/api/alerts": {
       "get": {
-        "description": "Ordered by `queue_priority ASC, combined_score DESC, id ASC` unless `sort` overrides it. `sort=queue` is the contract order and what the demo shows; the other keys are inspection tools, not alternative rankings. Maximum page size 200.",
+        "description": "Ordered by `CASE severity WHEN 'Critical' THEN 4 WHEN 'High' THEN 3 WHEN 'Medium' THEN 2 WHEN 'Low' THEN 1 ELSE 0 END DESC, combined_score DESC, id ASC` unless `sort` overrides it. `sort=queue` is the contract order and what the demo shows; the other keys are inspection tools, not alternative rankings. Maximum page size 200.",
         "operationId": "listAlerts",
         "parameters": [
           {
@@ -2953,19 +2953,20 @@
             }
           },
           {
-            "description": "Default `queue` is the contract order: queue_priority ASC, combined_score DESC, id ASC",
+            "description": "Default `queue` is the contract order: CASE severity WHEN 'Critical' THEN 4 WHEN 'High' THEN 3 WHEN 'Medium' THEN 2 WHEN 'Low' THEN 1 ELSE 0 END DESC, combined_score DESC, id ASC",
             "in": "query",
             "name": "sort",
             "required": false,
             "schema": {
               "default": "queue",
-              "description": "Default `queue` is the contract order: queue_priority ASC, combined_score DESC, id ASC",
+              "description": "Default `queue` is the contract order: CASE severity WHEN 'Critical' THEN 4 WHEN 'High' THEN 3 WHEN 'Medium' THEN 2 WHEN 'Low' THEN 1 ELSE 0 END DESC, combined_score DESC, id ASC",
               "enum": [
                 "queue",
                 "combined_score",
                 "detection_score",
                 "created_at",
-                "severity"
+                "severity",
+                "evidence"
               ],
               "title": "Sort",
               "type": "string"
@@ -3190,6 +3191,47 @@
             }
           },
           {
+            "description": "On detection_score, the immutable column. With evidence filters, `detectionMaxScore=99.999` isolates flagged alerts a confirming verdict can still visibly raise — 975 of the 996 flagged alerts sit at exactly 100.0, and the rest are all below 99.999",
+            "in": "query",
+            "name": "detectionMinScore",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maximum": 100,
+                  "minimum": 0,
+                  "type": "number"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "description": "On detection_score, the immutable column. With evidence filters, `detectionMaxScore=99.999` isolates flagged alerts a confirming verdict can still visibly raise — 975 of the 996 flagged alerts sit at exactly 100.0, and the rest are all below 99.999",
+              "title": "Detectionminscore"
+            }
+          },
+          {
+            "description": null,
+            "in": "query",
+            "name": "detectionMaxScore",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maximum": 100,
+                  "minimum": 0,
+                  "type": "number"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Detectionmaxscore"
+            }
+          },
+          {
             "description": "Substring of source IP, destination IP, or matched rule id",
             "in": "query",
             "name": "search",
@@ -3255,6 +3297,25 @@
               "default": null,
               "description": "Filter by the verdict currently in force",
               "title": "Verdict"
+            }
+          },
+          {
+            "description": "`true`: only alerts with no verdict recorded at all — the complement of the `verdict` filter, which asks about the verdict currently in force. The queue row's `hasFeedback` reports the same condition, so a filter and its row pill never disagree",
+            "in": "query",
+            "name": "unjudged",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "description": "`true`: only alerts with no verdict recorded at all — the complement of the `verdict` filter, which asks about the verdict currently in force. The queue row's `hasFeedback` reports the same condition, so a filter and its row pill never disagree",
+              "title": "Unjudged"
             }
           },
           {

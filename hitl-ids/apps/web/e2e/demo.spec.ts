@@ -33,7 +33,7 @@ async function recordVerdict(page: Page, verdict: RegExp) {
 
 async function signIn(page: Page, username: string, password: string, home: string) {
   await page.getByLabel("Username").fill(username);
-  await page.getByLabel("Password").fill(password);
+  await page.getByLabel("Password", { exact: true }).fill(password);
   await page.getByRole("button", { name: "Sign in" }).click();
   await expect(page).toHaveURL(new RegExp(`${home}$`));
 }
