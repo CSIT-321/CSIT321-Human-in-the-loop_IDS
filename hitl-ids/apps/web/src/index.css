@@ -3,10 +3,9 @@
 /*
  * Design tokens — console rebuild R2 (docs/console-rebuild-proposal.md §1).
  *
- * The SOC analyst workstation: a near-black ground that recedes, square panels divided by 1 px rules,
- * no shadows, and data carrying the colour. The semantic names (bg-surface, text-muted, border-border
- * ...) are unchanged from S11, so every screen picks up the new look from these values alone; the
- * workstation-specific names (primary, severity-*) are additions.
+ * The dark SOC workstation keeps its near-black ground; the light theme uses blue-grey ground and
+ * white surfaces. Both use the same semantic names (bg-surface, text-muted, border-border...), so
+ * components and charts switch together without separate render trees.
  *
  * Severity is never colour alone: every mark using these tokens is paired with a word (WCAG 1.4.1).
  */
@@ -19,13 +18,14 @@
 
   --color-text: #e6e8eb;
   --color-muted: #8f97a3;
-  --color-dim: #656d79;
+  --color-dim: #7d8590;
 
   /* Data and links (IPs, alert IDs). The primary action is the deeper blue. */
   --color-accent: #58a6ff;
   --color-accent-dim: #0f2540;
   --color-primary: #2f81f7;
   --color-primary-hover: #4493f8;
+  --color-on-primary: #ffffff;
 
   --color-warn: #f0883e;
   --color-warn-dim: #3a2312;
@@ -50,6 +50,48 @@
   --font-mono: "JetBrains Mono", "Cascadia Mono", ui-monospace, monospace;
 }
 
+:root[data-theme="dark"] {
+  color-scheme: dark;
+}
+
+:root[data-theme="light"] {
+  color-scheme: light;
+
+  --color-bg: #edf2f7;
+  --color-surface: #ffffff;
+  --color-raised: #f4f7fa;
+  --color-border: #c8d2df;
+  --color-border-strong: #91a1b5;
+
+  --color-text: #132238;
+  --color-muted: #4f6075;
+  --color-dim: #66758a;
+
+  --color-accent: #0969da;
+  --color-accent-dim: #dbeafe;
+  --color-primary: #0969da;
+  --color-primary-hover: #075bb8;
+  --color-on-primary: #ffffff;
+
+  --color-warn: #9a4a0f;
+  --color-warn-dim: #fff0e1;
+  --color-ok: #1a7f37;
+  --color-ok-dim: #dafbe1;
+  --color-danger: #cf222e;
+  --color-danger-dim: #ffebe9;
+  --color-violet: #6f42c1;
+  --color-violet-dim: #f1e8ff;
+
+  --color-severity-critical: #cf222e;
+  --color-severity-high: #9a4a0f;
+  --color-severity-medium: #7d5d00;
+  --color-severity-low: #1a7f37;
+  --color-severity-info: #0969da;
+
+  --color-stub: #6e5700;
+  --color-stub-bg: #fff8c5;
+}
+
 @layer base {
   html,
   body,
@@ -64,6 +106,7 @@
     font-size: 14px;
     -webkit-font-smoothing: antialiased;
     font-feature-settings: "tnum" 1;
+    transition: background-color 120ms ease, color 120ms ease;
   }
 
   :focus-visible {

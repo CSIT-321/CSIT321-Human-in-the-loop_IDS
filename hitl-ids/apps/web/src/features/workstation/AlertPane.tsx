@@ -37,7 +37,7 @@ type Tab = (typeof TABS)[number];
 const ACTION =
   "rounded-sm border px-2.5 py-1 text-xs font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-40";
 const SECONDARY = `${ACTION} border-border bg-raised text-text hover:border-border-strong`;
-const PRIMARY = `${ACTION} border-primary bg-primary text-white hover:bg-primary-hover`;
+const PRIMARY = `${ACTION} border-primary bg-primary text-on-primary hover:bg-primary-hover`;
 
 function messageOf(cause: unknown): string {
   return cause instanceof ApiError ? cause.message : String(cause);

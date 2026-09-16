@@ -10,6 +10,7 @@ import { Navigate, useNavigate } from "react-router";
 import { unwrap, api, ApiError } from "../api/client";
 import { ROLE_META } from "../session/roles";
 import { useSession, type Session } from "../session/SessionContext";
+import { ThemeToggle } from "../theme/ThemeToggle";
 
 export function LoginPage() {
   const { session, signIn } = useSession();
@@ -53,6 +54,9 @@ export function LoginPage() {
 
   return (
     <div className="flex min-h-full flex-col items-center justify-center gap-6 bg-bg p-6">
+      <div className="fixed right-4 top-4">
+        <ThemeToggle />
+      </div>
       <div className="w-full max-w-md rounded-sm border border-border bg-surface p-6">
         <span aria-hidden className="block h-8 w-8 rounded-sm bg-accent" />
         <h1 className="mt-4 text-2xl font-semibold text-text">IDS Console</h1>
@@ -121,7 +125,7 @@ export function LoginPage() {
           <button
             type="submit"
             disabled={pending || username.trim() === "" || password === ""}
-            className="w-full rounded-sm bg-primary px-3 py-2 font-semibold text-white hover:bg-primary-hover disabled:opacity-50"
+            className="w-full rounded-sm bg-primary px-3 py-2 font-semibold text-on-primary hover:bg-primary-hover disabled:opacity-50"
           >
             {pending ? "Signing in…" : "Sign in"}
           </button>

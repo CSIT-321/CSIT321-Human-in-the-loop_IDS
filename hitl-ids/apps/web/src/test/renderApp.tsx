@@ -10,6 +10,7 @@ import { vi } from "vitest";
 
 import { routes } from "../App";
 import { SESSION_STORAGE_KEY, SessionProvider, type Session } from "../session/SessionContext";
+import { ThemeProvider } from "../theme/ThemeContext";
 
 export type FetchHandler = (request: Request) => Response | Promise<Response>;
 
@@ -43,9 +44,11 @@ export function renderApp(path: string, options: { session?: Session } = {}) {
   }
   const router = createMemoryRouter(routes, { initialEntries: [path] });
   const utils = render(
-    <SessionProvider>
-      <RouterProvider router={router} />
-    </SessionProvider>,
+    <ThemeProvider>
+      <SessionProvider>
+        <RouterProvider router={router} />
+      </SessionProvider>
+    </ThemeProvider>,
   );
   return { ...utils, router };
 }

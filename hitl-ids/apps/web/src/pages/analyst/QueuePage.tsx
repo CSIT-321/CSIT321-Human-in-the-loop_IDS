@@ -243,7 +243,7 @@ export function QueuePage() {
             </FilterField>
             <button
               type="submit"
-              className="rounded-sm bg-primary px-4 py-1.5 text-sm font-semibold text-white hover:bg-primary-hover"
+              className="rounded-sm bg-primary px-4 py-1.5 text-sm font-semibold text-on-primary hover:bg-primary-hover"
             >
               Search
             </button>
