@@ -1,4 +1,4 @@
-import { useRef, useState, type FormEvent, type ReactNode } from "react";
+import { useState, type FormEvent, type ReactNode } from "react";
 
 import { api, unwrap, type Schemas } from "../../api/client";
 import { useApi } from "../../api/useApi";
@@ -9,6 +9,7 @@ import { formatDateTime, formatNumber, formatScore, humanise } from "../../desig
 export type IpSecurityReport = Schemas["IpSecurityReport"];
 type TimelineRow = Schemas["IpReportTimelineRow"];
 type SourceIpOverviewPage = Schemas["SourceIpOverviewPage"];
+type SourceIpOverviewRow = Schemas["SourceIpOverviewRow"];
 type SourceIpOverviewSort = SourceIpOverviewPage["sort"];
 
 interface ReportQuery {
@@ -47,6 +48,21 @@ const PRIMARY_CLASS =
   "rounded-sm bg-primary px-4 py-1.5 text-sm font-semibold text-on-primary hover:bg-primary-hover disabled:cursor-not-allowed disabled:opacity-40";
 const TH_CLASS = "whitespace-nowrap px-2 py-1.5 text-left font-medium";
 const TD_CLASS = "whitespace-nowrap px-2 py-1.5 align-top text-text";
+
+export const OVERVIEW_CSV_COLUMNS = [
+  "sourceIp",
+  "totalAlerts",
+  "judgedAlerts",
+  "confirmedMalicious",
+  "confirmedMaliciousRate",
+  "falsePositives",
+  "benignPositives",
+  "escalated",
+  "needsInvestigation",
+  "unjudged",
+  "firstSeen",
+  "lastSeen",
+] as const;
 
 const VERDICT_TONE: Partial<Record<NonNullable<TimelineRow["effectiveVerdict"]>, Tone>> = {
   confirm_true_positive: "danger",
@@ -101,15 +117,47 @@ export function ipReportFilename(report: IpSecurityReport): string {
   return `ip-security-report-${safeFilenamePart(report.sourceIp)}-${from}-to-${to}.csv`;
 }
 
-function downloadCsv(report: IpSecurityReport): void {
-  const url = URL.createObjectURL(new Blob([ipReportCsv(report)], { type: "text/csv;charset=utf-8" }));
+function overviewValues(row: SourceIpOverviewRow): readonly (string | number | null)[] {
+  return [
+    row.sourceIp,
+    row.totalAlerts,
+    row.judgedAlerts,
+    row.confirmedMalicious,
+    row.confirmedMaliciousRate,
+    row.falsePositives,
+    row.benignPositives,
+    row.escalated,
+    row.needsInvestigation,
+    row.unjudged,
+    row.firstSeen,
+    row.lastSeen,
+  ];
+}
+
+export function sourceIpOverviewCsv(rows: readonly SourceIpOverviewRow[]): string {
+  return [
+    OVERVIEW_CSV_COLUMNS.join(","),
+    ...rows.map((row) => overviewValues(row).map(csvCell).join(",")),
+  ].join("\r\n");
+}
+
+function sourceIpOverviewFilename(query: OverviewQuery): string {
+  return `source-ip-security-overview-${query.fromDate || "all"}-to-${query.toDate || "all"}.csv`;
+}
+
+function downloadText(contents: string, filename: string): void {
+  const url = URL.createObjectURL(new Blob([contents], { type: "text/csv;charset=utf-8" }));
   const anchor = document.createElement("a");
   anchor.href = url;
-  anchor.download = ipReportFilename(report);
+  anchor.download = filename;
   document.body.append(anchor);
   anchor.click();
   anchor.remove();
   URL.revokeObjectURL(url);
+}
+
+function downloadCsv(report: IpSecurityReport): void {
+  downloadText(ipReportCsv(report), ipReportFilename(report));
 }
 
 function Verdict({ verdict }: { verdict: TimelineRow["effectiveVerdict"] }) {
@@ -289,6 +337,7 @@ function LoadedReport({ query }: { query: ReportQuery }) {
 }
 
 const OVERVIEW_PAGE_SIZE = 25;
+const OVERVIEW_EXPORT_PAGE_SIZE = 200;
 const OVERVIEW_SORT_OPTIONS: readonly { value: SourceIpOverviewSort; label: string }[] = [
   { value: "totalAlerts", label: "Total alerts" },
   { value: "confirmedMalicious", label: "Confirmed malicious" },
@@ -300,6 +349,35 @@ const OVERVIEW_SORT_OPTIONS: readonly { value: SourceIpOverviewSort; label: stri
   { value: "sourceIp", label: "Source IP" },
 ];
 
+function overviewQueryParams(query: OverviewQuery, limit: number, offset: number) {
+  return {
+    ...(query.search === "" ? {} : { search: query.search }),
+    ...(query.fromDate === "" ? {} : { fromDate: query.fromDate }),
+    ...(query.toDate === "" ? {} : { toDate: query.toDate }),
+    minAlerts: query.minAlerts,
+    limit,
+    offset,
+    sort: query.sort,
+    direction: query.direction,
+  };
+}
+
+async function loadAllOverviewRows(query: OverviewQuery): Promise<SourceIpOverviewRow[]> {
+  const rows: SourceIpOverviewRow[] = [];
+  let offset = 0;
+  let total = 0;
+  do {
+    const page = await unwrap(api.GET("/api/admin/reports/ips", {
+      params: { query: overviewQueryParams(query, OVERVIEW_EXPORT_PAGE_SIZE, offset) },
+    }));
+    rows.push(...page.items);
+    total = page.page.total;
+    if (page.page.returned === 0) break;
+    offset += page.page.returned;
+  } while (rows.length < total);
+  return rows;
+}
+
 function SourceIpOverview({ onOpenReport }: {
   onOpenReport: (sourceIp: string, fromDate: string, toDate: string) => void;
 }) {
@@ -310,21 +388,14 @@ function SourceIpOverview({ onOpenReport }: {
   const [sort, setSort] = useState<SourceIpOverviewSort>("totalAlerts");
   const [direction, setDirection] = useState<"asc" | "desc">("desc");
   const [validation, setValidation] = useState<string | null>(null);
+  const [exporting, setExporting] = useState(false);
+  const [exportError, setExportError] = useState<string | null>(null);
   const [query, setQuery] = useState<OverviewQuery>({
     search: "", fromDate: "", toDate: "", minAlerts: 1,
     sort: "totalAlerts", direction: "desc", offset: 0,
   });
 
-  const queryParams = {
-    ...(query.search === "" ? {} : { search: query.search }),
-    ...(query.fromDate === "" ? {} : { fromDate: query.fromDate }),
-    ...(query.toDate === "" ? {} : { toDate: query.toDate }),
-    minAlerts: query.minAlerts,
-    limit: OVERVIEW_PAGE_SIZE,
-    offset: query.offset,
-    sort: query.sort,
-    direction: query.direction,
-  };
+  const queryParams = overviewQueryParams(query, OVERVIEW_PAGE_SIZE, query.offset);
   const overview = useApi(
     (signal) => unwrap(api.GET("/api/admin/reports/ips", {
       params: { query: queryParams }, signal,
@@ -353,6 +424,19 @@ function SourceIpOverview({ onOpenReport }: {
 
   function move(offset: number) {
     setQuery((current) => ({ ...current, offset }));
+  }
+
+  async function exportOverview() {
+    setExporting(true);
+    setExportError(null);
+    try {
+      const rows = await loadAllOverviewRows(query);
+      downloadText(sourceIpOverviewCsv(rows), sourceIpOverviewFilename(query));
+    } catch {
+      setExportError("Could not export the source IP overview. Try again.");
+    } finally {
+      setExporting(false);
+    }
   }
 
   return (
@@ -398,8 +482,12 @@ function SourceIpOverview({ onOpenReport }: {
             </select>
           </label>
           <button type="submit" className={PRIMARY_CLASS}>Apply</button>
+          <button type="button" className={CONTROL_CLASS} disabled={exporting} onClick={exportOverview}>
+            {exporting ? "Exporting..." : "Export Overview CSV"}
+          </button>
         </form>
         {validation !== null && <p role="alert" className="mb-3 text-sm text-danger">{validation}</p>}
+        {exportError !== null && <p role="alert" className="mb-3 text-sm text-danger">{exportError}</p>}
 
         <ApiView resource={overview} loadingLabel="Loading source IP overview...">
           {(data) => {
@@ -411,7 +499,7 @@ function SourceIpOverview({ onOpenReport }: {
               <div className="space-y-3">
                 <DataTable
                   label="Source IP security overview"
-                  headings={["Source IP", "Alerts", "Confirmed malicious", "Confirmed rate", "False positive", "Escalated", "Unjudged", "Last seen"]}
+                  headings={["Source IP", "Total Alerts", "Confirmed Malicious", "Confirmed Malicious Rate", "False Positive", "Escalated", "Unjudged", "Last Seen", "Action"]}
                 >
                   {data.items.map((row) => (
                     <tr key={row.sourceIp} className="border-t border-border">
@@ -432,6 +520,16 @@ function SourceIpOverview({ onOpenReport }: {
                       <td className={`${TD_CLASS} text-right font-mono`}>{formatNumber(row.escalated)}</td>
                       <td className={`${TD_CLASS} text-right font-mono`}>{formatNumber(row.unjudged)}</td>
                       <td className={`${TD_CLASS} font-mono text-muted`}>{row.lastSeen ?? "—"}</td>
+                      <td className={TD_CLASS}>
+                        <button
+                          type="button"
+                          className="text-accent hover:underline"
+                          aria-label={`View report for ${row.sourceIp}`}
+                          onClick={() => onOpenReport(row.sourceIp, query.fromDate, query.toDate)}
+                        >
+                          View Report
+                        </button>
+                      </td>
                     </tr>
                   ))}
                 </DataTable>
@@ -452,83 +550,40 @@ function SourceIpOverview({ onOpenReport }: {
 }
 
 export function IpSecurityReportPage() {
-  const [ip, setIp] = useState("");
-  const [fromDate, setFromDate] = useState("");
-  const [toDate, setToDate] = useState("");
   const [query, setQuery] = useState<ReportQuery | null>(null);
-  const [validation, setValidation] = useState<string | null>(null);
-  const reportScope = useRef<HTMLDivElement>(null);
-
-  function submit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    const sourceIp = ip.trim();
-    if (sourceIp === "") {
-      setValidation("Enter a source IP address.");
-      return;
-    }
-    if (fromDate !== "" && toDate !== "" && fromDate > toDate) {
-      setValidation("From date must be on or before To date.");
-      return;
-    }
-    setValidation(null);
-    setQuery({ ip: sourceIp, fromDate, toDate });
-  }
+  const [view, setView] = useState<"overview" | "report">("overview");
 
   function openOverviewReport(sourceIp: string, overviewFromDate: string, overviewToDate: string) {
-    setIp(sourceIp);
-    setFromDate(overviewFromDate);
-    setToDate(overviewToDate);
-    setValidation(null);
     setQuery({ ip: sourceIp, fromDate: overviewFromDate, toDate: overviewToDate });
-    requestAnimationFrame(() => {
-      if (typeof reportScope.current?.scrollIntoView === "function") {
-        reportScope.current.scrollIntoView({ behavior: "smooth", block: "start" });
-      }
-    });
+    setView("report");
   }
 
   return (
     <div className="space-y-4">
-      <PageHeader
-        title="IP Security Report"
-        subtitle="Read-only source-IP activity report over recorded flows and effective analyst verdicts."
-      />
-
-      <div ref={reportScope}>
-      <Card className="print-hidden" title="Report scope" subtitle="Dates are inclusive and use recorded flow capture time.">
-        <form onSubmit={submit} className="flex flex-wrap items-end gap-3">
-          <label className="min-w-56 flex-1 text-xs text-dim">
-            Source IP
-            <input
-              aria-label="Source IP"
-              required
-              value={ip}
-              onChange={(event) => setIp(event.target.value)}
-              placeholder="e.g. 172.31.69.25"
-              className={`${CONTROL_CLASS} mt-1 w-full font-mono`}
-            />
-          </label>
-          <label className="text-xs text-dim">
-            From date
-            <input aria-label="From date" type="date" value={fromDate} onChange={(event) => setFromDate(event.target.value)} className={`${CONTROL_CLASS} mt-1 block`} />
-          </label>
-          <label className="text-xs text-dim">
-            To date
-            <input aria-label="To date" type="date" value={toDate} onChange={(event) => setToDate(event.target.value)} className={`${CONTROL_CLASS} mt-1 block`} />
-          </label>
-          <button type="submit" className={PRIMARY_CLASS}>Generate report</button>
-        </form>
-        {validation !== null && <p role="alert" className="mt-3 text-sm text-danger">{validation}</p>}
-      </Card>
+      <div hidden={view !== "overview"}>
+        <div className="space-y-4">
+          <PageHeader
+            title="Source IP Security Overview"
+            subtitle="Search and compare source-IP activity before opening a specific security report."
+          />
+          <SourceIpOverview onOpenReport={openOverviewReport} />
+        </div>
       </div>
 
-      {query === null ? (
-        <EmptyState title="Choose one source IP" hint="Generate a report to review its captured activity, effective verdicts and advisory recommendation." />
-      ) : (
-        <LoadedReport key={`${query.ip}:${query.fromDate}:${query.toDate}`} query={query} />
+      {view === "report" && query !== null && (
+        <div className="space-y-4">
+          <div className="print-hidden">
+            <button type="button" className={CONTROL_CLASS} onClick={() => setView("overview")}>
+              Back to Source IP Overview
+            </button>
+          </div>
+          <PageHeader
+            title="Specific IP Report"
+            subtitle={`Recorded source-IP activity and effective analyst verdicts for ${query.ip}.`}
+          />
+          <LoadedReport key={`${query.ip}:${query.fromDate}:${query.toDate}`} query={query} />
+        </div>
       )}
-
-      <SourceIpOverview onOpenReport={openOverviewReport} />
     </div>
   );
 }

@@ -9,9 +9,11 @@ import type { Session } from "../../../session/SessionContext";
 import { THEME_STORAGE_KEY } from "../../../theme/ThemeContext";
 import { jsonResponse, renderApp, stubFetch } from "../../../test/renderApp";
 import {
+  OVERVIEW_CSV_COLUMNS,
   REPORT_CSV_COLUMNS,
   ipReportCsv,
   ipReportFilename,
+  sourceIpOverviewCsv,
 } from "../IpSecurityReportPage";
 import { ADMIN } from "./fixtures";
 
@@ -115,24 +117,42 @@ const OVERVIEW: Schemas["SourceIpOverviewPage"] = {
   direction: "desc",
 };
 
+type OverviewStub = Schemas["SourceIpOverviewPage"] | ((url: URL) => Schemas["SourceIpOverviewPage"]);
+
 function stubReport(
   report: Schemas["IpSecurityReport"] = REPORT,
-  overview: Schemas["SourceIpOverviewPage"] = OVERVIEW,
+  overview: OverviewStub = OVERVIEW,
 ): Request[] {
   return stubFetch((request) => {
     const url = new URL(request.url);
-    if (url.pathname === "/api/admin/reports/ips") return jsonResponse(overview);
+    if (url.pathname === "/api/admin/reports/ips") {
+      return jsonResponse(typeof overview === "function" ? overview(url) : overview);
+    }
     if (url.pathname === `/api/admin/reports/ip/${REPORT.sourceIp}`) return jsonResponse(report);
     return jsonResponse({ error: { code: "NOT_FOUND", message: `No stub for ${url.pathname}` } }, 404);
   });
 }
 
-async function generateReport(user: ReturnType<typeof userEvent.setup>) {
-  await user.type(screen.getByLabelText("Source IP"), REPORT.sourceIp);
-  await user.type(screen.getByLabelText("From date"), "2018-03-01");
-  await user.type(screen.getByLabelText("To date"), "2018-03-01");
-  await user.click(screen.getByRole("button", { name: "Generate report" }));
+async function openSpecificReport(user: ReturnType<typeof userEvent.setup>) {
+  await user.click(await screen.findByRole("button", { name: `Open report for ${REPORT.sourceIp}` }));
   await screen.findByRole("heading", { level: 2, name: "IP SECURITY REPORT" });
+}
+
+function installDownloadSpies() {
+  const createObjectURL = vi.fn(() => "blob:test-download");
+  const revokeObjectURL = vi.fn();
+  Object.defineProperty(URL, "createObjectURL", { configurable: true, value: createObjectURL });
+  Object.defineProperty(URL, "revokeObjectURL", { configurable: true, value: revokeObjectURL });
+  const click = vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(() => undefined);
+  return { createObjectURL, revokeObjectURL, click };
+}
+
+function overviewRow(index: number): Schemas["SourceIpOverviewRow"] {
+  return {
+    ...OVERVIEW.items[0]!,
+    sourceIp: `10.0.${Math.floor(index / 250)}.${index % 250}`,
+    totalAlerts: index + 1,
+  };
 }
 
 describe("admin IP security report: access and scope", () => {
@@ -147,12 +167,25 @@ describe("admin IP security report: access and scope", () => {
     await waitFor(() => expect(second.router.state.location.pathname).toBe("/analyst/workstation"));
   });
 
-  it("requests one source IP with inclusive capture-date parameters", async () => {
+  it("starts with the source-IP list and requires no manually entered IP", async () => {
+    stubReport();
+    renderApp("/admin/reports/ip", { session: ADMIN });
+
+    expect(await screen.findByRole("heading", { level: 1, name: "Source IP Security Overview" })).toBeInTheDocument();
+    expect(screen.getByRole("table", { name: "Source IP security overview" })).toBeInTheDocument();
+    expect(screen.queryByLabelText("Source IP")).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Generate report" })).not.toBeInTheDocument();
+  });
+
+  it("opens one source IP with the overview's inclusive capture-date parameters", async () => {
     const user = userEvent.setup();
     const seen = stubReport();
     renderApp("/admin/reports/ip", { session: ADMIN });
 
-    await generateReport(user);
+    await user.type(screen.getByLabelText("Overview from date"), "2018-03-01");
+    await user.type(screen.getByLabelText("Overview to date"), "2018-03-01");
+    await user.click(screen.getByRole("button", { name: "Apply" }));
+    await openSpecificReport(user);
 
     const request = seen.find((item) => new URL(item.url).pathname.startsWith("/api/admin/reports/ip/"));
     expect(request).toBeDefined();
@@ -163,17 +196,16 @@ describe("admin IP security report: access and scope", () => {
     expect(request?.headers.get("Authorization")).toBe("Bearer test-token");
   });
 
-  it("rejects a reversed date range without calling the report endpoint", async () => {
+  it("rejects a reversed overview date range without calling the report endpoint", async () => {
     const user = userEvent.setup();
     const seen = stubReport();
     renderApp("/admin/reports/ip", { session: ADMIN });
 
-    await user.type(screen.getByLabelText("Source IP"), REPORT.sourceIp);
-    await user.type(screen.getByLabelText("From date"), "2018-03-02");
-    await user.type(screen.getByLabelText("To date"), "2018-03-01");
-    await user.click(screen.getByRole("button", { name: "Generate report" }));
+    await user.type(screen.getByLabelText("Overview from date"), "2018-03-02");
+    await user.type(screen.getByLabelText("Overview to date"), "2018-03-01");
+    await user.click(screen.getByRole("button", { name: "Apply" }));
 
-    expect(screen.getByRole("alert")).toHaveTextContent("From date must be on or before To date");
+    expect(screen.getByRole("alert")).toHaveTextContent("Overview from date must be on or before overview to date");
     expect(seen.filter((request) => new URL(request.url).pathname.startsWith("/api/admin/reports/ip/"))).toHaveLength(0);
   });
 });
@@ -228,10 +260,33 @@ describe("admin source IP security overview", () => {
     const seen = stubReport();
     renderApp("/admin/reports/ip", { session: ADMIN });
 
-    await user.click(await screen.findByRole("button", { name: `Open report for ${REPORT.sourceIp}` }));
+    await openSpecificReport(user);
     expect(await screen.findByRole("heading", { level: 2, name: "IP SECURITY REPORT" })).toBeInTheDocument();
-    expect(screen.getByLabelText("Source IP")).toHaveValue(REPORT.sourceIp);
+    expect(screen.getByRole("heading", { level: 1, name: "Specific IP Report" })).toBeInTheDocument();
     expect(seen.some((request) => new URL(request.url).pathname === `/api/admin/reports/ip/${REPORT.sourceIp}`)).toBe(true);
+  });
+
+  it("returns to the preserved overview without re-entering the IP", async () => {
+    const user = userEvent.setup();
+    stubReport();
+    renderApp("/admin/reports/ip", { session: ADMIN });
+    await user.type(screen.getByLabelText("Search source IP"), "172.31");
+    await user.click(screen.getByRole("button", { name: "Apply" }));
+    await openSpecificReport(user);
+
+    await user.click(screen.getByRole("button", { name: "Back to Source IP Overview" }));
+    expect(screen.getByRole("heading", { level: 1, name: "Source IP Security Overview" })).toBeInTheDocument();
+    expect(screen.getByLabelText("Search source IP")).toHaveValue("172.31");
+    expect(screen.getByRole("table", { name: "Source IP security overview" })).toBeInTheDocument();
+  });
+
+  it("provides a separate View Report action for each source row", async () => {
+    const user = userEvent.setup();
+    stubReport();
+    renderApp("/admin/reports/ip", { session: ADMIN });
+
+    await user.click(await screen.findByRole("button", { name: `View report for ${REPORT.sourceIp}` }));
+    expect(await screen.findByRole("heading", { level: 1, name: "Specific IP Report" })).toBeInTheDocument();
   });
 
   it("requests stable server pages using the returned offset and limit", async () => {
@@ -248,6 +303,60 @@ describe("admin source IP security overview", () => {
       expect(new URL(requests.at(-1)?.url ?? "http://localhost").searchParams.get("offset")).toBe("25");
     });
   });
+
+  it("exports every filtered row across server pages using the active sort", async () => {
+    const user = userEvent.setup();
+    const allRows = Array.from({ length: 201 }, (_, index) => overviewRow(index));
+    const seen = stubReport(REPORT, (url) => {
+      const limit = Number(url.searchParams.get("limit"));
+      const offset = Number(url.searchParams.get("offset"));
+      if (limit === 200) {
+        const items = allRows.slice(offset, offset + limit);
+        return {
+          ...OVERVIEW,
+          items,
+          page: { total: allRows.length, limit, offset, returned: items.length },
+          sort: "sourceIp",
+          direction: "asc",
+        };
+      }
+      return { ...OVERVIEW, page: { total: allRows.length, limit: 25, offset, returned: 1 } };
+    });
+    const downloads = installDownloadSpies();
+    renderApp("/admin/reports/ip", { session: ADMIN });
+
+    await user.type(screen.getByLabelText("Search source IP"), "10.0");
+    await user.type(screen.getByLabelText("Overview from date"), "2018-03-01");
+    await user.type(screen.getByLabelText("Overview to date"), "2018-03-02");
+    await user.clear(screen.getByLabelText("Minimum alerts"));
+    await user.type(screen.getByLabelText("Minimum alerts"), "3");
+    await user.selectOptions(screen.getByLabelText("Sort by"), "sourceIp");
+    await user.selectOptions(screen.getByLabelText("Sort direction"), "asc");
+    await user.click(screen.getByRole("button", { name: "Apply" }));
+    await user.click(screen.getByRole("button", { name: "Export Overview CSV" }));
+
+    await waitFor(() => expect(downloads.createObjectURL).toHaveBeenCalledOnce());
+    const exportRequests = seen
+      .filter((request) => {
+        const url = new URL(request.url);
+        return url.pathname === "/api/admin/reports/ips" && url.searchParams.get("limit") === "200";
+      })
+      .map((request) => new URL(request.url));
+    expect(exportRequests.map((url) => url.searchParams.get("offset"))).toEqual(["0", "200"]);
+    expect(Object.fromEntries(exportRequests[0]!.searchParams)).toMatchObject({
+      search: "10.0",
+      fromDate: "2018-03-01",
+      toDate: "2018-03-02",
+      minAlerts: "3",
+      sort: "sourceIp",
+      direction: "asc",
+    });
+    const csv = sourceIpOverviewCsv(allRows);
+    expect(csv.split("\r\n")).toHaveLength(202);
+    expect(csv.split("\r\n")[0]).toBe(OVERVIEW_CSV_COLUMNS.join(","));
+    expect(csv).toContain(allRows.at(-1)?.sourceIp);
+    expect(downloads.click).toHaveBeenCalledOnce();
+  });
 });
 
 describe("admin IP security report: evidence and exports", () => {
@@ -256,7 +365,7 @@ describe("admin IP security report: evidence and exports", () => {
     stubReport();
     const { container } = renderApp("/admin/reports/ip", { session: ADMIN });
 
-    await generateReport(user);
+    await openSpecificReport(user);
 
     expect(screen.getByLabelText("IP activity summary")).toHaveTextContent("Confirmed malicious2");
     expect(screen.getByRole("table", { name: "Attack behaviour" })).toHaveTextContent("Brute Force");
@@ -275,7 +384,7 @@ describe("admin IP security report: evidence and exports", () => {
     stubReport();
     const print = vi.spyOn(window, "print").mockImplementation(() => undefined);
     renderApp("/admin/reports/ip", { session: ADMIN });
-    await generateReport(user);
+    await openSpecificReport(user);
 
     await user.click(screen.getByRole("button", { name: "Print / Save PDF" }));
     expect(print).toHaveBeenCalledOnce();
@@ -291,6 +400,19 @@ describe("admin IP security report: evidence and exports", () => {
     expect(ipReportFilename({ ...REPORT, sourceIp: "2001:db8::1" })).toBe(
       "ip-security-report-2001-db8-1-2018-03-01-to-2018-03-01.csv",
     );
+  });
+
+  it("keeps the specific-IP CSV export separate from the overview export", async () => {
+    const user = userEvent.setup();
+    const downloads = installDownloadSpies();
+    stubReport();
+    renderApp("/admin/reports/ip", { session: ADMIN });
+    await openSpecificReport(user);
+
+    await user.click(screen.getByRole("button", { name: "Export CSV" }));
+    expect(downloads.createObjectURL).toHaveBeenCalledOnce();
+    expect(downloads.click).toHaveBeenCalledOnce();
+    expect(screen.queryByRole("button", { name: "Export Overview CSV" })).not.toBeInTheDocument();
   });
 
   it("works with the light theme and a persisted collapsed sidebar", async () => {
