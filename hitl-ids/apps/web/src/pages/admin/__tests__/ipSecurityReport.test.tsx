@@ -171,8 +171,9 @@ describe("admin IP security report: access and scope", () => {
     stubReport();
     renderApp("/admin/reports/ip", { session: ADMIN });
 
-    expect(await screen.findByRole("heading", { level: 1, name: "Source IP Security Overview" })).toBeInTheDocument();
-    expect(screen.getByRole("table", { name: "Source IP security overview" })).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { level: 1, name: "IP Security Reports" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { level: 2, name: "All Source IPs" })).toBeInTheDocument();
+    expect(screen.getByRole("table", { name: "All source IPs" })).toBeInTheDocument();
     expect(screen.queryByLabelText("Source IP")).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Generate report" })).not.toBeInTheDocument();
   });
@@ -215,12 +216,12 @@ describe("admin source IP security overview", () => {
     stubReport();
     const { container } = renderApp("/admin/reports/ip", { session: ADMIN });
 
-    const table = await screen.findByRole("table", { name: "Source IP security overview" });
+    const table = await screen.findByRole("table", { name: "All source IPs" });
     expect(screen.getByText("Source IPs observed in recorded network flows. Destination-only appearances are excluded.")).toBeInTheDocument();
     expect(table).toHaveTextContent(REPORT.sourceIp);
     expect(table).toHaveTextContent("66.7%");
     expect(table).toHaveTextContent("18");
-    expect(container.textContent).not.toContain("All IPs");
+    expect(container).toHaveTextContent("All Source IPs");
     expect(container.textContent?.toLowerCase()).not.toContain("risk score");
   });
 
@@ -228,7 +229,7 @@ describe("admin source IP security overview", () => {
     const user = userEvent.setup();
     const seen = stubReport();
     renderApp("/admin/reports/ip", { session: ADMIN });
-    await screen.findByRole("table", { name: "Source IP security overview" });
+    await screen.findByRole("table", { name: "All source IPs" });
 
     await user.type(screen.getByLabelText("Search source IP"), "172.31");
     await user.type(screen.getByLabelText("Overview from date"), "2018-03-01");
@@ -255,6 +256,58 @@ describe("admin source IP security overview", () => {
     });
   });
 
+  it("resets active filters and returns immediately to the complete source-IP list", async () => {
+    const user = userEvent.setup();
+    const seen = stubReport();
+    renderApp("/admin/reports/ip", { session: ADMIN });
+    await screen.findByRole("table", { name: "All source IPs" });
+
+    await user.type(screen.getByLabelText("Search source IP"), "172.31");
+    await user.type(screen.getByLabelText("Overview from date"), "2018-03-01");
+    await user.clear(screen.getByLabelText("Minimum alerts"));
+    await user.type(screen.getByLabelText("Minimum alerts"), "5");
+    await user.selectOptions(screen.getByLabelText("Sort by"), "sourceIp");
+    await user.selectOptions(screen.getByLabelText("Sort direction"), "asc");
+    await user.click(screen.getByRole("button", { name: "Apply" }));
+    await user.click(screen.getByRole("button", { name: "Reset" }));
+
+    expect(screen.getByLabelText("Search source IP")).toHaveValue("");
+    expect(screen.getByLabelText("Overview from date")).toHaveValue("");
+    expect(screen.getByLabelText("Minimum alerts")).toHaveValue(1);
+    expect(screen.getByLabelText("Sort by")).toHaveValue("totalAlerts");
+    expect(screen.getByLabelText("Sort direction")).toHaveValue("desc");
+    await waitFor(() => {
+      const requests = seen.filter((request) => new URL(request.url).pathname === "/api/admin/reports/ips");
+      const url = new URL(requests.at(-1)?.url ?? "http://localhost");
+      expect(url.searchParams.get("search")).toBeNull();
+      expect(url.searchParams.get("fromDate")).toBeNull();
+      expect(url.searchParams.get("toDate")).toBeNull();
+      expect(url.searchParams.get("minAlerts")).toBe("1");
+      expect(url.searchParams.get("sort")).toBe("totalAlerts");
+      expect(url.searchParams.get("direction")).toBe("desc");
+      expect(url.searchParams.get("offset")).toBe("0");
+    });
+  });
+
+  it("applies default controls as the complete source-IP list", async () => {
+    const user = userEvent.setup();
+    const seen = stubReport();
+    renderApp("/admin/reports/ip", { session: ADMIN });
+    await screen.findByRole("table", { name: "All source IPs" });
+
+    await user.click(screen.getByRole("button", { name: "Apply" }));
+
+    await waitFor(() => {
+      const requests = seen.filter((request) => new URL(request.url).pathname === "/api/admin/reports/ips");
+      const url = new URL(requests.at(-1)?.url ?? "http://localhost");
+      expect(url.searchParams.get("search")).toBeNull();
+      expect(url.searchParams.get("fromDate")).toBeNull();
+      expect(url.searchParams.get("toDate")).toBeNull();
+      expect(url.searchParams.get("minAlerts")).toBe("1");
+      expect(url.searchParams.get("offset")).toBe("0");
+    });
+  });
+
   it("opens the existing individual report when a source IP is selected", async () => {
     const user = userEvent.setup();
     const seen = stubReport();
@@ -274,10 +327,10 @@ describe("admin source IP security overview", () => {
     await user.click(screen.getByRole("button", { name: "Apply" }));
     await openSpecificReport(user);
 
-    await user.click(screen.getByRole("button", { name: "Back to Source IP Overview" }));
-    expect(screen.getByRole("heading", { level: 1, name: "Source IP Security Overview" })).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Back to All Source IPs" }));
+    expect(screen.getByRole("heading", { level: 1, name: "IP Security Reports" })).toBeInTheDocument();
     expect(screen.getByLabelText("Search source IP")).toHaveValue("172.31");
-    expect(screen.getByRole("table", { name: "Source IP security overview" })).toBeInTheDocument();
+    expect(screen.getByRole("table", { name: "All source IPs" })).toBeInTheDocument();
   });
 
   it("provides a separate View Report action for each source row", async () => {

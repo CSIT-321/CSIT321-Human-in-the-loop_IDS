@@ -426,6 +426,21 @@ function SourceIpOverview({ onOpenReport }: {
     setQuery((current) => ({ ...current, offset }));
   }
 
+  function resetFilters() {
+    setSearch("");
+    setFromDate("");
+    setToDate("");
+    setMinAlerts("1");
+    setSort("totalAlerts");
+    setDirection("desc");
+    setValidation(null);
+    setExportError(null);
+    setQuery({
+      search: "", fromDate: "", toDate: "", minAlerts: 1,
+      sort: "totalAlerts", direction: "desc", offset: 0,
+    });
+  }
+
   async function exportOverview() {
     setExporting(true);
     setExportError(null);
@@ -440,9 +455,9 @@ function SourceIpOverview({ onOpenReport }: {
   }
 
   return (
-    <section className="print-hidden" aria-label="Source IP Security Overview">
+    <section className="print-hidden" aria-label="All Source IPs">
       <Card
-        title="Source IP Security Overview"
+        title="All Source IPs"
         subtitle="Source IPs observed in recorded network flows. Destination-only appearances are excluded."
       >
         <form onSubmit={submit} className="mb-4 flex flex-wrap items-end gap-3">
@@ -482,6 +497,7 @@ function SourceIpOverview({ onOpenReport }: {
             </select>
           </label>
           <button type="submit" className={PRIMARY_CLASS}>Apply</button>
+          <button type="button" className={CONTROL_CLASS} onClick={resetFilters}>Reset</button>
           <button type="button" className={CONTROL_CLASS} disabled={exporting} onClick={exportOverview}>
             {exporting ? "Exporting..." : "Export Overview CSV"}
           </button>
@@ -498,7 +514,7 @@ function SourceIpOverview({ onOpenReport }: {
             ) : (
               <div className="space-y-3">
                 <DataTable
-                  label="Source IP security overview"
+                  label="All source IPs"
                   headings={["Source IP", "Total Alerts", "Confirmed Malicious", "Confirmed Malicious Rate", "False Positive", "Escalated", "Unjudged", "Last Seen", "Action"]}
                 >
                   {data.items.map((row) => (
@@ -563,8 +579,8 @@ export function IpSecurityReportPage() {
       <div hidden={view !== "overview"}>
         <div className="space-y-4">
           <PageHeader
-            title="Source IP Security Overview"
-            subtitle="Search and compare source-IP activity before opening a specific security report."
+            title="IP Security Reports"
+            subtitle="Browse all source IPs, apply filters, or open a specific security report."
           />
           <SourceIpOverview onOpenReport={openOverviewReport} />
         </div>
@@ -574,7 +590,7 @@ export function IpSecurityReportPage() {
         <div className="space-y-4">
           <div className="print-hidden">
             <button type="button" className={CONTROL_CLASS} onClick={() => setView("overview")}>
-              Back to Source IP Overview
+              Back to All Source IPs
             </button>
           </div>
           <PageHeader
