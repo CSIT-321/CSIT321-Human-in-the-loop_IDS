@@ -14,7 +14,11 @@ export function Sidebar() {
   if (session === null) return null;
 
   return (
-    <nav aria-label="Main" className="w-52 shrink-0 border-r border-border bg-surface py-3">
+    <nav
+      aria-label="Main"
+      data-print-hidden="true"
+      className="w-52 shrink-0 border-r border-border bg-surface py-3"
+    >
       <p aria-hidden className="label-mono px-4 pb-2 text-dim">
         {ROLE_META[session.role].label}
       </p>

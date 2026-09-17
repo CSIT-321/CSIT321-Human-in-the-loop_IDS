@@ -550,6 +550,259 @@ def test_a_detection_run_is_admin_only(client):
 
 
 # --------------------------------------------------------------------------------------------
+# Administrator source-IP security report
+# --------------------------------------------------------------------------------------------
+
+REPORT_IP = "172.31.69.25"
+DESTINATION_ONLY_IP = "18.221.219.4"
+
+
+def admin_report(client: TestClient, ip: str = REPORT_IP, **params) -> dict:
+    response = client.get(
+        f"/api/admin/reports/ip/{ip}",
+        params=params,
+        headers={"Authorization": f"Bearer {client.tokens['admin']}"},
+    )
+    assert response.status_code == 200, response.text
+    return response.json()
+
+
+def admin_source_ip_overview(client: TestClient, **params) -> dict:
+    response = client.get(
+        "/api/admin/reports/ips",
+        params=params,
+        headers={"Authorization": f"Bearer {client.tokens['admin']}"},
+    )
+    assert response.status_code == 200, response.text
+    return response.json()
+
+
+def test_ip_security_report_is_admin_only(client):
+    url = f"/api/admin/reports/ip/{REPORT_IP}"
+    assert client.get(url).status_code == 403
+    evaluator = client.get(
+        url, headers={"Authorization": f"Bearer {client.tokens['evaluator']}"})
+    assert evaluator.status_code == 403
+    assert admin_report(client)["sourceIp"] == REPORT_IP
+
+
+def test_ip_security_report_uses_source_appearances_only(client):
+    report = admin_report(client)
+    assert report["summary"]["totalAlerts"] == len(ROWS)
+    assert all(row["sourceIp"] == REPORT_IP for row in report["timeline"])
+
+    destination_only = admin_report(client, DESTINATION_ONLY_IP)
+    assert destination_only["summary"]["totalAlerts"] == 0
+    assert destination_only["timeline"] == []
+
+
+def test_ip_security_report_date_range_is_inclusive_and_validated(client):
+    day = admin_report(client, fromDate="2018-03-01", toDate="2018-03-01")
+    assert day["summary"]["totalAlerts"] == len(ROWS)
+    assert day["fromDate"] == day["toDate"] == "2018-03-01"
+
+    empty = admin_report(client, fromDate="2018-02-28", toDate="2018-02-28")
+    assert empty["summary"]["totalAlerts"] == 0
+
+    headers = {"Authorization": f"Bearer {client.tokens['admin']}"}
+    reversed_range = client.get(
+        f"/api/admin/reports/ip/{REPORT_IP}",
+        params={"fromDate": "2018-03-02", "toDate": "2018-03-01"}, headers=headers)
+    assert reversed_range.status_code == 400
+    invalid_date = client.get(
+        f"/api/admin/reports/ip/{REPORT_IP}",
+        params={"fromDate": "2018-99-99"}, headers=headers)
+    assert invalid_date.status_code == 400
+
+
+def test_ip_security_report_counts_only_the_latest_effective_verdict(client):
+    refs = [item["alertRef"] for item in rows(client, limit=100)]
+    assert client.post(f"/api/alerts/{refs[0]}/feedback",
+                       json={"category": "confirm_true_positive"}).status_code == 200
+    assert client.post(f"/api/alerts/{refs[0]}/feedback",
+                       json={"category": "mark_false_positive"}).status_code == 200
+    assert client.post(f"/api/alerts/{refs[1]}/feedback",
+                       json={"category": "escalate"}).status_code == 200
+    assert client.post(f"/api/alerts/{refs[2]}/feedback",
+                       json={"category": "needs_investigation"}).status_code == 200
+
+    report = admin_report(client)
+    summary = report["summary"]
+    assert summary["truePositive"] == 0
+    assert summary["falsePositive"] == 1
+    assert summary["escalated"] == 1
+    assert summary["needsInvestigation"] == 1
+    assert summary["confirmedMalicious"] == 1
+    target = next(row for row in report["timeline"] if row["alertRef"] == refs[0])
+    assert target["effectiveVerdict"] == "mark_false_positive"
+
+
+def test_ip_security_report_tp_and_escalate_are_the_only_malicious_confirmations(client):
+    categories = ["confirm_true_positive", "escalate", "mark_false_positive",
+                  "mark_expected_activity", "needs_investigation"]
+    refs = [item["alertRef"] for item in rows(client, limit=100)[:len(categories)]]
+    for ref, category in zip(refs, categories, strict=True):
+        assert client.post(f"/api/alerts/{ref}/feedback",
+                           json={"category": category}).status_code == 200
+
+    summary = admin_report(client)["summary"]
+    assert summary["confirmedMalicious"] == 2
+    assert summary["truePositive"] == 1
+    assert summary["escalated"] == 1
+    assert summary["falsePositive"] == 1
+    assert summary["expectedActivity"] == 1
+    assert summary["needsInvestigation"] == 1
+
+
+def test_ip_security_report_recommendation_is_transparent_and_advisory(client):
+    refs = [item["alertRef"] for item in rows(client, limit=100)[:3]]
+    for ref in refs:
+        assert client.post(f"/api/alerts/{ref}/feedback",
+                           json={"category": "confirm_true_positive"}).status_code == 200
+    recommendation = admin_report(client)["recommendation"]
+    assert recommendation["action"] == "Review for temporary block"
+    assert "3 analyst-confirmed malicious alerts" in recommendation["reason"]
+    assert recommendation["advisory"] == (
+        "Recommendation is advisory. No network blocking action is performed.")
+
+
+def test_ip_security_report_contains_no_ground_truth_fields(client):
+    body = admin_report(client)
+    serialised = str(body).casefold()
+    for forbidden in ("groundtruth", "rawlabel", "trueattacktype", "label"):
+        assert forbidden not in serialised
+
+
+def test_ip_security_report_handles_an_unknown_source_cleanly(client):
+    report = admin_report(client, "203.0.113.99")
+    assert report["summary"]["totalAlerts"] == 0
+    assert report["attackBehaviour"] == []
+    assert report["targetedHosts"] == []
+    assert report["destinationPorts"] == []
+    assert report["timeline"] == []
+    assert report["recommendation"]["action"] == "Monitor"
+
+
+def test_source_ip_overview_is_admin_only_and_excludes_destination_only_ips(client):
+    assert client.get("/api/admin/reports/ips").status_code == 403
+    evaluator = client.get(
+        "/api/admin/reports/ips",
+        headers={"Authorization": f"Bearer {client.tokens['evaluator']}"},
+    )
+    assert evaluator.status_code == 403
+
+    body = admin_source_ip_overview(client)
+    assert body["page"]["total"] == 1
+    assert body["items"][0]["sourceIp"] == REPORT_IP
+    assert DESTINATION_ONLY_IP not in {item["sourceIp"] for item in body["items"]}
+    assert body["items"][0]["confirmedMaliciousRate"] is None
+
+
+def test_source_ip_overview_query_is_source_only_and_rejects_unknown_sort(database):
+    conn = db.connect(str(database))
+    try:
+        items, total = store.source_ip_security_overview(conn)
+        assert total == 1
+        assert items[0]["source_ip"] == REPORT_IP
+        assert items[0]["total_alerts"] == len(ROWS)
+        assert items[0]["confirmed_malicious_rate"] is None
+        with pytest.raises(ValueError, match="Unsupported source-IP overview sort"):
+            store.source_ip_security_overview(conn, sort="riskScore")
+        with pytest.raises(ValueError, match="Unsupported source-IP overview direction"):
+            store.source_ip_security_overview(conn, direction="sideways")
+    finally:
+        conn.close()
+
+
+def test_source_ip_overview_counts_an_ip_only_when_it_is_the_source(client, database):
+    conn = db.connect(str(database))
+    alert_ids = [row["alert_id"] for row in conn.execute(
+        "SELECT alert_id FROM flow_data ORDER BY alert_id LIMIT 2").fetchall()]
+    with conn:
+        conn.execute("UPDATE flow_data SET src_ip = ? WHERE alert_id = ?",
+                     ("10.0.0.1", alert_ids[0]))
+        conn.execute("UPDATE flow_data SET dst_ip = ? WHERE alert_id = ?",
+                     ("10.0.0.1", alert_ids[1]))
+    conn.close()
+
+    match = admin_source_ip_overview(client, search="10.0.0.1")
+    assert match["page"]["total"] == 1
+    assert match["items"][0]["sourceIp"] == "10.0.0.1"
+    assert match["items"][0]["totalAlerts"] == 1
+
+
+def test_source_ip_overview_date_range_is_inclusive_and_minimum_is_enforced(client):
+    day = admin_source_ip_overview(
+        client, fromDate="2018-03-01", toDate="2018-03-01", minAlerts=len(ROWS))
+    assert day["page"]["total"] == 1
+    assert day["items"][0]["totalAlerts"] == len(ROWS)
+
+    assert admin_source_ip_overview(
+        client, fromDate="2018-02-28", toDate="2018-02-28")["items"] == []
+    assert admin_source_ip_overview(client, minAlerts=len(ROWS) + 1)["items"] == []
+
+
+def test_source_ip_overview_uses_latest_verdict_and_correct_rate_denominator(client):
+    refs = [item["alertRef"] for item in rows(client, limit=100)[:4]]
+    assert client.post(f"/api/alerts/{refs[0]}/feedback",
+                       json={"category": "confirm_true_positive"}).status_code == 200
+    assert client.post(f"/api/alerts/{refs[0]}/feedback",
+                       json={"category": "mark_false_positive"}).status_code == 200
+    assert client.post(f"/api/alerts/{refs[1]}/feedback",
+                       json={"category": "confirm_true_positive"}).status_code == 200
+    assert client.post(f"/api/alerts/{refs[2]}/feedback",
+                       json={"category": "escalate"}).status_code == 200
+    assert client.post(f"/api/alerts/{refs[3]}/feedback",
+                       json={"category": "needs_investigation"}).status_code == 200
+
+    item = admin_source_ip_overview(client)["items"][0]
+    assert item["judgedAlerts"] == 4
+    assert item["confirmedMalicious"] == 2
+    assert item["confirmedMaliciousRate"] == 0.5
+    assert item["falsePositives"] == 1
+    assert item["escalated"] == 1
+    assert item["needsInvestigation"] == 1
+    assert item["unjudged"] == len(ROWS) - 4
+
+
+def test_source_ip_overview_sorting_and_pagination_are_stable(client, database):
+    conn = db.connect(str(database))
+    alert_ids = [row["alert_id"] for row in conn.execute(
+        "SELECT alert_id FROM flow_data ORDER BY alert_id").fetchall()]
+    with conn:
+        for alert_id in alert_ids[:10]:
+            conn.execute("UPDATE flow_data SET src_ip = ? WHERE alert_id = ?",
+                         ("10.0.0.1", alert_id))
+        for alert_id in alert_ids[10:16]:
+            conn.execute("UPDATE flow_data SET src_ip = ? WHERE alert_id = ?",
+                         ("10.0.0.2", alert_id))
+        for alert_id in alert_ids[16:]:
+            conn.execute("UPDATE flow_data SET src_ip = ? WHERE alert_id = ?",
+                         ("10.0.0.3", alert_id))
+    conn.close()
+
+    first = admin_source_ip_overview(
+        client, sort="totalAlerts", direction="desc", limit=2, offset=0)
+    second = admin_source_ip_overview(
+        client, sort="totalAlerts", direction="desc", limit=2, offset=2)
+    assert [item["totalAlerts"] for item in first["items"]] == [10, 6]
+    assert [item["totalAlerts"] for item in second["items"]] == [5]
+    assert ({item["sourceIp"] for item in first["items"]}
+            .isdisjoint(item["sourceIp"] for item in second["items"]))
+
+    by_ip = admin_source_ip_overview(
+        client, sort="sourceIp", direction="asc", limit=10)
+    assert [item["sourceIp"] for item in by_ip["items"]] == [
+        "10.0.0.1", "10.0.0.2", "10.0.0.3"]
+
+
+def test_source_ip_overview_contains_no_ground_truth_fields(client):
+    serialised = str(admin_source_ip_overview(client)).casefold()
+    for forbidden in ("groundtruth", "rawlabel", "trueattacktype"):
+        assert forbidden not in serialised
+
+
+# --------------------------------------------------------------------------------------------
 # NFR-04 — measured, not assumed
 # --------------------------------------------------------------------------------------------
 

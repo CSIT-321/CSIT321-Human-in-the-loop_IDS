@@ -61,6 +61,8 @@ REQUIRED_OPERATIONS = {
     ("/api/alerts/{alertRef}/notes", "post"),
     ("/api/dashboard/breakdowns", "get"),
     ("/api/entities/ip/{ip}", "get"),
+    ("/api/admin/reports/ips", "get"),
+    ("/api/admin/reports/ip/{ip}", "get"),
     ("/api/evaluation/runs/{runId}", "get"),
     ("/api/evaluation/runs/{runId}/detection", "get"),
 }

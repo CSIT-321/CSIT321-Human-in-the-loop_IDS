@@ -20,6 +20,7 @@ from __future__ import annotations
 import ipaddress
 import json
 import sqlite3
+from datetime import date
 from pathlib import Path
 from typing import Annotated, Any, Literal
 
@@ -362,6 +363,77 @@ def get_ip_entity(ip: str, conn: Conn, principal: Principal,
     if data is None:
         raise not_found("alert involving IP", ip)
     return co.EntityIp(**data)
+
+
+def _validate_report_dates(from_date: str | None, to_date: str | None) -> None:
+    try:
+        parsed_from = date.fromisoformat(from_date) if from_date is not None else None
+        parsed_to = date.fromisoformat(to_date) if to_date is not None else None
+    except ValueError as error:
+        raise ApiError(400, "VALIDATION_FAILED", "Dates must be valid YYYY-MM-DD values") from error
+    if parsed_from is not None and parsed_to is not None and parsed_from > parsed_to:
+        raise ApiError(400, "VALIDATION_FAILED", "fromDate must be on or before toDate")
+
+
+@router.get("/api/admin/reports/ips", response_model=co.SourceIpOverviewPage,
+            tags=["reports"], operation_id="getAdminSourceIpOverview",
+            dependencies=[AdminOnly])
+def get_admin_source_ip_overview(
+    conn: Conn,
+    from_date: str | None = Query(None, alias="fromDate", pattern=r"^\d{4}-\d{2}-\d{2}$"),
+    to_date: str | None = Query(None, alias="toDate", pattern=r"^\d{4}-\d{2}-\d{2}$"),
+    search: str | None = Query(None, max_length=200),
+    min_alerts: int = Query(1, alias="minAlerts", ge=1),
+    limit: int = Query(DEFAULT_PAGE_SIZE, ge=1, le=MAX_PAGE_SIZE),
+    offset: int = Query(0, ge=0),
+    sort: co.SourceIpOverviewSort = Query("totalAlerts"),
+    direction: Literal["asc", "desc"] = Query("desc"),
+) -> co.SourceIpOverviewPage:
+    """Paginated source-only activity counts using current analyst verdicts."""
+    _validate_report_dates(from_date, to_date)
+    items, total = store.source_ip_security_overview(
+        conn,
+        from_date=from_date,
+        to_date=to_date,
+        search=search,
+        min_alerts=min_alerts,
+        limit=limit,
+        offset=offset,
+        sort=sort,
+        direction=direction,
+    )
+    return co.SourceIpOverviewPage(
+        generated_at=m.utc_now(),
+        from_date=from_date,
+        to_date=to_date,
+        items=items,
+        page=PageInfo(total=total, limit=limit, offset=offset, returned=len(items)),
+        sort=sort,
+        direction=direction,
+    )
+
+
+@router.get("/api/admin/reports/ip/{ip}", response_model=co.IpSecurityReport,
+            tags=["reports"], operation_id="getAdminIpSecurityReport",
+            dependencies=[AdminOnly])
+def get_admin_ip_security_report(
+    ip: str,
+    conn: Conn,
+    from_date: str | None = Query(None, alias="fromDate", pattern=r"^\d{4}-\d{2}-\d{2}$"),
+    to_date: str | None = Query(None, alias="toDate", pattern=r"^\d{4}-\d{2}-\d{2}$"),
+) -> co.IpSecurityReport:
+    """A read-only source-IP report over recorded capture time and effective analyst verdicts."""
+    try:
+        source_ip = str(ipaddress.ip_address(ip))
+    except ValueError as error:
+        raise ApiError(400, "VALIDATION_FAILED", f"{ip!r} is not an IP address") from error
+
+    _validate_report_dates(from_date, to_date)
+
+    return co.IpSecurityReport(
+        generated_at=m.utc_now(),
+        **store.ip_security_report(conn, source_ip, from_date=from_date, to_date=to_date),
+    )
 
 
 @router.get("/api/dashboard/summary", response_model=co.DashboardSummary, tags=["dashboard"],

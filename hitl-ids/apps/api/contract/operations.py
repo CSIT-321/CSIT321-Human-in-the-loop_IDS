@@ -18,11 +18,18 @@ Two shapes here are load-bearing for honesty:
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Any
+from typing import Any, Literal
 
 from pydantic import Field
 
-from apps.api.contract.common import Actor, ApiModel
+from apps.api.contract.common import (
+    DEFAULT_PAGE_SIZE,
+    MAX_PAGE_SIZE,
+    Actor,
+    ApiModel,
+    PageInfo,
+    SortDirection,
+)
 from packages.contracts import models as m
 
 # --------------------------------------------------------------------------------------------
@@ -84,6 +91,135 @@ class EntityIp(ApiModel):
     verdict_mix: dict[str, int] = Field(default_factory=dict)
     top_peers: list[TopValue] = Field(default_factory=list)
     top_destination_ports: list[TopValue] = Field(default_factory=list)
+
+
+# --------------------------------------------------------------------------------------------
+# Administrator IP security report
+# --------------------------------------------------------------------------------------------
+
+
+class IpReportSummary(ApiModel):
+    total_alerts: int = Field(ge=0)
+    confirmed_malicious: int = Field(ge=0)
+    true_positive: int = Field(ge=0)
+    escalated: int = Field(ge=0)
+    false_positive: int = Field(ge=0)
+    expected_activity: int = Field(ge=0)
+    needs_investigation: int = Field(ge=0)
+    distinct_attack_categories: int = Field(ge=0)
+    distinct_destination_hosts: int = Field(ge=0)
+    distinct_destination_ports: int = Field(ge=0)
+    first_seen: str | None = None
+    last_seen: str | None = None
+
+
+class IpAttackBehaviour(ApiModel):
+    attack_category: str
+    alert_count: int = Field(ge=0)
+    confirmed_malicious: int = Field(ge=0)
+
+
+class IpTargetHost(ApiModel):
+    destination_ip: str
+    alerts: int = Field(ge=0)
+    confirmed_malicious: int = Field(ge=0)
+    last_seen: str | None = None
+
+
+class IpDestinationPort(ApiModel):
+    port: int = Field(ge=0, le=65535)
+    alerts: int = Field(ge=0)
+    confirmed_malicious: int = Field(ge=0)
+
+
+class IpReportTimelineRow(ApiModel):
+    capture_time: str | None = None
+    alert_ref: str
+    source_record_id: str
+    source_ip: str
+    destination_ip: str
+    destination_port: int = Field(ge=0, le=65535)
+    protocol: str
+    attack_category: str | None = None
+    detection_score: m.Score
+    operational_score: m.Score
+    effective_verdict: m.FeedbackCategory | None = None
+    status: m.AlertStatus
+
+
+class IpReportRecommendation(ApiModel):
+    action: Literal[
+        "Review for temporary block",
+        "Investigate / monitor",
+        "Review for suppression / allow-listing",
+        "Mixed evidence — investigate before action",
+        "Monitor",
+    ]
+    reason: str
+    advisory: str = "Recommendation is advisory. No network blocking action is performed."
+
+
+class IpSecurityReport(ApiModel):
+    """A read-only source-IP report derived from recorded flows and effective analyst verdicts."""
+
+    source_ip: str
+    from_date: str | None = None
+    to_date: str | None = None
+    generated_at: datetime
+    summary: IpReportSummary
+    attack_behaviour: list[IpAttackBehaviour] = Field(default_factory=list)
+    targeted_hosts: list[IpTargetHost] = Field(default_factory=list)
+    destination_ports: list[IpDestinationPort] = Field(default_factory=list)
+    timeline: list[IpReportTimelineRow] = Field(default_factory=list)
+    recommendation: IpReportRecommendation
+
+
+SourceIpOverviewSort = Literal[
+    "totalAlerts",
+    "confirmedMalicious",
+    "confirmedMaliciousRate",
+    "escalated",
+    "falsePositives",
+    "unjudged",
+    "lastSeen",
+    "sourceIp",
+]
+
+
+class SourceIpOverviewQuery(ApiModel):
+    from_date: str | None = None
+    to_date: str | None = None
+    search: str | None = Field(default=None, max_length=200)
+    min_alerts: int = Field(default=1, ge=1)
+    limit: int = Field(default=DEFAULT_PAGE_SIZE, ge=1, le=MAX_PAGE_SIZE)
+    offset: int = Field(default=0, ge=0)
+    sort: SourceIpOverviewSort = "totalAlerts"
+    direction: SortDirection = "desc"
+
+
+class SourceIpOverviewRow(ApiModel):
+    source_ip: str
+    total_alerts: int = Field(ge=0)
+    judged_alerts: int = Field(ge=0)
+    confirmed_malicious: int = Field(ge=0)
+    confirmed_malicious_rate: float | None = Field(default=None, ge=0, le=1)
+    false_positives: int = Field(ge=0)
+    benign_positives: int = Field(ge=0)
+    escalated: int = Field(ge=0)
+    needs_investigation: int = Field(ge=0)
+    unjudged: int = Field(ge=0)
+    first_seen: str | None = None
+    last_seen: str | None = None
+
+
+class SourceIpOverviewPage(ApiModel):
+    generated_at: datetime
+    from_date: str | None = None
+    to_date: str | None = None
+    items: list[SourceIpOverviewRow]
+    page: PageInfo
+    sort: SourceIpOverviewSort
+    direction: SortDirection
 
 
 class DashboardSummary(ApiModel):
