@@ -72,6 +72,7 @@ export function WorkstationPage() {
               sort: "queue",
               direction: "desc",
               queueClass: tab.queueClass === null ? null : [tab.queueClass],
+              evidenceClass: tab.evidenceClass === null ? null : [tab.evidenceClass],
               requiresReview: tab.requiresReview ? true : null,
               search: search === "" ? null : search,
             },
@@ -125,8 +126,11 @@ export function WorkstationPage() {
     counts.all = summary.data.totalAlerts;
     counts.review = summary.data.requiresReview;
     for (const option of QUEUE_TABS) {
-      if (option.queueClass === null) continue;
-      counts[option.key] = (summary.data.byQueueClass ?? []).find((band) => band.queueClass === option.queueClass)?.count ?? 0;
+      if (option.queueClass !== null) {
+        counts[option.key] = (summary.data.byQueueClass ?? []).find((band) => band.queueClass === option.queueClass)?.count ?? 0;
+      } else if (option.evidenceClass !== null) {
+        counts[option.key] = summary.data.byEvidenceClass?.[option.evidenceClass] ?? 0;
+      }
     }
   }
 

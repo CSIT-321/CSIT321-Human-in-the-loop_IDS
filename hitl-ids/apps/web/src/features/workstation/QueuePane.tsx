@@ -1,9 +1,8 @@
 /**
  * The workstation's left column: band tabs, a search box, and the ranked alert list.
  *
- * The API ranks; this list renders rows in the order they arrive. Tabs are queue bands, not severities:
- * in this data severity is almost only Critical or Informational, while the band carries the triage
- * meaning (console-rebuild-proposal.md §1).
+ * The API ranks; this list renders rows in the order they arrive. Tabs select either queue/workflow
+ * state or immutable detector evidence. Neither dimension is a severity filter.
  */
 
 import { useEffect, useRef, useState, type FormEvent } from "react";
@@ -15,6 +14,7 @@ import { formatNumber, formatScore, humanise } from "../../design/format";
 
 type AlertSummary = Schemas["AlertSummary"];
 type QueueClass = AlertSummary["queueClass"];
+type EvidenceClass = AlertSummary["evidenceClass"];
 
 interface AlertPage {
   readonly items: AlertSummary[];
@@ -25,17 +25,18 @@ export interface QueueTab {
   readonly key: string;
   readonly label: string;
   readonly queueClass: QueueClass | null;
+  readonly evidenceClass: EvidenceClass | null;
   readonly requiresReview: boolean;
 }
 
 export const QUEUE_TABS: readonly [QueueTab, ...QueueTab[]] = [
-  { key: "all", label: "All", queueClass: null, requiresReview: false },
-  { key: "tier2", label: "Tier 2", queueClass: "tier2_candidate", requiresReview: false },
-  { key: "review", label: "Needs review", queueClass: null, requiresReview: true },
-  { key: "corroborated", label: "Rule + model", queueClass: "corroborated", requiresReview: false },
-  { key: "rule", label: "Rule only", queueClass: "signature_override", requiresReview: false },
-  { key: "model", label: "Model only", queueClass: "ml_only", requiresReview: false },
-  { key: "none", label: "Not flagged", queueClass: "none", requiresReview: false },
+  { key: "all", label: "All", queueClass: null, evidenceClass: null, requiresReview: false },
+  { key: "tier2", label: "Tier 2", queueClass: "tier2_candidate", evidenceClass: null, requiresReview: false },
+  { key: "review", label: "Needs review", queueClass: null, evidenceClass: null, requiresReview: true },
+  { key: "corroborated", label: "Rule + model", queueClass: null, evidenceClass: "corroborated", requiresReview: false },
+  { key: "rule", label: "Rule only", queueClass: null, evidenceClass: "signature_override", requiresReview: false },
+  { key: "model", label: "Model only", queueClass: null, evidenceClass: "ml_only", requiresReview: false },
+  { key: "none", label: "Not flagged", queueClass: null, evidenceClass: "none", requiresReview: false },
 ];
 
 /** The left edge of a card: the band's colour, so the list reads as bands even when scrolled. */
@@ -167,7 +168,7 @@ export function QueuePane({
         )}
       </header>
 
-      <div role="tablist" aria-label="Queue band" className="flex flex-wrap gap-px border-b border-border bg-border">
+      <div role="tablist" aria-label="Alert filter" className="flex flex-wrap gap-px border-b border-border bg-border">
         {QUEUE_TABS.map((option) => {
           const active = option.key === tab.key;
           const count = counts[option.key];
