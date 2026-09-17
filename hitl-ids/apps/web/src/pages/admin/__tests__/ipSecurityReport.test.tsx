@@ -90,9 +90,38 @@ const REPORT: Schemas["IpSecurityReport"] = {
   },
 };
 
-function stubReport(report: Schemas["IpSecurityReport"] = REPORT): Request[] {
+const OVERVIEW: Schemas["SourceIpOverviewPage"] = {
+  generatedAt: "2026-09-17T04:00:00Z",
+  fromDate: null,
+  toDate: null,
+  items: [
+    {
+      sourceIp: REPORT.sourceIp,
+      totalAlerts: 21,
+      judgedAlerts: 3,
+      confirmedMalicious: 2,
+      confirmedMaliciousRate: 2 / 3,
+      falsePositives: 1,
+      benignPositives: 0,
+      escalated: 1,
+      needsInvestigation: 0,
+      unjudged: 18,
+      firstSeen: "2018-03-01 10:00:00",
+      lastSeen: "2018-03-01 10:05:00",
+    },
+  ],
+  page: { total: 1, limit: 25, offset: 0, returned: 1 },
+  sort: "totalAlerts",
+  direction: "desc",
+};
+
+function stubReport(
+  report: Schemas["IpSecurityReport"] = REPORT,
+  overview: Schemas["SourceIpOverviewPage"] = OVERVIEW,
+): Request[] {
   return stubFetch((request) => {
     const url = new URL(request.url);
+    if (url.pathname === "/api/admin/reports/ips") return jsonResponse(overview);
     if (url.pathname === `/api/admin/reports/ip/${REPORT.sourceIp}`) return jsonResponse(report);
     return jsonResponse({ error: { code: "NOT_FOUND", message: `No stub for ${url.pathname}` } }, 404);
   });
@@ -145,7 +174,79 @@ describe("admin IP security report: access and scope", () => {
     await user.click(screen.getByRole("button", { name: "Generate report" }));
 
     expect(screen.getByRole("alert")).toHaveTextContent("From date must be on or before To date");
-    expect(seen).toHaveLength(0);
+    expect(seen.filter((request) => new URL(request.url).pathname.startsWith("/api/admin/reports/ip/"))).toHaveLength(0);
+  });
+});
+
+describe("admin source IP security overview", () => {
+  it("renders source-only helper text and verdict aggregates without a risk score", async () => {
+    stubReport();
+    const { container } = renderApp("/admin/reports/ip", { session: ADMIN });
+
+    const table = await screen.findByRole("table", { name: "Source IP security overview" });
+    expect(screen.getByText("Source IPs observed in recorded network flows. Destination-only appearances are excluded.")).toBeInTheDocument();
+    expect(table).toHaveTextContent(REPORT.sourceIp);
+    expect(table).toHaveTextContent("66.7%");
+    expect(table).toHaveTextContent("18");
+    expect(container.textContent).not.toContain("All IPs");
+    expect(container.textContent?.toLowerCase()).not.toContain("risk score");
+  });
+
+  it("sends search, inclusive dates, minimum count and server-side sorting", async () => {
+    const user = userEvent.setup();
+    const seen = stubReport();
+    renderApp("/admin/reports/ip", { session: ADMIN });
+    await screen.findByRole("table", { name: "Source IP security overview" });
+
+    await user.type(screen.getByLabelText("Search source IP"), "172.31");
+    await user.type(screen.getByLabelText("Overview from date"), "2018-03-01");
+    await user.type(screen.getByLabelText("Overview to date"), "2018-03-01");
+    await user.clear(screen.getByLabelText("Minimum alerts"));
+    await user.type(screen.getByLabelText("Minimum alerts"), "5");
+    await user.selectOptions(screen.getByLabelText("Sort by"), "confirmedMaliciousRate");
+    await user.selectOptions(screen.getByLabelText("Sort direction"), "asc");
+    await user.click(screen.getByRole("button", { name: "Apply" }));
+
+    await waitFor(() => {
+      const requests = seen.filter((request) => new URL(request.url).pathname === "/api/admin/reports/ips");
+      expect(requests.length).toBeGreaterThan(1);
+      const url = new URL(requests.at(-1)?.url ?? "http://localhost");
+      expect(Object.fromEntries(url.searchParams)).toMatchObject({
+        search: "172.31",
+        fromDate: "2018-03-01",
+        toDate: "2018-03-01",
+        minAlerts: "5",
+        sort: "confirmedMaliciousRate",
+        direction: "asc",
+        offset: "0",
+      });
+    });
+  });
+
+  it("opens the existing individual report when a source IP is selected", async () => {
+    const user = userEvent.setup();
+    const seen = stubReport();
+    renderApp("/admin/reports/ip", { session: ADMIN });
+
+    await user.click(await screen.findByRole("button", { name: `Open report for ${REPORT.sourceIp}` }));
+    expect(await screen.findByRole("heading", { level: 2, name: "IP SECURITY REPORT" })).toBeInTheDocument();
+    expect(screen.getByLabelText("Source IP")).toHaveValue(REPORT.sourceIp);
+    expect(seen.some((request) => new URL(request.url).pathname === `/api/admin/reports/ip/${REPORT.sourceIp}`)).toBe(true);
+  });
+
+  it("requests stable server pages using the returned offset and limit", async () => {
+    const user = userEvent.setup();
+    const seen = stubReport(REPORT, {
+      ...OVERVIEW,
+      page: { total: 30, limit: 25, offset: 0, returned: 1 },
+    });
+    renderApp("/admin/reports/ip", { session: ADMIN });
+
+    await user.click(await screen.findByRole("button", { name: "Next" }));
+    await waitFor(() => {
+      const requests = seen.filter((request) => new URL(request.url).pathname === "/api/admin/reports/ips");
+      expect(new URL(requests.at(-1)?.url ?? "http://localhost").searchParams.get("offset")).toBe("25");
+    });
   });
 });
 

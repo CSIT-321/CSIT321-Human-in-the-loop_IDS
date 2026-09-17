@@ -1,4 +1,4 @@
-import { useState, type FormEvent, type ReactNode } from "react";
+import { useRef, useState, type FormEvent, type ReactNode } from "react";
 
 import { api, unwrap, type Schemas } from "../../api/client";
 import { useApi } from "../../api/useApi";
@@ -8,11 +8,23 @@ import { formatDateTime, formatNumber, formatScore, humanise } from "../../desig
 
 export type IpSecurityReport = Schemas["IpSecurityReport"];
 type TimelineRow = Schemas["IpReportTimelineRow"];
+type SourceIpOverviewPage = Schemas["SourceIpOverviewPage"];
+type SourceIpOverviewSort = SourceIpOverviewPage["sort"];
 
 interface ReportQuery {
   ip: string;
   fromDate: string;
   toDate: string;
+}
+
+interface OverviewQuery {
+  search: string;
+  fromDate: string;
+  toDate: string;
+  minAlerts: number;
+  sort: SourceIpOverviewSort;
+  direction: "asc" | "desc";
+  offset: number;
 }
 
 export const REPORT_CSV_COLUMNS = [
@@ -276,12 +288,176 @@ function LoadedReport({ query }: { query: ReportQuery }) {
   );
 }
 
+const OVERVIEW_PAGE_SIZE = 25;
+const OVERVIEW_SORT_OPTIONS: readonly { value: SourceIpOverviewSort; label: string }[] = [
+  { value: "totalAlerts", label: "Total alerts" },
+  { value: "confirmedMalicious", label: "Confirmed malicious" },
+  { value: "confirmedMaliciousRate", label: "Confirmed malicious rate" },
+  { value: "escalated", label: "Escalated" },
+  { value: "falsePositives", label: "False positive" },
+  { value: "unjudged", label: "Unjudged" },
+  { value: "lastSeen", label: "Last seen" },
+  { value: "sourceIp", label: "Source IP" },
+];
+
+function SourceIpOverview({ onOpenReport }: {
+  onOpenReport: (sourceIp: string, fromDate: string, toDate: string) => void;
+}) {
+  const [search, setSearch] = useState("");
+  const [fromDate, setFromDate] = useState("");
+  const [toDate, setToDate] = useState("");
+  const [minAlerts, setMinAlerts] = useState("1");
+  const [sort, setSort] = useState<SourceIpOverviewSort>("totalAlerts");
+  const [direction, setDirection] = useState<"asc" | "desc">("desc");
+  const [validation, setValidation] = useState<string | null>(null);
+  const [query, setQuery] = useState<OverviewQuery>({
+    search: "", fromDate: "", toDate: "", minAlerts: 1,
+    sort: "totalAlerts", direction: "desc", offset: 0,
+  });
+
+  const queryParams = {
+    ...(query.search === "" ? {} : { search: query.search }),
+    ...(query.fromDate === "" ? {} : { fromDate: query.fromDate }),
+    ...(query.toDate === "" ? {} : { toDate: query.toDate }),
+    minAlerts: query.minAlerts,
+    limit: OVERVIEW_PAGE_SIZE,
+    offset: query.offset,
+    sort: query.sort,
+    direction: query.direction,
+  };
+  const overview = useApi(
+    (signal) => unwrap(api.GET("/api/admin/reports/ips", {
+      params: { query: queryParams }, signal,
+    })),
+    [query.search, query.fromDate, query.toDate, query.minAlerts,
+      query.sort, query.direction, query.offset],
+  );
+
+  function submit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const parsedMinimum = Number(minAlerts);
+    if (!Number.isInteger(parsedMinimum) || parsedMinimum < 1) {
+      setValidation("Minimum alerts must be a whole number of 1 or more.");
+      return;
+    }
+    if (fromDate !== "" && toDate !== "" && fromDate > toDate) {
+      setValidation("Overview from date must be on or before overview to date.");
+      return;
+    }
+    setValidation(null);
+    setQuery({
+      search: search.trim(), fromDate, toDate, minAlerts: parsedMinimum,
+      sort, direction, offset: 0,
+    });
+  }
+
+  function move(offset: number) {
+    setQuery((current) => ({ ...current, offset }));
+  }
+
+  return (
+    <section className="print-hidden" aria-label="Source IP Security Overview">
+      <Card
+        title="Source IP Security Overview"
+        subtitle="Source IPs observed in recorded network flows. Destination-only appearances are excluded."
+      >
+        <form onSubmit={submit} className="mb-4 flex flex-wrap items-end gap-3">
+          <label className="min-w-48 flex-1 text-xs text-dim">
+            Search
+            <input
+              aria-label="Search source IP"
+              value={search}
+              onChange={(event) => setSearch(event.target.value)}
+              placeholder="Source IP contains..."
+              className={`${CONTROL_CLASS} mt-1 w-full font-mono`}
+            />
+          </label>
+          <label className="text-xs text-dim">
+            Overview from date
+            <input aria-label="Overview from date" type="date" value={fromDate} onChange={(event) => setFromDate(event.target.value)} className={`${CONTROL_CLASS} mt-1 block`} />
+          </label>
+          <label className="text-xs text-dim">
+            Overview to date
+            <input aria-label="Overview to date" type="date" value={toDate} onChange={(event) => setToDate(event.target.value)} className={`${CONTROL_CLASS} mt-1 block`} />
+          </label>
+          <label className="w-28 text-xs text-dim">
+            Minimum alerts
+            <input aria-label="Minimum alerts" type="number" min="1" step="1" value={minAlerts} onChange={(event) => setMinAlerts(event.target.value)} className={`${CONTROL_CLASS} mt-1 w-full`} />
+          </label>
+          <label className="text-xs text-dim">
+            Sort by
+            <select aria-label="Sort by" value={sort} onChange={(event) => setSort(event.target.value as SourceIpOverviewSort)} className={`${CONTROL_CLASS} mt-1 block`}>
+              {OVERVIEW_SORT_OPTIONS.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
+            </select>
+          </label>
+          <label className="text-xs text-dim">
+            Direction
+            <select aria-label="Sort direction" value={direction} onChange={(event) => setDirection(event.target.value as "asc" | "desc")} className={`${CONTROL_CLASS} mt-1 block`}>
+              <option value="desc">Descending</option>
+              <option value="asc">Ascending</option>
+            </select>
+          </label>
+          <button type="submit" className={PRIMARY_CLASS}>Apply</button>
+        </form>
+        {validation !== null && <p role="alert" className="mb-3 text-sm text-danger">{validation}</p>}
+
+        <ApiView resource={overview} loadingLabel="Loading source IP overview...">
+          {(data) => {
+            const pageNumber = Math.floor(data.page.offset / data.page.limit) + 1;
+            const pageCount = Math.max(1, Math.ceil(data.page.total / data.page.limit));
+            return data.items.length === 0 ? (
+              <EmptyState title="No source-IP activity found" hint="Adjust the overview filters and try again." />
+            ) : (
+              <div className="space-y-3">
+                <DataTable
+                  label="Source IP security overview"
+                  headings={["Source IP", "Alerts", "Confirmed malicious", "Confirmed rate", "False positive", "Escalated", "Unjudged", "Last seen"]}
+                >
+                  {data.items.map((row) => (
+                    <tr key={row.sourceIp} className="border-t border-border">
+                      <th scope="row" className={TD_CLASS}>
+                        <button
+                          type="button"
+                          className="font-mono text-accent hover:underline"
+                          aria-label={`Open report for ${row.sourceIp}`}
+                          onClick={() => onOpenReport(row.sourceIp, query.fromDate, query.toDate)}
+                        >
+                          {row.sourceIp}
+                        </button>
+                      </th>
+                      <td className={`${TD_CLASS} text-right font-mono`}>{formatNumber(row.totalAlerts)}</td>
+                      <td className={`${TD_CLASS} text-right font-mono`}>{formatNumber(row.confirmedMalicious)}</td>
+                      <td className={`${TD_CLASS} text-right font-mono`}>{row.confirmedMaliciousRate === null ? "Not judged" : `${(row.confirmedMaliciousRate * 100).toFixed(1)}%`}</td>
+                      <td className={`${TD_CLASS} text-right font-mono`}>{formatNumber(row.falsePositives)}</td>
+                      <td className={`${TD_CLASS} text-right font-mono`}>{formatNumber(row.escalated)}</td>
+                      <td className={`${TD_CLASS} text-right font-mono`}>{formatNumber(row.unjudged)}</td>
+                      <td className={`${TD_CLASS} font-mono text-muted`}>{row.lastSeen ?? "—"}</td>
+                    </tr>
+                  ))}
+                </DataTable>
+                <div className="flex items-center justify-between gap-3 border-t border-border pt-3 text-xs text-muted">
+                  <span>{formatNumber(data.page.total)} source IPs · Page {pageNumber} of {pageCount}</span>
+                  <div className="flex gap-2">
+                    <button type="button" className={CONTROL_CLASS} disabled={data.page.offset === 0} onClick={() => move(Math.max(0, data.page.offset - data.page.limit))}>Previous</button>
+                    <button type="button" className={CONTROL_CLASS} disabled={data.page.offset + data.page.returned >= data.page.total} onClick={() => move(data.page.offset + data.page.limit)}>Next</button>
+                  </div>
+                </div>
+              </div>
+            );
+          }}
+        </ApiView>
+      </Card>
+    </section>
+  );
+}
+
 export function IpSecurityReportPage() {
   const [ip, setIp] = useState("");
   const [fromDate, setFromDate] = useState("");
   const [toDate, setToDate] = useState("");
   const [query, setQuery] = useState<ReportQuery | null>(null);
   const [validation, setValidation] = useState<string | null>(null);
+  const reportScope = useRef<HTMLDivElement>(null);
 
   function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -298,6 +474,19 @@ export function IpSecurityReportPage() {
     setQuery({ ip: sourceIp, fromDate, toDate });
   }
 
+  function openOverviewReport(sourceIp: string, overviewFromDate: string, overviewToDate: string) {
+    setIp(sourceIp);
+    setFromDate(overviewFromDate);
+    setToDate(overviewToDate);
+    setValidation(null);
+    setQuery({ ip: sourceIp, fromDate: overviewFromDate, toDate: overviewToDate });
+    requestAnimationFrame(() => {
+      if (typeof reportScope.current?.scrollIntoView === "function") {
+        reportScope.current.scrollIntoView({ behavior: "smooth", block: "start" });
+      }
+    });
+  }
+
   return (
     <div className="space-y-4">
       <PageHeader
@@ -305,6 +494,7 @@ export function IpSecurityReportPage() {
         subtitle="Read-only source-IP activity report over recorded flows and effective analyst verdicts."
       />
 
+      <div ref={reportScope}>
       <Card className="print-hidden" title="Report scope" subtitle="Dates are inclusive and use recorded flow capture time.">
         <form onSubmit={submit} className="flex flex-wrap items-end gap-3">
           <label className="min-w-56 flex-1 text-xs text-dim">
@@ -330,12 +520,15 @@ export function IpSecurityReportPage() {
         </form>
         {validation !== null && <p role="alert" className="mt-3 text-sm text-danger">{validation}</p>}
       </Card>
+      </div>
 
       {query === null ? (
         <EmptyState title="Choose one source IP" hint="Generate a report to review its captured activity, effective verdicts and advisory recommendation." />
       ) : (
         <LoadedReport key={`${query.ip}:${query.fromDate}:${query.toDate}`} query={query} />
       )}
+
+      <SourceIpOverview onOpenReport={openOverviewReport} />
     </div>
   );
 }

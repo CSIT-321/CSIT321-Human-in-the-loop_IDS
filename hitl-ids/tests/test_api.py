@@ -567,6 +567,16 @@ def admin_report(client: TestClient, ip: str = REPORT_IP, **params) -> dict:
     return response.json()
 
 
+def admin_source_ip_overview(client: TestClient, **params) -> dict:
+    response = client.get(
+        "/api/admin/reports/ips",
+        params=params,
+        headers={"Authorization": f"Bearer {client.tokens['admin']}"},
+    )
+    assert response.status_code == 200, response.text
+    return response.json()
+
+
 def test_ip_security_report_is_admin_only(client):
     url = f"/api/admin/reports/ip/{REPORT_IP}"
     assert client.get(url).status_code == 403
@@ -671,6 +681,125 @@ def test_ip_security_report_handles_an_unknown_source_cleanly(client):
     assert report["destinationPorts"] == []
     assert report["timeline"] == []
     assert report["recommendation"]["action"] == "Monitor"
+
+
+def test_source_ip_overview_is_admin_only_and_excludes_destination_only_ips(client):
+    assert client.get("/api/admin/reports/ips").status_code == 403
+    evaluator = client.get(
+        "/api/admin/reports/ips",
+        headers={"Authorization": f"Bearer {client.tokens['evaluator']}"},
+    )
+    assert evaluator.status_code == 403
+
+    body = admin_source_ip_overview(client)
+    assert body["page"]["total"] == 1
+    assert body["items"][0]["sourceIp"] == REPORT_IP
+    assert DESTINATION_ONLY_IP not in {item["sourceIp"] for item in body["items"]}
+    assert body["items"][0]["confirmedMaliciousRate"] is None
+
+
+def test_source_ip_overview_query_is_source_only_and_rejects_unknown_sort(database):
+    conn = db.connect(str(database))
+    try:
+        items, total = store.source_ip_security_overview(conn)
+        assert total == 1
+        assert items[0]["source_ip"] == REPORT_IP
+        assert items[0]["total_alerts"] == len(ROWS)
+        assert items[0]["confirmed_malicious_rate"] is None
+        with pytest.raises(ValueError, match="Unsupported source-IP overview sort"):
+            store.source_ip_security_overview(conn, sort="riskScore")
+        with pytest.raises(ValueError, match="Unsupported source-IP overview direction"):
+            store.source_ip_security_overview(conn, direction="sideways")
+    finally:
+        conn.close()
+
+
+def test_source_ip_overview_counts_an_ip_only_when_it_is_the_source(client, database):
+    conn = db.connect(str(database))
+    alert_ids = [row["alert_id"] for row in conn.execute(
+        "SELECT alert_id FROM flow_data ORDER BY alert_id LIMIT 2").fetchall()]
+    with conn:
+        conn.execute("UPDATE flow_data SET src_ip = ? WHERE alert_id = ?",
+                     ("10.0.0.1", alert_ids[0]))
+        conn.execute("UPDATE flow_data SET dst_ip = ? WHERE alert_id = ?",
+                     ("10.0.0.1", alert_ids[1]))
+    conn.close()
+
+    match = admin_source_ip_overview(client, search="10.0.0.1")
+    assert match["page"]["total"] == 1
+    assert match["items"][0]["sourceIp"] == "10.0.0.1"
+    assert match["items"][0]["totalAlerts"] == 1
+
+
+def test_source_ip_overview_date_range_is_inclusive_and_minimum_is_enforced(client):
+    day = admin_source_ip_overview(
+        client, fromDate="2018-03-01", toDate="2018-03-01", minAlerts=len(ROWS))
+    assert day["page"]["total"] == 1
+    assert day["items"][0]["totalAlerts"] == len(ROWS)
+
+    assert admin_source_ip_overview(
+        client, fromDate="2018-02-28", toDate="2018-02-28")["items"] == []
+    assert admin_source_ip_overview(client, minAlerts=len(ROWS) + 1)["items"] == []
+
+
+def test_source_ip_overview_uses_latest_verdict_and_correct_rate_denominator(client):
+    refs = [item["alertRef"] for item in rows(client, limit=100)[:4]]
+    assert client.post(f"/api/alerts/{refs[0]}/feedback",
+                       json={"category": "confirm_true_positive"}).status_code == 200
+    assert client.post(f"/api/alerts/{refs[0]}/feedback",
+                       json={"category": "mark_false_positive"}).status_code == 200
+    assert client.post(f"/api/alerts/{refs[1]}/feedback",
+                       json={"category": "confirm_true_positive"}).status_code == 200
+    assert client.post(f"/api/alerts/{refs[2]}/feedback",
+                       json={"category": "escalate"}).status_code == 200
+    assert client.post(f"/api/alerts/{refs[3]}/feedback",
+                       json={"category": "needs_investigation"}).status_code == 200
+
+    item = admin_source_ip_overview(client)["items"][0]
+    assert item["judgedAlerts"] == 4
+    assert item["confirmedMalicious"] == 2
+    assert item["confirmedMaliciousRate"] == 0.5
+    assert item["falsePositives"] == 1
+    assert item["escalated"] == 1
+    assert item["needsInvestigation"] == 1
+    assert item["unjudged"] == len(ROWS) - 4
+
+
+def test_source_ip_overview_sorting_and_pagination_are_stable(client, database):
+    conn = db.connect(str(database))
+    alert_ids = [row["alert_id"] for row in conn.execute(
+        "SELECT alert_id FROM flow_data ORDER BY alert_id").fetchall()]
+    with conn:
+        for alert_id in alert_ids[:10]:
+            conn.execute("UPDATE flow_data SET src_ip = ? WHERE alert_id = ?",
+                         ("10.0.0.1", alert_id))
+        for alert_id in alert_ids[10:16]:
+            conn.execute("UPDATE flow_data SET src_ip = ? WHERE alert_id = ?",
+                         ("10.0.0.2", alert_id))
+        for alert_id in alert_ids[16:]:
+            conn.execute("UPDATE flow_data SET src_ip = ? WHERE alert_id = ?",
+                         ("10.0.0.3", alert_id))
+    conn.close()
+
+    first = admin_source_ip_overview(
+        client, sort="totalAlerts", direction="desc", limit=2, offset=0)
+    second = admin_source_ip_overview(
+        client, sort="totalAlerts", direction="desc", limit=2, offset=2)
+    assert [item["totalAlerts"] for item in first["items"]] == [10, 6]
+    assert [item["totalAlerts"] for item in second["items"]] == [5]
+    assert ({item["sourceIp"] for item in first["items"]}
+            .isdisjoint(item["sourceIp"] for item in second["items"]))
+
+    by_ip = admin_source_ip_overview(
+        client, sort="sourceIp", direction="asc", limit=10)
+    assert [item["sourceIp"] for item in by_ip["items"]] == [
+        "10.0.0.1", "10.0.0.2", "10.0.0.3"]
+
+
+def test_source_ip_overview_contains_no_ground_truth_fields(client):
+    serialised = str(admin_source_ip_overview(client)).casefold()
+    for forbidden in ("groundtruth", "rawlabel", "trueattacktype"):
+        assert forbidden not in serialised
 
 
 # --------------------------------------------------------------------------------------------

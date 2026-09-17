@@ -561,6 +561,99 @@ def entity_ip(conn: sqlite3.Connection, ip: str, *, limit: int = 10) -> dict[str
 CONFIRMED_MALICIOUS = frozenset({"confirm_true_positive", "escalate"})
 
 
+SOURCE_IP_OVERVIEW_SORTS = {
+    "totalAlerts": "total_alerts",
+    "confirmedMalicious": "confirmed_malicious",
+    "confirmedMaliciousRate": "confirmed_malicious_rate",
+    "escalated": "escalated",
+    "falsePositives": "false_positives",
+    "unjudged": "unjudged",
+    "lastSeen": "last_seen",
+    "sourceIp": "source_ip",
+}
+
+
+def source_ip_security_overview(
+    conn: sqlite3.Connection,
+    *,
+    from_date: str | None = None,
+    to_date: str | None = None,
+    search: str | None = None,
+    min_alerts: int = 1,
+    limit: int = 25,
+    offset: int = 0,
+    sort: str = "totalAlerts",
+    direction: str = "desc",
+) -> tuple[list[dict[str, Any]], int]:
+    """Aggregate recorded alerts by source IP only.
+
+    Verdict counts use the latest effective analyst verdict for each alert. Destination-only
+    appearances never enter ``source_rows``, and hidden evaluation labels are not joined.
+    """
+    sort_column = SOURCE_IP_OVERVIEW_SORTS.get(sort)
+    if sort_column is None:
+        raise ValueError(f"Unsupported source-IP overview sort: {sort}")
+    if direction not in {"asc", "desc"}:
+        raise ValueError(f"Unsupported source-IP overview direction: {direction}")
+
+    clauses = ["f.src_ip IS NOT NULL", "trim(f.src_ip) <> ''"]
+    params: list[Any] = []
+    if from_date is not None:
+        clauses.append(f"substr({FLOW_TIME}, 1, 10) >= ?")
+        params.append(from_date)
+    if to_date is not None:
+        clauses.append(f"substr({FLOW_TIME}, 1, 10) <= ?")
+        params.append(to_date)
+    if search is not None and search.strip():
+        clauses.append("f.src_ip LIKE ?")
+        params.append(f"%{search.strip()}%")
+
+    cte = (
+        "WITH source_rows AS ("
+        f"SELECT f.src_ip AS source_ip, {FLOW_TIME} AS capture_time, "
+        f"{EFFECTIVE_VERDICT} AS effective_verdict "
+        "FROM alerts a JOIN flow_data f ON f.alert_id = a.id "
+        f"WHERE {' AND '.join(clauses)}"
+        "), aggregated AS ("
+        "SELECT source_ip, COUNT(*) AS total_alerts, "
+        "SUM(CASE WHEN effective_verdict IS NOT NULL THEN 1 ELSE 0 END) AS judged_alerts, "
+        "SUM(CASE WHEN effective_verdict IN ('confirm_true_positive', 'escalate') "
+        "THEN 1 ELSE 0 END) AS confirmed_malicious, "
+        "SUM(CASE WHEN effective_verdict = 'mark_false_positive' THEN 1 ELSE 0 END) "
+        "AS false_positives, "
+        "SUM(CASE WHEN effective_verdict = 'mark_expected_activity' THEN 1 ELSE 0 END) "
+        "AS benign_positives, "
+        "SUM(CASE WHEN effective_verdict = 'escalate' THEN 1 ELSE 0 END) AS escalated, "
+        "SUM(CASE WHEN effective_verdict = 'needs_investigation' THEN 1 ELSE 0 END) "
+        "AS needs_investigation, "
+        "MIN(capture_time) AS first_seen, MAX(capture_time) AS last_seen "
+        "FROM source_rows GROUP BY source_ip HAVING COUNT(*) >= ?"
+        "), overview AS ("
+        "SELECT source_ip, total_alerts, judged_alerts, confirmed_malicious, "
+        "CASE WHEN judged_alerts = 0 THEN NULL "
+        "ELSE CAST(confirmed_malicious AS REAL) / judged_alerts END "
+        "AS confirmed_malicious_rate, false_positives, benign_positives, escalated, "
+        "needs_investigation, total_alerts - judged_alerts AS unjudged, "
+        "first_seen, last_seen FROM aggregated) "
+    )
+    query_params = [*params, min_alerts]
+    total = int(conn.execute(
+        f"{cte}SELECT COUNT(*) AS n FROM overview", query_params,
+    ).fetchone()["n"])
+
+    order_direction = direction.upper()
+    if sort_column == "confirmed_malicious_rate":
+        order = ("confirmed_malicious_rate IS NULL ASC, "
+                 f"confirmed_malicious_rate {order_direction}, source_ip ASC")
+    else:
+        order = f"{sort_column} {order_direction}, source_ip ASC"
+    rows = conn.execute(
+        f"{cte}SELECT * FROM overview ORDER BY {order} LIMIT ? OFFSET ?",
+        [*query_params, limit, offset],
+    ).fetchall()
+    return [dict(row) for row in rows], total
+
+
 def _ip_report_recommendation(*, confirmed: int, benign: int,
                               destination_hosts: int) -> dict[str, str]:
     """Transparent prototype advice. This never mutates an alert or network control."""

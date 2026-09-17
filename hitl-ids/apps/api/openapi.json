@@ -3200,6 +3200,181 @@
         "title": "SignaturePanel",
         "type": "object"
       },
+      "SourceIpOverviewPage": {
+        "additionalProperties": false,
+        "properties": {
+          "direction": {
+            "enum": [
+              "asc",
+              "desc"
+            ],
+            "title": "Direction",
+            "type": "string"
+          },
+          "fromDate": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Fromdate"
+          },
+          "generatedAt": {
+            "format": "date-time",
+            "title": "Generatedat",
+            "type": "string"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/SourceIpOverviewRow"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "page": {
+            "$ref": "#/components/schemas/PageInfo"
+          },
+          "sort": {
+            "enum": [
+              "totalAlerts",
+              "confirmedMalicious",
+              "confirmedMaliciousRate",
+              "escalated",
+              "falsePositives",
+              "unjudged",
+              "lastSeen",
+              "sourceIp"
+            ],
+            "title": "Sort",
+            "type": "string"
+          },
+          "toDate": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Todate"
+          }
+        },
+        "required": [
+          "generatedAt",
+          "items",
+          "page",
+          "sort",
+          "direction"
+        ],
+        "title": "SourceIpOverviewPage",
+        "type": "object"
+      },
+      "SourceIpOverviewRow": {
+        "additionalProperties": false,
+        "properties": {
+          "benignPositives": {
+            "minimum": 0,
+            "title": "Benignpositives",
+            "type": "integer"
+          },
+          "confirmedMalicious": {
+            "minimum": 0,
+            "title": "Confirmedmalicious",
+            "type": "integer"
+          },
+          "confirmedMaliciousRate": {
+            "anyOf": [
+              {
+                "maximum": 1,
+                "minimum": 0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Confirmedmaliciousrate"
+          },
+          "escalated": {
+            "minimum": 0,
+            "title": "Escalated",
+            "type": "integer"
+          },
+          "falsePositives": {
+            "minimum": 0,
+            "title": "Falsepositives",
+            "type": "integer"
+          },
+          "firstSeen": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Firstseen"
+          },
+          "judgedAlerts": {
+            "minimum": 0,
+            "title": "Judgedalerts",
+            "type": "integer"
+          },
+          "lastSeen": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Lastseen"
+          },
+          "needsInvestigation": {
+            "minimum": 0,
+            "title": "Needsinvestigation",
+            "type": "integer"
+          },
+          "sourceIp": {
+            "title": "Sourceip",
+            "type": "string"
+          },
+          "totalAlerts": {
+            "minimum": 0,
+            "title": "Totalalerts",
+            "type": "integer"
+          },
+          "unjudged": {
+            "minimum": 0,
+            "title": "Unjudged",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "sourceIp",
+          "totalAlerts",
+          "judgedAlerts",
+          "confirmedMalicious",
+          "falsePositives",
+          "benignPositives",
+          "escalated",
+          "needsInvestigation",
+          "unjudged"
+        ],
+        "title": "SourceIpOverviewRow",
+        "type": "object"
+      },
       "StatusChangeRequest": {
         "additionalProperties": false,
         "description": "``POST /api/alerts/{alertRef}/status``.\n\nWorking an alert (`claimed`, `in_progress`) makes the caller its owner when it has none;\nreturning it to `new` releases it; a closed alert (`resolved`, `dismissed`) can only be reopened\nto `in_progress`. A refused transition is a 409.",
@@ -3407,6 +3582,199 @@
           }
         },
         "summary": "A read-only security report for one source IP",
+        "tags": [
+          "reports"
+        ],
+        "x-required-role": "system_admin"
+      }
+    },
+    "/api/admin/reports/ips": {
+      "get": {
+        "description": "Source-only aggregation over recorded flow capture time and the latest effective analyst verdict. Destination-only appearances and hidden ground truth are excluded.",
+        "operationId": "getAdminSourceIpOverview",
+        "parameters": [
+          {
+            "description": "`Bearer <token>` from POST /api/auth/login",
+            "in": "header",
+            "name": "Authorization",
+            "required": false,
+            "schema": {
+              "example": "Bearer eyJhbGciOiJIUzI1NiJ9...",
+              "type": "string"
+            }
+          },
+          {
+            "description": null,
+            "in": "query",
+            "name": "fromDate",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Fromdate"
+            }
+          },
+          {
+            "description": null,
+            "in": "query",
+            "name": "toDate",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Todate"
+            }
+          },
+          {
+            "description": null,
+            "in": "query",
+            "name": "search",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 200,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Search"
+            }
+          },
+          {
+            "description": null,
+            "in": "query",
+            "name": "minAlerts",
+            "required": false,
+            "schema": {
+              "default": 1,
+              "minimum": 1,
+              "title": "Minalerts",
+              "type": "integer"
+            }
+          },
+          {
+            "description": null,
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 50,
+              "maximum": 200,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          },
+          {
+            "description": null,
+            "in": "query",
+            "name": "offset",
+            "required": false,
+            "schema": {
+              "default": 0,
+              "minimum": 0,
+              "title": "Offset",
+              "type": "integer"
+            }
+          },
+          {
+            "description": null,
+            "in": "query",
+            "name": "sort",
+            "required": false,
+            "schema": {
+              "default": "totalAlerts",
+              "enum": [
+                "totalAlerts",
+                "confirmedMalicious",
+                "confirmedMaliciousRate",
+                "escalated",
+                "falsePositives",
+                "unjudged",
+                "lastSeen",
+                "sourceIp"
+              ],
+              "title": "Sort",
+              "type": "string"
+            }
+          },
+          {
+            "description": null,
+            "in": "query",
+            "name": "direction",
+            "required": false,
+            "schema": {
+              "default": "desc",
+              "enum": [
+                "asc",
+                "desc"
+              ],
+              "title": "Direction",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SourceIpOverviewPage"
+                }
+              }
+            },
+            "description": "Sortable source-IP alert and verdict counts"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Validation failed"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not signed in, or the token expired"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Role not permitted"
+          }
+        },
+        "summary": "Paginated security overview of recorded source IPs",
         "tags": [
           "reports"
         ],

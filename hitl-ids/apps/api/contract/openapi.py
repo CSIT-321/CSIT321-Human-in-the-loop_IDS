@@ -80,6 +80,8 @@ MODELS: tuple[type[BaseModel], ...] = (
     o.IpReportTimelineRow,
     o.IpReportRecommendation,
     o.IpSecurityReport,
+    o.SourceIpOverviewRow,
+    o.SourceIpOverviewPage,
     o.QueueBandCount,
     o.DetectionRunRequest,
     o.DetectionRunSummary,
@@ -393,6 +395,23 @@ def _paths() -> dict[str, Any]:
                 "responses": {
                     "200": {"description": "Source-IP activity, verdicts and advisory",
                             **_json(o.IpSecurityReport)},
+                    **_errors(400, 403),
+                },
+                "x-required-role": "system_admin",
+            }
+        },
+        "/api/admin/reports/ips": {
+            "get": {
+                "operationId": "getAdminSourceIpOverview",
+                "summary": "Paginated security overview of recorded source IPs",
+                "description": "Source-only aggregation over recorded flow capture time and the "
+                               "latest effective analyst verdict. Destination-only appearances "
+                               "and hidden ground truth are excluded.",
+                "tags": ["reports"],
+                "parameters": [AUTH_PARAMETER, *_query_parameters(o.SourceIpOverviewQuery)],
+                "responses": {
+                    "200": {"description": "Sortable source-IP alert and verdict counts",
+                            **_json(o.SourceIpOverviewPage)},
                     **_errors(400, 403),
                 },
                 "x-required-role": "system_admin",

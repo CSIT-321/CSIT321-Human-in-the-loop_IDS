@@ -22,7 +22,14 @@ from typing import Any, Literal
 
 from pydantic import Field
 
-from apps.api.contract.common import Actor, ApiModel
+from apps.api.contract.common import (
+    DEFAULT_PAGE_SIZE,
+    MAX_PAGE_SIZE,
+    Actor,
+    ApiModel,
+    PageInfo,
+    SortDirection,
+)
 from packages.contracts import models as m
 
 # --------------------------------------------------------------------------------------------
@@ -165,6 +172,54 @@ class IpSecurityReport(ApiModel):
     destination_ports: list[IpDestinationPort] = Field(default_factory=list)
     timeline: list[IpReportTimelineRow] = Field(default_factory=list)
     recommendation: IpReportRecommendation
+
+
+SourceIpOverviewSort = Literal[
+    "totalAlerts",
+    "confirmedMalicious",
+    "confirmedMaliciousRate",
+    "escalated",
+    "falsePositives",
+    "unjudged",
+    "lastSeen",
+    "sourceIp",
+]
+
+
+class SourceIpOverviewQuery(ApiModel):
+    from_date: str | None = None
+    to_date: str | None = None
+    search: str | None = Field(default=None, max_length=200)
+    min_alerts: int = Field(default=1, ge=1)
+    limit: int = Field(default=DEFAULT_PAGE_SIZE, ge=1, le=MAX_PAGE_SIZE)
+    offset: int = Field(default=0, ge=0)
+    sort: SourceIpOverviewSort = "totalAlerts"
+    direction: SortDirection = "desc"
+
+
+class SourceIpOverviewRow(ApiModel):
+    source_ip: str
+    total_alerts: int = Field(ge=0)
+    judged_alerts: int = Field(ge=0)
+    confirmed_malicious: int = Field(ge=0)
+    confirmed_malicious_rate: float | None = Field(default=None, ge=0, le=1)
+    false_positives: int = Field(ge=0)
+    benign_positives: int = Field(ge=0)
+    escalated: int = Field(ge=0)
+    needs_investigation: int = Field(ge=0)
+    unjudged: int = Field(ge=0)
+    first_seen: str | None = None
+    last_seen: str | None = None
+
+
+class SourceIpOverviewPage(ApiModel):
+    generated_at: datetime
+    from_date: str | None = None
+    to_date: str | None = None
+    items: list[SourceIpOverviewRow]
+    page: PageInfo
+    sort: SourceIpOverviewSort
+    direction: SortDirection
 
 
 class DashboardSummary(ApiModel):

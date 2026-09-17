@@ -24,6 +24,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/admin/reports/ips": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Paginated security overview of recorded source IPs
+         * @description Source-only aggregation over recorded flow capture time and the latest effective analyst verdict. Destination-only appearances and hidden ground truth are excluded.
+         */
+        get: operations["getAdminSourceIpOverview"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/alerts": {
         parameters: {
             query?: never;
@@ -1893,6 +1913,73 @@ export interface components {
              */
             severityScore: number | null;
         };
+        /** SourceIpOverviewPage */
+        SourceIpOverviewPage: {
+            /**
+             * Direction
+             * @enum {string}
+             */
+            direction: "asc" | "desc";
+            /**
+             * Fromdate
+             * @default null
+             */
+            fromDate: string | null;
+            /**
+             * Generatedat
+             * Format: date-time
+             */
+            generatedAt: string;
+            /** Items */
+            items: components["schemas"]["SourceIpOverviewRow"][];
+            page: components["schemas"]["PageInfo"];
+            /**
+             * Sort
+             * @enum {string}
+             */
+            sort: "totalAlerts" | "confirmedMalicious" | "confirmedMaliciousRate" | "escalated" | "falsePositives" | "unjudged" | "lastSeen" | "sourceIp";
+            /**
+             * Todate
+             * @default null
+             */
+            toDate: string | null;
+        };
+        /** SourceIpOverviewRow */
+        SourceIpOverviewRow: {
+            /** Benignpositives */
+            benignPositives: number;
+            /** Confirmedmalicious */
+            confirmedMalicious: number;
+            /**
+             * Confirmedmaliciousrate
+             * @default null
+             */
+            confirmedMaliciousRate: number | null;
+            /** Escalated */
+            escalated: number;
+            /** Falsepositives */
+            falsePositives: number;
+            /**
+             * Firstseen
+             * @default null
+             */
+            firstSeen: string | null;
+            /** Judgedalerts */
+            judgedAlerts: number;
+            /**
+             * Lastseen
+             * @default null
+             */
+            lastSeen: string | null;
+            /** Needsinvestigation */
+            needsInvestigation: number;
+            /** Sourceip */
+            sourceIp: string;
+            /** Totalalerts */
+            totalAlerts: number;
+            /** Unjudged */
+            unjudged: number;
+        };
         /**
          * StatusChangeRequest
          * @description ``POST /api/alerts/{alertRef}/status``.
@@ -1985,6 +2072,73 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["IpSecurityReport"];
+                };
+            };
+            /** @description Validation failed */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not signed in, or the token expired */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Role not permitted */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    getAdminSourceIpOverview: {
+        parameters: {
+            query?: {
+                /** @description null */
+                fromDate?: string | null;
+                /** @description null */
+                toDate?: string | null;
+                /** @description null */
+                search?: string | null;
+                /** @description null */
+                minAlerts?: number;
+                /** @description null */
+                limit?: number;
+                /** @description null */
+                offset?: number;
+                /** @description null */
+                sort?: "totalAlerts" | "confirmedMalicious" | "confirmedMaliciousRate" | "escalated" | "falsePositives" | "unjudged" | "lastSeen" | "sourceIp";
+                /** @description null */
+                direction?: "asc" | "desc";
+            };
+            header?: {
+                /** @description `Bearer <token>` from POST /api/auth/login */
+                Authorization?: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Sortable source-IP alert and verdict counts */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SourceIpOverviewPage"];
                 };
             };
             /** @description Validation failed */
