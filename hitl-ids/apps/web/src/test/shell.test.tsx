@@ -9,9 +9,10 @@
 
 import { screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
 import type { Schemas } from "../api/client";
+import { SIDEBAR_COLLAPSED_STORAGE_KEY } from "../components/layout/AppShell";
 import { ROLE_META, ROLES } from "../session/roles";
 import type { Session } from "../session/SessionContext";
 import { jsonResponse, renderApp, stubFetch } from "./renderApp";
@@ -89,6 +90,14 @@ const SIGN_IN_CASES = [
   { username: "admin", heading: "System Status" },
   { username: "evaluator", heading: "Evaluation scenarios" },
 ] as const;
+
+beforeEach(() => {
+  window.localStorage.removeItem(SIDEBAR_COLLAPSED_STORAGE_KEY);
+});
+
+afterEach(() => {
+  window.localStorage.removeItem(SIDEBAR_COLLAPSED_STORAGE_KEY);
+});
 
 describe("shell: signing in as each account", () => {
   for (const { username, heading } of SIGN_IN_CASES) {
@@ -252,6 +261,83 @@ describe("shell: navigation", () => {
     const reloaded = renderApp("/analyst/queue");
     await waitFor(() => expect(reloaded.router.state.location.pathname).toBe("/login"));
   });
+});
+
+describe("shell: collapsible sidebar", () => {
+  it("starts expanded without a saved preference and shows role navigation", async () => {
+    stubApi();
+    renderApp("/analyst/queue", { session: ANALYST });
+
+    const nav = await screen.findByRole("navigation", { name: "Main" });
+    expect(nav).toHaveAttribute("data-collapsed", "false");
+    expect(nav).toHaveClass("w-52");
+    expect(within(nav).getByText(ROLE_META.security_analyst.label)).toBeInTheDocument();
+    for (const item of ROLE_META.security_analyst.nav) {
+      expect(within(nav).getByRole("link", { name: item.label })).toBeInTheDocument();
+    }
+    expect(within(nav).getByRole("button", { name: "Collapse sidebar" })).toHaveAttribute(
+      "aria-expanded",
+      "true",
+    );
+  });
+
+  it("collapses and expands while hiding and restoring navigation text", async () => {
+    const user = userEvent.setup();
+    stubApi();
+    renderApp("/analyst/queue", { session: ANALYST });
+
+    const nav = await screen.findByRole("navigation", { name: "Main" });
+    await user.click(within(nav).getByRole("button", { name: "Collapse sidebar" }));
+
+    expect(nav).toHaveAttribute("data-collapsed", "true");
+    expect(nav).toHaveClass("w-14");
+    expect(within(nav).queryByText(ROLE_META.security_analyst.label)).toBeNull();
+    for (const item of ROLE_META.security_analyst.nav) {
+      expect(within(nav).queryByText(item.label)).toBeNull();
+    }
+    expect(window.localStorage.getItem(SIDEBAR_COLLAPSED_STORAGE_KEY)).toBe("true");
+
+    await user.click(within(nav).getByRole("button", { name: "Expand sidebar" }));
+    expect(nav).toHaveAttribute("data-collapsed", "false");
+    expect(within(nav).getByText(ROLE_META.security_analyst.label)).toBeInTheDocument();
+    expect(window.localStorage.getItem(SIDEBAR_COLLAPSED_STORAGE_KEY)).toBe("false");
+  });
+
+  it("restores a collapsed preference after remounting", async () => {
+    stubApi();
+    window.localStorage.setItem(SIDEBAR_COLLAPSED_STORAGE_KEY, "true");
+    const first = renderApp("/analyst/queue", { session: ANALYST });
+
+    expect(await screen.findByRole("navigation", { name: "Main" })).toHaveAttribute(
+      "data-collapsed",
+      "true",
+    );
+    first.unmount();
+
+    renderApp("/analyst/queue", { session: ANALYST });
+    expect(await screen.findByRole("navigation", { name: "Main" })).toHaveAttribute(
+      "data-collapsed",
+      "true",
+    );
+  });
+
+  it("supports keyboard activation for collapsing and expanding", async () => {
+    const user = userEvent.setup();
+    stubApi();
+    renderApp("/analyst/queue", { session: ANALYST });
+
+    const nav = await screen.findByRole("navigation", { name: "Main" });
+    const collapse = within(nav).getByRole("button", { name: "Collapse sidebar" });
+    collapse.focus();
+    await user.keyboard("{Enter}");
+    expect(nav).toHaveAttribute("data-collapsed", "true");
+
+    const expand = within(nav).getByRole("button", { name: "Expand sidebar" });
+    expand.focus();
+    await user.keyboard(" ");
+    expect(nav).toHaveAttribute("data-collapsed", "false");
+  });
+
 });
 
 describe("shell: the sign-in page states the account separation", () => {
