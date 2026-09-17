@@ -326,7 +326,6 @@ function LoadedReport({ query }: { query: ReportQuery }) {
       {(data) => (
         <div className="space-y-4">
           <div className="print-hidden flex flex-wrap justify-end gap-2">
-            <button type="button" className={CONTROL_CLASS} onClick={() => window.print()}>Print / Save PDF</button>
             <button type="button" className={PRIMARY_CLASS} onClick={() => downloadCsv(data)}>Export CSV</button>
           </div>
           <ReportBody report={data} />

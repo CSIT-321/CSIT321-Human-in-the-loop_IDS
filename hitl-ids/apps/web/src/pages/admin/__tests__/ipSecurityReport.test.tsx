@@ -432,17 +432,6 @@ describe("admin IP security report: evidence and exports", () => {
     expect(container.textContent?.toLowerCase()).not.toContain("raw label");
   });
 
-  it("prints through the browser without adding a PDF dependency", async () => {
-    const user = userEvent.setup();
-    stubReport();
-    const print = vi.spyOn(window, "print").mockImplementation(() => undefined);
-    renderApp("/admin/reports/ip", { session: ADMIN });
-    await openSpecificReport(user);
-
-    await user.click(screen.getByRole("button", { name: "Print / Save PDF" }));
-    expect(print).toHaveBeenCalledOnce();
-  });
-
   it("exports the documented columns, quotes CSV values and creates a portable filename", () => {
     const csv = ipReportCsv(REPORT);
     expect(csv.split("\r\n")[0]).toBe(REPORT_CSV_COLUMNS.join(","));
@@ -466,6 +455,7 @@ describe("admin IP security report: evidence and exports", () => {
     expect(downloads.createObjectURL).toHaveBeenCalledOnce();
     expect(downloads.click).toHaveBeenCalledOnce();
     expect(screen.queryByRole("button", { name: "Export Overview CSV" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Print / Save PDF" })).not.toBeInTheDocument();
   });
 
   it("works with the light theme and a persisted collapsed sidebar", async () => {
