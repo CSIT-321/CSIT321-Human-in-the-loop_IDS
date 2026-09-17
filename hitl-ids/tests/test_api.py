@@ -550,6 +550,130 @@ def test_a_detection_run_is_admin_only(client):
 
 
 # --------------------------------------------------------------------------------------------
+# Administrator source-IP security report
+# --------------------------------------------------------------------------------------------
+
+REPORT_IP = "172.31.69.25"
+DESTINATION_ONLY_IP = "18.221.219.4"
+
+
+def admin_report(client: TestClient, ip: str = REPORT_IP, **params) -> dict:
+    response = client.get(
+        f"/api/admin/reports/ip/{ip}",
+        params=params,
+        headers={"Authorization": f"Bearer {client.tokens['admin']}"},
+    )
+    assert response.status_code == 200, response.text
+    return response.json()
+
+
+def test_ip_security_report_is_admin_only(client):
+    url = f"/api/admin/reports/ip/{REPORT_IP}"
+    assert client.get(url).status_code == 403
+    evaluator = client.get(
+        url, headers={"Authorization": f"Bearer {client.tokens['evaluator']}"})
+    assert evaluator.status_code == 403
+    assert admin_report(client)["sourceIp"] == REPORT_IP
+
+
+def test_ip_security_report_uses_source_appearances_only(client):
+    report = admin_report(client)
+    assert report["summary"]["totalAlerts"] == len(ROWS)
+    assert all(row["sourceIp"] == REPORT_IP for row in report["timeline"])
+
+    destination_only = admin_report(client, DESTINATION_ONLY_IP)
+    assert destination_only["summary"]["totalAlerts"] == 0
+    assert destination_only["timeline"] == []
+
+
+def test_ip_security_report_date_range_is_inclusive_and_validated(client):
+    day = admin_report(client, fromDate="2018-03-01", toDate="2018-03-01")
+    assert day["summary"]["totalAlerts"] == len(ROWS)
+    assert day["fromDate"] == day["toDate"] == "2018-03-01"
+
+    empty = admin_report(client, fromDate="2018-02-28", toDate="2018-02-28")
+    assert empty["summary"]["totalAlerts"] == 0
+
+    headers = {"Authorization": f"Bearer {client.tokens['admin']}"}
+    reversed_range = client.get(
+        f"/api/admin/reports/ip/{REPORT_IP}",
+        params={"fromDate": "2018-03-02", "toDate": "2018-03-01"}, headers=headers)
+    assert reversed_range.status_code == 400
+    invalid_date = client.get(
+        f"/api/admin/reports/ip/{REPORT_IP}",
+        params={"fromDate": "2018-99-99"}, headers=headers)
+    assert invalid_date.status_code == 400
+
+
+def test_ip_security_report_counts_only_the_latest_effective_verdict(client):
+    refs = [item["alertRef"] for item in rows(client, limit=100)]
+    assert client.post(f"/api/alerts/{refs[0]}/feedback",
+                       json={"category": "confirm_true_positive"}).status_code == 200
+    assert client.post(f"/api/alerts/{refs[0]}/feedback",
+                       json={"category": "mark_false_positive"}).status_code == 200
+    assert client.post(f"/api/alerts/{refs[1]}/feedback",
+                       json={"category": "escalate"}).status_code == 200
+    assert client.post(f"/api/alerts/{refs[2]}/feedback",
+                       json={"category": "needs_investigation"}).status_code == 200
+
+    report = admin_report(client)
+    summary = report["summary"]
+    assert summary["truePositive"] == 0
+    assert summary["falsePositive"] == 1
+    assert summary["escalated"] == 1
+    assert summary["needsInvestigation"] == 1
+    assert summary["confirmedMalicious"] == 1
+    target = next(row for row in report["timeline"] if row["alertRef"] == refs[0])
+    assert target["effectiveVerdict"] == "mark_false_positive"
+
+
+def test_ip_security_report_tp_and_escalate_are_the_only_malicious_confirmations(client):
+    categories = ["confirm_true_positive", "escalate", "mark_false_positive",
+                  "mark_expected_activity", "needs_investigation"]
+    refs = [item["alertRef"] for item in rows(client, limit=100)[:len(categories)]]
+    for ref, category in zip(refs, categories, strict=True):
+        assert client.post(f"/api/alerts/{ref}/feedback",
+                           json={"category": category}).status_code == 200
+
+    summary = admin_report(client)["summary"]
+    assert summary["confirmedMalicious"] == 2
+    assert summary["truePositive"] == 1
+    assert summary["escalated"] == 1
+    assert summary["falsePositive"] == 1
+    assert summary["expectedActivity"] == 1
+    assert summary["needsInvestigation"] == 1
+
+
+def test_ip_security_report_recommendation_is_transparent_and_advisory(client):
+    refs = [item["alertRef"] for item in rows(client, limit=100)[:3]]
+    for ref in refs:
+        assert client.post(f"/api/alerts/{ref}/feedback",
+                           json={"category": "confirm_true_positive"}).status_code == 200
+    recommendation = admin_report(client)["recommendation"]
+    assert recommendation["action"] == "Review for temporary block"
+    assert "3 analyst-confirmed malicious alerts" in recommendation["reason"]
+    assert recommendation["advisory"] == (
+        "Recommendation is advisory. No network blocking action is performed.")
+
+
+def test_ip_security_report_contains_no_ground_truth_fields(client):
+    body = admin_report(client)
+    serialised = str(body).casefold()
+    for forbidden in ("groundtruth", "rawlabel", "trueattacktype", "label"):
+        assert forbidden not in serialised
+
+
+def test_ip_security_report_handles_an_unknown_source_cleanly(client):
+    report = admin_report(client, "203.0.113.99")
+    assert report["summary"]["totalAlerts"] == 0
+    assert report["attackBehaviour"] == []
+    assert report["targetedHosts"] == []
+    assert report["destinationPorts"] == []
+    assert report["timeline"] == []
+    assert report["recommendation"]["action"] == "Monitor"
+
+
+# --------------------------------------------------------------------------------------------
 # NFR-04 — measured, not assumed
 # --------------------------------------------------------------------------------------------
 

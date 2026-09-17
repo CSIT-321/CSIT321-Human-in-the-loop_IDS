@@ -41,7 +41,10 @@ export function TopBar() {
   if (session === null) return null;
 
   return (
-    <header className="flex h-12 w-full shrink-0 items-center justify-between gap-4 border-b border-border bg-bg px-4">
+    <header
+      data-print-hidden="true"
+      className="flex h-12 w-full shrink-0 items-center justify-between gap-4 border-b border-border bg-bg px-4"
+    >
       <div className="flex min-w-0 items-center gap-3">
         <span aria-hidden className="grid h-6 w-6 place-items-center rounded-sm border border-primary/60 bg-accent-dim">
           <span className="h-2 w-2 rounded-full bg-primary" />

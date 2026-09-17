@@ -21,6 +21,7 @@ export function Sidebar({ collapsed, onCollapsedChange }: SidebarProps) {
   return (
     <nav
       aria-label="Main"
+      data-print-hidden="true"
       data-collapsed={collapsed ? "true" : "false"}
       className={`${collapsed ? "w-14" : "w-52"} shrink-0 overflow-hidden border-r border-border bg-surface py-3 transition-[width] duration-150`}
     >

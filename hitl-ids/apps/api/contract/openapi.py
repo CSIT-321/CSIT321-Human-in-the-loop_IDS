@@ -73,6 +73,13 @@ MODELS: tuple[type[BaseModel], ...] = (
     o.TopValue,
     o.TimeBucket,
     o.EntityIp,
+    o.IpReportSummary,
+    o.IpAttackBehaviour,
+    o.IpTargetHost,
+    o.IpDestinationPort,
+    o.IpReportTimelineRow,
+    o.IpReportRecommendation,
+    o.IpSecurityReport,
     o.QueueBandCount,
     o.DetectionRunRequest,
     o.DetectionRunSummary,
@@ -190,6 +197,18 @@ IP_PATH = {"name": "ip", "in": "path", "required": True,
 TOP_LIMIT = {"name": "limit", "in": "query", "required": False,
              "description": "How many top values to return per list",
              "schema": {"type": "integer", "minimum": 1, "maximum": 50, "default": 10}}
+
+REPORT_FROM_DATE = {
+    "name": "fromDate", "in": "query", "required": False,
+    "description": "Inclusive lower bound on recorded flow capture date (YYYY-MM-DD)",
+    "schema": {"type": "string", "format": "date"},
+}
+
+REPORT_TO_DATE = {
+    "name": "toDate", "in": "query", "required": False,
+    "description": "Inclusive upper bound on recorded flow capture date (YYYY-MM-DD)",
+    "schema": {"type": "string", "format": "date"},
+}
 
 RUN_ID = {"name": "runId", "in": "path", "required": True,
           "schema": {"type": "string"},
@@ -362,6 +381,23 @@ def _paths() -> dict[str, Any]:
                                       **_json(o.EntityIp)}, **_errors(400, 404)},
             }
         },
+        "/api/admin/reports/ip/{ip}": {
+            "get": {
+                "operationId": "getAdminIpSecurityReport",
+                "summary": "A read-only security report for one source IP",
+                "description": "Uses recorded flow capture time and the latest effective analyst "
+                               "verdict per alert. It never uses hidden ground truth and performs "
+                               "no blocking action.",
+                "tags": ["reports"],
+                "parameters": [AUTH_PARAMETER, IP_PATH, REPORT_FROM_DATE, REPORT_TO_DATE],
+                "responses": {
+                    "200": {"description": "Source-IP activity, verdicts and advisory",
+                            **_json(o.IpSecurityReport)},
+                    **_errors(400, 403),
+                },
+                "x-required-role": "system_admin",
+            }
+        },
         "/api/dashboard/summary": {
             "get": {
                 "operationId": "getDashboardSummary",
@@ -495,6 +531,7 @@ def openapi_document() -> dict[str, Any]:
             {"name": "detection", "description": "Batch runs"},
             {"name": "audit", "description": "The append-only trail"},
             {"name": "config", "description": "Guardrail settings (admin)"},
+            {"name": "reports", "description": "Read-only administrator security reports"},
             {"name": "evaluation", "description": "S15's three-arm results"},
         ],
         "paths": _paths(),

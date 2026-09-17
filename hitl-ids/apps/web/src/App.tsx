@@ -12,6 +12,7 @@ import { createBrowserRouter, RouterProvider, type RouteObject } from "react-rou
 import { AppShell } from "./components/layout/AppShell";
 import { AuditPage } from "./pages/admin/AuditPage";
 import { GuardrailsPage } from "./pages/admin/GuardrailsPage";
+import { IpSecurityReportPage } from "./pages/admin/IpSecurityReportPage";
 import { StatusPage } from "./pages/admin/StatusPage";
 import { AlertDetailPage } from "./pages/analyst/AlertDetailPage";
 import { DashboardPage } from "./pages/analyst/DashboardPage";
@@ -61,6 +62,7 @@ export const routes: RouteObject[] = [
       { path: "status", element: <StatusPage /> },
       { path: "guardrails", element: <GuardrailsPage /> },
       { path: "audit", element: <AuditPage /> },
+      { path: "reports/ip", element: <IpSecurityReportPage /> },
     ],
   },
   {

@@ -49,6 +49,7 @@ export const ROLE_META: Readonly<Record<Role, RoleMeta>> = {
       { to: "/admin/status", label: "System Status" },
       { to: "/admin/guardrails", label: "Guardrails" },
       { to: "/admin/audit", label: "Audit Trail" },
+      { to: "/admin/reports/ip", label: "IP Security Report" },
     ],
   },
   evaluator: {

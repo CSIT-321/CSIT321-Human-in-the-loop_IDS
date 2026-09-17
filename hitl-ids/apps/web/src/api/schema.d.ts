@@ -4,6 +4,26 @@
  */
 
 export interface paths {
+    "/api/admin/reports/ip/{ip}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * A read-only security report for one source IP
+         * @description Uses recorded flow capture time and the latest effective analyst verdict per alert. It never uses hidden ground truth and performs no blocking action.
+         */
+        get: operations["getAdminIpSecurityReport"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/alerts": {
         parameters: {
             query?: never;
@@ -1364,6 +1384,158 @@ export interface components {
              */
             updatedAt: string | null;
         };
+        /** IpAttackBehaviour */
+        IpAttackBehaviour: {
+            /** Alertcount */
+            alertCount: number;
+            /** Attackcategory */
+            attackCategory: string;
+            /** Confirmedmalicious */
+            confirmedMalicious: number;
+        };
+        /** IpDestinationPort */
+        IpDestinationPort: {
+            /** Alerts */
+            alerts: number;
+            /** Confirmedmalicious */
+            confirmedMalicious: number;
+            /** Port */
+            port: number;
+        };
+        /** IpReportRecommendation */
+        IpReportRecommendation: {
+            /**
+             * Action
+             * @enum {string}
+             */
+            action: "Review for temporary block" | "Investigate / monitor" | "Review for suppression / allow-listing" | "Mixed evidence — investigate before action" | "Monitor";
+            /**
+             * Advisory
+             * @default Recommendation is advisory. No network blocking action is performed.
+             */
+            advisory: string;
+            /** Reason */
+            reason: string;
+        };
+        /** IpReportSummary */
+        IpReportSummary: {
+            /** Confirmedmalicious */
+            confirmedMalicious: number;
+            /** Distinctattackcategories */
+            distinctAttackCategories: number;
+            /** Distinctdestinationhosts */
+            distinctDestinationHosts: number;
+            /** Distinctdestinationports */
+            distinctDestinationPorts: number;
+            /** Escalated */
+            escalated: number;
+            /** Expectedactivity */
+            expectedActivity: number;
+            /** Falsepositive */
+            falsePositive: number;
+            /**
+             * Firstseen
+             * @default null
+             */
+            firstSeen: string | null;
+            /**
+             * Lastseen
+             * @default null
+             */
+            lastSeen: string | null;
+            /** Needsinvestigation */
+            needsInvestigation: number;
+            /** Totalalerts */
+            totalAlerts: number;
+            /** Truepositive */
+            truePositive: number;
+        };
+        /** IpReportTimelineRow */
+        IpReportTimelineRow: {
+            /** Alertref */
+            alertRef: string;
+            /**
+             * Attackcategory
+             * @default null
+             */
+            attackCategory: string | null;
+            /**
+             * Capturetime
+             * @default null
+             */
+            captureTime: string | null;
+            /** Destinationip */
+            destinationIp: string;
+            /** Destinationport */
+            destinationPort: number;
+            /** Detectionscore */
+            detectionScore: number;
+            /**
+             * Effectiveverdict
+             * @default null
+             */
+            effectiveVerdict: ("confirm_true_positive" | "mark_false_positive" | "mark_expected_activity" | "needs_investigation" | "escalate") | null;
+            /** Operationalscore */
+            operationalScore: number;
+            /** Protocol */
+            protocol: string;
+            /** Sourceip */
+            sourceIp: string;
+            /** Sourcerecordid */
+            sourceRecordId: string;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "new" | "claimed" | "in_progress" | "resolved" | "dismissed";
+        };
+        /**
+         * IpSecurityReport
+         * @description A read-only source-IP report derived from recorded flows and effective analyst verdicts.
+         */
+        IpSecurityReport: {
+            /** Attackbehaviour */
+            attackBehaviour?: components["schemas"]["IpAttackBehaviour"][];
+            /** Destinationports */
+            destinationPorts?: components["schemas"]["IpDestinationPort"][];
+            /**
+             * Fromdate
+             * @default null
+             */
+            fromDate: string | null;
+            /**
+             * Generatedat
+             * Format: date-time
+             */
+            generatedAt: string;
+            recommendation: components["schemas"]["IpReportRecommendation"];
+            /** Sourceip */
+            sourceIp: string;
+            summary: components["schemas"]["IpReportSummary"];
+            /** Targetedhosts */
+            targetedHosts?: components["schemas"]["IpTargetHost"][];
+            /** Timeline */
+            timeline?: components["schemas"]["IpReportTimelineRow"][];
+            /**
+             * Todate
+             * @default null
+             */
+            toDate: string | null;
+        };
+        /** IpTargetHost */
+        IpTargetHost: {
+            /** Alerts */
+            alerts: number;
+            /** Confirmedmalicious */
+            confirmedMalicious: number;
+            /** Destinationip */
+            destinationIp: string;
+            /**
+             * Lastseen
+             * @default null
+             */
+            lastSeen: string | null;
+        };
         /**
          * LoginRequest
          * @description What the sign-in form sends. A wrong username and a wrong password answer identically.
@@ -1786,6 +1958,64 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+    getAdminIpSecurityReport: {
+        parameters: {
+            query?: {
+                /** @description Inclusive lower bound on recorded flow capture date (YYYY-MM-DD) */
+                fromDate?: string;
+                /** @description Inclusive upper bound on recorded flow capture date (YYYY-MM-DD) */
+                toDate?: string;
+            };
+            header?: {
+                /** @description `Bearer <token>` from POST /api/auth/login */
+                Authorization?: string;
+            };
+            path: {
+                /** @description An IPv4 or IPv6 address */
+                ip: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Source-IP activity, verdicts and advisory */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["IpSecurityReport"];
+                };
+            };
+            /** @description Validation failed */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not signed in, or the token expired */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Role not permitted */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
     listAlerts: {
         parameters: {
             query?: {

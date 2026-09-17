@@ -1990,6 +1990,413 @@
         "title": "GuardrailSetting",
         "type": "object"
       },
+      "IpAttackBehaviour": {
+        "additionalProperties": false,
+        "properties": {
+          "alertCount": {
+            "minimum": 0,
+            "title": "Alertcount",
+            "type": "integer"
+          },
+          "attackCategory": {
+            "title": "Attackcategory",
+            "type": "string"
+          },
+          "confirmedMalicious": {
+            "minimum": 0,
+            "title": "Confirmedmalicious",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "attackCategory",
+          "alertCount",
+          "confirmedMalicious"
+        ],
+        "title": "IpAttackBehaviour",
+        "type": "object"
+      },
+      "IpDestinationPort": {
+        "additionalProperties": false,
+        "properties": {
+          "alerts": {
+            "minimum": 0,
+            "title": "Alerts",
+            "type": "integer"
+          },
+          "confirmedMalicious": {
+            "minimum": 0,
+            "title": "Confirmedmalicious",
+            "type": "integer"
+          },
+          "port": {
+            "maximum": 65535,
+            "minimum": 0,
+            "title": "Port",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "port",
+          "alerts",
+          "confirmedMalicious"
+        ],
+        "title": "IpDestinationPort",
+        "type": "object"
+      },
+      "IpReportRecommendation": {
+        "additionalProperties": false,
+        "properties": {
+          "action": {
+            "enum": [
+              "Review for temporary block",
+              "Investigate / monitor",
+              "Review for suppression / allow-listing",
+              "Mixed evidence — investigate before action",
+              "Monitor"
+            ],
+            "title": "Action",
+            "type": "string"
+          },
+          "advisory": {
+            "default": "Recommendation is advisory. No network blocking action is performed.",
+            "title": "Advisory",
+            "type": "string"
+          },
+          "reason": {
+            "title": "Reason",
+            "type": "string"
+          }
+        },
+        "required": [
+          "action",
+          "reason"
+        ],
+        "title": "IpReportRecommendation",
+        "type": "object"
+      },
+      "IpReportSummary": {
+        "additionalProperties": false,
+        "properties": {
+          "confirmedMalicious": {
+            "minimum": 0,
+            "title": "Confirmedmalicious",
+            "type": "integer"
+          },
+          "distinctAttackCategories": {
+            "minimum": 0,
+            "title": "Distinctattackcategories",
+            "type": "integer"
+          },
+          "distinctDestinationHosts": {
+            "minimum": 0,
+            "title": "Distinctdestinationhosts",
+            "type": "integer"
+          },
+          "distinctDestinationPorts": {
+            "minimum": 0,
+            "title": "Distinctdestinationports",
+            "type": "integer"
+          },
+          "escalated": {
+            "minimum": 0,
+            "title": "Escalated",
+            "type": "integer"
+          },
+          "expectedActivity": {
+            "minimum": 0,
+            "title": "Expectedactivity",
+            "type": "integer"
+          },
+          "falsePositive": {
+            "minimum": 0,
+            "title": "Falsepositive",
+            "type": "integer"
+          },
+          "firstSeen": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Firstseen"
+          },
+          "lastSeen": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Lastseen"
+          },
+          "needsInvestigation": {
+            "minimum": 0,
+            "title": "Needsinvestigation",
+            "type": "integer"
+          },
+          "totalAlerts": {
+            "minimum": 0,
+            "title": "Totalalerts",
+            "type": "integer"
+          },
+          "truePositive": {
+            "minimum": 0,
+            "title": "Truepositive",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "totalAlerts",
+          "confirmedMalicious",
+          "truePositive",
+          "escalated",
+          "falsePositive",
+          "expectedActivity",
+          "needsInvestigation",
+          "distinctAttackCategories",
+          "distinctDestinationHosts",
+          "distinctDestinationPorts"
+        ],
+        "title": "IpReportSummary",
+        "type": "object"
+      },
+      "IpReportTimelineRow": {
+        "additionalProperties": false,
+        "properties": {
+          "alertRef": {
+            "title": "Alertref",
+            "type": "string"
+          },
+          "attackCategory": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Attackcategory"
+          },
+          "captureTime": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Capturetime"
+          },
+          "destinationIp": {
+            "title": "Destinationip",
+            "type": "string"
+          },
+          "destinationPort": {
+            "maximum": 65535,
+            "minimum": 0,
+            "title": "Destinationport",
+            "type": "integer"
+          },
+          "detectionScore": {
+            "maximum": 100,
+            "minimum": 0,
+            "title": "Detectionscore",
+            "type": "number"
+          },
+          "effectiveVerdict": {
+            "anyOf": [
+              {
+                "enum": [
+                  "confirm_true_positive",
+                  "mark_false_positive",
+                  "mark_expected_activity",
+                  "needs_investigation",
+                  "escalate"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Effectiveverdict"
+          },
+          "operationalScore": {
+            "maximum": 100,
+            "minimum": 0,
+            "title": "Operationalscore",
+            "type": "number"
+          },
+          "protocol": {
+            "title": "Protocol",
+            "type": "string"
+          },
+          "sourceIp": {
+            "title": "Sourceip",
+            "type": "string"
+          },
+          "sourceRecordId": {
+            "title": "Sourcerecordid",
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "new",
+              "claimed",
+              "in_progress",
+              "resolved",
+              "dismissed"
+            ],
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "alertRef",
+          "sourceRecordId",
+          "sourceIp",
+          "destinationIp",
+          "destinationPort",
+          "protocol",
+          "detectionScore",
+          "operationalScore",
+          "status"
+        ],
+        "title": "IpReportTimelineRow",
+        "type": "object"
+      },
+      "IpSecurityReport": {
+        "additionalProperties": false,
+        "description": "A read-only source-IP report derived from recorded flows and effective analyst verdicts.",
+        "properties": {
+          "attackBehaviour": {
+            "items": {
+              "$ref": "#/components/schemas/IpAttackBehaviour"
+            },
+            "title": "Attackbehaviour",
+            "type": "array"
+          },
+          "destinationPorts": {
+            "items": {
+              "$ref": "#/components/schemas/IpDestinationPort"
+            },
+            "title": "Destinationports",
+            "type": "array"
+          },
+          "fromDate": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Fromdate"
+          },
+          "generatedAt": {
+            "format": "date-time",
+            "title": "Generatedat",
+            "type": "string"
+          },
+          "recommendation": {
+            "$ref": "#/components/schemas/IpReportRecommendation"
+          },
+          "sourceIp": {
+            "title": "Sourceip",
+            "type": "string"
+          },
+          "summary": {
+            "$ref": "#/components/schemas/IpReportSummary"
+          },
+          "targetedHosts": {
+            "items": {
+              "$ref": "#/components/schemas/IpTargetHost"
+            },
+            "title": "Targetedhosts",
+            "type": "array"
+          },
+          "timeline": {
+            "items": {
+              "$ref": "#/components/schemas/IpReportTimelineRow"
+            },
+            "title": "Timeline",
+            "type": "array"
+          },
+          "toDate": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Todate"
+          }
+        },
+        "required": [
+          "sourceIp",
+          "generatedAt",
+          "summary",
+          "recommendation"
+        ],
+        "title": "IpSecurityReport",
+        "type": "object"
+      },
+      "IpTargetHost": {
+        "additionalProperties": false,
+        "properties": {
+          "alerts": {
+            "minimum": 0,
+            "title": "Alerts",
+            "type": "integer"
+          },
+          "confirmedMalicious": {
+            "minimum": 0,
+            "title": "Confirmedmalicious",
+            "type": "integer"
+          },
+          "destinationIp": {
+            "title": "Destinationip",
+            "type": "string"
+          },
+          "lastSeen": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Lastseen"
+          }
+        },
+        "required": [
+          "destinationIp",
+          "alerts",
+          "confirmedMalicious"
+        ],
+        "title": "IpTargetHost",
+        "type": "object"
+      },
       "LoginRequest": {
         "additionalProperties": false,
         "description": "What the sign-in form sends. A wrong username and a wrong password answer identically.",
@@ -2912,6 +3319,100 @@
   },
   "openapi": "3.1.0",
   "paths": {
+    "/api/admin/reports/ip/{ip}": {
+      "get": {
+        "description": "Uses recorded flow capture time and the latest effective analyst verdict per alert. It never uses hidden ground truth and performs no blocking action.",
+        "operationId": "getAdminIpSecurityReport",
+        "parameters": [
+          {
+            "description": "`Bearer <token>` from POST /api/auth/login",
+            "in": "header",
+            "name": "Authorization",
+            "required": false,
+            "schema": {
+              "example": "Bearer eyJhbGciOiJIUzI1NiJ9...",
+              "type": "string"
+            }
+          },
+          {
+            "description": "An IPv4 or IPv6 address",
+            "in": "path",
+            "name": "ip",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Inclusive lower bound on recorded flow capture date (YYYY-MM-DD)",
+            "in": "query",
+            "name": "fromDate",
+            "required": false,
+            "schema": {
+              "format": "date",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Inclusive upper bound on recorded flow capture date (YYYY-MM-DD)",
+            "in": "query",
+            "name": "toDate",
+            "required": false,
+            "schema": {
+              "format": "date",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IpSecurityReport"
+                }
+              }
+            },
+            "description": "Source-IP activity, verdicts and advisory"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Validation failed"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not signed in, or the token expired"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Role not permitted"
+          }
+        },
+        "summary": "A read-only security report for one source IP",
+        "tags": [
+          "reports"
+        ],
+        "x-required-role": "system_admin"
+      }
+    },
     "/api/alerts": {
       "get": {
         "description": "Ordered by `CASE severity WHEN 'Critical' THEN 4 WHEN 'High' THEN 3 WHEN 'Medium' THEN 2 WHEN 'Low' THEN 1 ELSE 0 END DESC, combined_score DESC, id ASC` unless `sort` overrides it. `sort=queue` is the contract order and what the demo shows; the other keys are inspection tools, not alternative rankings. Maximum page size 200.",
@@ -5047,6 +5548,10 @@
     {
       "description": "Guardrail settings (admin)",
       "name": "config"
+    },
+    {
+      "description": "Read-only administrator security reports",
+      "name": "reports"
     },
     {
       "description": "S15's three-arm results",

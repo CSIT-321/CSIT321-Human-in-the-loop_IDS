@@ -144,3 +144,38 @@
     transition-duration: 0.01ms !important;
   }
 }
+
+@media print {
+  @page {
+    size: landscape;
+    margin: 12mm;
+  }
+
+  [data-print-hidden="true"],
+  .print-hidden {
+    display: none !important;
+  }
+
+  html,
+  body,
+  #root,
+  main {
+    height: auto !important;
+    overflow: visible !important;
+    background: #ffffff !important;
+    color: #111111 !important;
+  }
+
+  main {
+    padding: 0 !important;
+  }
+
+  .print-report {
+    color: #111111;
+  }
+
+  .print-report section,
+  .print-report dl {
+    break-inside: avoid;
+  }
+}

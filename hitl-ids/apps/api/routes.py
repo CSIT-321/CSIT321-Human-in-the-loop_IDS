@@ -20,6 +20,7 @@ from __future__ import annotations
 import ipaddress
 import json
 import sqlite3
+from datetime import date
 from pathlib import Path
 from typing import Annotated, Any, Literal
 
@@ -362,6 +363,35 @@ def get_ip_entity(ip: str, conn: Conn, principal: Principal,
     if data is None:
         raise not_found("alert involving IP", ip)
     return co.EntityIp(**data)
+
+
+@router.get("/api/admin/reports/ip/{ip}", response_model=co.IpSecurityReport,
+            tags=["reports"], operation_id="getAdminIpSecurityReport",
+            dependencies=[AdminOnly])
+def get_admin_ip_security_report(
+    ip: str,
+    conn: Conn,
+    from_date: str | None = Query(None, alias="fromDate", pattern=r"^\d{4}-\d{2}-\d{2}$"),
+    to_date: str | None = Query(None, alias="toDate", pattern=r"^\d{4}-\d{2}-\d{2}$"),
+) -> co.IpSecurityReport:
+    """A read-only source-IP report over recorded capture time and effective analyst verdicts."""
+    try:
+        source_ip = str(ipaddress.ip_address(ip))
+    except ValueError as error:
+        raise ApiError(400, "VALIDATION_FAILED", f"{ip!r} is not an IP address") from error
+
+    try:
+        parsed_from = date.fromisoformat(from_date) if from_date is not None else None
+        parsed_to = date.fromisoformat(to_date) if to_date is not None else None
+    except ValueError as error:
+        raise ApiError(400, "VALIDATION_FAILED", "Dates must be valid YYYY-MM-DD values") from error
+    if parsed_from is not None and parsed_to is not None and parsed_from > parsed_to:
+        raise ApiError(400, "VALIDATION_FAILED", "fromDate must be on or before toDate")
+
+    return co.IpSecurityReport(
+        generated_at=m.utc_now(),
+        **store.ip_security_report(conn, source_ip, from_date=from_date, to_date=to_date),
+    )
 
 
 @router.get("/api/dashboard/summary", response_model=co.DashboardSummary, tags=["dashboard"],

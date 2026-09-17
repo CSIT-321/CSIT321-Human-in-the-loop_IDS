@@ -11,6 +11,7 @@ Registration is idempotent on the natural key — a dataset's ``(name, version)`
 from __future__ import annotations
 
 import sqlite3
+from collections import Counter
 from collections.abc import Mapping, Sequence
 from datetime import datetime
 from typing import Any
@@ -554,4 +555,165 @@ def entity_ip(conn: sqlite3.Connection, ip: str, *, limit: int = 10) -> dict[str
                           where=where, params=[ip, *params], limit=limit),
         "top_destination_ports": _top(conn, "f.dst_port", where=where, params=params,
                                       limit=limit),
+    }
+
+
+CONFIRMED_MALICIOUS = frozenset({"confirm_true_positive", "escalate"})
+
+
+def _ip_report_recommendation(*, confirmed: int, benign: int,
+                              destination_hosts: int) -> dict[str, str]:
+    """Transparent prototype advice. This never mutates an alert or network control."""
+    if confirmed >= 2 and benign >= 2 and abs(confirmed - benign) <= 1:
+        return {
+            "action": "Mixed evidence — investigate before action",
+            "reason": (f"Analysts recorded {confirmed} malicious confirmations and {benign} "
+                       "false-positive or expected-activity outcomes; the evidence is strongly "
+                       "mixed."),
+        }
+    if confirmed >= 3 and confirmed >= benign + 2:
+        return {
+            "action": "Review for temporary block",
+            "reason": (f"{confirmed} analyst-confirmed malicious alerts across "
+                       f"{destination_hosts} destination hosts clearly exceed {benign} "
+                       "false-positive or expected-activity outcomes."),
+        }
+    if confirmed >= 1:
+        return {
+            "action": "Investigate / monitor",
+            "reason": (f"{confirmed} analyst-confirmed malicious alerts were recorded across "
+                       f"{destination_hosts} destination hosts, but the evidence is limited or "
+                       "does not clearly outweigh benign outcomes."),
+        }
+    if benign >= 3:
+        return {
+            "action": "Review for suppression / allow-listing",
+            "reason": (f"No malicious outcome is confirmed, while analysts recorded {benign} "
+                       "false-positive or expected-activity outcomes."),
+        }
+    return {
+        "action": "Monitor",
+        "reason": ("No analyst-confirmed malicious activity is available and there is not enough "
+                   "benign feedback to justify suppression."),
+    }
+
+
+def ip_security_report(conn: sqlite3.Connection, source_ip: str, *,
+                       from_date: str | None = None,
+                       to_date: str | None = None) -> dict[str, Any]:
+    """Build one source-IP report from capture-time flows and effective analyst verdicts.
+
+    One joined query supplies every timeline row. Aggregations are derived from that frozen result,
+    so the summary and tables cannot disagree and no per-alert query is needed.
+    """
+    clauses = ["f.src_ip = ?"]
+    params: list[Any] = [source_ip]
+    if from_date is not None:
+        clauses.append(f"substr({FLOW_TIME}, 1, 10) >= ?")
+        params.append(from_date)
+    if to_date is not None:
+        clauses.append(f"substr({FLOW_TIME}, 1, 10) <= ?")
+        params.append(to_date)
+    where = " AND ".join(clauses)
+    rows = conn.execute(
+        f"SELECT {FLOW_TIME} AS capture_time, a.alert_ref, f.source_record_id, "
+        "f.src_ip, f.dst_ip, f.dst_port, f.protocol, a.attack_category, "
+        "a.detection_score, a.combined_score, a.status, "
+        f"{EFFECTIVE_VERDICT} AS effective_verdict "
+        "FROM alerts a JOIN flow_data f ON f.alert_id = a.id "
+        f"WHERE {where} ORDER BY capture_time, a.id",
+        params,
+    ).fetchall()
+
+    timeline = [
+        {
+            "capture_time": row["capture_time"],
+            "alert_ref": str(row["alert_ref"]),
+            "source_record_id": str(row["source_record_id"]),
+            "source_ip": str(row["src_ip"]),
+            "destination_ip": str(row["dst_ip"]),
+            "destination_port": int(row["dst_port"]),
+            "protocol": str(row["protocol"]),
+            "attack_category": row["attack_category"],
+            "detection_score": float(row["detection_score"]),
+            "operational_score": float(row["combined_score"]),
+            "effective_verdict": row["effective_verdict"],
+            "status": str(row["status"]),
+        }
+        for row in rows
+    ]
+    verdicts = Counter(row["effective_verdict"] for row in timeline
+                       if row["effective_verdict"] is not None)
+
+    def confirmed(row: dict[str, Any]) -> bool:
+        return row["effective_verdict"] in CONFIRMED_MALICIOUS
+
+    behaviour: dict[str, dict[str, Any]] = {}
+    hosts: dict[str, dict[str, Any]] = {}
+    ports: dict[int, dict[str, Any]] = {}
+    for row in timeline:
+        category = str(row["attack_category"] or "No detection")
+        behaviour_entry = behaviour.setdefault(
+            category, {"attack_category": category, "alert_count": 0,
+                       "confirmed_malicious": 0})
+        behaviour_entry["alert_count"] += 1
+        behaviour_entry["confirmed_malicious"] += int(confirmed(row))
+
+        host = str(row["destination_ip"])
+        host_entry = hosts.setdefault(
+            host, {"destination_ip": host, "alerts": 0,
+                   "confirmed_malicious": 0, "last_seen": None})
+        host_entry["alerts"] += 1
+        host_entry["confirmed_malicious"] += int(confirmed(row))
+        seen = row["capture_time"]
+        if seen is not None and (host_entry["last_seen"] is None
+                                 or seen > host_entry["last_seen"]):
+            host_entry["last_seen"] = seen
+
+        port = int(row["destination_port"])
+        port_entry = ports.setdefault(
+            port, {"port": port, "alerts": 0, "confirmed_malicious": 0})
+        port_entry["alerts"] += 1
+        port_entry["confirmed_malicious"] += int(confirmed(row))
+
+    capture_times = [str(row["capture_time"]) for row in timeline
+                     if row["capture_time"] is not None]
+    first_seen = min(capture_times) if capture_times else None
+    last_seen = max(capture_times) if capture_times else None
+    true_positive = verdicts["confirm_true_positive"]
+    escalated = verdicts["escalate"]
+    confirmed_count = true_positive + escalated
+    false_positive = verdicts["mark_false_positive"]
+    expected_activity = verdicts["mark_expected_activity"]
+    benign_count = false_positive + expected_activity
+
+    return {
+        "source_ip": source_ip,
+        "from_date": from_date or (first_seen[:10] if first_seen else None),
+        "to_date": to_date or (last_seen[:10] if last_seen else None),
+        "summary": {
+            "total_alerts": len(timeline),
+            "confirmed_malicious": confirmed_count,
+            "true_positive": true_positive,
+            "escalated": escalated,
+            "false_positive": false_positive,
+            "expected_activity": expected_activity,
+            "needs_investigation": verdicts["needs_investigation"],
+            "distinct_attack_categories": len({row["attack_category"] for row in timeline
+                                                if row["attack_category"] is not None}),
+            "distinct_destination_hosts": len(hosts),
+            "distinct_destination_ports": len(ports),
+            "first_seen": first_seen,
+            "last_seen": last_seen,
+        },
+        "attack_behaviour": sorted(behaviour.values(),
+                                   key=lambda item: (-item["alert_count"],
+                                                     item["attack_category"])),
+        "targeted_hosts": sorted(hosts.values(),
+                                 key=lambda item: (-item["alerts"], item["destination_ip"])),
+        "destination_ports": sorted(ports.values(),
+                                    key=lambda item: (-item["alerts"], item["port"])),
+        "timeline": timeline,
+        "recommendation": _ip_report_recommendation(
+            confirmed=confirmed_count, benign=benign_count, destination_hosts=len(hosts)),
     }
