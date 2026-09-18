@@ -10,6 +10,9 @@ Read the **five traps** before you start. Four of them will bite you otherwise.
 
 ---
 
+> **Presenting on a machine that has never run this?** Do [`demo-machine-setup.md`](demo-machine-setup.md) first — clone, Python 3.11 environment,
+> build the database, `npm ci`. About five minutes, and every step of it has been run from a bare clone.
+
 ## 0 · The thirty-second version
 
 | | |

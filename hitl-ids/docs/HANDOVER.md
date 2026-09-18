@@ -63,6 +63,8 @@ following the requested direction ·
 **466 tests, 0 skipped** (Python, in `.venv`) + **157 web tests** (`apps/web`, `npm test`) +
 the browser narrative (`npm run e2e`, passes with three real sign-ins) ·
 **Python runs from `hitl-ids\.venv` (3.11) — see §0b before running anything** ·
+**Presenting on a different machine? [`demo-machine-setup.md`](demo-machine-setup.md)** —
+clone to running console, every step verified on a bare clone 2026-09-18 ·
 `python scripts/run_detection.py` builds the demo database · `python -m uvicorn apps.api.main:app`
 serves the API on :8000 · `cd apps/web && npm run dev` serves the console on :5173
 **Iteration 1 (Evidence & Direction) complete** · the ranking formula and the agreement gate were
