@@ -281,7 +281,7 @@
         <span class="act">Before the audience arrives</span>
         <h2>Build a clean database, then start two servers</h2>
       </div>
-      <div class="note" style="margin-bottom:18px"><b>Presenting on a machine that has never run this project?</b> Start here, then come back. <b>A clone carries everything you need</b> — the 5,000-flow sample, the trained model, the rules and the severity chart are all committed. Three things are not, and you build them locally: the Python environment (<b>~2 min</b>), the demo database (<b>~26 s</b>) and the console’s packages (<b>~10 s</b>). The full path is in <code>docs/demo-machine-setup.md</code>, and every step of it was run from a bare clone on 2026-09-18.</div>
+      <div class="note" style="margin-bottom:18px"><b>Presenting on a machine that has never run this project?</b> Start here, then come back. <b>A clone carries everything you need</b> — the 5,000-flow sample, the trained model, the rules and the severity chart are all committed. Three things are not, and you build them locally: the Python environment (<b>~2 min</b>), the demo database (<b>~25 s</b>) and the console’s packages (<b>~10 s</b>). The full path is in <code>docs/demo-machine-setup.md</code>, and every step of it was run from a bare clone on 2026-09-18.</div>
       <div class="table-wrap" style="margin-bottom:18px">
         <table>
           <thead><tr><th>Once per machine</th><th>Run from</th><th>Takes</th></tr></thead>
@@ -290,7 +290,7 @@
             <tr><td class="mono">install Python 3.11 — <b>assume it is not there</b></td><td class="mono">python.org</td><td>~5 min — see below</td></tr>
             <tr><td class="mono">py -3.11 -m venv .venv</td><td class="mono">hitl-ids</td><td>seconds</td></tr>
             <tr><td class="mono">python -m pip install -r requirements.txt</td><td class="mono">hitl-ids</td><td>~2 min</td></tr>
-            <tr><td class="mono">python scripts/run_detection.py</td><td class="mono">hitl-ids</td><td>~26 s — 5,000 alerts, 644 Tier 2</td></tr>
+            <tr><td class="mono">python scripts/run_detection.py</td><td class="mono">hitl-ids</td><td>~25 s — 5,000 alerts, 644 Tier 2</td></tr>
             <tr><td class="mono">npm ci</td><td class="mono">hitl-ids/apps/web</td><td>~10 s</td></tr>
           </tbody>
         </table>
@@ -303,8 +303,14 @@
       <h3>If the machine has no Python 3.11 — which is the normal case</h3>
       <div class="prose">
         <p>Run <code>py -0p</code> first: it lists every Python the launcher knows about. If no <code>3.11</code> line appears, install one before anything else. Any 3.11.x works — this project was built on 3.11.11.</p>
-        <p><strong>The straightforward route is the python.org installer.</strong> Open <a href="https://www.python.org/downloads/">python.org/downloads</a> and find Python 3.11 under “Looking for a specific release?” — 3.11 is no longer current, so it is not the large download button; 3.11.9 is the last 3.11 with a Windows installer. In the installer, leave <strong>“Install launcher for all users” ticked</strong> — that is what makes <code>py -3.11</code> work afterwards. You do not need “Add python.exe to PATH”, and leaving it off avoids displacing whatever Python the machine already has. A per-user install needs no administrator rights.</p>
-        <p><strong>If the machine already has Miniconda or Anaconda</strong>, <code>conda create -y -n hitl311 python=3.11</code> gives you one without touching the system Python; <code>conda env list</code> then prints the path to use. <strong>If it has <code>winget</code></strong> — not all do — <code>winget install Python.Python.3.11</code> is quicker.</p>
+        <p><strong>Fastest route — <code>winget</code>, one command.</strong> Verified: winget v1.29.290 offers <code>Python.Python.3.11</code> at exactly <strong>3.11.9</strong>, and it installs alongside the existing 3.12 without touching it.</p>
+        <pre class="cmd"><span class="p">&gt; </span>winget install Python.Python.3.11        <span class="c"># add --scope user to skip the admin prompt</span></pre>
+        <p>If <code>winget</code> is not found, it may simply not be on <code>PATH</code> in the shell you are using — try a plain Command Prompt or PowerShell before giving up on it.</p>
+        <p><strong>No winget? The python.org installer.</strong> Open <a href="https://www.python.org/downloads/">python.org/downloads</a> and find Python 3.11 under “Looking for a specific release?” — 3.11 is no longer current, so it is not the large download button. The direct link used here, verified to return the installer (26.2 MB), is <code class="mono">python.org/ftp/python/3.11.9/python-3.11.9-amd64.exe</code> — and it installs silently from a command prompt:</p>
+        <pre class="cmd"><span class="p">&gt; </span>curl -o %TEMP%\py311.exe https://www.python.org/ftp/python/3.11.9/python-3.11.9-amd64.exe
+<span class="p">&gt; </span>%TEMP%\py311.exe /quiet InstallAllUsers=0 PrependPath=0 Include_launcher=1</pre>
+        <p>Those switches matter: <code>InstallAllUsers=0</code> needs no administrator rights, <code>PrependPath=0</code> avoids displacing whatever Python the machine already has, and <code>Include_launcher=1</code> is what makes <code>py -3.11</code> work afterwards. Running the installer by hand instead? Leave <strong>“Install launcher for all users” ticked</strong>. It returns immediately and finishes in the background — give it half a minute before checking.</p>
+        <p><strong>Already have Miniconda or Anaconda?</strong> <code>conda create -y -n hitl311 python=3.11</code> gives you one without touching the system Python; <code>conda env list</code> then prints the path to use.</p>
         <p>Then check the launcher can see it: <code>py -0p</code> should now show a 3.11 line, and <code>py -3.11 --version</code> should print it. The full procedure, with the failure modes, is in <code>docs/demo-machine-setup.md</code>.</p>
       </div>
       <h3>Which folder each command runs from</h3>
@@ -338,7 +344,7 @@
 
 <span class="c"># before every audience  —  DELETE FIRST: run_detection appends, it does not replace</span>
 <span class="p">&gt; </span>del data\demo.db                         <span class="c"># skip this and you get 10,000 alerts and two runs</span>
-<span class="p">&gt; </span>python scripts/run_detection.py          <span class="c"># fresh data/demo.db: 5,000 flows → 5,000 alerts, ~26 s</span>
+<span class="p">&gt; </span>python scripts/run_detection.py          <span class="c"># fresh data/demo.db: 5,000 flows → 5,000 alerts, ~25 s</span>
 <span class="p">&gt; </span>python scripts/rehearse_demo.py          <span class="c"># 47 checks on a copy; must end "holds end to end"</span>
 
 <span class="c"># start the API on :8000 and leave this terminal open</span>
@@ -348,6 +354,59 @@
 <span class="p">&gt; </span>cd "&lt;wherever you cloned&gt;\CSIT321-Human-in-the-loop_IDS\hitl-ids\apps\web"
 <span class="p">&gt; </span>npm ci                                   <span class="c"># once per machine — ci, not install: honours the lockfile</span>
 <span class="p">&gt; </span>npm run dev                              <span class="c"># http://localhost:5173</span></pre>
+      <h3>Running from a bare clone: the dataset, and when you need it</h3>
+      <div class="prose">
+        <p><strong>For the demo, you do not need the dataset.</strong> The 5,000-flow sample the demo runs on is committed to the repository &mdash; <code>data/processed/demo_sample.csv</code>, 2.9 MB &mdash; together with its manifest, its ground truth and its predictions. A clone builds the demo database and runs, with nothing downloaded. Verified from a bare clone on 2026-09-18.</p>
+        <p><strong>The 10.4 GB archive is only needed to regenerate the two samples from the original 63 million flows.</strong> That is the reproduction path, not the demo path, and it is documented below. <em>If you are setting up to present, you have already finished &mdash; go to <a href="#act1">Sign in and roles</a>.</em></p>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Path</th><th>Download</th><th>Steps</th><th>When you need it</th></tr></thead>
+          <tbody>
+            <tr><td><strong>Demo</strong> &mdash; the console running</td><td>none</td><td>clone &rarr; Python 3.11 &rarr; venv &rarr; <code>pip install</code> &rarr; <code>npm ci</code> &rarr; <code>run_detection.py</code></td><td>Every presentation. This is the whole of it.</td></tr>
+            <tr><td><strong>Reproduction</strong> &mdash; every file rebuilt from the raw capture</td><td>10.4 GB</td><td>that, plus the archive and the six scripts below</td><td>Only to show the pipeline from the original data</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h4>The archive, if you do need it</h4>
+      <div class="prose">
+        <p>It cannot be committed: GitHub rejects files over 100 MB, and this one is a hundred times that. Download it into <code>data/raw/</code> &mdash; a folder that is not in the clone, so create it.</p>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>File</th><th>Size</th><th>Where from</th></tr></thead>
+          <tbody>
+            <tr><td class="mono">data/raw/CSECICIDS2018_improved.zip</td><td>10,426,851,729 bytes<br><b>10.4 GB compressed</b> &middot; about <b>36 GB uncompressed</b> &middot; 10 capture days &middot; 63,195,145 flows</td><td class="mono">intrusion-detection.distrinet-research.be/CNS2022/Datasets/CSECICIDS2018_improved.zip</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <pre class="cmd"><span class="c"># from hitl-ids: create the folder, then download (this takes a while)</span>
+<span class="p">&gt; </span>mkdir data\raw
+<span class="p">&gt; </span>curl -L -o data\raw\CSECICIDS2018_improved.zip https://intrusion-detection.distrinet-research.be/CNS2022/Datasets/CSECICIDS2018_improved.zip
+
+<span class="c"># verify it BEFORE using it: a truncated download fails much later, and confusingly</span>
+<span class="p">PS&gt; </span>Get-FileHash data\raw\CSECICIDS2018_improved.zip -Algorithm SHA256
+<span class="p">&gt; </span>sha256sum data/raw/CSECICIDS2018_improved.zip        <span class="c"># or this, in bash</span>
+<span class="c"># must print 7f7b6f8065a88527bcb6e1579f088e1d0480a49903c5fd7e4e907ab238344f6e</span></pre>
+
+      <h4>The rebuild chain, in order</h4>
+      <div class="prose">
+        <p>Each step consumes the one before it. The 36 GB of CSV is streamed straight out of the zip and never written to disk &mdash; only the derived files land in <code>data/processed/</code>, which is why a modest laptop can do this.</p>
+      </div>
+      <pre class="cmd"><span class="c"># from hitl-ids, environment active, once the archive is in place and verified</span>
+<span class="p">&gt; </span>python scripts/scan_labels.py            <span class="c"># census of all 63,195,145 flows -> label_scan.json</span>
+<span class="p">&gt; </span>python scripts/build_samples.py          <span class="c"># the two samples; asserts they share no row</span>
+<span class="p">&gt; </span>python scripts/build_demo_detection.py   <span class="c"># the observable view and ground truth for the demo sample</span>
+<span class="p">&gt; </span>python scripts/run_ml_inference.py       <span class="c"># TreeSHAP for all 5,000 demo alerts</span>
+<span class="p">&gt; </span>python scripts/run_detection.py          <span class="c"># data/demo.db - the demo database</span>
+
+<span class="c"># optional, and only if you want to reproduce the training itself</span>
+<span class="p">&gt; </span>python scripts/train_model.py            <span class="c"># retrains the 8-class model from train_sample.csv</span></pre>
+
+      <div class="note"><b>You do not have to retrain, and the demo does not need you to.</b> The committed model in <code>models/</code> is the one every reported figure came from. <code>run_detection.py</code> computes its own predictions and TreeSHAP, so it needs neither <code>train_sample.csv</code> nor the 16 MB SHAP file. Run <code>train_model.py</code> only to reproduce the training step itself.</div>
+      <div class="note"><b>The test suite knows when the archive is absent.</b> On a clone without it, <code>python -m pytest</code> reports <b>461 passed, 5 skipped</b> &mdash; the five skips are the checks that need <code>train_sample.csv</code> (136 MB, over GitHub's limit, not in git) or the raw capture. After a full rebuild they run and the suite is <b>466 passed, 0 skipped</b>. A non-zero skip count on a demo machine is expected, not a fault.</div>
+      <div class="note"><b>Do not reach for <code>scripts/download_dataset.py</code> here.</b> It targets a Kaggle mirror and needs Kaggle credentials, which a demo machine will not have. The direct URL above is the file this project actually used.</div>
       <p class="aside">Uvicorn prints <code>Uvicorn running on http://127.0.0.1:8000</code> when the API is up; Vite prints <code>Local: http://localhost:5173/</code>. To leave the environment, type <code>deactivate</code>. Any Python 3.11 can create it — <code>py -3.11 -m venv .venv</code> once one is installed, or the interpreter’s full path. The console's terminal does not need the environment: Node runs it.</p>
       <div class="note"><b>Both servers must be running.</b> The console is only the screens; every number, verdict, claim and note goes through the API. If the API is not running, the pages still load but every panel reports <em>"Cannot reach the API"</em> and no button does anything. After pulling new code, <strong>restart the API</strong>: an API started before an update does not have the endpoints the workstation uses.</div>
       <div class="note"><b>Check the board before the audience arrives.</b> On the Workstation the strip must read <b>5,000</b> total alerts, <b>644</b> Tier 2 candidates and <b>0</b> verdicts, and System Status must show <b>one</b> detection run. Verdicts above zero means the database carries a previous rehearsal; two runs means <code>run_detection.py</code> ran without the file being deleted first. Either way: delete <code>data\demo.db</code> and rebuild.</div>

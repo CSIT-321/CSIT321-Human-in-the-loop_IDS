@@ -23,13 +23,20 @@ to be copied by hand from the original machine.
 
 | **Absent by design — you create these on the new machine** | Built by |
 |---|---|
-| `data/demo.db` (the demo database) | `scripts/run_detection.py`, ~26 s |
+| `data/demo.db` (the demo database) | `scripts/run_detection.py`, ~25 s |
 | `.venv` (the Python environment) | `py -3.11 -m venv`, ~550 MB |
 | `apps/web/node_modules` | `npm ci`, ~196 MB, ~8 s |
 
 The repository is about 810 MB cloned, most of it the frozen `stage-1`…`stage-5`
 research record and the document images. On a slow connection, clone it the
 night before rather than on the morning.
+
+**You do not need the dataset.** The 10.4 GB raw archive
+(`CSECICIDS2018_improved.zip`) is not required to run or present the demo — it is
+only needed to regenerate the two samples from the original 63 million flows.
+The 5,000-flow demo sample is committed. If you do want the reproduction path,
+it is in the console guide under *Running from a bare clone*, with the download
+URL, the SHA-256 to verify against, and the six scripts in order.
 
 ---
 
@@ -73,11 +80,25 @@ py -0p                                :: lists every Python the launcher knows
 If no `3.11` line appears, install one. Any 3.11.x will do; the project was
 built on 3.11.11 and the pinned set installs on any of them.
 
-**Route A — the python.org installer. Use this one unless you have a reason
-not to.** Download the latest **Python 3.11** Windows installer from
+**Route A — `winget`. One command, if the machine has it.** Verified on this
+machine: winget v1.29.290, offering `Python.Python.3.11` at exactly **3.11.9**.
+Note that winget is not always on `PATH` in every shell — if `winget` is not
+found, try it from a plain Command Prompt or PowerShell, or use route B.
+
+```
+winget install Python.Python.3.11
+```
+
+Add `--scope user` to avoid the administrator prompt. It installs alongside the
+existing 3.12 without touching it.
+
+**Route B — the python.org installer, when winget is absent.** Download the
+latest **Python 3.11** Windows installer from
 <https://www.python.org/downloads/> (open "Looking for a specific release?" —
-3.11 is no longer the newest, so it is not the big yellow button; 3.11.9 is the
-last 3.11 with a Windows installer). In the installer:
+3.11 is no longer the newest, so it is not the large download button). The direct
+link used here, which was verified to return the installer:
+`https://www.python.org/ftp/python/3.11.9/python-3.11.9-amd64.exe` (26.2 MB). In
+the installer:
 
 - Tick **"Install launcher for all users"** — this is what makes `py -3.11` work
   afterwards. It is on by default.
@@ -92,7 +113,7 @@ py -0p                                :: a 3.11 line must now appear
 py -3.11 --version                    :: Python 3.11.x
 ```
 
-**Route B — Miniconda, if the machine already has it.** Conda can create a 3.11
+**Route C — Miniconda, if the machine already has it.** Conda can create a 3.11
 without touching the system Python:
 
 ```
@@ -101,13 +122,6 @@ conda env list                        :: note the path printed for hitl311
 ```
 
 The interpreter is `<that path>\python.exe`, and you use it in step 3.
-
-**Route C — `winget`, only if it exists.** Not all machines have it (the one
-this was written on does not):
-
-```
-winget install Python.Python.3.11
-```
 
 > **Do not use `python -m venv` or `py -m venv` without a version.** Both pick
 > the machine's default, which is where the 3.12 failure comes from. Always name
@@ -130,7 +144,7 @@ python -c "import fastapi, xgboost, pandas; print(fastapi.__version__, xgboost._
 
 Expect `0.136.0 3.2.0 2.3.3`.
 
-### 4 · Build the demo database  (~26 seconds)
+### 4 · Build the demo database  (~25 seconds)
 
 ```
 python scripts/run_detection.py

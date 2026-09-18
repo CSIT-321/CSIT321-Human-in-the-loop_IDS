@@ -94,6 +94,64 @@ file to create.
 **TreeSHAP needs no extra package.** The rebuild uses xgboost's own `pred_contribs`, not the `shap`
 library, so `requirements.txt` is complete as it stands.
 
+### 1b · The database — the one thing you must build, and what NOT to download
+
+**Nothing is downloaded.** The demo database is absent from the repository by design: it is 42 MB and
+it regenerates in about 25 seconds. No external file is needed for the demo.
+
+| database | in a clone? | needed for the demo? | how you get it |
+|---|---|---|---|
+| **`data/demo.db`** | **no** | **YES — the demo runs on this and nothing else** | **BUILD IT — one command, ~21 s** |
+| `data/stress.db` | no | no — the evidence discussion cites it; no act opens it | build only if asked, see below |
+| `data/eval-A-control.db`, `eval-B-treatment.db`, `eval-C-guardrails-off.db` | no | **no** | `python scripts/run_evaluation.py` |
+| `evaluation/three-arm/runs/*` | **yes** | **yes — Act 8 reads these** | nothing to do |
+
+#### Build the demo database
+
+```bash
+cd <wherever you put it>/hitl-ids
+
+# DELETE FIRST. run_detection APPENDS — without this you get 10,000 alerts and two runs.
+rm -f data/demo.db                     # cmd: del data\demo.db
+
+python scripts/run_detection.py        # creates data/demo.db: 5,000 flows → 5,000 alerts, ~25 s
+```
+
+It reads four committed things and nothing else:
+
+```
+data/processed/demo_sample.csv
+data/processed/sample_manifest.json
+models/          the committed 8-class model
+rules/rule-set-s4b-1.json
+```
+
+**Verify it worked — two checks, in order:**
+
+1. `python scripts/rehearse_demo.py` must close with **`The demo narrative holds end to end.`**
+2. With the API running, the KPI strip must read **`VERDICTS 0`**. If it does not, the database is dirty —
+   delete it and rebuild.
+
+#### Act 8 needs no database
+
+`apps/api/routes.py` reads the evaluation runs from `hitl-ids/evaluation/three-arm/runs/*/results.json`,
+and **all four runs are committed**. The evaluator act therefore works on a clone with no build step.
+
+#### Only if you also want the stress database
+
+Optional, and no act uses it. `data/stress.db` is a **synthetic** artifact — its numbers are not a
+measurement of the model — and the builder says so in its own docstring. It needs an intermediate file
+that is also not committed, so run the whole chain:
+
+```bash
+python scripts/run_ml_inference.py                       # regenerates demo_ml_predictions_shap.json
+python scripts/build_stress_detection.py                 # writes stress_ml_predictions.json
+python scripts/run_detection.py --replay data/processed/stress_ml_predictions.json \
+    --database data/stress.db
+```
+
+Then `python scripts/list_false_positives.py --database data/stress.db` lists its 600 false positives.
+
 **Then check three things, in this order:**
 
 1. `http://localhost:8000/api/health` answers and names `data\demo.db`.
