@@ -24,7 +24,7 @@ to be copied by hand from the original machine.
 | **Absent by design — you create these on the new machine** | Built by |
 |---|---|
 | `data/demo.db` (the demo database) | `scripts/run_detection.py`, ~26 s |
-| `.venv` (the Python environment) | `python -m venv`, ~550 MB |
+| `.venv` (the Python environment) | `py -3.11 -m venv`, ~550 MB |
 | `apps/web/node_modules` | `npm ci`, ~196 MB, ~8 s |
 
 The repository is about 810 MB cloned, most of it the frozen `stage-1`…`stage-5`
@@ -37,15 +37,14 @@ night before rather than on the morning.
 
 | Requirement | Why, and what goes wrong without it |
 |---|---|
-| **Python 3.11** | Non-negotiable. The pinned FastAPI 0.136 / Starlette 1.6 set is tested on 3.11 only. On 3.12 the API fails at import with `TypeError: Router.__init__() got an unexpected keyword argument 'on_startup'`. |
-| **Node 20 or newer** | Verified on Node 22.12.0 with npm 10.9.0. Vite 8 will not run on Node 18. |
+| **Python 3.11** | **Assume the machine does not have it** — step 2 installs it. Non-negotiable: The pinned FastAPI 0.136 / Starlette 1.6 set is tested on 3.11 only. On 3.12 the API fails at import with `TypeError: Router.__init__() got an unexpected keyword argument 'on_startup'`. |
+| **Node 20 or newer** | Verified on Node 22.12.0 with npm 10.9.0. Vite 8 requires a current LTS; do not assume an older Node will do. |
 | **Ports 8000 and 5173 free** | The API and the console. Nothing else may be listening. |
 | **git** | To clone. |
 
-**On Windows, `py -0p` usually does not list a 3.11.** It shows 3.12, 3.8, 3.7 —
-which is exactly the trap that has cost this project a session before. Install
-Python 3.11 explicitly (python.org or miniconda) and create the environment with
-that interpreter's **full path**, never with bare `python` or `py`.
+**On Windows, `py -0p` usually does not list a 3.11** — it shows 3.12, 3.8, 3.7.
+That is the trap that has already cost this project a session, so step 2 installs
+one before anything else and step 3 names it explicitly.
 
 ---
 
@@ -62,10 +61,62 @@ git checkout feat/demo-build
 cd hitl-ids
 ```
 
-### 2 · The Python environment  (~2 minutes)
+### 2 · Get Python 3.11 onto the machine  (~5 minutes)
+
+**Assume it is not there.** A current Windows machine typically has 3.12 or
+nothing, and 3.12 does not work — see the table above. Check first:
 
 ```
-<full path to python 3.11> -m venv .venv
+py -0p                                :: lists every Python the launcher knows
+```
+
+If no `3.11` line appears, install one. Any 3.11.x will do; the project was
+built on 3.11.11 and the pinned set installs on any of them.
+
+**Route A — the python.org installer. Use this one unless you have a reason
+not to.** Download the latest **Python 3.11** Windows installer from
+<https://www.python.org/downloads/> (open "Looking for a specific release?" —
+3.11 is no longer the newest, so it is not the big yellow button; 3.11.9 is the
+last 3.11 with a Windows installer). In the installer:
+
+- Tick **"Install launcher for all users"** — this is what makes `py -3.11` work
+  afterwards. It is on by default.
+- You do **not** need "Add python.exe to PATH", and leaving it off avoids
+  displacing the machine's existing Python.
+- A per-user install needs no administrator rights.
+
+Then confirm the launcher can see it:
+
+```
+py -0p                                :: a 3.11 line must now appear
+py -3.11 --version                    :: Python 3.11.x
+```
+
+**Route B — Miniconda, if the machine already has it.** Conda can create a 3.11
+without touching the system Python:
+
+```
+conda create -y -n hitl311 python=3.11
+conda env list                        :: note the path printed for hitl311
+```
+
+The interpreter is `<that path>\python.exe`, and you use it in step 3.
+
+**Route C — `winget`, only if it exists.** Not all machines have it (the one
+this was written on does not):
+
+```
+winget install Python.Python.3.11
+```
+
+> **Do not use `python -m venv` or `py -m venv` without a version.** Both pick
+> the machine's default, which is where the 3.12 failure comes from. Always name
+> the interpreter: `py -3.11 -m venv` or the full path.
+
+### 3 · Build the environment  (~2 minutes)
+
+```
+py -3.11 -m venv .venv                :: or: <full path to a 3.11>\python.exe -m venv .venv
 .venv\Scripts\activate
 python --version                      :: MUST print Python 3.11.x - stop here if not
 python -m pip install -r requirements.txt
@@ -79,7 +130,7 @@ python -c "import fastapi, xgboost, pandas; print(fastapi.__version__, xgboost._
 
 Expect `0.136.0 3.2.0 2.3.3`.
 
-### 3 · Build the demo database  (~26 seconds)
+### 4 · Build the demo database  (~26 seconds)
 
 ```
 python scripts/run_detection.py
@@ -91,7 +142,7 @@ Expect `5,000 flows -> 5,000 alerts` and `"tier2_candidates": 644`.
 > detection run to whatever database it finds. Run it twice and you get 10,000
 > alerts across two runs, with every old verdict still in place.
 
-### 4 · The console's dependencies  (~10 seconds)
+### 5 · The console's dependencies  (~10 seconds)
 
 ```
 cd apps\web
@@ -101,7 +152,7 @@ cd ..\..
 
 `npm ci` — not `npm install` — so the pinned lockfile is honoured exactly.
 
-### 5 · Start it  (two terminals, both from `hitl-ids/`)
+### 6 · Start it  (two terminals, both from `hitl-ids/`)
 
 ```
 :: terminal 1 - the API
@@ -153,7 +204,9 @@ cd apps\web && npm test             :: 157 passed
 | Symptom | Cause | Fix |
 |---|---|---|
 | `TypeError: Router.__init__() got an unexpected keyword argument 'on_startup'` | The environment is Python 3.12 | Delete `.venv`, recreate with a 3.11 interpreter's full path |
-| `(.venv)` shows but `python --version` says 3.12 | Created with `py -m venv` or bare `python` | Same fix — the `py` launcher does not list 3.11 |
+| `(.venv)` shows but `python --version` says 3.12 | Created with `py -m venv` or bare `python`, both of which take the default | Delete `.venv`, recreate with `py -3.11 -m venv .venv` |
+| `py -0p` lists no 3.11 at all | The machine has never had it | Step 2 — install it before going further |
+| `py: can't find a suitable Python` after installing | The launcher was not installed with it | Use the interpreter's full path instead: `C:\Users\&lt;you&gt;\AppData\Local\Programs\Python\Python311\python.exe -m venv .venv` |
 | `No module named 'apps'` | uvicorn started outside `hitl-ids/` | `cd` to `hitl-ids` first |
 | Console loads, every panel says "Cannot reach the API" | The API is not running on :8000 | Start terminal 1 |
 | KPI strip reads 10,000 alerts | `run_detection.py` ran over an existing database | Delete `data/demo.db`, rebuild |

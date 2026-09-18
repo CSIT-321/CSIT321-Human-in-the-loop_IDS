@@ -287,7 +287,8 @@
           <thead><tr><th>Once per machine</th><th>Run from</th><th>Takes</th></tr></thead>
           <tbody>
             <tr><td class="mono">git clone … &amp;&amp; git checkout feat/demo-build</td><td class="mono">anywhere</td><td>~810 MB — do this the night before</td></tr>
-            <tr><td class="mono">&lt;full path to python 3.11&gt; -m venv .venv</td><td class="mono">hitl-ids</td><td>seconds</td></tr>
+            <tr><td class="mono">install Python 3.11 — <b>assume it is not there</b></td><td class="mono">python.org</td><td>~5 min — see below</td></tr>
+            <tr><td class="mono">py -3.11 -m venv .venv</td><td class="mono">hitl-ids</td><td>seconds</td></tr>
             <tr><td class="mono">python -m pip install -r requirements.txt</td><td class="mono">hitl-ids</td><td>~2 min</td></tr>
             <tr><td class="mono">python scripts/run_detection.py</td><td class="mono">hitl-ids</td><td>~26 s — 5,000 alerts, 644 Tier 2</td></tr>
             <tr><td class="mono">npm ci</td><td class="mono">hitl-ids/apps/web</td><td>~10 s</td></tr>
@@ -298,6 +299,13 @@
         <p><strong>Verdicts are permanent.</strong> The audit trail refuses <code>UPDATE</code> and <code>DELETE</code>, so a database that has been demonstrated on has already been judged. Rebuild it before every audience; it takes about 26 seconds.</p>
         <p><strong>The project has its own Python environment</strong>, <code>hitl-ids\.venv</code>: Python 3.11 with the exact library versions the tests, the demo database and the trained model were produced with (listed in <code>requirements.txt</code>). Activate it in every terminal you run Python commands in. After activating, a plain <code>python</code> means the project's Python, whatever other Python (for example 3.12) is installed on the computer. You also need <strong>Node 20 or newer</strong> for the console — verified on Node 22.12.0 with npm 10.9.0.</p>
         <p><strong>On Windows, <code>py -0p</code> usually does not list a 3.11</strong> — it shows 3.12, 3.8 and 3.7. Create the environment with the 3.11 interpreter’s <em>full path</em>, never with bare <code>python</code> or <code>py</code>, and stop if <code>python --version</code> does not print 3.11. An environment built on 3.12 fails at import with <code>Router.__init__() got an unexpected keyword argument 'on_startup'</code>.</p>
+      </div>
+      <h3>If the machine has no Python 3.11 — which is the normal case</h3>
+      <div class="prose">
+        <p>Run <code>py -0p</code> first: it lists every Python the launcher knows about. If no <code>3.11</code> line appears, install one before anything else. Any 3.11.x works — this project was built on 3.11.11.</p>
+        <p><strong>The straightforward route is the python.org installer.</strong> Open <a href="https://www.python.org/downloads/">python.org/downloads</a> and find Python 3.11 under “Looking for a specific release?” — 3.11 is no longer current, so it is not the large download button; 3.11.9 is the last 3.11 with a Windows installer. In the installer, leave <strong>“Install launcher for all users” ticked</strong> — that is what makes <code>py -3.11</code> work afterwards. You do not need “Add python.exe to PATH”, and leaving it off avoids displacing whatever Python the machine already has. A per-user install needs no administrator rights.</p>
+        <p><strong>If the machine already has Miniconda or Anaconda</strong>, <code>conda create -y -n hitl311 python=3.11</code> gives you one without touching the system Python; <code>conda env list</code> then prints the path to use. <strong>If it has <code>winget</code></strong> — not all do — <code>winget install Python.Python.3.11</code> is quicker.</p>
+        <p>Then check the launcher can see it: <code>py -0p</code> should now show a 3.11 line, and <code>py -3.11 --version</code> should print it. The full procedure, with the failure modes, is in <code>docs/demo-machine-setup.md</code>.</p>
       </div>
       <h3>Which folder each command runs from</h3>
       <div class="prose">
@@ -317,8 +325,9 @@
 <span class="p">&gt; </span>dir                                       <span class="c"># you should see apps  data  packages  pyproject.toml</span>
 
 <span class="c"># ONCE PER MACHINE: create the environment from Python 3.11, then install into it</span>
-<span class="c"># the full path matters: "py -m venv" and plain "python -m venv" pick 3.12, which breaks the API</span>
-<span class="p">&gt; </span>C:\ProgramData\miniconda3\python.exe -m venv .venv   <span class="c"># or any 3.11 on this machine</span>
+<span class="c"># name the version: bare "py -m venv" and "python -m venv" pick 3.12, which breaks the API</span>
+<span class="p">&gt; </span>py -0p                                   <span class="c"># no 3.11 listed? install it first - see above</span>
+<span class="p">&gt; </span>py -3.11 -m venv .venv                   <span class="c"># names the version; bare "py"/"python" would take 3.12</span>
 <span class="p">&gt; </span>.venv\Scripts\activate
 <span class="p">&gt; </span>python -m pip install -r requirements.txt
 
@@ -339,7 +348,7 @@
 <span class="p">&gt; </span>cd "&lt;wherever you cloned&gt;\CSIT321-Human-in-the-loop_IDS\hitl-ids\apps\web"
 <span class="p">&gt; </span>npm ci                                   <span class="c"># once per machine — ci, not install: honours the lockfile</span>
 <span class="p">&gt; </span>npm run dev                              <span class="c"># http://localhost:5173</span></pre>
-      <p class="aside">Uvicorn prints <code>Uvicorn running on http://127.0.0.1:8000</code> when the API is up; Vite prints <code>Local: http://localhost:5173/</code>. To leave the environment, type <code>deactivate</code>. Any Python 3.11 can create it; on the development machine that is <code>C:\ProgramData\miniconda3\python.exe</code>. The console's terminal does not need the environment: Node runs it.</p>
+      <p class="aside">Uvicorn prints <code>Uvicorn running on http://127.0.0.1:8000</code> when the API is up; Vite prints <code>Local: http://localhost:5173/</code>. To leave the environment, type <code>deactivate</code>. Any Python 3.11 can create it — <code>py -3.11 -m venv .venv</code> once one is installed, or the interpreter’s full path. The console's terminal does not need the environment: Node runs it.</p>
       <div class="note"><b>Both servers must be running.</b> The console is only the screens; every number, verdict, claim and note goes through the API. If the API is not running, the pages still load but every panel reports <em>"Cannot reach the API"</em> and no button does anything. After pulling new code, <strong>restart the API</strong>: an API started before an update does not have the endpoints the workstation uses.</div>
       <div class="note"><b>Check the board before the audience arrives.</b> On the Workstation the strip must read <b>5,000</b> total alerts, <b>644</b> Tier 2 candidates and <b>0</b> verdicts, and System Status must show <b>one</b> detection run. Verdicts above zero means the database carries a previous rehearsal; two runs means <code>run_detection.py</code> ran without the file being deleted first. Either way: delete <code>data\demo.db</code> and rebuild.</div>
       <div class="prose">
@@ -1383,7 +1392,7 @@
           <tbody>
             <tr><td>Starting the API ends in <code>TypeError: Router.__init__() got an unexpected keyword argument 'on_startup'</code>, and the paths mention <code>Python312</code></td><td>The project environment isn't active, so the computer's own Python 3.12 ran it (its FastAPI 0.115 doesn't work with its Starlette 1.6)</td><td>From <code>hitl-ids</code>: <code>.venv\Scripts\activate</code>, then run the command again</td></tr>
             <tr><td><code>python --version</code> prints 3.12 (or anything but 3.11)</td><td>The environment isn't active in this terminal</td><td>Activate it; the prompt should start with <code>(.venv)</code></td></tr>
-            <tr><td>The prompt shows <code>(.venv)</code> but <code>python --version</code> still prints 3.12, and imports fail with <code>Error importing numpy</code></td><td>The environment was created with <code>py -m venv</code> or plain <code>python -m venv</code>, which use Python 3.12. The <code>py</code> launcher does not know about the miniconda Python 3.11</td><td><code>deactivate</code>, delete the <code>.venv</code> folder, then recreate it with the full path: <code>C:\ProgramData\miniconda3\python.exe -m venv .venv</code>, activate, and <code>python -m pip install -r requirements.txt</code></td></tr>
+            <tr><td>The prompt shows <code>(.venv)</code> but <code>python --version</code> still prints 3.12, and imports fail with <code>Error importing numpy</code></td><td>The environment was created with <code>py -m venv</code> or plain <code>python -m venv</code>, both of which take the machine’s default — usually 3.12</td><td><code>deactivate</code>, delete the <code>.venv</code> folder, then recreate it naming the version: <code>py -3.11 -m venv .venv</code> (or the interpreter’s full path), activate, and <code>python -m pip install -r requirements.txt</code></td></tr>
             <tr><td>PowerShell says <code>Activate.ps1 cannot be loaded because running scripts is disabled</code></td><td>PowerShell's script policy</td><td>Use Command Prompt and <code>.venv\Scripts\activate</code>, or skip activation and call <code>.venv\Scripts\python.exe</code> directly</td></tr>
             <tr><td><code>No module named 'apps'</code> when starting the API</td><td>You ran uvicorn from the wrong folder</td><td><code>cd</code> into <code>hitl-ids</code> (the folder with <code>apps/</code> and <code>packages/</code>) and run it again</td></tr>
             <tr><td><code>No module named 'fastapi'</code>, <code>'uvicorn'</code> or <code>'xgboost'</code></td><td>The environment isn't active, or was never installed</td><td>Activate <code>.venv</code>; if it still fails, <code>python -m pip install -r requirements.txt</code></td></tr>
