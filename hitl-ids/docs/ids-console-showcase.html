@@ -281,9 +281,23 @@
         <span class="act">Before the audience arrives</span>
         <h2>Build a clean database, then start two servers</h2>
       </div>
+      <div class="note" style="margin-bottom:18px"><b>Presenting on a machine that has never run this project?</b> Start here, then come back. <b>A clone carries everything you need</b> — the 5,000-flow sample, the trained model, the rules and the severity chart are all committed. Three things are not, and you build them locally: the Python environment (<b>~2 min</b>), the demo database (<b>~26 s</b>) and the console’s packages (<b>~10 s</b>). The full path is in <code>docs/demo-machine-setup.md</code>, and every step of it was run from a bare clone on 2026-09-18.</div>
+      <div class="table-wrap" style="margin-bottom:18px">
+        <table>
+          <thead><tr><th>Once per machine</th><th>Run from</th><th>Takes</th></tr></thead>
+          <tbody>
+            <tr><td class="mono">git clone … &amp;&amp; git checkout feat/demo-build</td><td class="mono">anywhere</td><td>~810 MB — do this the night before</td></tr>
+            <tr><td class="mono">&lt;full path to python 3.11&gt; -m venv .venv</td><td class="mono">hitl-ids</td><td>seconds</td></tr>
+            <tr><td class="mono">python -m pip install -r requirements.txt</td><td class="mono">hitl-ids</td><td>~2 min</td></tr>
+            <tr><td class="mono">python scripts/run_detection.py</td><td class="mono">hitl-ids</td><td>~26 s — 5,000 alerts, 644 Tier 2</td></tr>
+            <tr><td class="mono">npm ci</td><td class="mono">hitl-ids/apps/web</td><td>~10 s</td></tr>
+          </tbody>
+        </table>
+      </div>
       <div class="prose">
-        <p><strong>Verdicts are permanent.</strong> The audit trail refuses <code>UPDATE</code> and <code>DELETE</code>, so a database that has been demonstrated on has already been judged. Rebuild it before every audience; it takes about 21 seconds.</p>
-        <p><strong>The project has its own Python environment</strong>, <code>hitl-ids\.venv</code>: Python 3.11 with the exact library versions the tests, the demo database and the trained model were produced with (listed in <code>requirements.txt</code>). Activate it in every terminal you run Python commands in. After activating, a plain <code>python</code> means the project's Python, whatever other Python (for example 3.12) is installed on the computer. You also need Node.js 18 or newer for the console.</p>
+        <p><strong>Verdicts are permanent.</strong> The audit trail refuses <code>UPDATE</code> and <code>DELETE</code>, so a database that has been demonstrated on has already been judged. Rebuild it before every audience; it takes about 26 seconds.</p>
+        <p><strong>The project has its own Python environment</strong>, <code>hitl-ids\.venv</code>: Python 3.11 with the exact library versions the tests, the demo database and the trained model were produced with (listed in <code>requirements.txt</code>). Activate it in every terminal you run Python commands in. After activating, a plain <code>python</code> means the project's Python, whatever other Python (for example 3.12) is installed on the computer. You also need <strong>Node 20 or newer</strong> for the console — verified on Node 22.12.0 with npm 10.9.0.</p>
+        <p><strong>On Windows, <code>py -0p</code> usually does not list a 3.11</strong> — it shows 3.12, 3.8 and 3.7. Create the environment with the 3.11 interpreter’s <em>full path</em>, never with bare <code>python</code> or <code>py</code>, and stop if <code>python --version</code> does not print 3.11. An environment built on 3.12 fails at import with <code>Router.__init__() got an unexpected keyword argument 'on_startup'</code>.</p>
       </div>
       <h3>Which folder each command runs from</h3>
       <div class="prose">
@@ -291,21 +305,20 @@
       </div>
       <div class="table-wrap">
         <table>
-          <thead><tr><th>Folder</th><th>On the development machine</th><th>Run here</th></tr></thead>
+          <thead><tr><th>Folder</th><th>Where it is</th><th>Run here</th></tr></thead>
           <tbody>
-            <tr><td class="mono">hitl-ids</td><td class="mono">C:\Users\Glenn Ang\Desktop\SIM Assignments\FYP\CSIT321-Human-in-the-loop_IDS\hitl-ids</td><td>pip install · run_detection · rehearse_demo · <strong>uvicorn (the API)</strong> · pytest</td></tr>
-            <tr><td class="mono">hitl-ids/apps/web</td><td class="mono">…\CSIT321-Human-in-the-loop_IDS\hitl-ids\apps\web</td><td>npm install · <strong>npm run dev (the console)</strong> · npm test · npm run e2e</td></tr>
+            <tr><td class="mono">hitl-ids</td><td class="mono">&lt;wherever you cloned&gt;\CSIT321-Human-in-the-loop_IDS\hitl-ids</td><td>pip install · run_detection · rehearse_demo · <strong>uvicorn (the API)</strong> · pytest</td></tr>
+            <tr><td class="mono">hitl-ids/apps/web</td><td class="mono">&lt;wherever you cloned&gt;\CSIT321-Human-in-the-loop_IDS\hitl-ids\apps\web</td><td>npm ci · <strong>npm run dev (the console)</strong> · npm test · npm run e2e</td></tr>
           </tbody>
         </table>
       </div>
       <pre class="cmd"><span class="c"># ── terminal 1: the API ─────────────────────────────────────────────</span>
-<span class="p">&gt; </span>cd "C:\Users\Glenn Ang\Desktop\SIM Assignments\FYP\CSIT321-Human-in-the-loop_IDS\hitl-ids"
+<span class="p">&gt; </span>cd "&lt;wherever you cloned&gt;\CSIT321-Human-in-the-loop_IDS\hitl-ids"
 <span class="p">&gt; </span>dir                                       <span class="c"># you should see apps  data  packages  pyproject.toml</span>
 
-<span class="c"># one-time: create the project environment from Python 3.11, then install into it</span>
-<span class="c"># (already done on the development machine — skip to "every terminal")</span>
-<span class="c"># use this full path: "py -m venv" and plain "python -m venv" would pick Python 3.12</span>
-<span class="p">&gt; </span>C:\ProgramData\miniconda3\python.exe -m venv .venv
+<span class="c"># ONCE PER MACHINE: create the environment from Python 3.11, then install into it</span>
+<span class="c"># the full path matters: "py -m venv" and plain "python -m venv" pick 3.12, which breaks the API</span>
+<span class="p">&gt; </span>C:\ProgramData\miniconda3\python.exe -m venv .venv   <span class="c"># or any 3.11 on this machine</span>
 <span class="p">&gt; </span>.venv\Scripts\activate
 <span class="p">&gt; </span>python -m pip install -r requirements.txt
 
@@ -316,18 +329,19 @@
 
 <span class="c"># before every audience  —  DELETE FIRST: run_detection appends, it does not replace</span>
 <span class="p">&gt; </span>del data\demo.db                         <span class="c"># skip this and you get 10,000 alerts and two runs</span>
-<span class="p">&gt; </span>python scripts/run_detection.py          <span class="c"># fresh data/demo.db: 5,000 flows → 5,000 alerts, ~21 s</span>
-<span class="p">&gt; </span>python scripts/rehearse_demo.py          <span class="c"># 41 checks on a copy; must end "holds end to end"</span>
+<span class="p">&gt; </span>python scripts/run_detection.py          <span class="c"># fresh data/demo.db: 5,000 flows → 5,000 alerts, ~26 s</span>
+<span class="p">&gt; </span>python scripts/rehearse_demo.py          <span class="c"># 47 checks on a copy; must end "holds end to end"</span>
 
 <span class="c"># start the API on :8000 and leave this terminal open</span>
 <span class="p">&gt; </span>python -m uvicorn apps.api.main:app
 
 <span class="c"># ── terminal 2: the console ─────────────────────────────────────────</span>
-<span class="p">&gt; </span>cd "C:\Users\Glenn Ang\Desktop\SIM Assignments\FYP\CSIT321-Human-in-the-loop_IDS\hitl-ids\apps\web"
-<span class="p">&gt; </span>npm install                              <span class="c"># one-time</span>
+<span class="p">&gt; </span>cd "&lt;wherever you cloned&gt;\CSIT321-Human-in-the-loop_IDS\hitl-ids\apps\web"
+<span class="p">&gt; </span>npm ci                                   <span class="c"># once per machine — ci, not install: honours the lockfile</span>
 <span class="p">&gt; </span>npm run dev                              <span class="c"># http://localhost:5173</span></pre>
       <p class="aside">Uvicorn prints <code>Uvicorn running on http://127.0.0.1:8000</code> when the API is up; Vite prints <code>Local: http://localhost:5173/</code>. To leave the environment, type <code>deactivate</code>. Any Python 3.11 can create it; on the development machine that is <code>C:\ProgramData\miniconda3\python.exe</code>. The console's terminal does not need the environment: Node runs it.</p>
       <div class="note"><b>Both servers must be running.</b> The console is only the screens; every number, verdict, claim and note goes through the API. If the API is not running, the pages still load but every panel reports <em>"Cannot reach the API"</em> and no button does anything. After pulling new code, <strong>restart the API</strong>: an API started before an update does not have the endpoints the workstation uses.</div>
+      <div class="note"><b>Check the board before the audience arrives.</b> On the Workstation the strip must read <b>5,000</b> total alerts, <b>644</b> Tier 2 candidates and <b>0</b> verdicts, and System Status must show <b>one</b> detection run. Verdicts above zero means the database carries a previous rehearsal; two runs means <code>run_detection.py</code> ran without the file being deleted first. Either way: delete <code>data\demo.db</code> and rebuild.</div>
       <div class="prose">
         <p>Open <a href="http://localhost:5173">http://localhost:5173</a>. To confirm the API is up and which database it is serving, open <code>http://localhost:8000/api/health</code>. The API's first request also adds the alert-notes table to an older database; alert data is not changed.</p>
         <p>Optional last check: <code>npm run e2e</code> in <code>apps/web</code> plays this whole story in a real browser against its own copy of the database, in under a minute. It never touches <code>data/demo.db</code>.</p>
@@ -1357,7 +1371,7 @@
         <h2>Reset and troubleshooting</h2>
       </div>
       <pre class="cmd"><span class="c"># in the API terminal: stop it (Ctrl+C), rebuild the database, start it again</span>
-<span class="p">&gt; </span>cd "C:\Users\Glenn Ang\Desktop\SIM Assignments\FYP\CSIT321-Human-in-the-loop_IDS\hitl-ids"
+<span class="p">&gt; </span>cd "&lt;wherever you cloned&gt;\CSIT321-Human-in-the-loop_IDS\hitl-ids"
 <span class="p">&gt; </span>.venv\Scripts\activate
 <span class="p">&gt; </span>del data\demo.db                         <span class="c"># required: the script appends to an existing file</span>
 <span class="p">&gt; </span>python scripts/run_detection.py
