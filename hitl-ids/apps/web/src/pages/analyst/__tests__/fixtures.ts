@@ -138,7 +138,16 @@ export const EVIDENCE: Schemas["EvidencePanel"] = {
 };
 
 export const FAMILY: Schemas["FamilyPanel"] = {
-  familyKey: "Web Attack|80|TCP|",
+  familyKey: '["Web Attack",80,"tcp","-"]',
+  familyLabel: "Web Attack · port 80 · tcp",
+  basis: {
+    attackCategory: "Web Attack",
+    dstPort: 80,
+    protocol: "tcp",
+    ruleId: null,
+    dstIp: null,
+    rule: "Alerts are one family when the attack class, destination port, protocol and matched rule all match exactly. There is no similarity score and no threshold.",
+  },
   members: 4,
   gateOpen: false,
   gateReason: "1 learning verdict in this family; 3 are needed.",

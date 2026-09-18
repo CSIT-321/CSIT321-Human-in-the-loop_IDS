@@ -30,7 +30,7 @@ from __future__ import annotations
 
 import sqlite3
 from collections import Counter
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from datetime import datetime
 from typing import Any, get_args
 
@@ -82,14 +82,36 @@ def _learning_state(family: m.AlertFamily) -> dict[str, Any]:
 
 
 @dataclass(frozen=True)
+class MemberMove:
+    """One family member the learning moved — an alert nobody judged.
+
+    This is the product's thesis made concrete, so it is recorded per alert rather than counted.
+    A count ("3 alerts moved") cannot be checked, cannot be clicked through to, and cannot be shown
+    to a viva panel; ``AL-00421 62.0 -> 72.0, ml_only -> tier2_candidate`` can.
+    """
+
+    alert_id: int
+    alert_ref: str
+    source_record_id: str
+    score_before: float
+    score_after: float
+    queue_class_before: m.QueueClass
+    queue_class_after: m.QueueClass
+
+
+@dataclass(frozen=True)
 class FamilyRefresh:
     """One recomputation of a family's learning (S7b)."""
 
     before: m.AlertFamily | None
     after: m.AlertFamily
-    members_moved: int
+    moves: list[MemberMove]
     # the guardrails holding the scores of the family's unjudged members, counted by code
     guardrail_interventions: dict[str, int]
+
+    @property
+    def members_moved(self) -> int:
+        return len(self.moves)
 
     @property
     def changed(self) -> bool:
@@ -173,7 +195,8 @@ def refresh_family(conn: sqlite3.Connection, family_key: str, *, policy: Guardra
 
     ceilings = ceilings_from_chart(chart)  # the chart's ceilings, so the label matches detection
     judged = {verdict.alert_id for verdict in verdicts}
-    moved, interventions = 0, Counter()
+    moves: list[MemberMove] = []
+    interventions = Counter()
     for alert in members.values():
         if alert.id in judged:
             continue  # its own verdict takes priority, and S7a has placed it
@@ -191,8 +214,28 @@ def refresh_family(conn: sqlite3.Connection, family_key: str, *, policy: Guardra
                               critical_threshold=policy.critical_alert_threshold),
                  place.queue_class, place.queue_priority, int(place.requires_review),
                  db.format_timestamp(now), alert.id))
-            moved += 1
-    return FamilyRefresh(before, after, moved, dict(sorted(interventions.items())))
+            moves.append(MemberMove(
+                alert_id=int(alert.id or 0), alert_ref=str(alert.alert_ref),
+                source_record_id="",  # filled below: one query for the movers, never one per row
+                score_before=alert.combined_score, score_after=place.score,
+                queue_class_before=alert.queue_class, queue_class_after=place.queue_class))
+    return FamilyRefresh(before, after, _named(conn, moves),
+                         dict(sorted(interventions.items())))
+
+
+def _named(conn: sqlite3.Connection, moves: list[MemberMove]) -> list[MemberMove]:
+    """Attach each moved alert's source record id — the short name an analyst reads aloud.
+
+    It lives in `flow_data`, so it is fetched once for the whole set rather than per member: a
+    family can hold hundreds of alerts and a verdict must stay one fast transaction.
+    """
+    if not moves:
+        return moves
+    ids = [move.alert_id for move in moves]
+    names = {int(row["alert_id"]): str(row["source_record_id"]) for row in conn.execute(
+        f"SELECT alert_id, source_record_id FROM flow_data "
+        f"WHERE alert_id IN ({', '.join('?' * len(ids))})", ids)}
+    return [replace(move, source_record_id=names.get(move.alert_id, "")) for move in moves]
 
 
 def submit_feedback(conn: sqlite3.Connection, *, alert_id: int, user_id: int, category: str,
@@ -252,7 +295,8 @@ def submit_feedback(conn: sqlite3.Connection, *, alert_id: int, user_id: int, ca
                 audit.append(writer.similar_alert_learning(
                     refresh.after, before=refresh.before, actor_id=user_id, alert_id=alert_id,
                     feedback_id=feedback_id, members_moved=refresh.members_moved,
-                    guardrail_interventions=refresh.guardrail_interventions))
+                    guardrail_interventions=refresh.guardrail_interventions,
+                    moves=refresh.moves))
 
     return FeedbackResult(feedback=db.get(conn, m.FeedbackEvent, feedback_id),
                           alert=db.get(conn, m.Alert, alert_id), outcome=outcome, audit=audit,

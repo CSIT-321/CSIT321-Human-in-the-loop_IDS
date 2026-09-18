@@ -43,6 +43,9 @@ REQUIRED_OPERATIONS = {
     ("/api/auth/login", "post"),
     ("/api/auth/me", "get"),
     ("/api/alerts", "get"),
+    # S7b made visible: the queue grouped by similar-alert family. Declared here because
+    # this is a deliberate addition to the demo surface, not an endpoint added in passing.
+    ("/api/alerts/families", "get"),
     ("/api/alerts/{alertRef}", "get"),
     ("/api/alerts/{alertRef}/feedback", "post"),
     ("/api/alerts/{alertRef}/score-adjustment", "get"),

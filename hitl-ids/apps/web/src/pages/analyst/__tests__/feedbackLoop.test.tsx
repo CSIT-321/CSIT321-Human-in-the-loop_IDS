@@ -72,9 +72,14 @@ function recordFalsePositive(server: Server): Schemas["FeedbackResponse"] {
     feedback: FALSE_POSITIVE_RECORD,
     family: {
       familyKey: null,
+      familyLabel: "",
+      basis: null,
       gateOpen: false,
       gateReason: "1 learning verdict in this family; 3 are needed.",
+      members: 0,
       membersMoved: 0,
+      moved: [],
+      movedLimit: 25,
     },
     auditEventIds: [41, 42],
   };

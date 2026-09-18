@@ -174,10 +174,34 @@ test("capture the demo guide", async ({ page }) => {
     page.getByText("Similar-alert learning applied: 2 other alerts in this family moved."),
   ).toBeVisible();
   await shot(card(page, "Record a verdict"), "15-family-gate-open");
+
+  // The claim itself: which alerts moved, and from where to where. The count above is an
+  // assertion; this table is the evidence, so it is captured on its own rather than only as part
+  // of the verdict card.
+  const learning = page.getByRole("status", { name: "Similar-alert learning" });
+  await expect(learning.getByRole("table")).toBeVisible();
+  await shot(learning, "15b-family-moved");
+
   await expect(card(page, "Similar alerts (family)").getByText("Open")).toBeVisible();
+  // The family card now states the membership test as fields, not prose.
+  await expect(card(page, "Similar alerts (family)").getByText("What makes these similar")).toBeVisible();
   await shot(card(page, "Similar alerts (family)"), "16-family-open");
   await searchQueue(page, "AL-03044");
   await shot(page, "17-untouched-promoted");
+
+  // The queue folded into the groups the learning acts on. The family judged above now reads
+  // "gate open" here, which is the same fact the alert page states, seen from the queue.
+  await page.goto("/analyst/workstation?group=family");
+  const queuePane = page.locator('section[aria-label="Alert queue"]');
+  await expect(queuePane.getByText(/families$/)).toBeVisible();
+  const learned = queuePane.getByRole("button", { name: /Port Scan · port 445/ });
+  await expect(learned).toBeVisible();
+  await expect(learned.getByText("gate open")).toBeVisible();
+  await shot(queuePane, "17b-group-by-family");
+
+  await learned.click();
+  await expect(queuePane.getByRole("list", { name: "Family members" })).toBeVisible();
+  await shot(queuePane, "17c-family-expanded");
 
   // The "verdict done" view: the same queue, filtered to what has already been judged. Four
   // confirmations are in force by now (AL-03086, AL-01696, AL-03873, AL-03153); AL-00478's
@@ -250,4 +274,41 @@ test("capture the demo guide", async ({ page }) => {
   await shot(page, "29-eval-metrics");
   await shot(card(page, "Per class"), "30-per-class");
   await shot(card(page, "Score saturation"), "31-saturation");
+
+  // --------------------------------------------------------------------------------------------
+  // Last, because it judges three more alerts: the dismissal case.
+  //
+  // The guide's own family (Port Scan / 445) is the *saturated* one — its members sit at 100.0, so
+  // three confirmations move the band and leave the score where it was. That is the honest picture
+  // of this sample, and 15b captures it. It is a poor picture of the mechanism, though, and the
+  // mechanism is what the section claims. Dismissing a large unjudged family shows the same code
+  // moving scores, bands and ranks together. Captured at the very end so no earlier screenshot
+  // sees these verdicts.
+  // --------------------------------------------------------------------------------------------
+  await signInAs(page, "g.ang", "analyst-demo", "/analyst/workstation");
+  await page.goto("/analyst/workstation?group=family");
+  const pane = page.locator('section[aria-label="Alert queue"]');
+  const botnet = pane.getByRole("button", { name: /Botnet · port 8080/ });
+  await expect(botnet).toBeVisible();
+  await botnet.click();
+  const members = pane.getByRole("list", { name: "Family members" });
+  await expect(members).toBeVisible();
+
+  // Read three members out of the group rather than hard-coding ids: which alerts a family holds
+  // is a property of the database, and a pinned id goes stale the moment detection is re-run.
+  const records: string[] = [];
+  for (const text of await members.getByRole("button").allInnerTexts()) {
+    const found = /AL-\d{5}/.exec(text);
+    if (found && !records.includes(found[0])) records.push(found[0]);
+    if (records.length === 3) break;
+  }
+  expect(records).toHaveLength(3);
+
+  for (const record of records) {
+    await openAlert(page, record);
+    await recordVerdict(page, /False Positive/);
+  }
+  const dismissal = page.getByRole("status", { name: "Similar-alert learning" });
+  await expect(dismissal.getByRole("table")).toBeVisible();
+  await shot(dismissal, "15d-family-moved-dismissal");
 });

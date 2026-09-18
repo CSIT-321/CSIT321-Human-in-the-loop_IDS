@@ -18,7 +18,7 @@ from __future__ import annotations
 import csv
 import json
 import sqlite3
-from collections.abc import Iterable, Mapping
+from collections.abc import Iterable, Mapping, Sequence
 from datetime import datetime
 from pathlib import Path
 from typing import Any
@@ -101,20 +101,36 @@ class AuditWriter:
             details=_details(rationale, action=action, from_status=from_status,
                              to_status=to_status, from_owner=from_owner, to_owner=to_owner)))
 
+    #: How many moved members one audit entry names. The count is always exact; the list is
+    #: evidence, and a family of 199 alerts would otherwise write a 199-row JSON blob per verdict.
+    MAX_RECORDED_MOVES = 50
+
     def similar_alert_learning(self, family: m.AlertFamily, *, before: m.AlertFamily | None,
                                actor_id: int, alert_id: int, feedback_id: int,
                                members_moved: int,
-                               guardrail_interventions: Mapping[str, int]) -> m.AuditEntry:
+                               guardrail_interventions: Mapping[str, int],
+                               moves: Sequence[Any] = ()) -> m.AuditEntry:
         """A verdict changed its family's learning (S7b): the family's state before and after, and
-        how many members it moved, so every family-driven score change is reconstructable."""
+        which members it moved, so every family-driven score change is reconstructable.
+
+        ``moves`` are ``feedback.service.MemberMove`` records. They are stored because the count
+        alone cannot be audited: "3 alerts moved" is not a record of *which* three, and a score no
+        analyst ever touched is exactly the change that has to stay traceable.
+        """
         def state(row: m.AlertFamily | None) -> dict[str, Any] | None:
             return None if row is None else row.model_dump(
                 mode="json", exclude={"id", "family_key", "updated_at"})
+        recorded = [{"alert_ref": move.alert_ref, "source_record_id": move.source_record_id,
+                     "score_before": move.score_before, "score_after": move.score_after,
+                     "queue_class_before": move.queue_class_before,
+                     "queue_class_after": move.queue_class_after}
+                    for move in list(moves)[:self.MAX_RECORDED_MOVES]]
         return self.record(m.AuditEntry(
             event_type="SIMILAR_ALERT_LEARNING", actor_id=actor_id, alert_id=alert_id,
             feedback_id=feedback_id,
             details={"family_key": family.family_key, "before": state(before),
                      "after": state(family), "members_moved": members_moved,
+                     "members": recorded, "members_truncated": len(moves) > len(recorded),
                      "guardrail_interventions": dict(sorted(guardrail_interventions.items()))}))
 
     def rule_change(self, rule: m.SignatureRule, *, actor_id: int, created: bool,

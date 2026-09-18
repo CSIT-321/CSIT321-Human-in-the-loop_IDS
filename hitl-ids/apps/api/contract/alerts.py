@@ -170,10 +170,43 @@ class EvidencePanel(ApiModel):
                     "escalation is post-demo)")
 
 
+class SimilarityBasis(ApiModel):
+    """**What makes two alerts similar** — the family key read back as named fields (S7b).
+
+    The key is stored positionally (``["Brute Force",21,"tcp","SIG-FTP-BRUTE-FORCE"]``) because it
+    is an identity. This is the same thing said out loud, because "why did *those* alerts move?" is
+    the first question the feature invites, and an opaque key does not answer it.
+
+    Every field here is an **exact match** requirement: alerts are one family when all of them
+    agree. There is no similarity score and no threshold — the collaborator's weighted matcher was
+    deliberately not ported (`learning.py`), because the experiment that chose the ranking formula
+    grouped by exact family, and anything else would be a different mechanism than the one measured.
+    """
+
+    attack_category: str | None = Field(
+        default=None, description="The class the alert asserts; null when nothing flagged the flow")
+    dst_port: int | None = Field(default=None, ge=0, le=65535)
+    protocol: str | None = None
+    rule_id: str | None = Field(
+        default=None, description="The first signature rule that matched; null when none did")
+    dst_ip: str | None = Field(
+        default=None,
+        description="Present **only** for a flow no detector flagged. Without it a verdict on one "
+                    "unflagged flow would spread across all benign traffic on that port")
+    rule: str = Field(
+        min_length=1,
+        description="The membership rule in one sentence, for display beside the fields")
+
+
 class FamilyPanel(ApiModel):
     """What the alert's family has learned (S7b) — why an alert nobody touched may have moved."""
 
     family_key: str | None = None
+    family_label: str = Field(
+        default="", description="The key as a person reads it, e.g. "
+                                "`Brute Force · port 21 · tcp · SIG-FTP-BRUTE-FORCE`")
+    basis: SimilarityBasis | None = Field(
+        default=None, description="Why these alerts are one family; null when it has no family")
     members: int = Field(default=0, ge=0)
     gate_open: bool = False
     gate_reason: str | None = None
@@ -189,6 +222,43 @@ class FamilyPanel(ApiModel):
 # --------------------------------------------------------------------------------------------
 # Feedback — the write path. Never delegated: it invokes the guardrails.
 # --------------------------------------------------------------------------------------------
+
+
+class FamilyRow(ApiModel):
+    """One row of ``GET /api/alerts/families`` — the queue grouped by what the system calls similar.
+
+    The same filters as the queue, so a band tab or a search narrows the groups exactly as it
+    narrows the rows. Families are ordered by `bestRank`, their highest-ranked member's position in
+    the contract queue order, so the grouped view keeps the queue's own order instead of inventing a
+    second ranking.
+
+    Alerts with no family are absent: a group of things similar to nothing is not a group. They stay
+    visible in the ungrouped queue.
+    """
+
+    family_key: str
+    family_label: str = Field(min_length=1)
+    basis: SimilarityBasis | None = None
+    members: int = Field(ge=1)
+    judged: int = Field(ge=0, description="Members carrying a verdict; the rest moved by learning")
+    requires_review: int = Field(ge=0)
+    best_rank: int = Field(ge=1, description="Queue position of the family's highest-ranked member")
+    best_alert_ref: UUID
+    best_severity: m.Severity
+    best_score: m.Score
+    best_queue_class: m.QueueClass
+    attack_category: str | None = None
+
+    # What the family has learned. All zero and shut is the normal state: most families have never
+    # been judged, and the gate needs three agreeing verdicts.
+    gate_open: bool = False
+    gate_reason: str | None = None
+    dominant_category: m.LearningCategory | None = None
+    agreement_ratio: m.Probability | None = None
+    applied_adjustment: float = 0.0
+    applied_offset: int = 0
+    learned_at: datetime | None = Field(
+        default=None, description="When this family's learning was last recomputed")
 
 
 class FeedbackRequest(ApiModel):
@@ -235,14 +305,44 @@ class ScoreAdjustment(ApiModel):
                          description="One sentence stating what happened and what bound it")
 
 
+class MovedMember(ApiModel):
+    """One similar alert this verdict moved, and where it moved from and to.
+
+    **This is the product's claim, stated as evidence rather than asserted.** The analyst judged one
+    alert; these moved because they are like it, with no one touching them. Rank is carried
+    alongside score because a score change nobody can locate in the queue demonstrates nothing —
+    `rankBefore` and `rankAfter` are the alert's position in the contract queue order, measured
+    either side of the same transaction.
+    """
+
+    alert_ref: UUID
+    source_record_id: str = Field(description="The short name an analyst reads aloud, e.g. AL-00576")
+    score_before: m.Score
+    score_after: m.Score
+    queue_class_before: m.QueueClass
+    queue_class_after: m.QueueClass
+    rank_before: int | None = Field(
+        default=None, ge=1, description="Position in the queue before this verdict, 1 = top")
+    rank_after: int | None = Field(default=None, ge=1)
+
+
 class FamilyEffect(ApiModel):
     """What this verdict taught the alerts like it. Zero members moved is a normal answer — the
     gate needs three verdicts before it opens."""
 
     family_key: str | None = None
+    family_label: str = Field(default="", description="The family as a person reads it")
+    basis: SimilarityBasis | None = Field(
+        default=None, description="What made these alerts similar, in the analyst's own terms")
     gate_open: bool = False
     gate_reason: str | None = None
+    members: int = Field(default=0, ge=0, description="Alerts in the family, the judged one included")
     members_moved: int = Field(default=0, ge=0)
+    moved: list[MovedMember] = Field(
+        default_factory=list,
+        description="The members that moved, best new rank first. Capped at `movedLimit`; "
+                    "`membersMoved` is always the true count")
+    moved_limit: int = Field(default=0, ge=0, description="How many moves this response lists")
     guardrail_interventions: dict[str, int] = Field(default_factory=dict)
 
 

@@ -7,12 +7,14 @@
 
 import { useEffect, useRef, useState, type FormEvent } from "react";
 
-import type { Schemas } from "../../api/client";
-import type { ApiResource } from "../../api/useApi";
+import { api, unwrap, type Schemas } from "../../api/client";
+import { useApi, type ApiResource } from "../../api/useApi";
 import { ErrorState, LoadingState } from "../../components/states";
 import { formatNumber, formatScore, humanise } from "../../design/format";
+import { categoryLabel } from "../feedback/categories";
 
 type AlertSummary = Schemas["AlertSummary"];
+type FamilyRow = Schemas["FamilyRow"];
 type QueueClass = AlertSummary["queueClass"];
 type EvidenceClass = AlertSummary["evidenceClass"];
 
@@ -20,6 +22,20 @@ interface AlertPage {
   readonly items: AlertSummary[];
   readonly page: Schemas["PageInfo"];
 }
+
+interface FamilyPage {
+  readonly items: FamilyRow[];
+  readonly page: Schemas["PageInfo"];
+}
+
+/**
+ * How the queue is grouped. `none` is the ranked list an analyst works down; `family` folds it into
+ * the groups similar-alert learning actually acts on.
+ *
+ * The grouping is not a second ranking: families are returned in the order of their best-ranked
+ * member, so the same queue order governs both views.
+ */
+export type QueueGrouping = "none" | "family";
 
 export interface QueueTab {
   readonly key: string;
@@ -131,8 +147,140 @@ function AlertCard({ alert, selected, onSelect }: { alert: AlertSummary; selecte
   );
 }
 
+/**
+ * One family in the grouped queue: what it is, what it has learned, and its members on demand.
+ *
+ * The learning line is the reason this view exists. `applied` is what every unjudged member of the
+ * family currently carries — the alerts no analyst has touched — so a family whose gate is open is
+ * a family that has re-ranked alerts on its own. Closed and zero is the normal state and is shown
+ * as plainly as an open one: the gate refusing to act on one verdict is the safety claim working.
+ */
+function FamilyGroup({
+  row,
+  expanded,
+  onToggle,
+  selectedRef,
+  onSelect,
+}: {
+  row: FamilyRow;
+  expanded: boolean;
+  onToggle: () => void;
+  selectedRef: string | null;
+  onSelect: (alertRef: string) => void;
+}) {
+  const applied = row.appliedAdjustment !== 0 || row.appliedOffset !== 0;
+  return (
+    <li className={`border-b border-border border-l-2 ${BAND_RULE[row.bestQueueClass]}`}>
+      <button
+        type="button"
+        aria-expanded={expanded}
+        onClick={onToggle}
+        className="flex w-full items-start gap-2 px-3 py-2 text-left hover:bg-raised"
+      >
+        <span aria-hidden className="mt-0.5 font-mono text-[10px] text-dim">
+          {expanded ? "▾" : "▸"}
+        </span>
+        <span className="min-w-0 flex-1">
+          <span className="block truncate text-[13px] text-text">{row.familyLabel}</span>
+          <span className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-0.5 font-mono text-[10px] text-dim">
+            <span className="tabular-nums">#{formatNumber(row.bestRank)}</span>
+            <span>· {formatNumber(row.members)} alerts</span>
+            <span>· {formatNumber(row.judged)} judged</span>
+            <span className={row.gateOpen ? "text-ok" : "text-muted"}>
+              · gate {row.gateOpen ? "open" : "closed"}
+            </span>
+            {applied && (
+              <span className="text-warn">
+                · applied {row.appliedAdjustment > 0 ? "+" : ""}
+                {row.appliedAdjustment}
+              </span>
+            )}
+          </span>
+          {row.gateOpen && row.dominantCategory !== null && (
+            <span className="mt-0.5 block text-[11px] text-muted">
+              {categoryLabel(row.dominantCategory)}
+              {row.agreementRatio !== null && ` · ${Math.round(row.agreementRatio * 100)}% agree`}
+              {` · ${formatNumber(row.members - row.judged)} unjudged alerts carry this`}
+            </span>
+          )}
+        </span>
+      </button>
+      {expanded && <FamilyMembers familyKey={row.familyKey} selectedRef={selectedRef} onSelect={onSelect} />}
+    </li>
+  );
+}
+
+/**
+ * A family's alerts, fetched only when the group is opened.
+ *
+ * Read back through the ordinary queue endpoint with `familyKey`, so these rows are the same rows,
+ * in the same contract order, as the ungrouped list — a grouped view rendering from a second source
+ * could disagree with the queue it claims to summarise.
+ */
+function FamilyMembers({
+  familyKey,
+  selectedRef,
+  onSelect,
+}: {
+  familyKey: string;
+  selectedRef: string | null;
+  onSelect: (alertRef: string) => void;
+}) {
+  const members = useApi(
+    (signal) =>
+      unwrap(
+        api.GET("/api/alerts", {
+          params: { query: { limit: MEMBER_PREVIEW, offset: 0, sort: "queue", direction: "desc", familyKey } },
+          signal,
+        }),
+      ),
+    [familyKey],
+  );
+  if (members.status === "loading") {
+    return (
+      <div className="px-3 pb-2">
+        <LoadingState label="Loading family…" />
+      </div>
+    );
+  }
+  if (members.status === "error") {
+    return (
+      <div className="px-3 pb-2">
+        <ErrorState error={members.error} onRetry={members.reload} />
+      </div>
+    );
+  }
+  const hidden = members.data.page.total - members.data.items.length;
+  return (
+    <div className="border-t border-border bg-bg">
+      <ol aria-label="Family members">
+        {members.data.items.map((alert) => (
+          <AlertCard
+            key={alert.alertRef}
+            alert={alert}
+            selected={alert.alertRef === selectedRef}
+            onSelect={() => onSelect(alert.alertRef)}
+          />
+        ))}
+      </ol>
+      {hidden > 0 && (
+        <p className="px-3 py-1.5 font-mono text-[10px] text-dim">
+          + {formatNumber(hidden)} more in this family
+        </p>
+      )}
+    </div>
+  );
+}
+
+//: How many of a family's alerts the expanded group shows. A family runs to 199 members on this
+//: sample, and the point of the group is the summary, not a second full queue.
+const MEMBER_PREVIEW = 8;
+
 export function QueuePane({
   queue,
+  families,
+  grouping,
+  onGrouping,
   tab,
   onTab,
   counts,
@@ -145,6 +293,9 @@ export function QueuePane({
   pageSize,
 }: {
   queue: ApiResource<AlertPage>;
+  families: ApiResource<FamilyPage>;
+  grouping: QueueGrouping;
+  onGrouping: (grouping: QueueGrouping) => void;
   tab: QueueTab;
   onTab: (tab: QueueTab) => void;
   counts: Readonly<Record<string, number | undefined>>;
@@ -157,14 +308,20 @@ export function QueuePane({
   pageSize: number;
 }) {
   const [draft, setDraft] = useState(search);
+  const [openFamily, setOpenFamily] = useState<string | null>(null);
   useEffect(() => setDraft(search), [search]);
+
+  const grouped = grouping === "family";
+  const page = grouped ? (families.status === "success" ? families.data.page : null) : queue.status === "success" ? queue.data.page : null;
 
   return (
     <section aria-label="Alert queue" className="flex min-h-0 flex-col border-r border-border bg-surface">
       <header className="flex items-center justify-between border-b border-border px-3 py-2">
         <h2 className="label-mono">Alert queue</h2>
-        {queue.status === "success" && (
-          <span className="font-mono text-[11px] tabular-nums text-dim">{formatNumber(queue.data.page.total)} alerts</span>
+        {page !== null && (
+          <span className="font-mono text-[11px] tabular-nums text-dim">
+            {formatNumber(page.total)} {grouped ? "families" : "alerts"}
+          </span>
         )}
       </header>
 
@@ -211,18 +368,67 @@ export function QueuePane({
         />
       </form>
 
+      {/* Grouping, not sorting. "Family" folds the queue into the groups similar-alert learning
+          acts on, which is the only way to see that a verdict moved alerts nobody judged. */}
+      <div className="flex items-center gap-2 border-b border-border px-3 py-1.5">
+        <span id="queue-grouping" className="font-mono text-[10px] uppercase tracking-wider text-dim">
+          Group by
+        </span>
+        <div role="group" aria-labelledby="queue-grouping" className="flex gap-px rounded-sm bg-border">
+          {(["none", "family"] as const).map((option) => (
+            <button
+              key={option}
+              type="button"
+              aria-pressed={grouping === option}
+              onClick={() => {
+                setOpenFamily(null);
+                onGrouping(option);
+              }}
+              className={`px-2 py-0.5 font-mono text-[10px] uppercase tracking-wider ${
+                grouping === option ? "bg-raised text-text" : "bg-surface text-muted hover:text-text"
+              }`}
+            >
+              {option === "none" ? "None" : "Family"}
+            </button>
+          ))}
+        </div>
+        {grouped && <span className="ml-auto font-mono text-[10px] text-dim">similar alerts</span>}
+      </div>
+
       <div className="min-h-0 flex-1 overflow-y-auto">
-        {queue.status === "loading" && (
+        {(grouped ? families : queue).status === "loading" && (
           <div className="p-3">
-            <LoadingState label="Loading queue…" />
+            <LoadingState label={grouped ? "Loading families…" : "Loading queue…"} />
           </div>
         )}
-        {queue.status === "error" && (
+        {grouped && families.status === "error" && (
+          <div className="p-3">
+            <ErrorState error={families.error} onRetry={families.reload} />
+          </div>
+        )}
+        {!grouped && queue.status === "error" && (
           <div className="p-3">
             <ErrorState error={queue.error} onRetry={queue.reload} />
           </div>
         )}
-        {queue.status === "success" &&
+        {grouped && families.status === "success" &&
+          (families.data.items.length === 0 ? (
+            <p className="p-6 text-center text-sm text-muted">No families match.</p>
+          ) : (
+            <ol aria-label="Alert families">
+              {families.data.items.map((row) => (
+                <FamilyGroup
+                  key={row.familyKey}
+                  row={row}
+                  expanded={openFamily === row.familyKey}
+                  onToggle={() => setOpenFamily(openFamily === row.familyKey ? null : row.familyKey)}
+                  selectedRef={selectedRef}
+                  onSelect={onSelect}
+                />
+              ))}
+            </ol>
+          ))}
+        {!grouped && queue.status === "success" &&
           (queue.data.items.length === 0 ? (
             <p className="p-6 text-center text-sm text-muted">No alerts match.</p>
           ) : (
@@ -239,7 +445,7 @@ export function QueuePane({
           ))}
       </div>
 
-      {queue.status === "success" && queue.data.page.total > pageSize && (
+      {page !== null && page.total > pageSize && (
         <footer className="flex items-center justify-between border-t border-border px-3 py-1.5 font-mono text-[11px] text-muted">
           <button
             type="button"
@@ -250,11 +456,11 @@ export function QueuePane({
             ← Prev
           </button>
           <span className="tabular-nums">
-            {formatNumber(offset + 1)}–{formatNumber(offset + queue.data.page.returned)} of {formatNumber(queue.data.page.total)}
+            {formatNumber(offset + 1)}–{formatNumber(offset + page.returned)} of {formatNumber(page.total)}
           </span>
           <button
             type="button"
-            disabled={offset + queue.data.page.returned >= queue.data.page.total}
+            disabled={offset + page.returned >= page.total}
             onClick={() => onPage(offset + pageSize)}
             className="px-1 hover:text-text disabled:opacity-30"
           >

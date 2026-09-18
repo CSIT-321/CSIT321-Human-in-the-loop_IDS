@@ -3,9 +3,10 @@
  *
  * Two rules shape this page:
  *
- * 1. **The API ranks, this page does not.** `sort=queue` is the contract order (band first, then
- *    operational score). Rows are rendered in the order they arrive; a client-side re-sort would
- *    silently disagree with the ranking the evaluation measured.
+ * 1. **The API ranks, this page does not.** `sort=queue` is the contract order (severity first,
+ *    then operational score; the band is a label since v1.31). Rows are rendered in the order
+ *    they arrive; a client-side re-sort would silently disagree with the ranking the
+ *    evaluation measured.
  * 2. **The view lives in the URL.** Every filter, the sort and the page offset are search params, so a
  *    refresh, a Back, or a pasted link all restore exactly what the analyst was looking at.
  */
@@ -218,7 +219,7 @@ export function QueuePage() {
     <div className="space-y-6">
       <PageHeader
         title="Alert Queue"
-        subtitle="Ranked by queue band, then operational score. The detection score never changes; the operational score is what analyst feedback moves."
+        subtitle="Ranked by severity, then operational score. The detection score never changes; the operational score is what analyst feedback moves."
       />
 
       <Card>

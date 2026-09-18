@@ -159,6 +159,12 @@ class QueueQuery(ApiModel):
         default=None, max_length=200,
         description="Substring of source IP, destination IP, or matched rule id")
     run_id: int | None = Field(default=None, description="Restrict to one detection run")
+    family_key: str | None = Field(
+        default=None, max_length=300,
+        description="Restrict to one similar-alert family, as `GET /api/alerts/families` returns "
+                    "its `familyKey`. This is how the members a verdict moved are read back: the "
+                    "alerts that re-ranked without anyone judging them are otherwise scattered "
+                    "through the queue with nothing naming them as a group")
     verdict: list[m.FeedbackCategory] | None = Field(
         default=None, description="Filter by the verdict currently in force")
     unjudged: bool | None = Field(
@@ -174,3 +180,11 @@ class QueueQuery(ApiModel):
     flow_to: str | None = Field(
         default=None, pattern=FLOW_TIME_PATTERN,
         description="Latest flow capture time; a date alone means the end of that day")
+
+
+#: What ``GET /api/alerts/families`` does **not** take. Groups are always ordered by their
+#: best-ranked member: a grouped view that could be re-sorted would be a second ranking, and this
+#: codebase has one (`QUEUE_ORDER`). They are dropped from the document rather than ignored by the
+#: handler — advertising a parameter that is silently dropped is how an API returns a plausible
+#: wrong answer.
+FAMILY_QUERY_OMITS = frozenset({"sort", "direction", "familyKey"})

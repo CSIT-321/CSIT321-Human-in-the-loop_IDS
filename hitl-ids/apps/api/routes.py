@@ -44,6 +44,7 @@ from apps.api.mappers import (
     detection_run,
     evidence_panel,
     family_panel,
+    family_row,
     feedback_record,
     flow_panel,
     guardrail_setting,
@@ -51,11 +52,13 @@ from apps.api.mappers import (
     note_out,
     score_adjustment,
     signature_panel,
+    similarity_basis,
 )
 from packages.contracts import db
 from packages.contracts import models as m
 from packages.detection import triage
-from packages.detection.feedback.service import current_feedback, submit_feedback
+from packages.detection.feedback.learning import family_label
+from packages.detection.feedback.service import MemberMove, current_feedback, submit_feedback
 from packages.detection.pipeline import store
 
 HITL = Path(__file__).resolve().parents[2]
@@ -112,15 +115,8 @@ def _page(items: list[Any], total: int, limit: int, offset: int) -> dict[str, An
 # --------------------------------------------------------------------------------------------
 
 
-@router.get("/api/alerts", response_model=Page[ca.AlertSummary], tags=["alerts"],
-            operation_id="listAlerts")
-def list_alerts(
-    conn: Conn,
+def queue_filters(
     principal: Principal,
-    limit: int = Query(DEFAULT_PAGE_SIZE, ge=1, le=MAX_PAGE_SIZE),
-    offset: int = Query(0, ge=0),
-    sort: str = Query("queue"),
-    direction: str = Query("desc"),
     queue_class: list[str] | None = Query(None, alias="queueClass"),
     evidence_class: list[str] | None = Query(None, alias="evidenceClass"),
     severity: list[str] | None = Query(None),
@@ -136,30 +132,84 @@ def list_alerts(
     verdict: list[m.FeedbackCategory] | None = Query(None),
     unjudged: bool | None = Query(None),
     owner: Literal["me", "unassigned"] | None = Query(None),
+    family_key: str | None = Query(None, alias="familyKey", max_length=300),
     flow_from: str | None = Query(None, alias="flowFrom", pattern=FLOW_TIME_PATTERN),
     flow_to: str | None = Query(None, alias="flowTo", pattern=FLOW_TIME_PATTERN),
 ) -> dict[str, Any]:
+    """Every filter the queue takes, as one dependency.
+
+    Shared by the flat queue and the grouped one so the two can never disagree about what a band
+    tab or a search means — a grouped view that filtered differently from the rows it groups would
+    be the most convincing kind of wrong.
+    """
+    return {
+        "queue_class": queue_class, "evidence_class": evidence_class, "severity": severity,
+        "status": status_filter, "attack_category": attack_category,
+        "requires_review": requires_review, "min_score": min_score, "max_score": max_score,
+        "detection_min_score": detection_min_score, "detection_max_score": detection_max_score,
+        "search": search, "run_id": run_id, "verdict": verdict, "unjudged": unjudged,
+        # "me" is the signed-in account; a user never assigned anything owns nothing.
+        "owner_id": principal.user_id if owner == "me" else None,
+        "unassigned": owner == "unassigned", "family_key": family_key,
+        "flow_from": flow_from,
+        "flow_to": None if flow_to is None
+        else (f"{flow_to} 23:59:59.999999" if len(flow_to) == 10 else flow_to),
+    }
+
+
+Filters = Annotated[dict[str, Any], Depends(queue_filters)]
+
+
+@router.get("/api/alerts", response_model=Page[ca.AlertSummary], tags=["alerts"],
+            operation_id="listAlerts")
+def list_alerts(
+    conn: Conn,
+    filters: Filters,
+    limit: int = Query(DEFAULT_PAGE_SIZE, ge=1, le=MAX_PAGE_SIZE),
+    offset: int = Query(0, ge=0),
+    sort: str = Query("queue"),
+    direction: str = Query("desc"),
+) -> dict[str, Any]:
     """The ranked queue, in the contract's order unless an inspection sort overrides it."""
-    owner_id: int | None = None
-    if owner == "me":
-        # The signed-in account. A user who has never been assigned anything owns nothing.
-        owner_id = principal.user_id
     try:
         rows, total = store.queue_page(
-            conn, limit=limit, offset=offset, sort=sort, direction=direction,
-            queue_class=queue_class, evidence_class=evidence_class, severity=severity,
-            status=status_filter, attack_category=attack_category,
-            requires_review=requires_review, min_score=min_score, max_score=max_score,
-            detection_min_score=detection_min_score, detection_max_score=detection_max_score,
-            search=search, run_id=run_id, verdict=verdict, unjudged=unjudged,
-            owner_id=owner_id,
-            unassigned=owner == "unassigned", flow_from=flow_from,
-            flow_to=None if flow_to is None
-            else (f"{flow_to} 23:59:59.999999" if len(flow_to) == 10 else flow_to))
+            conn, limit=limit, offset=offset, sort=sort, direction=direction, **filters)
     except ValueError as error:  # an unknown sort key or filter: refused, never ignored
         raise ApiError(400, "VALIDATION_FAILED", str(error)) from error
 
     items = _summaries(conn, rows)
+    return _page(items, total, limit, offset)
+
+
+# Declared before `/api/alerts/{alertRef}`: FastAPI matches in declaration order, and the path
+# parameter would otherwise swallow "families" and fail to find an alert by that name.
+@router.get("/api/alerts/families", response_model=Page[ca.FamilyRow], tags=["alerts"],
+            operation_id="listAlertFamilies")
+def list_alert_families(
+    conn: Conn,
+    filters: Filters,
+    limit: int = Query(DEFAULT_PAGE_SIZE, ge=1, le=MAX_PAGE_SIZE),
+    offset: int = Query(0, ge=0),
+) -> dict[str, Any]:
+    """The queue grouped by similar-alert family — the view that makes S7b visible.
+
+    A verdict re-scores every unjudged member of its family. Ungrouped, those alerts are scattered
+    through 5,000 rows with nothing naming them as a group, so the product's central mechanism
+    could be described but not shown. Each row carries the family's gate state and what it applied;
+    `familyKey` reads its members back through `GET /api/alerts`.
+
+    No sort: groups follow their best-ranked member, which keeps this in the contract queue order
+    rather than inventing a second ranking.
+    """
+    grouped = dict(filters)
+    grouped.pop("family_key", None)  # grouping by family and filtering to one contradict
+    try:
+        rows, total = store.family_page(conn, limit=limit, offset=offset, **grouped)
+    except ValueError as error:
+        raise ApiError(400, "VALIDATION_FAILED", str(error)) from error
+
+    refs = store.alert_refs(conn, [int(row["best_alert_id"]) for row in rows])
+    items = [family_row(row, refs[int(row["best_alert_id"])]) for row in rows]
     return _page(items, total, limit, offset)
 
 
@@ -223,6 +273,11 @@ def get_alert(alertRef: str, conn: Conn, principal: Principal) -> ca.AlertDetail
 # --------------------------------------------------------------------------------------------
 
 
+#: How many moved members the verdict response lists. The count is always exact; the list is what
+#: an analyst reads, and a family of 199 alerts would otherwise return 199 rows to a form panel.
+MOVED_LIMIT = 25
+
+
 @router.post("/api/alerts/{alertRef}/feedback", response_model=ca.FeedbackResponse,
              tags=["alerts", "feedback"], operation_id="submitFeedback")
 def post_feedback(alertRef: str, body: ca.FeedbackRequest, conn: Conn,  # noqa: N803
@@ -230,6 +285,10 @@ def post_feedback(alertRef: str, body: ca.FeedbackRequest, conn: Conn,  # noqa: 
     """Record one analyst verdict: guardrails, family learning and audit, in one transaction."""
     alert = _load_alert(conn, alertRef)
     user_id = principal.user_id
+    # Ranks are a property of the queue, so "where was this alert before?" cannot be answered
+    # after the fact. The whole family is snapshotted because which members will move is not known
+    # until the learning has run.
+    before_ranks = store.queue_ranks(conn, store.family_member_ids(conn, alert.family_key))
     try:
         result = submit_feedback(conn, alert_id=alert.id, user_id=user_id,
                                  category=body.category, note=body.note)
@@ -239,18 +298,44 @@ def post_feedback(alertRef: str, body: ca.FeedbackRequest, conn: Conn,  # noqa: 
     flow = store.flow_for_alert(conn, alert.id)
     users = store.users_by_id(conn, [user_id])
     learning = result.learning
+    family_key = learning.after.family_key if learning else alert.family_key
     return ca.FeedbackResponse(
         alert=_summary(conn, result.alert, flow),
         feedback=feedback_record(result.feedback, result.alert, users.get(user_id),
                                  guardrail_values(conn)),
         family=ca.FamilyEffect(
-            family_key=learning.after.family_key if learning else alert.family_key,
+            family_key=family_key,
+            family_label=family_label(family_key),
+            basis=similarity_basis(family_key),
             gate_open=learning.after.gate_open if learning else False,
             gate_reason=(learning.after.gate_reason if learning else
                          "This alert does not teach a family (invariant I3)."),
+            members=store.family_size(conn, family_key),
             members_moved=learning.members_moved if learning else 0,
+            moved=_moved_members(conn, learning.moves if learning else [], before_ranks),
+            moved_limit=MOVED_LIMIT,
             guardrail_interventions=learning.guardrail_interventions if learning else {}),
         audit_event_ids=[entry.id for entry in result.audit if entry.id is not None])
+
+
+def _moved_members(conn: sqlite3.Connection, moves: list[MemberMove],
+                   before_ranks: dict[int, int]) -> list[ca.MovedMember]:
+    """The similar alerts this verdict moved, best new rank first.
+
+    Ordered by where they landed rather than by how far they travelled: the analyst's next question
+    is "what should I look at now?", and the answer is the top of the queue.
+    """
+    if not moves:
+        return []
+    after_ranks = store.queue_ranks(conn, [move.alert_id for move in moves])
+    members = [ca.MovedMember(
+        alert_ref=move.alert_ref, source_record_id=move.source_record_id,
+        score_before=move.score_before, score_after=move.score_after,
+        queue_class_before=move.queue_class_before, queue_class_after=move.queue_class_after,
+        rank_before=before_ranks.get(move.alert_id), rank_after=after_ranks.get(move.alert_id))
+        for move in moves]
+    members.sort(key=lambda member: member.rank_after or 0)
+    return members[:MOVED_LIMIT]
 
 
 @router.get("/api/alerts/{alertRef}/score-adjustment", response_model=ca.ScoreAdjustment,

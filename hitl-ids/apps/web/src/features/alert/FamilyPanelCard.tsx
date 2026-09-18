@@ -9,6 +9,7 @@
 import type { Schemas } from "../../api/client";
 import { Card, KeyValues, Pill } from "../../components/ui";
 import { formatDelta, formatNumber, formatPercent } from "../../design/format";
+import { SimilarityFacets } from "../family/SimilarAlerts";
 import { categoryLabel } from "../feedback/categories";
 
 type FamilyPanel = Schemas["FamilyPanel"];
@@ -18,7 +19,7 @@ export function FamilyPanelCard({ family }: { family: FamilyPanel }) {
     <Card title="Similar alerts (family)">
       <KeyValues
         rows={[
-          ["Family key", <span className="font-mono text-xs">{family.familyKey ?? "—"}</span>],
+          ["Family", <span className="text-xs">{family.familyLabel === "" ? "—" : family.familyLabel}</span>],
           ["Members", formatNumber(family.members)],
           [
             "Learning gate",
@@ -43,10 +44,15 @@ export function FamilyPanelCard({ family }: { family: FamilyPanel }) {
       {family.gateReason !== null && <p className="mt-4 text-sm text-muted">{family.gateReason}</p>}
       {family.note !== null && <p className="mt-2 text-sm text-muted">{family.note}</p>}
 
-      <p className="mt-4 text-xs text-dim">
-        Families group alerts by attack class, destination port, protocol and matched rule. Learning
-        applies only once three verdicts in the family agree.
-      </p>
+      {/* What "similar" means, in the fields themselves rather than as prose the reader has to
+          trust. The membership test is exact match on every chip below. */}
+      <div className="mt-4 border-t border-border pt-4">
+        <p className="mb-2 text-[11px] uppercase tracking-wider text-dim">What makes these similar</p>
+        <SimilarityFacets basis={family.basis} />
+        <p className="mt-2 text-xs text-dim">
+          Learning applies only once three verdicts in the family agree.
+        </p>
+      </div>
     </Card>
   );
 }

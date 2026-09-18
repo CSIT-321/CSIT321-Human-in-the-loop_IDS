@@ -1,0 +1,246 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>FYP Demo — Run Card</title>
+<style>
+  @page { size: A4 portrait; margin: 7mm; }
+
+  :root{
+    --ink:#111; --mid:#555; --rule:#999; --box:#f1f1f1; --box2:#e2e2e2;
+    --mono: ui-monospace, "Cascadia Mono", Consolas, monospace;
+  }
+  *{ box-sizing:border-box; }
+  html,body{ margin:0; padding:0; background:#fff; }
+  body{
+    color:var(--ink);
+    font:7.85pt/1.22 "Segoe UI", system-ui, -apple-system, Arial, sans-serif;
+    -webkit-print-color-adjust:exact; print-color-adjust:exact;
+  }
+  .page{ width:196mm; margin:0 auto; }
+  @media screen{ .page{ width:196mm; padding:7mm 0; } body{ background:#fafafa; } }
+
+  /* ---------- header ---------- */
+  header{ border-bottom:2.2pt solid var(--ink); padding-bottom:1.6mm; margin-bottom:2mm; }
+  .t{ display:flex; align-items:baseline; justify-content:space-between; gap:4mm; }
+  h1{ font-size:13pt; margin:0; letter-spacing:-.2pt; }
+  .sub{ font-size:7pt; color:var(--mid); text-align:right; line-height:1.25; }
+  .arc{ font-size:7.6pt; margin-top:1.1mm; }
+  .arc b{ font-weight:700; }
+
+  /* ---------- layout ---------- */
+  .grid{ display:grid; grid-template-columns:1fr 1fr; gap:0 5.5mm; }
+  section{ margin-bottom:1.4mm; break-inside:avoid; page-break-inside:avoid; }
+
+  h2{
+    font-size:7.4pt; text-transform:uppercase; letter-spacing:.55pt;
+    margin:0 0 .7mm; padding-bottom:.4mm; border-bottom:.8pt solid var(--rule);
+  }
+  p{ margin:0 0 .75mm; }
+  ul{ margin:0; padding-left:3.1mm; }
+  li{ margin-bottom:.35mm; }
+  code, .m{ font-family:var(--mono); font-size:7.1pt; }
+
+  /* ---------- key/value rows ---------- */
+  .kv{ width:100%; border-collapse:collapse; }
+  .kv td{ padding:.5mm 0; vertical-align:top; border-bottom:.4pt dotted #c8c8c8; }
+  .kv td:first-child{ width:37%; font-weight:600; }
+  .kv tr:last-child td{ border-bottom:0; }
+
+  /* ---------- act blocks ---------- */
+  .act{ margin-bottom:1.05mm; }
+  .act h3{ font-size:7.4pt; margin:0 0 .35mm; }
+  .act h3 span{ font-weight:400; color:var(--mid); font-size:6.7pt; }
+  .act p{ margin:0 0 .4mm; }
+  .k{ font-weight:700; }
+  .res{
+    background:var(--box); border-left:1.6pt solid var(--ink);
+    padding:.6mm 1.2mm; margin:.45mm 0 .4mm; font-size:7pt;
+  }
+  .res .m{ font-size:7pt; }
+
+  /* ---------- traps ---------- */
+  .traps{ border:1pt solid var(--ink); padding:1.3mm 1.6mm; background:var(--box); }
+  .traps h2{ border-bottom-color:var(--ink); }
+  .traps ol{ margin:0; padding-left:3.6mm; }
+  .traps li{ margin-bottom:.6mm; }
+
+  /* ---------- money ---------- */
+  .money{ border:1pt solid var(--ink); padding:1.3mm 1.6mm; }
+  .money h2{ border-bottom-color:var(--ink); }
+  .money .row{ display:flex; justify-content:space-between; gap:2mm; border-bottom:.4pt dotted #bbb; padding:.45mm 0; }
+  .money .row:last-child{ border-bottom:0; }
+  .money .row b{ font-family:var(--mono); font-size:7.4pt; }
+
+  .note{ font-size:6.9pt; color:var(--mid); margin-top:.5mm; }
+  .fallback{ font-size:6.9pt; }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <header>
+    <div class="t">
+      <h1>FYP Demo — Run Card</h1>
+      <div class="sub">
+        Console <b>localhost:5173</b><br>
+        API <b>localhost:8000/api/health</b>
+      </div>
+    </div>
+    <div class="arc">
+      Dismiss one alert → confirm one → <b>three that agree</b> → the family promotes
+      <b>two alerts nobody judged</b>.
+    </div>
+  </header>
+
+  <div class="grid">
+
+    <!-- ============ COLUMN 1 ============ -->
+    <div>
+
+      <section>
+        <h2>Accounts &amp; landing pages</h2>
+        <table class="kv">
+          <tr><td>Analyst</td><td><code>g.ang</code> / <code>analyst-demo</code><br><span class="note">→ /analyst/workstation</span></td></tr>
+          <tr><td>Admin</td><td><code>admin</code> / <code>admin-demo</code><br><span class="note">→ /admin/status</span></td></tr>
+          <tr><td>Evaluator</td><td><code>evaluator</code> / <code>evaluator-demo</code><br><span class="note">→ /evaluator/scenarios</span></td></tr>
+        </table>
+        <p class="note">No role picker. To change role: sign out, sign in as that account.</p>
+      </section>
+
+      <section>
+        <h2>Pre-flight · hitl-ids folder</h2>
+        <ul>
+          <li><code>source .venv/Scripts/activate</code></li>
+          <li><code>rm -f data/demo.db</code> <span class="note">← deletes; appends otherwise</span></li>
+          <li><code>python scripts/run_detection.py</code> <span class="note">~21s</span></li>
+          <li><code>python scripts/rehearse_demo.py</code> <span class="note">→ “holds end to end”</span></li>
+          <li><code>python -m uvicorn apps.api.main:app</code></li>
+          <li><code>npm run dev</code> <span class="note">from apps/web</span></li>
+        </ul>
+        <div class="res"><span class="k">Check before you start:</span> the KPI strip reads <span class="m">VERDICTS 0</span>. If not, the database is dirty — rebuild.</div>
+      </section>
+
+      <section>
+        <h2>Start state</h2>
+        <table class="kv">
+          <tr><td>Critical</td><td><b>185</b> &nbsp; Tier 2 <b>644</b> &nbsp; Needs review <b>996</b></td></tr>
+          <tr><td>Verdicts</td><td><b>0</b> &nbsp; Unresolved <b>5,000</b> &nbsp; Total <b>5,000</b></td></tr>
+          <tr><td>Severity</td><td>Info 3,986 · Med 401 · High 261 · Crit 185 · Low 167</td></tr>
+        </table>
+      </section>
+
+      <section>
+        <h2>The run</h2>
+
+        <div class="act">
+          <h3>1 · Sign in <span>/login</span></h3>
+          <p>Sign out if open. <code>g.ang</code> + <span class="k">wrong</span> password → <span class="k">refused</span>. Then <code>analyst-demo</code> → workstation.</p>
+        </div>
+
+        <div class="act">
+          <h3>2 · Workstation <span>/analyst/workstation</span></h3>
+          <p><code>AL-01707</code> opens by itself — Infiltration, Critical.</p>
+          <p>Click band tab <span class="k">RULE + MODEL 200</span> → opens <code>AL-01958</code> <span class="k">Brute Force · MEDIUM</span>; the rule panel explains <code>SIG-FTP-BRUTE-FORCE</code>.</p>
+          <p><span class="k">Click <code>ALL 5,000</code> first</span>, then search <code>AL-00478</code>.</p>
+        </div>
+
+        <div class="act">
+          <h3>3 · Dashboard → Alert Queue</h3>
+          <p>Point at <span class="k">Moved by feedback 0</span> — nothing has been judged yet. Then the severity spread. Then the two score columns: detection never moves, operational does.</p>
+        </div>
+
+        <div class="act">
+          <h3>4 · <code>AL-00478</code> — the model is wrong <span>Web Attack · HIGH · 99.89</span></h3>
+          <p>Four panels: Flow · <span class="k">no rule matched</span> · model + TreeSHAP · combined. Family <code>Web Attack · port 80 · tcp</code>, 61 members, gate closed.</p>
+          <p>Verdict <span class="k">False Positive</span> → <span class="k">scroll down</span> → Record verdict.</p>
+          <div class="res">
+            <span class="m">−30.00 requested → BOUND → −29.89 applied → 70.00</span><br>
+            “held at the floor of 70” · <span class="note">Critical alert floor = 70.00</span>
+          </div>
+        </div>
+
+        <div class="act">
+          <h3>5 · <code>AL-03086</code> — the attack nobody caught <span>Nothing flagged · 36.94</span></h3>
+          <p>Verdict <span class="k">True Positive</span> → scroll → Record.</p>
+          <div class="res">
+            <span class="m">+10.00 requested → NO guardrail → +10.00 applied → 46.94</span><br>
+            Band: Nothing flagged it → <span class="k">Model only</span>
+          </div>
+        </div>
+
+      </section>
+    </div>
+
+    <!-- ============ COLUMN 2 ============ -->
+    <div>
+
+      <section>
+        <div class="act">
+          <h3>6 · Three that agree — the gate opens <span>Port Scan · port 445 · tcp</span></h3>
+          <p><code>AL-01696</code>, then <code>AL-03873</code>, then <code>AL-03153</code> — <span class="k">True Positive</span> each time. Watch the family panel: <span class="k">1 of 3 → 2 of 3 → 3 of 3, gate OPEN</span>.</p>
+          <div class="res">
+            Applied change is tiny — <span class="k">do not call it a failure</span>:<br>
+            <span class="m">+10 asked → +0.04 / +0.03 / +0.01 applied</span><br>
+            All sit at the 100 ceiling. <span class="note">975 of 996 flagged alerts are at 100.</span>
+          </div>
+          <p>Family then reads <span class="k">+20.00 · offset −3</span>: “carries its family’s learned adjustment even where it has no verdict of its own.”</p>
+          <div class="res">
+            <span class="k">The payoff — search these two:</span><br>
+            <code>AL-03044</code> and <code>AL-04526</code> → both <span class="k">Tier 2 candidate</span>,<br>
+            <span class="k">neither has a verdict of its own.</span>
+          </div>
+        </div>
+
+        <div class="act">
+          <h3>7 · Admin <span>admin / admin-demo</span></h3>
+          <p>Nav changes. System Status: <span class="k">Verdicts 5 · Guardrail actions 4</span> · Needs review 997 · Tier 2 645.</p>
+          <p>Audit Trail: <span class="k">15 rows</span> — 5 Feedback · 4 Guardrail · 5 Family learning · 1 Detection run. A guardrail row appears on the 4 capped verdicts and <span class="k">not</span> on <code>AL-03086</code>.</p>
+        </div>
+
+        <div class="act">
+          <h3>8 · Evaluator <span>evaluator / evaluator-demo</span></h3>
+          <p>Newest run <code>20260916T073220Z</code> top row. Pre-registration <code>s15-preregistration-1</code>, size 40.</p>
+          <p>Read the banner aloud: <span class="k">“Deltas are shown as measured, including those that went the wrong way.”</span></p>
+          <p>P@50 <span class="k">1.000 in all three arms</span>. The negative move is mean rank <span class="m">511.09 → 511.51</span>.</p>
+        </div>
+      </section>
+
+      <section class="traps">
+        <h2>Five traps</h2>
+        <ol>
+          <li><span class="k">Search obeys the active band.</span> Click <code>ALL 5,000</code> first or you get “No alerts match”.</li>
+          <li><span class="k">The queue subtitle is stale.</span> It says “band, then operational score”. The order is <span class="k">severity, then score</span>. Do not read it aloud.</li>
+          <li><span class="k">“Record verdict” moves down ~90px</span> once you pick a verdict. <span class="k">Scroll, then click.</span> If nothing happened, nothing was recorded.</li>
+          <li><span class="k">“This alert is Critical” prints on Medium/High/Low alerts.</span> Known defect — see the answer at right.</li>
+          <li><span class="k">Act&nbsp;8 step text claims −0.020.</span> The console shows ±0.000. Do not read that step.</li>
+        </ol>
+      </section>
+
+      <section>
+        <h2>If the panel asks</h2>
+        <p><span class="k">“Was AL-00478 really Critical? The badge says HIGH.”</span><br>
+        Two measures, only the wording conflates them. The floor triggers on the <span class="k">score</span>: <code>is_critical</code> means the detection score reached <span class="k">80</span>, and this alert scored 99.89. The badge is capped by the attack class — since v1.29 a Web Attack cannot display above High however high it scores. Measured on <code>data/demo.db</code>, <code>is_critical</code> matches <code>combined_score &gt;= 80</code> on every alert with <span class="k">zero mismatches</span>; the highest unscored alert is 42.77. The trigger is right — the <span class="k">sentence</span> is stale. <span class="k">Do not call the trigger “too wide.”</span></p>
+        <p><span class="k">“Why did 975 alerts not move when you confirmed them?”</span><br>
+        They already sit at the maximum 100 and scores are bounded. +10 applies as +0.04. It is why the evaluation’s two guardrail arms came out identical — no policy bound on that sequence; the <span class="k">100 ceiling did, on all 40 verdicts</span>.</p>
+        <p><span class="k">“Corroborated reads 0 but 200 alerts have rule + model?”</span><br>
+        A band and an evidence class are different labels. All 200 sit in the Tier 2 band, so the Corroborated <i>band</i> is empty. The tab reads <code>RULE + MODEL 200</code>. Both are right.</p>
+      </section>
+
+      <section>
+        <h2>If something breaks</h2>
+        <table class="kv">
+          <tr><td>“Cannot reach the API”</td><td>Restart <code>uvicorn apps.api.main:app</code></td></tr>
+          <tr><td>Search returns nothing</td><td>Click <code>ALL 5,000</code></td></tr>
+          <tr><td>Record verdict does nothing</td><td>Button moved — scroll, click again</td></tr>
+          <tr><td>10,000 alerts, two runs</td><td>Rebuilt without deleting: <code>rm -f data/demo.db</code></td></tr>
+          <tr><td>Wrong verdict recorded</td><td><span class="k">Permanent</span> — rebuild the database</td></tr>
+        </table>
+        <p class="note"><b>Afterwards:</b> <code>rm -f data/demo.db &amp;&amp; python scripts/run_detection.py</code> — a demonstrated database has already been judged. Re-check without touching it: <code>npm run e2e</code> in <code>apps/web</code>.</p>
+      </section>
+
+    </div>
+  </div>
+</div>
+</body>
+</html>

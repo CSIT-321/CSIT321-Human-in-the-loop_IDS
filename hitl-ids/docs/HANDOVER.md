@@ -3,8 +3,9 @@
 **Purpose.** Carry the full state of this project into a fresh session with zero loss of context
 and minimal token cost. Everything a new session needs is here or one link away.
 
-**Last updated:** 2026-09-16 (rev 23 — ranking provenance resolved, four stale claims corrected;
-see §0b item 7) · **Branch:** `feat/demo-build` — tracking
+**Last updated:** 2026-09-18 (rev 24 — similar-alert learning made visible: the moved members, the
+family group-by, and the similarity basis on screen; changelog v1.32. Rev 23 notes below still
+stand) · **Branch:** `feat/demo-build` — tracking
 `origin/feat/demo-build`, in sync with `origin/feat/demo-build` (**0 ahead, 0 behind** — verified 2026-09-16; the
 R4→showcase-v9 work was pushed after rev 22, so the old "11 commits ahead" is stale) · `feat/s2-contracts` and `feat/s6-fusion` pushed earlier as view-only progress
 branches ·
@@ -59,7 +60,7 @@ inspection-sort tie-break fixed (v1.28):** it was a direction-blind `a.id ASC`, 
 scores all tied came back identical ascending and descending — and 4,789 of 5,000 alerts (95.8%)
 tie on their score. It now orders by evidence class, review flag, capture time and id, each
 following the requested direction ·
-**445 tests, 0 skipped** (Python, in `.venv`) + **132 web tests** (`apps/web`, `npm test`) +
+**466 tests, 0 skipped** (Python, in `.venv`) + **157 web tests** (`apps/web`, `npm test`) +
 the browser narrative (`npm run e2e`, passes with three real sign-ins) ·
 **Python runs from `hitl-ids\.venv` (3.11) — see §0b before running anything** ·
 `python scripts/run_detection.py` builds the demo database · `python -m uvicorn apps.api.main:app`
@@ -98,11 +99,12 @@ anything. Then confirm the ground you are standing on:
 
 ```
 cd hitl-ids && .venv\Scripts\activate  # every terminal; python --version must print 3.11.x (§0b)
-python -m pytest                      # expect 445 passed, 0 skipped (sandbox blocking the temp
+python -m pytest                      # expect 466 passed, 0 skipped (sandbox blocking the temp
                                        # dir? add -p no:cacheprovider --basetemp=<scratchpad>)
-python scripts/run_detection.py       # rebuilds data/demo.db: 5,000 flows -> 5,000 alerts, ~21 s
+del data\demo.db && python scripts/run_detection.py   # REBUILD. The script *appends* to
+                                       # an existing file: 10,000 alerts, two runs. ~21 s
 python scripts/rehearse_demo.py       # the S16 narrative through the API on a copy: 46 checks
-cd apps/web && npm test && npm run e2e && cd ../..   # 128 web tests; the narrative in a browser
+cd apps/web && npm test && npm run e2e && cd ../..   # 157 web tests; the narrative in a browser
 python scripts/run_evaluation.py      # the three arms over that database, ~3 s
 python scripts/build_openapi.py --check   # the committed API contract is in step with the models
 ```
@@ -172,7 +174,18 @@ From Claude's Bash tool, call the environment directly: `.venv/Scripts/python.ex
   `_v0.2.docx` beside it is committed), `docs/FYP-26-S3-13_PUM.pdf` or
   `hitl-ids/Screenshot 2026-09-13 210609.png` (the design reference). All three are uncommitted by design.
 
-### Open now (verified 2026-09-16)
+### Open now (verified 2026-09-18)
+
+0. **Two things this session changed, and one it found.** (a) `origin/feat/demo-build` had moved
+   **2 commits ahead** — a collaborator (LCK0629) landed the admin IP security report and a
+   Workstation evidence-filter fix on our own branch; fast-forwarded, no conflicts. Six further
+   collaborator branches exist on origin, of which `demo/ui-integration` has **not** been inspected.
+   (b) **Similar-alert learning is now visible** (changelog v1.32): the verdict response names the
+   members it moved with score, band and **queue rank before/after**; `GET /api/alerts/families`
+   groups the queue by family and the console has a **Group by: None | Family** control; the family
+   key is rendered as its named fields with the membership rule stated. (c) **`data/demo.db` is no
+   longer pristine** — it holds **4 verdicts** from 2026-09-16, contradicting item 5 below.
+   **Rebuild it with `python scripts/run_detection.py` before presenting.**
 
 1. **Figma "Product screens" page** — still requested, still blocked: the Desktop Bridge plugin is
    not running (probed 2026-09-16). The user must open Figma Desktop → Plugins → Development →
@@ -287,7 +300,11 @@ hitl-ids/
   data/raw/       CSECICIDS2018_improved.zip   10.4 GB, GITIGNORED, must be re-downloaded
   data/processed/ label_scan · demo_sample(5,000) · train_sample(250,655) · manifests
   data/demo.db    the populated demo database, 42 MB, GITIGNORED - rebuild:
-                  python scripts/run_detection.py   (5,000 flows -> 5,000 alerts, ~21 s)
+                  DELETE IT FIRST, then python scripts/run_detection.py  (5,000 flows ->
+                  5,000 alerts, ~21 s). The script APPENDS a run to an existing file, so
+                  running it over a used database gives 10,000 alerts across two runs and
+                  keeps every old verdict. A clean build reads 5,000 alerts / 644 Tier 2 /
+                  0 verdicts; the three accounts re-seed themselves on first sign-in.
   models/         8-class XGBoost + metrics + port ablation
   notebooks/      01-06, all execute with ZERO errors (05 = ranking runs 1-2, 06 = run 3, the gate)
   config/severity-chart.json           Q28: editable, versioned severity chart

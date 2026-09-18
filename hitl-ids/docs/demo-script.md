@@ -29,10 +29,13 @@ npm run dev                                :: console on http://localhost:5173
 `UPDATE` and `DELETE` — so a database that has been demonstrated on is a database that has already been
 judged. The rehearsal and the browser test (`npm run e2e`) both run on copies and never touch it.
 
-Python comes from the project environment `hitl-ids\.venv` (3.11). If it is missing or reports 3.12, rebuild
-it with `C:\ProgramData\miniconda3\python.exe -m venv .venv` and `python -m pip install -r requirements.txt` —
-never `py -m venv`, which picks 3.12 on this machine. `npm run e2e` starts its own API and needs
-`set HITL_PYTHON=<hitl-ids>\.venv\Scripts\python.exe` in terminal 2.
+Python comes from the project environment `hitl-ids\.venv` (3.11). **The `.venv` is not portable** — it
+stores absolute paths — so recreate it on a new machine with any Python 3.11 interpreter
+(`py -3.11 -m venv .venv`, or the full path to a 3.11 `python.exe`), then `.venv\Scripts\activate` and
+`python -m pip install -r requirements.txt`. Do **not** use a bare `py -m venv`, which picks 3.12.
+`npm run e2e` starts its own API and needs the interpreter named in terminal 2 —
+`set HITL_PYTHON=<hitl-ids>\.venv\Scripts\python.exe` in cmd, `$env:HITL_PYTHON="...\python.exe"` in
+PowerShell. It also needs the Chromium test browser once per machine: `npx playwright install chromium`.
 
 ---
 
@@ -119,7 +122,28 @@ Confirm three members of the **Port Scan / port 445** family: `AL-01696`, `AL-03
 Search `AL-03044` and `AL-04526`: both are now **Tier 2 candidates**, with **no verdict of their own**.
 Ground truth: all five are Port Scans.
 
+**Do not read the count aloud and move on — show the table under it.** Since v1.32 the verdict
+response lists the members it moved: each one's **score, band and queue rank before and after**.
+Those are alerts nobody opened, let alone judged.
+
 > One analyst cannot move a family. Three who agree can. Nothing outside the family moved.
+
+**Then answer the question the panel is already forming: *what counts as similar?*** The panel under
+the verdict shows it as fields, not prose — attack class, destination port, protocol, matched rule.
+**Exact match on all of them.** There is no similarity score and no threshold, and the screen says
+so. (For a flow no detector flagged, the destination address must match too, so one verdict cannot
+spread across all benign traffic on a port.)
+
+**Finally, switch the queue to Group by → Family.** The 5,000-row queue folds into the groups the
+learning actually acts on, ordered by each group's best-ranked member — the same queue order, not a
+second ranking. The Port Scan family now reads *gate open · 100% agree*, with its unjudged members
+carrying the adjustment. Expand it to see them.
+
+**If you want the strongest version of this beat, use a dismissal, not a confirmation.** 975 of the
+996 flagged alerts sit at exactly 100.0, so a *confirming* verdict on a flagged family moves the
+band but not the score. Dismissing three members of **Botnet · port 8080 · tcp** (150 alerts, none
+judged) moves **147** of them `100.0 → 91.0`, `tier2_candidate → corroborated`, and the family's
+best position in the queue from **rank 27 to rank 31**. Measured on a copy, 2026-09-18.
 
 ### 6. The administrator
 

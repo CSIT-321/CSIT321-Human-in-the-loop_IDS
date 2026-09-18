@@ -134,7 +134,11 @@ def counts_by(conn: sqlite3.Connection, column: str, *,
 #: The contract order, qualified for a join against flow_data.
 QUEUE_ORDER_QUALIFIED = db.queue_order("a")
 
-FILTERABLE = frozenset({"queue_class", "evidence_class", "severity", "status", "attack_category"})
+#: `family_key` is filterable so one family reads back as an ordinary queue page. The similar-alert
+#: learning that moves those rows is the product's thesis, and until this key was admitted there was
+#: no way to *see* the members a verdict moved — only the count the verdict returned.
+FILTERABLE = frozenset({"queue_class", "evidence_class", "severity", "status", "attack_category",
+                        "family_key"})
 
 #: When the flow was captured, as the dataset recorded it: capture-local text such as
 #: '2018-02-14 12:28:54.334391', so text order is time order. Not the alert's created_at, which is
@@ -323,6 +327,98 @@ def family_size(conn: sqlite3.Connection, family_key: str | None) -> int:
         return 0
     return int(conn.execute("SELECT COUNT(*) AS n FROM alerts WHERE family_key = ?",
                             (family_key,)).fetchone()["n"])
+
+
+def family_member_ids(conn: sqlite3.Connection, family_key: str | None) -> list[int]:
+    """Every alert in one family. Its members are what a verdict on any of them can move."""
+    if not family_key:
+        return []
+    return [int(row["id"]) for row in conn.execute(
+        "SELECT id FROM alerts WHERE family_key = ?", (family_key,))]
+
+
+def alert_refs(conn: sqlite3.Connection, alert_ids: Sequence[int]) -> dict[int, str]:
+    """Row id → public UUID, for the one place a grouped query returns ids: the API never exposes
+    a row id, so an aggregate that identifies a member by id has to be translated before it sails."""
+    ids = [int(i) for i in alert_ids]
+    if not ids:
+        return {}
+    rows = conn.execute(
+        f"SELECT id, alert_ref FROM alerts WHERE id IN ({', '.join('?' * len(ids))})", ids)
+    return {int(row["id"]): str(row["alert_ref"]) for row in rows}
+
+
+def queue_ranks(conn: sqlite3.Connection, alert_ids: Sequence[int]) -> dict[int, int]:
+    """Each alert's 1-based position in the whole queue, in the contract order.
+
+    One window query over `alerts`, not one per row: the rank of an alert is a property of the
+    *queue*, so it cannot be computed from the alert alone. Snapshotted either side of a verdict,
+    these are what make similar-alert learning visible — a member that moved from 812 to 47 moved
+    because its family learned, and no score on its own says that.
+
+    The contract order reads only `alerts` columns (`db.queue_order`), so no join is needed.
+    """
+    ids = [int(i) for i in alert_ids]
+    if not ids:
+        return {}
+    rows = conn.execute(
+        f"WITH ranked AS (SELECT id, ROW_NUMBER() OVER (ORDER BY {db.QUEUE_ORDER_BY}) AS r "
+        f"FROM alerts) SELECT id, r FROM ranked WHERE id IN ({', '.join('?' * len(ids))})", ids)
+    return {int(row["id"]): int(row["r"]) for row in rows}
+
+
+#: One family as the group-by returns it. `best_*` describe the family's highest-ranked member —
+#: where the family sits in the queue an analyst actually works down.
+FAMILY_GROUP = """
+    WITH ranked AS (SELECT id, ROW_NUMBER() OVER (ORDER BY {order}) AS r FROM alerts)
+    SELECT a.family_key                                        AS family_key,
+           COUNT(*)                                            AS members,
+           SUM(EXISTS (SELECT 1 FROM feedback_events fe WHERE fe.alert_id = a.id)) AS judged,
+           SUM(a.requires_review)                              AS requires_review,
+           MIN(ranked.r)                                       AS best_rank,
+           -- SQLite carries the bare columns of the row that produced MIN(): these describe the
+           -- family's best-ranked member, not an arbitrary one.
+           a.id                                                AS best_alert_id,
+           a.severity                                          AS best_severity,
+           a.combined_score                                    AS best_score,
+           a.queue_class                                       AS best_queue_class,
+           a.attack_category                                   AS attack_category,
+           af.gate_open                                        AS gate_open,
+           af.gate_reason                                      AS gate_reason,
+           af.dominant_category                                AS dominant_category,
+           af.agreement_ratio                                  AS agreement_ratio,
+           af.applied_adjustment                               AS applied_adjustment,
+           af.applied_offset                                   AS applied_offset,
+           af.updated_at                                       AS learned_at
+    FROM alerts a
+    JOIN flow_data f ON f.alert_id = a.id
+    JOIN ranked ON ranked.id = a.id
+    LEFT JOIN alert_families af ON af.family_key = a.family_key
+    {where}
+    GROUP BY a.family_key
+    ORDER BY best_rank
+    LIMIT ? OFFSET ?"""
+
+
+def family_page(conn: sqlite3.Connection, *, limit: int = 50, offset: int = 0,
+                **filters: Any) -> tuple[list[dict[str, Any]], int]:
+    """One page of the queue **grouped by family**, with the number of families matching.
+
+    The same filters as `queue_page`, so a band tab or a search narrows the groups exactly as it
+    narrows the rows. Families are ordered by their best-ranked member, which keeps the grouped view
+    in the queue's own order rather than inventing a second one.
+
+    Alerts with no family (`family_key IS NULL`) are excluded: a group of things that are similar to
+    nothing is not a group. They remain visible in the ungrouped queue.
+    """
+    where, params = _queue_filters(filters)
+    where = (where + " AND " if where else " WHERE ") + "a.family_key IS NOT NULL"
+    total = int(conn.execute(
+        f"SELECT COUNT(DISTINCT a.family_key) AS n "
+        f"FROM alerts a JOIN flow_data f ON f.alert_id = a.id{where}", params).fetchone()["n"])
+    rows = conn.execute(
+        FAMILY_GROUP.format(order=db.QUEUE_ORDER_BY, where=where), [*params, limit, offset])
+    return [dict(row) for row in rows], total
 
 
 def feedback_for_alert(conn: sqlite3.Connection, alert_id: int) -> list[m.FeedbackEvent]:

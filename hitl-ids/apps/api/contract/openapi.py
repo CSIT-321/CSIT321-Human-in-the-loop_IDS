@@ -27,6 +27,7 @@ from apps.api.contract import alerts as a
 from apps.api.contract import auth as au
 from apps.api.contract import operations as o
 from apps.api.contract.common import (
+    FAMILY_QUERY_OMITS,
     MAX_PAGE_SIZE,
     QUEUE_ORDER,
     ErrorResponse,
@@ -55,6 +56,9 @@ MODELS: tuple[type[BaseModel], ...] = (
     a.ShapFeature,
     a.EvidencePanel,
     a.FamilyPanel,
+    a.SimilarityBasis,
+    a.FamilyRow,
+    a.MovedMember,
     a.FeedbackRequest,
     a.FeedbackResponse,
     a.FeedbackRecord,
@@ -258,6 +262,30 @@ def _paths() -> dict[str, Any]:
                 "parameters": [AUTH_PARAMETER, *_query_parameters(QueueQuery)],
                 "responses": {"200": {"description": "A page of the queue",
                                       **_page_of(a.AlertSummary)}, **_errors(400)},
+            }
+        },
+        "/api/alerts/families": {
+            "get": {
+                "operationId": "listAlertFamilies",
+                "summary": "The queue grouped by similar-alert family",
+                "description":
+                    "The same queue, grouped by what the system calls similar: attack class, "
+                    "destination port, protocol and matched rule must all agree (plus the "
+                    "destination IP when nothing flagged the flow). Exact match, no threshold.\n\n"
+                    "This is how similar-alert learning is *seen*. A verdict re-scores every "
+                    "unjudged member of its family, and ungrouped those alerts are scattered "
+                    "through the queue with nothing naming them as a group. Each row carries the "
+                    "family's gate state and applied adjustment; `familyKey` reads the members "
+                    "back through `GET /api/alerts`.\n\n"
+                    "Groups are ordered by `bestRank` — their highest-ranked member's position in "
+                    "the contract queue order — so this is the queue's own order, not a second "
+                    "ranking. Alerts with no family are excluded.",
+                "tags": ["alerts"],
+                "parameters": [AUTH_PARAMETER,
+                               *(parameter for parameter in _query_parameters(QueueQuery)
+                                 if parameter["name"] not in FAMILY_QUERY_OMITS)],
+                "responses": {"200": {"description": "A page of families",
+                                      **_page_of(a.FamilyRow)}, **_errors(400)},
             }
         },
         "/api/alerts/{alertRef}": {

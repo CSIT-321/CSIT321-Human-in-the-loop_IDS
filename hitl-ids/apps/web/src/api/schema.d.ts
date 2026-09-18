@@ -64,6 +64,30 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/alerts/families": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * The queue grouped by similar-alert family
+         * @description The same queue, grouped by what the system calls similar: attack class, destination port, protocol and matched rule must all agree (plus the destination IP when nothing flagged the flow). Exact match, no threshold.
+         *
+         *     This is how similar-alert learning is *seen*. A verdict re-scores every unjudged member of its family, and ungrouped those alerts are scattered through the queue with nothing naming them as a group. Each row carries the family's gate state and applied adjustment; `familyKey` reads the members back through `GET /api/alerts`.
+         *
+         *     Groups are ordered by `bestRank` — their highest-ranked member's position in the contract queue order — so this is the queue's own order, not a second ranking. Alerts with no family are excluded.
+         */
+        get: operations["listAlertFamilies"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/alerts/{alertRef}": {
         parameters: {
             query?: never;
@@ -1117,10 +1141,21 @@ export interface components {
          */
         FamilyEffect: {
             /**
+             * @description What made these alerts similar, in the analyst's own terms
+             * @default null
+             */
+            basis: components["schemas"]["SimilarityBasis"] | null;
+            /**
              * Familykey
              * @default null
              */
             familyKey: string | null;
+            /**
+             * Familylabel
+             * @description The family as a person reads it
+             * @default
+             */
+            familyLabel: string;
             /**
              * Gateopen
              * @default false
@@ -1136,10 +1171,27 @@ export interface components {
                 [key: string]: number;
             };
             /**
+             * Members
+             * @description Alerts in the family, the judged one included
+             * @default 0
+             */
+            members: number;
+            /**
              * Membersmoved
              * @default 0
              */
             membersMoved: number;
+            /**
+             * Moved
+             * @description The members that moved, best new rank first. Capped at `movedLimit`; `membersMoved` is always the true count
+             */
+            moved?: components["schemas"]["MovedMember"][];
+            /**
+             * Movedlimit
+             * @description How many moves this response lists
+             * @default 0
+             */
+            movedLimit: number;
         };
         /**
          * FamilyPanel
@@ -1162,6 +1214,11 @@ export interface components {
              */
             appliedOffset: number;
             /**
+             * @description Why these alerts are one family; null when it has no family
+             * @default null
+             */
+            basis: components["schemas"]["SimilarityBasis"] | null;
+            /**
              * Dominantcategory
              * @default null
              */
@@ -1171,6 +1228,12 @@ export interface components {
              * @default null
              */
             familyKey: string | null;
+            /**
+             * Familylabel
+             * @description The key as a person reads it, e.g. `Brute Force · port 21 · tcp · SIG-FTP-BRUTE-FORCE`
+             * @default
+             */
+            familyLabel: string;
             /**
              * Gateopen
              * @default false
@@ -1192,6 +1255,98 @@ export interface components {
              * @default null
              */
             note: string | null;
+        };
+        /**
+         * FamilyRow
+         * @description One row of ``GET /api/alerts/families`` — the queue grouped by what the system calls similar.
+         *
+         *     The same filters as the queue, so a band tab or a search narrows the groups exactly as it
+         *     narrows the rows. Families are ordered by `bestRank`, their highest-ranked member's position in
+         *     the contract queue order, so the grouped view keeps the queue's own order instead of inventing a
+         *     second ranking.
+         *
+         *     Alerts with no family are absent: a group of things similar to nothing is not a group. They stay
+         *     visible in the ungrouped queue.
+         */
+        FamilyRow: {
+            /**
+             * Agreementratio
+             * @default null
+             */
+            agreementRatio: number | null;
+            /**
+             * Appliedadjustment
+             * @default 0
+             */
+            appliedAdjustment: number;
+            /**
+             * Appliedoffset
+             * @default 0
+             */
+            appliedOffset: number;
+            /**
+             * Attackcategory
+             * @default null
+             */
+            attackCategory: string | null;
+            /** @default null */
+            basis: components["schemas"]["SimilarityBasis"] | null;
+            /**
+             * Bestalertref
+             * Format: uuid
+             */
+            bestAlertRef: string;
+            /**
+             * Bestqueueclass
+             * @enum {string}
+             */
+            bestQueueClass: "tier2_candidate" | "corroborated" | "signature_override" | "ml_only" | "none";
+            /**
+             * Bestrank
+             * @description Queue position of the family's highest-ranked member
+             */
+            bestRank: number;
+            /** Bestscore */
+            bestScore: number;
+            /**
+             * Bestseverity
+             * @enum {string}
+             */
+            bestSeverity: "Critical" | "High" | "Medium" | "Low" | "Informational";
+            /**
+             * Dominantcategory
+             * @default null
+             */
+            dominantCategory: ("confirm_true_positive" | "mark_false_positive" | "mark_expected_activity") | null;
+            /** Familykey */
+            familyKey: string;
+            /** Familylabel */
+            familyLabel: string;
+            /**
+             * Gateopen
+             * @default false
+             */
+            gateOpen: boolean;
+            /**
+             * Gatereason
+             * @default null
+             */
+            gateReason: string | null;
+            /**
+             * Judged
+             * @description Members carrying a verdict; the rest moved by learning
+             */
+            judged: number;
+            /**
+             * Learnedat
+             * @description When this family's learning was last recomputed
+             * @default null
+             */
+            learnedAt: string | null;
+            /** Members */
+            members: number;
+            /** Requiresreview */
+            requiresReview: number;
         };
         /**
          * FeedbackHistory
@@ -1656,6 +1811,53 @@ export interface components {
             topSupporting?: components["schemas"]["ShapFeature"][];
         };
         /**
+         * MovedMember
+         * @description One similar alert this verdict moved, and where it moved from and to.
+         *
+         *     **This is the product's claim, stated as evidence rather than asserted.** The analyst judged one
+         *     alert; these moved because they are like it, with no one touching them. Rank is carried
+         *     alongside score because a score change nobody can locate in the queue demonstrates nothing —
+         *     `rankBefore` and `rankAfter` are the alert's position in the contract queue order, measured
+         *     either side of the same transaction.
+         */
+        MovedMember: {
+            /**
+             * Alertref
+             * Format: uuid
+             */
+            alertRef: string;
+            /**
+             * Queueclassafter
+             * @enum {string}
+             */
+            queueClassAfter: "tier2_candidate" | "corroborated" | "signature_override" | "ml_only" | "none";
+            /**
+             * Queueclassbefore
+             * @enum {string}
+             */
+            queueClassBefore: "tier2_candidate" | "corroborated" | "signature_override" | "ml_only" | "none";
+            /**
+             * Rankafter
+             * @default null
+             */
+            rankAfter: number | null;
+            /**
+             * Rankbefore
+             * @description Position in the queue before this verdict, 1 = top
+             * @default null
+             */
+            rankBefore: number | null;
+            /** Scoreafter */
+            scoreAfter: number;
+            /** Scorebefore */
+            scoreBefore: number;
+            /**
+             * Sourcerecordid
+             * @description The short name an analyst reads aloud, e.g. AL-00576
+             */
+            sourceRecordId: string;
+        };
+        /**
          * MovementGroup
          * @description ``adjusted`` is the system acting; ``rankChanged`` includes drift caused by others moving.
          *     Leakage is measured by ``adjusted`` in the ``unrelated`` group, never by rank.
@@ -1912,6 +2114,54 @@ export interface components {
              * @default null
              */
             severityScore: number | null;
+        };
+        /**
+         * SimilarityBasis
+         * @description **What makes two alerts similar** — the family key read back as named fields (S7b).
+         *
+         *     The key is stored positionally (``["Brute Force",21,"tcp","SIG-FTP-BRUTE-FORCE"]``) because it
+         *     is an identity. This is the same thing said out loud, because "why did *those* alerts move?" is
+         *     the first question the feature invites, and an opaque key does not answer it.
+         *
+         *     Every field here is an **exact match** requirement: alerts are one family when all of them
+         *     agree. There is no similarity score and no threshold — the collaborator's weighted matcher was
+         *     deliberately not ported (`learning.py`), because the experiment that chose the ranking formula
+         *     grouped by exact family, and anything else would be a different mechanism than the one measured.
+         */
+        SimilarityBasis: {
+            /**
+             * Attackcategory
+             * @description The class the alert asserts; null when nothing flagged the flow
+             * @default null
+             */
+            attackCategory: string | null;
+            /**
+             * Dstip
+             * @description Present **only** for a flow no detector flagged. Without it a verdict on one unflagged flow would spread across all benign traffic on that port
+             * @default null
+             */
+            dstIp: string | null;
+            /**
+             * Dstport
+             * @default null
+             */
+            dstPort: number | null;
+            /**
+             * Protocol
+             * @default null
+             */
+            protocol: string | null;
+            /**
+             * Rule
+             * @description The membership rule in one sentence, for display beside the fields
+             */
+            rule: string;
+            /**
+             * Ruleid
+             * @description The first signature rule that matched; null when none did
+             * @default null
+             */
+            ruleId: string | null;
         };
         /** SourceIpOverviewPage */
         SourceIpOverviewPage: {
@@ -2205,6 +2455,8 @@ export interface operations {
                 search?: string | null;
                 /** @description Restrict to one detection run */
                 runId?: number | null;
+                /** @description Restrict to one similar-alert family, as `GET /api/alerts/families` returns its `familyKey`. This is how the members a verdict moved are read back: the alerts that re-ranked without anyone judging them are otherwise scattered through the queue with nothing naming them as a group */
+                familyKey?: string | null;
                 /** @description Filter by the verdict currently in force */
                 verdict?: ("confirm_true_positive" | "mark_false_positive" | "mark_expected_activity" | "needs_investigation" | "escalate")[] | null;
                 /** @description `true`: only alerts with no verdict recorded at all — the complement of the `verdict` filter, which asks about the verdict currently in force. The queue row's `hasFeedback` reports the same condition, so a filter and its row pill never disagree */
@@ -2233,6 +2485,89 @@ export interface operations {
                 content: {
                     "application/json": {
                         items: components["schemas"]["AlertSummary"][];
+                        page: components["schemas"]["PageInfo"];
+                    };
+                };
+            };
+            /** @description Validation failed */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not signed in, or the token expired */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    listAlertFamilies: {
+        parameters: {
+            query?: {
+                /** @description null */
+                limit?: number;
+                /** @description null */
+                offset?: number;
+                /** @description Filter to these queue bands */
+                queueClass?: ("tier2_candidate" | "corroborated" | "signature_override" | "ml_only" | "none")[] | null;
+                /** @description Filter to these evidence classes. Reported, never sorted on */
+                evidenceClass?: ("corroborated" | "signature_override" | "ml_only" | "none")[] | null;
+                /** @description null */
+                severity?: ("Critical" | "High" | "Medium" | "Low" | "Informational")[] | null;
+                /** @description null */
+                status?: ("new" | "claimed" | "in_progress" | "resolved" | "dismissed")[] | null;
+                /** @description null */
+                attackCategory?: ("Benign" | "Botnet" | "Brute Force" | "DDoS" | "DoS" | "Infiltration" | "Port Scan" | "Web Attack")[] | null;
+                /** @description null */
+                requiresReview?: boolean | null;
+                /** @description On combined_score */
+                minScore?: number | null;
+                /** @description null */
+                maxScore?: number | null;
+                /** @description On detection_score, the immutable column. With evidence filters, `detectionMaxScore=99.999` isolates flagged alerts a confirming verdict can still visibly raise — 975 of the 996 flagged alerts sit at exactly 100.0, and the rest are all below 99.999 */
+                detectionMinScore?: number | null;
+                /** @description null */
+                detectionMaxScore?: number | null;
+                /** @description Substring of source IP, destination IP, or matched rule id */
+                search?: string | null;
+                /** @description Restrict to one detection run */
+                runId?: number | null;
+                /** @description Filter by the verdict currently in force */
+                verdict?: ("confirm_true_positive" | "mark_false_positive" | "mark_expected_activity" | "needs_investigation" | "escalate")[] | null;
+                /** @description `true`: only alerts with no verdict recorded at all — the complement of the `verdict` filter, which asks about the verdict currently in force. The queue row's `hasFeedback` reports the same condition, so a filter and its row pill never disagree */
+                unjudged?: boolean | null;
+                /** @description `me`: owned by the caller's demo user; `unassigned`: no owner */
+                owner?: ("me" | "unassigned") | null;
+                /** @description Earliest flow capture time, capture-local, e.g. 2018-02-14 12:00 */
+                flowFrom?: string | null;
+                /** @description Latest flow capture time; a date alone means the end of that day */
+                flowTo?: string | null;
+            };
+            header?: {
+                /** @description `Bearer <token>` from POST /api/auth/login */
+                Authorization?: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description A page of families */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        items: components["schemas"]["FamilyRow"][];
                         page: components["schemas"]["PageInfo"];
                     };
                 };

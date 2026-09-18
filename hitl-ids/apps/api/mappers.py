@@ -27,7 +27,11 @@ from apps.api.contract import alerts as ca
 from apps.api.contract import operations as co
 from apps.api.contract.common import Actor
 from packages.contracts import models as m
-from packages.detection.feedback.learning import detection_placement
+from packages.detection.feedback.learning import (
+    detection_placement,
+    family_label,
+    parse_family_key,
+)
 from packages.detection.feedback.service import FEEDBACK_EFFECTS
 from packages.detection.guardrail.policy import GuardrailPolicy
 from packages.detection.ranking.severity import load_severity_chart
@@ -178,10 +182,31 @@ def evidence_panel(alert: m.Alert, *, fusion_scheme: str | None = None) -> ca.Ev
         tier2_candidate=alert.queue_class == "tier2_candidate")
 
 
+#: The membership rule, stated for the screen. Written once here so the alert panel, the grouped
+#: queue and the verdict response cannot describe similarity three different ways.
+SIMILARITY_RULE = ("Alerts are one family when the attack class, destination port, protocol and "
+                   "matched rule all match exactly. There is no similarity score and no threshold.")
+UNFLAGGED_RULE = (SIMILARITY_RULE + " For a flow no detector flagged, the destination address must "
+                  "match too, so a verdict cannot spread across all benign traffic on a port.")
+
+
+def similarity_basis(family_key: str | None) -> ca.SimilarityBasis | None:
+    """The family key in the analyst's own terms — `learning.parse_family_key` on the wire."""
+    fields = parse_family_key(family_key)
+    if fields is None:
+        return None
+    return ca.SimilarityBasis(
+        attack_category=fields["attack_category"], dst_port=fields["dst_port"],
+        protocol=fields["protocol"], rule_id=fields["rule_id"], dst_ip=fields["dst_ip"],
+        rule=UNFLAGGED_RULE if fields["dst_ip"] else SIMILARITY_RULE)
+
+
 def family_panel(alert: m.Alert, family: m.AlertFamily | None, members: int) -> ca.FamilyPanel:
+    basis = similarity_basis(alert.family_key)
+    label = family_label(alert.family_key)
     if family is None:
         return ca.FamilyPanel(
-            family_key=alert.family_key, members=members,
+            family_key=alert.family_key, family_label=label, basis=basis, members=members,
             gate_reason=("No verdict has been recorded for this family yet."
                          if alert.family_key else None),
             note=(None if alert.family_key else
@@ -191,11 +216,35 @@ def family_panel(alert: m.Alert, family: m.AlertFamily | None, members: int) -> 
         note = ("Similar alerts have been judged, so this alert carries its family's learned "
                 "adjustment even where it has no verdict of its own.")
     return ca.FamilyPanel(
-        family_key=family.family_key, members=members, gate_open=family.gate_open,
+        family_key=family.family_key, family_label=label, basis=basis, members=members,
+        gate_open=family.gate_open,
         gate_reason=family.gate_reason, dominant_category=family.dominant_category,
         agreement_ratio=family.agreement_ratio,
         applied_adjustment=family.applied_adjustment, applied_offset=family.applied_offset,
         note=note)
+
+
+def family_row(row: Mapping[str, Any], best_alert_ref: str) -> ca.FamilyRow:
+    """One grouped row from ``store.family_page``.
+
+    The learning columns arrive NULL for a family nothing has judged — most of them — so they are
+    defaulted here rather than left to a validator: "never judged" is the normal state of a family,
+    not a missing value.
+    """
+    key = str(row["family_key"])
+    return ca.FamilyRow(
+        family_key=key, family_label=family_label(key) or key, basis=similarity_basis(key),
+        members=int(row["members"]), judged=int(row["judged"] or 0),
+        requires_review=int(row["requires_review"] or 0),
+        best_rank=int(row["best_rank"]), best_alert_ref=best_alert_ref,
+        best_severity=row["best_severity"], best_score=row["best_score"],
+        best_queue_class=row["best_queue_class"], attack_category=row["attack_category"],
+        gate_open=bool(row["gate_open"]), gate_reason=row["gate_reason"],
+        dominant_category=row["dominant_category"], agreement_ratio=row["agreement_ratio"],
+        applied_adjustment=float(row["applied_adjustment"] or 0.0),
+        applied_offset=int(row["applied_offset"] or 0),
+        # Stored as fixed-width UTC text (`2026-09-16T09:15:09.957252Z`); Pydantic parses it.
+        learned_at=row["learned_at"] or None)
 
 
 # --------------------------------------------------------------------------------------------

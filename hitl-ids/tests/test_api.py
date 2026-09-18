@@ -429,6 +429,82 @@ def test_an_open_gate_reaches_members_that_were_never_judged(client):
     assert family["note"], "the panel must explain why an unjudged alert carries an adjustment"
 
 
+def test_the_verdict_names_the_similar_alerts_it_moved(client):
+    """The product's central claim, as the API states it.
+
+    The response must carry the moved members themselves — with the score, the band and the queue
+    rank each one held before and after — not just a count. `membersMoved` may legitimately be 0 on
+    a saturated family; what must never happen is a non-zero count with nothing behind it.
+    """
+    family_alerts = [i for i in rows(client, limit=100)
+                     if i["queueClass"] != "none" and i["attackCategory"] == "Brute Force"]
+    body = {}
+    for alert in family_alerts[:3]:
+        body = client.post(f"/api/alerts/{alert['alertRef']}/feedback",
+                           json={"category": "mark_false_positive"}).json()
+
+    family = body["family"]
+    assert family["gateOpen"] is True
+    assert family["familyLabel"] and family["familyKey"], "the family must be nameable on screen"
+    assert family["basis"]["attackCategory"] == "Brute Force"
+    assert family["basis"]["dstPort"] == 21 and family["basis"]["rule"]
+    assert family["membersMoved"] > 0, "a dismissal of a scored family must move its members"
+    assert len(family["moved"]) == min(family["membersMoved"], family["movedLimit"])
+
+    judged = {alert["alertRef"] for alert in family_alerts[:3]}
+    for member in family["moved"]:
+        assert member["alertRef"] not in judged, "these are the alerts nobody judged"
+        assert member["scoreAfter"] < member["scoreBefore"], "a dismissal lowers a family"
+        assert member["rankBefore"] is not None and member["rankAfter"] is not None
+        assert member["sourceRecordId"], "the name an analyst reads aloud"
+    ranks = [member["rankAfter"] for member in family["moved"]]
+    assert ranks == sorted(ranks), "best new rank first: the analyst's next question"
+
+
+def test_the_queue_groups_by_the_family_it_learns_from(client):
+    """The grouped queue is the same queue: same filters, same order, folded by similarity."""
+    grouped = client.get("/api/alerts/families", params={"limit": 50}).json()
+    assert grouped["page"]["total"] > 0
+    ranks = [row["bestRank"] for row in grouped["items"]]
+    assert ranks == sorted(ranks), "families follow their best-ranked member, not a second ranking"
+
+    row = grouped["items"][0]
+    assert row["familyLabel"] and row["basis"]["rule"]
+    assert row["members"] >= 1 and row["judged"] == 0
+    # The key reads its own members back through the ordinary queue endpoint.
+    members = client.get("/api/alerts", params={"familyKey": row["familyKey"], "limit": 200}).json()
+    assert members["page"]["total"] == row["members"]
+    assert {item["attackCategory"] for item in members["items"]} == {row["attackCategory"]}
+
+
+def test_a_family_row_reports_what_its_learning_applied(client):
+    """A group that has learned must say so, or the grouped view hides the very thing it exists
+    to show."""
+    family_alerts = [i for i in rows(client, limit=100)
+                     if i["queueClass"] != "none" and i["attackCategory"] == "Brute Force"]
+    for alert in family_alerts[:3]:
+        client.post(f"/api/alerts/{alert['alertRef']}/feedback",
+                    json={"category": "confirm_true_positive"})
+
+    grouped = client.get("/api/alerts/families", params={"limit": 200}).json()["items"]
+    row = next(item for item in grouped if item["attackCategory"] == "Brute Force")
+    assert (row["gateOpen"], row["judged"]) == (True, 3)
+    assert row["dominantCategory"] == "confirm_true_positive"
+    assert row["agreementRatio"] == 1.0
+    assert row["appliedAdjustment"] != 0 or row["appliedOffset"] != 0
+    assert row["learnedAt"] is not None
+
+
+def test_the_grouped_queue_refuses_a_sort_it_cannot_honour(client):
+    """`sort` is absent from this operation by design; FastAPI ignores unknown query parameters, so
+    the guarantee that matters is that the order never changes."""
+    plain = client.get("/api/alerts/families", params={"limit": 10}).json()["items"]
+    with_sort = client.get("/api/alerts/families",
+                           params={"limit": 10, "sort": "combined_score",
+                                   "direction": "asc"}).json()["items"]
+    assert [row["familyKey"] for row in plain] == [row["familyKey"] for row in with_sort]
+
+
 def test_the_severity_label_agrees_with_the_score_after_a_verdict(client):
     """The invariant behind the labels: severity is a function of the operational score.
 

@@ -95,6 +95,49 @@ def family_key(attack: str | None, dst_port: int | str, protocol: int | str,
     return json.dumps(parts, separators=(",", ":"))
 
 
+#: The key's fields, in the order `family_key` writes them. The fifth is present only for a flow no
+#: detector flagged, which is why this is a tuple and not a fixed-width record.
+FAMILY_FIELDS = ("attack_category", "dst_port", "protocol", "rule_id", "dst_ip")
+
+
+def parse_family_key(key: str | None) -> dict[str, Any] | None:
+    """The key read back as named fields — the inverse of ``family_key``.
+
+    The key is written as positional JSON because it is an identity, not a document; but "what makes
+    these alerts similar" is a question an analyst is entitled to have answered on screen, and
+    ``["Brute Force",21,"tcp","SIG-FTP-BRUTE-FORCE"]`` does not answer it. Parsing lives here,
+    beside the function that writes it, so the two cannot drift.
+
+    Returns ``None`` for a key that is absent or not in this scheme, never a partial guess.
+    """
+    if not key:
+        return None
+    try:
+        parts = json.loads(key)
+    except (TypeError, ValueError):
+        return None
+    if not isinstance(parts, list) or not 4 <= len(parts) <= len(FAMILY_FIELDS):
+        return None
+    fields: dict[str, Any] = dict(zip(FAMILY_FIELDS, parts, strict=False))
+    if fields.get("rule_id") == NO_RULE:
+        fields["rule_id"] = None
+    return {name: fields.get(name) for name in FAMILY_FIELDS}
+
+
+def family_label(key: str | None) -> str:
+    """The key as a person reads it: ``Brute Force · port 21 · tcp · SIG-FTP-BRUTE-FORCE``."""
+    fields = parse_family_key(key)
+    if fields is None:
+        return ""
+    parts = [str(fields["attack_category"] or "Unflagged"), f"port {fields['dst_port']}",
+             str(fields["protocol"])]
+    if fields["rule_id"]:
+        parts.append(str(fields["rule_id"]))
+    if fields["dst_ip"]:
+        parts.append(f"to {fields['dst_ip']}")
+    return " · ".join(parts)
+
+
 def family_key_of(alert: m.Alert, flow: m.FlowRecord) -> str:
     """An alert's family, from the alert and its flow - what S9 stores in ``alerts.family_key``."""
     rule = alert.signature_rules[0].rule_id if alert.signature_rules else None

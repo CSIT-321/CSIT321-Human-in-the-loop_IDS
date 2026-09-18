@@ -1389,6 +1389,18 @@
         "additionalProperties": false,
         "description": "What this verdict taught the alerts like it. Zero members moved is a normal answer — the\ngate needs three verdicts before it opens.",
         "properties": {
+          "basis": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/SimilarityBasis"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "What made these alerts similar, in the analyst's own terms"
+          },
           "familyKey": {
             "anyOf": [
               {
@@ -1400,6 +1412,12 @@
             ],
             "default": null,
             "title": "Familykey"
+          },
+          "familyLabel": {
+            "default": "",
+            "description": "The family as a person reads it",
+            "title": "Familylabel",
+            "type": "string"
           },
           "gateOpen": {
             "default": false,
@@ -1425,10 +1443,32 @@
             "title": "Guardrailinterventions",
             "type": "object"
           },
+          "members": {
+            "default": 0,
+            "description": "Alerts in the family, the judged one included",
+            "minimum": 0,
+            "title": "Members",
+            "type": "integer"
+          },
           "membersMoved": {
             "default": 0,
             "minimum": 0,
             "title": "Membersmoved",
+            "type": "integer"
+          },
+          "moved": {
+            "description": "The members that moved, best new rank first. Capped at `movedLimit`; `membersMoved` is always the true count",
+            "items": {
+              "$ref": "#/components/schemas/MovedMember"
+            },
+            "title": "Moved",
+            "type": "array"
+          },
+          "movedLimit": {
+            "default": 0,
+            "description": "How many moves this response lists",
+            "minimum": 0,
+            "title": "Movedlimit",
             "type": "integer"
           }
         },
@@ -1463,6 +1503,18 @@
             "title": "Appliedoffset",
             "type": "integer"
           },
+          "basis": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/SimilarityBasis"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "Why these alerts are one family; null when it has no family"
+          },
           "dominantCategory": {
             "anyOf": [
               {
@@ -1491,6 +1543,12 @@
             ],
             "default": null,
             "title": "Familykey"
+          },
+          "familyLabel": {
+            "default": "",
+            "description": "The key as a person reads it, e.g. `Brute Force · port 21 · tcp · SIG-FTP-BRUTE-FORCE`",
+            "title": "Familylabel",
+            "type": "string"
           },
           "gateOpen": {
             "default": false,
@@ -1530,6 +1588,185 @@
           }
         },
         "title": "FamilyPanel",
+        "type": "object"
+      },
+      "FamilyRow": {
+        "additionalProperties": false,
+        "description": "One row of ``GET /api/alerts/families`` — the queue grouped by what the system calls similar.\n\nThe same filters as the queue, so a band tab or a search narrows the groups exactly as it\nnarrows the rows. Families are ordered by `bestRank`, their highest-ranked member's position in\nthe contract queue order, so the grouped view keeps the queue's own order instead of inventing a\nsecond ranking.\n\nAlerts with no family are absent: a group of things similar to nothing is not a group. They stay\nvisible in the ungrouped queue.",
+        "properties": {
+          "agreementRatio": {
+            "anyOf": [
+              {
+                "maximum": 1,
+                "minimum": 0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Agreementratio"
+          },
+          "appliedAdjustment": {
+            "default": 0.0,
+            "title": "Appliedadjustment",
+            "type": "number"
+          },
+          "appliedOffset": {
+            "default": 0,
+            "title": "Appliedoffset",
+            "type": "integer"
+          },
+          "attackCategory": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Attackcategory"
+          },
+          "basis": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/SimilarityBasis"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
+          "bestAlertRef": {
+            "format": "uuid",
+            "title": "Bestalertref",
+            "type": "string"
+          },
+          "bestQueueClass": {
+            "enum": [
+              "tier2_candidate",
+              "corroborated",
+              "signature_override",
+              "ml_only",
+              "none"
+            ],
+            "title": "Bestqueueclass",
+            "type": "string"
+          },
+          "bestRank": {
+            "description": "Queue position of the family's highest-ranked member",
+            "minimum": 1,
+            "title": "Bestrank",
+            "type": "integer"
+          },
+          "bestScore": {
+            "maximum": 100,
+            "minimum": 0,
+            "title": "Bestscore",
+            "type": "number"
+          },
+          "bestSeverity": {
+            "enum": [
+              "Critical",
+              "High",
+              "Medium",
+              "Low",
+              "Informational"
+            ],
+            "title": "Bestseverity",
+            "type": "string"
+          },
+          "dominantCategory": {
+            "anyOf": [
+              {
+                "enum": [
+                  "confirm_true_positive",
+                  "mark_false_positive",
+                  "mark_expected_activity"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Dominantcategory"
+          },
+          "familyKey": {
+            "title": "Familykey",
+            "type": "string"
+          },
+          "familyLabel": {
+            "minLength": 1,
+            "title": "Familylabel",
+            "type": "string"
+          },
+          "gateOpen": {
+            "default": false,
+            "title": "Gateopen",
+            "type": "boolean"
+          },
+          "gateReason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Gatereason"
+          },
+          "judged": {
+            "description": "Members carrying a verdict; the rest moved by learning",
+            "minimum": 0,
+            "title": "Judged",
+            "type": "integer"
+          },
+          "learnedAt": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "When this family's learning was last recomputed",
+            "title": "Learnedat"
+          },
+          "members": {
+            "minimum": 1,
+            "title": "Members",
+            "type": "integer"
+          },
+          "requiresReview": {
+            "minimum": 0,
+            "title": "Requiresreview",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "familyKey",
+          "familyLabel",
+          "members",
+          "judged",
+          "requiresReview",
+          "bestRank",
+          "bestAlertRef",
+          "bestSeverity",
+          "bestScore",
+          "bestQueueClass"
+        ],
+        "title": "FamilyRow",
         "type": "object"
       },
       "FeedbackHistory": {
@@ -2618,6 +2855,93 @@
         "title": "MlPanel",
         "type": "object"
       },
+      "MovedMember": {
+        "additionalProperties": false,
+        "description": "One similar alert this verdict moved, and where it moved from and to.\n\n**This is the product's claim, stated as evidence rather than asserted.** The analyst judged one\nalert; these moved because they are like it, with no one touching them. Rank is carried\nalongside score because a score change nobody can locate in the queue demonstrates nothing —\n`rankBefore` and `rankAfter` are the alert's position in the contract queue order, measured\neither side of the same transaction.",
+        "properties": {
+          "alertRef": {
+            "format": "uuid",
+            "title": "Alertref",
+            "type": "string"
+          },
+          "queueClassAfter": {
+            "enum": [
+              "tier2_candidate",
+              "corroborated",
+              "signature_override",
+              "ml_only",
+              "none"
+            ],
+            "title": "Queueclassafter",
+            "type": "string"
+          },
+          "queueClassBefore": {
+            "enum": [
+              "tier2_candidate",
+              "corroborated",
+              "signature_override",
+              "ml_only",
+              "none"
+            ],
+            "title": "Queueclassbefore",
+            "type": "string"
+          },
+          "rankAfter": {
+            "anyOf": [
+              {
+                "minimum": 1,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Rankafter"
+          },
+          "rankBefore": {
+            "anyOf": [
+              {
+                "minimum": 1,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "Position in the queue before this verdict, 1 = top",
+            "title": "Rankbefore"
+          },
+          "scoreAfter": {
+            "maximum": 100,
+            "minimum": 0,
+            "title": "Scoreafter",
+            "type": "number"
+          },
+          "scoreBefore": {
+            "maximum": 100,
+            "minimum": 0,
+            "title": "Scorebefore",
+            "type": "number"
+          },
+          "sourceRecordId": {
+            "description": "The short name an analyst reads aloud, e.g. AL-00576",
+            "title": "Sourcerecordid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "alertRef",
+          "sourceRecordId",
+          "scoreBefore",
+          "scoreAfter",
+          "queueClassBefore",
+          "queueClassAfter"
+        ],
+        "title": "MovedMember",
+        "type": "object"
+      },
       "MovementGroup": {
         "additionalProperties": false,
         "description": "``adjusted`` is the system acting; ``rankChanged`` includes drift caused by others moving.\nLeakage is measured by ``adjusted`` in the ``unrelated`` group, never by rank.",
@@ -3198,6 +3522,88 @@
           }
         },
         "title": "SignaturePanel",
+        "type": "object"
+      },
+      "SimilarityBasis": {
+        "additionalProperties": false,
+        "description": "**What makes two alerts similar** — the family key read back as named fields (S7b).\n\nThe key is stored positionally (``[\"Brute Force\",21,\"tcp\",\"SIG-FTP-BRUTE-FORCE\"]``) because it\nis an identity. This is the same thing said out loud, because \"why did *those* alerts move?\" is\nthe first question the feature invites, and an opaque key does not answer it.\n\nEvery field here is an **exact match** requirement: alerts are one family when all of them\nagree. There is no similarity score and no threshold — the collaborator's weighted matcher was\ndeliberately not ported (`learning.py`), because the experiment that chose the ranking formula\ngrouped by exact family, and anything else would be a different mechanism than the one measured.",
+        "properties": {
+          "attackCategory": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "The class the alert asserts; null when nothing flagged the flow",
+            "title": "Attackcategory"
+          },
+          "dstIp": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "Present **only** for a flow no detector flagged. Without it a verdict on one unflagged flow would spread across all benign traffic on that port",
+            "title": "Dstip"
+          },
+          "dstPort": {
+            "anyOf": [
+              {
+                "maximum": 65535,
+                "minimum": 0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Dstport"
+          },
+          "protocol": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Protocol"
+          },
+          "rule": {
+            "description": "The membership rule in one sentence, for display beside the fields",
+            "minLength": 1,
+            "title": "Rule",
+            "type": "string"
+          },
+          "ruleId": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "The first signature rule that matched; null when none did",
+            "title": "Ruleid"
+          }
+        },
+        "required": [
+          "rule"
+        ],
+        "title": "SimilarityBasis",
         "type": "object"
       },
       "SourceIpOverviewPage": {
@@ -4140,6 +4546,26 @@
             }
           },
           {
+            "description": "Restrict to one similar-alert family, as `GET /api/alerts/families` returns its `familyKey`. This is how the members a verdict moved are read back: the alerts that re-ranked without anyone judging them are otherwise scattered through the queue with nothing naming them as a group",
+            "in": "query",
+            "name": "familyKey",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 300,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "description": "Restrict to one similar-alert family, as `GET /api/alerts/families` returns its `familyKey`. This is how the members a verdict moved are read back: the alerts that re-ranked without anyone judging them are otherwise scattered through the queue with nothing naming them as a group",
+              "title": "Familykey"
+            }
+          },
+          {
             "description": "Filter by the verdict currently in force",
             "in": "query",
             "name": "verdict",
@@ -4299,6 +4725,494 @@
           }
         },
         "summary": "The ranked analyst queue",
+        "tags": [
+          "alerts"
+        ]
+      }
+    },
+    "/api/alerts/families": {
+      "get": {
+        "description": "The same queue, grouped by what the system calls similar: attack class, destination port, protocol and matched rule must all agree (plus the destination IP when nothing flagged the flow). Exact match, no threshold.\n\nThis is how similar-alert learning is *seen*. A verdict re-scores every unjudged member of its family, and ungrouped those alerts are scattered through the queue with nothing naming them as a group. Each row carries the family's gate state and applied adjustment; `familyKey` reads the members back through `GET /api/alerts`.\n\nGroups are ordered by `bestRank` — their highest-ranked member's position in the contract queue order — so this is the queue's own order, not a second ranking. Alerts with no family are excluded.",
+        "operationId": "listAlertFamilies",
+        "parameters": [
+          {
+            "description": "`Bearer <token>` from POST /api/auth/login",
+            "in": "header",
+            "name": "Authorization",
+            "required": false,
+            "schema": {
+              "example": "Bearer eyJhbGciOiJIUzI1NiJ9...",
+              "type": "string"
+            }
+          },
+          {
+            "description": null,
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 50,
+              "maximum": 200,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          },
+          {
+            "description": null,
+            "in": "query",
+            "name": "offset",
+            "required": false,
+            "schema": {
+              "default": 0,
+              "minimum": 0,
+              "title": "Offset",
+              "type": "integer"
+            }
+          },
+          {
+            "description": "Filter to these queue bands",
+            "in": "query",
+            "name": "queueClass",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "items": {
+                    "enum": [
+                      "tier2_candidate",
+                      "corroborated",
+                      "signature_override",
+                      "ml_only",
+                      "none"
+                    ],
+                    "type": "string"
+                  },
+                  "type": "array"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "description": "Filter to these queue bands",
+              "title": "Queueclass"
+            }
+          },
+          {
+            "description": "Filter to these evidence classes. Reported, never sorted on",
+            "in": "query",
+            "name": "evidenceClass",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "items": {
+                    "enum": [
+                      "corroborated",
+                      "signature_override",
+                      "ml_only",
+                      "none"
+                    ],
+                    "type": "string"
+                  },
+                  "type": "array"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "description": "Filter to these evidence classes. Reported, never sorted on",
+              "title": "Evidenceclass"
+            }
+          },
+          {
+            "description": null,
+            "in": "query",
+            "name": "severity",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "items": {
+                    "enum": [
+                      "Critical",
+                      "High",
+                      "Medium",
+                      "Low",
+                      "Informational"
+                    ],
+                    "type": "string"
+                  },
+                  "type": "array"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Severity"
+            }
+          },
+          {
+            "description": null,
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "items": {
+                    "enum": [
+                      "new",
+                      "claimed",
+                      "in_progress",
+                      "resolved",
+                      "dismissed"
+                    ],
+                    "type": "string"
+                  },
+                  "type": "array"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Status"
+            }
+          },
+          {
+            "description": null,
+            "in": "query",
+            "name": "attackCategory",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "items": {
+                    "enum": [
+                      "Benign",
+                      "Botnet",
+                      "Brute Force",
+                      "DDoS",
+                      "DoS",
+                      "Infiltration",
+                      "Port Scan",
+                      "Web Attack"
+                    ],
+                    "type": "string"
+                  },
+                  "type": "array"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Attackcategory"
+            }
+          },
+          {
+            "description": null,
+            "in": "query",
+            "name": "requiresReview",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Requiresreview"
+            }
+          },
+          {
+            "description": "On combined_score",
+            "in": "query",
+            "name": "minScore",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maximum": 100,
+                  "minimum": 0,
+                  "type": "number"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "description": "On combined_score",
+              "title": "Minscore"
+            }
+          },
+          {
+            "description": null,
+            "in": "query",
+            "name": "maxScore",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maximum": 100,
+                  "minimum": 0,
+                  "type": "number"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Maxscore"
+            }
+          },
+          {
+            "description": "On detection_score, the immutable column. With evidence filters, `detectionMaxScore=99.999` isolates flagged alerts a confirming verdict can still visibly raise — 975 of the 996 flagged alerts sit at exactly 100.0, and the rest are all below 99.999",
+            "in": "query",
+            "name": "detectionMinScore",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maximum": 100,
+                  "minimum": 0,
+                  "type": "number"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "description": "On detection_score, the immutable column. With evidence filters, `detectionMaxScore=99.999` isolates flagged alerts a confirming verdict can still visibly raise — 975 of the 996 flagged alerts sit at exactly 100.0, and the rest are all below 99.999",
+              "title": "Detectionminscore"
+            }
+          },
+          {
+            "description": null,
+            "in": "query",
+            "name": "detectionMaxScore",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maximum": 100,
+                  "minimum": 0,
+                  "type": "number"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Detectionmaxscore"
+            }
+          },
+          {
+            "description": "Substring of source IP, destination IP, or matched rule id",
+            "in": "query",
+            "name": "search",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 200,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "description": "Substring of source IP, destination IP, or matched rule id",
+              "title": "Search"
+            }
+          },
+          {
+            "description": "Restrict to one detection run",
+            "in": "query",
+            "name": "runId",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "description": "Restrict to one detection run",
+              "title": "Runid"
+            }
+          },
+          {
+            "description": "Filter by the verdict currently in force",
+            "in": "query",
+            "name": "verdict",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "items": {
+                    "enum": [
+                      "confirm_true_positive",
+                      "mark_false_positive",
+                      "mark_expected_activity",
+                      "needs_investigation",
+                      "escalate"
+                    ],
+                    "type": "string"
+                  },
+                  "type": "array"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "description": "Filter by the verdict currently in force",
+              "title": "Verdict"
+            }
+          },
+          {
+            "description": "`true`: only alerts with no verdict recorded at all — the complement of the `verdict` filter, which asks about the verdict currently in force. The queue row's `hasFeedback` reports the same condition, so a filter and its row pill never disagree",
+            "in": "query",
+            "name": "unjudged",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "description": "`true`: only alerts with no verdict recorded at all — the complement of the `verdict` filter, which asks about the verdict currently in force. The queue row's `hasFeedback` reports the same condition, so a filter and its row pill never disagree",
+              "title": "Unjudged"
+            }
+          },
+          {
+            "description": "`me`: owned by the caller's demo user; `unassigned`: no owner",
+            "in": "query",
+            "name": "owner",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "me",
+                    "unassigned"
+                  ],
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "description": "`me`: owned by the caller's demo user; `unassigned`: no owner",
+              "title": "Owner"
+            }
+          },
+          {
+            "description": "Earliest flow capture time, capture-local, e.g. 2018-02-14 12:00",
+            "in": "query",
+            "name": "flowFrom",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "pattern": "^\\d{4}-\\d{2}-\\d{2}( \\d{2}(:\\d{2}(:\\d{2}(\\.\\d{1,6})?)?)?)?$",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "description": "Earliest flow capture time, capture-local, e.g. 2018-02-14 12:00",
+              "title": "Flowfrom"
+            }
+          },
+          {
+            "description": "Latest flow capture time; a date alone means the end of that day",
+            "in": "query",
+            "name": "flowTo",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "pattern": "^\\d{4}-\\d{2}-\\d{2}( \\d{2}(:\\d{2}(:\\d{2}(\\.\\d{1,6})?)?)?)?$",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "description": "Latest flow capture time; a date alone means the end of that day",
+              "title": "Flowto"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "items": {
+                      "items": {
+                        "$ref": "#/components/schemas/FamilyRow"
+                      },
+                      "type": "array"
+                    },
+                    "page": {
+                      "$ref": "#/components/schemas/PageInfo"
+                    }
+                  },
+                  "required": [
+                    "items",
+                    "page"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "A page of families"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Validation failed"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not signed in, or the token expired"
+          }
+        },
+        "summary": "The queue grouped by similar-alert family",
         "tags": [
           "alerts"
         ]

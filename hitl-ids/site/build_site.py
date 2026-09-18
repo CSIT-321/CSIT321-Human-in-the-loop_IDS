@@ -81,18 +81,26 @@ def build(out: Path) -> list[str]:
 
 
 def check(out: Path) -> list[str]:
-    """Every relative src/href inside ``out`` must resolve. Returns the broken refs."""
-    broken: list[str] = []
+    """Problems with the built pages: broken local refs, and missing encoding declarations.
+
+    Both have shipped before. A broken image reached the first version of this build; and both the
+    showcase and the pipeline map were written as Artifacts, which inject ``<meta charset>`` for
+    them — served as ordinary files they had none, so a browser decoded them as cp1252 and every
+    em-dash, multiplication sign and "&#8805;" rendered as mojibake. The declaration has to sit in
+    the first 1024 bytes to be honoured, so it is checked there rather than anywhere in the file.
+    """
+    problems: list[str] = []
     for page in sorted(out.glob("*.html")):
         text = page.read_text(encoding="utf-8")
-        refs = re.findall(r'(?:src|href)="([^"#][^"]*)"', text)
-        for ref in refs:
+        for ref in re.findall(r'(?:src|href)="([^"#][^"]*)"', text):
             if ref.startswith(("http://", "https://", "mailto:", "data:", "//")):
                 continue
             target = (out / ref.split("?")[0].split("#")[0]).resolve()
             if not target.exists():
-                broken.append(f"{page.name} -> {ref}")
-    return broken
+                problems.append(f"{page.name} -> broken reference: {ref}")
+        if not re.search(r'<meta[^>]+charset\s*=\s*["\']?utf-8', text[:1024], re.I):
+            problems.append(f'{page.name} -> no <meta charset="utf-8"> in the first 1 KB')
+    return problems
 
 
 def serve(out: Path, port: int) -> None:
@@ -126,13 +134,13 @@ def main() -> int:
         print(f"  {name}")
 
     if args.check:
-        broken = check(args.out)
-        if broken:
-            print(f"\nFAIL: {len(broken)} broken local reference(s)", file=sys.stderr)
-            for item in broken:
+        problems = check(args.out)
+        if problems:
+            print(f"\nFAIL: {len(problems)} problem(s) with the built pages", file=sys.stderr)
+            for item in problems:
                 print(f"  {item}", file=sys.stderr)
             return 1
-        print("\nOK: every local reference resolves")
+        print("\nOK: every local reference resolves, and every page declares UTF-8")
 
     if args.serve:
         serve(args.out, args.port)

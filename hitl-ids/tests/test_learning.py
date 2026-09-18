@@ -332,6 +332,43 @@ def test_the_third_agreeing_verdict_opens_the_gate_and_moves_the_family(conn, ba
     assert result.learning.guardrail_interventions == {"critical_alert_floor": 1}
 
 
+def test_the_moved_members_are_named_not_counted(conn, base, web):
+    """The verdict reports *which* alerts it moved, each with its before and after.
+
+    A count cannot be audited or shown: "3 alerts moved" is not a record of which three, and the
+    alerts that move are precisely the ones no analyst touched.
+    """
+    a1, a2, a3, a4, a5, a6 = web
+    for second, alert_id in enumerate((a1, a2), 1):
+        assert verdict(conn, base, alert_id, "mark_false_positive", second).learning.moves == []
+    moves = verdict(conn, base, a3, "mark_false_positive", 3).learning.moves
+
+    assert [move.alert_id for move in moves] == [a4, a5, a6]  # every unjudged member, in id order
+    assert [(move.score_before, move.score_after) for move in moves] == [
+        (99.5, 81.5), (100.0, 82.0), (85.0, 70.0)]
+    # The two Tier 2 members drop a band; the Critical 85 was already ml_only and stays there —
+    # the record shows the band it actually left, not the band most of the family left.
+    assert [(move.queue_class_before, move.queue_class_after) for move in moves] == [
+        ("tier2_candidate", "ml_only"), ("tier2_candidate", "ml_only"), ("ml_only", "ml_only")]
+    assert all(move.alert_ref == str(get(conn, move.alert_id).alert_ref) for move in moves)
+    # These fixtures store alerts without their flow rows, so the source record id is empty here.
+    # The 1:1 invariant fills it everywhere a detection run built the database; test_api covers it.
+    assert all(move.source_record_id == "" for move in moves)
+
+
+def test_the_audit_entry_names_the_moved_members(conn, base, web):
+    """A score no analyst touched is exactly the change that has to stay traceable."""
+    for second, alert_id in enumerate(web[:3], 1):
+        result = verdict(conn, base, alert_id, "mark_false_positive", second)
+    entry = next(e for e in result.audit if e.event_type == "SIMILAR_ALERT_LEARNING")
+    assert entry.details["members_moved"] == 3
+    assert entry.details["members_truncated"] is False
+    assert [member["alert_ref"] for member in entry.details["members"]] == [
+        str(get(conn, alert_id).alert_ref) for alert_id in web[3:]]
+    assert [(member["score_before"], member["score_after"])
+            for member in entry.details["members"]] == [(99.5, 81.5), (100.0, 82.0), (85.0, 70.0)]
+
+
 def test_an_amended_verdict_counts_once_and_a_shut_gate_restores_the_family(conn, base, web):
     a1, a2, a3, a4, *_ = web
     for second, alert_id in enumerate((a1, a2, a3), 1):

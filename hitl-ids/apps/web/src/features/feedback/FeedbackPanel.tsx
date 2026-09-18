@@ -12,6 +12,7 @@ import { api, ApiError, CLIENT_ERROR, unwrap, type Schemas } from "../../api/cli
 import { ErrorState } from "../../components/states";
 import { Card, Pill } from "../../components/ui";
 import { formatDelta } from "../../design/format";
+import { MovedAlerts, SimilarityFacets } from "../family/SimilarAlerts";
 import { categoryMeta, FEEDBACK_CATEGORIES, type FeedbackCategory } from "./categories";
 import { ScoreAdjustmentChain } from "./ScoreAdjustmentChain";
 
@@ -19,19 +20,33 @@ type FeedbackResponse = Schemas["FeedbackResponse"];
 
 export function FamilyEffectNotice({ family }: { family: Schemas["FamilyEffect"] }) {
   const moved = family.membersMoved ?? 0;
+  const rows = family.moved ?? [];
   return (
-    <div
-      role="status"
-      aria-label="Similar-alert learning"
-      className="rounded-sm border border-border bg-raised px-4 py-3 text-sm"
-    >
-      <p className="font-medium text-text">
-        {family.gateOpen
-          ? `Similar-alert learning applied: ${moved} other ${moved === 1 ? "alert" : "alerts"} in this family moved.`
-          : "Similar-alert learning did not apply."}
-      </p>
-      {family.gateReason !== null && family.gateReason !== undefined && (
-        <p className="mt-1 text-muted">{family.gateReason}</p>
+    <div role="status" aria-label="Similar-alert learning" className="space-y-3 text-sm">
+      <div className="rounded-sm border border-border bg-raised px-4 py-3">
+        <p className="font-medium text-text">
+          {family.gateOpen
+            ? `Similar-alert learning applied: ${moved} other ${moved === 1 ? "alert" : "alerts"} in this family moved.`
+            : "Similar-alert learning did not apply."}
+        </p>
+        {family.gateReason !== null && family.gateReason !== undefined && (
+          <p className="mt-1 text-muted">{family.gateReason}</p>
+        )}
+        {family.familyLabel !== undefined && family.familyLabel !== "" && (
+          <p className="mt-2 text-[12px] text-dim">
+            Family: <span className="font-mono text-muted">{family.familyLabel}</span>
+            {family.members !== undefined && family.members > 0 && ` · ${family.members} alerts`}
+          </p>
+        )}
+      </div>
+      {/* The verdict's own alert is on screen above this. These are the ones nobody touched — the
+          claim the project is actually making, so they are listed rather than counted. */}
+      <MovedAlerts rows={rows} total={moved} familyKey={family.familyKey} />
+      {!family.gateOpen && family.basis !== null && family.basis !== undefined && (
+        <div className="rounded-sm border border-border px-4 py-3">
+          <p className="mb-2 text-[12px] font-medium text-text">Alerts this verdict could move</p>
+          <SimilarityFacets basis={family.basis} />
+        </div>
       )}
     </div>
   );

@@ -1,3 +1,5 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <title>HITL IDS Pipeline Map</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -456,7 +458,231 @@ ml  = 1 - P(Benign)                            <i>the model's malicious probabil
 </section>
 
 <section>
-  <h2><span class="num">04</span>Severity: the band, then the ceiling</h2>
+  <h2><span class="num">04</span>The exhaustive case tree — every input, every output</h2>
+  <p class="sub">Section 03 showed the four evidence classes. This section enumerates the <b>complete
+  input space</b>: every combination the detectors can present, the output fusion produces for it,
+  and what each downstream stage then does. Six terminal cases, three questions — and three of the
+  six never occur in the demo sample, which is itself worth knowing.</p>
+
+  <figure>
+    <div class="figscroll">
+      <svg viewBox="0 0 1000 570" role="img" aria-label="Exhaustive fusion decision tree. If a rule matched, ask whether a model prediction is available: if not, the case is signature_override; if so, ask whether the model predicts a class a matching rule asserts, giving corroborated or signature_override. If no rule matched, ask whether a prediction is available: if not, the case is none; if so, ask whether it predicts an attack, giving ml_only or none.">
+        <defs>
+          <marker id="t" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+            <path d="M 0 0 L 10 5 L 0 10 z" fill="#333b47"/>
+          </marker>
+          <marker id="tg" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+            <path d="M 0 0 L 10 5 L 0 10 z" fill="#3fb950"/>
+          </marker>
+          <marker id="tr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+            <path d="M 0 0 L 10 5 L 0 10 z" fill="#f0883e"/>
+          </marker>
+        </defs>
+
+        <rect class="nd" x="14" y="240" width="196" height="62" stroke-width="2"/>
+        <text class="nd-sub" x="30" y="264">Q1</text>
+        <text class="nd-title" x="30" y="284" font-size="11.5">Did a rule match?</text>
+
+        <polyline class="ar" points="210,258 238,258 238,124 252,124" marker-end="url(#t)"/>
+        <text class="ar-lbl" x="218" y="150">yes</text>
+        <polyline class="ar" points="210,284 238,284 238,418 252,418" marker-end="url(#t)"/>
+        <text class="ar-lbl" x="218" y="392">no</text>
+
+        <rect class="nd" x="256" y="94" width="196" height="62"/>
+        <text class="nd-sub" x="272" y="118">Q2a</text>
+        <text class="nd-title" x="272" y="138" font-size="11.5">Model available?</text>
+
+        <rect class="nd" x="256" y="388" width="196" height="62"/>
+        <text class="nd-sub" x="272" y="412">Q2b</text>
+        <text class="nd-title" x="272" y="432" font-size="11.5">Model available?</text>
+
+        <polyline class="ar" points="452,112 478,112 478,66 490,66" marker-end="url(#t)"/>
+        <text class="ar-lbl" x="458" y="92">yes</text>
+        <polyline class="ar ar-guard" points="452,138 478,138 478,196 742,196" marker-end="url(#tr)"/>
+        <text class="ar-lbl" x="458" y="160">no</text>
+
+        <rect class="nd" x="494" y="26" width="212" height="72" stroke-width="2"/>
+        <text class="nd-sub" x="510" y="50">Q3a</text>
+        <text class="nd-title" x="510" y="70" font-size="11">Does the model predict a</text>
+        <text class="nd-title" x="510" y="86" font-size="11">class a matching rule asserts?</text>
+
+        <polyline class="ar" points="452,406 478,406 478,360 490,360" marker-end="url(#t)"/>
+        <text class="ar-lbl" x="458" y="386">yes</text>
+        <polyline class="ar ar-guard" points="452,432 478,432 478,500 742,500" marker-end="url(#tr)"/>
+        <text class="ar-lbl" x="458" y="454">no</text>
+
+        <rect class="nd" x="494" y="326" width="212" height="72" stroke-width="2"/>
+        <text class="nd-sub" x="510" y="350">Q3b</text>
+        <text class="nd-title" x="510" y="370" font-size="11">Does the model predict an</text>
+        <text class="nd-title" x="510" y="386" font-size="11">attack — not Benign?</text>
+
+        <polyline class="ar ar-fb" points="706,52 728,52 728,40 742,40" marker-end="url(#tg)"/>
+        <text class="ar-lbl" x="710" y="32">yes</text>
+        <polyline class="ar ar-guard" points="706,80 728,80 728,126 742,126" marker-end="url(#tr)"/>
+        <text class="ar-lbl" x="710" y="106">no</text>
+        <polyline class="ar ar-fb" points="706,352 728,352 728,340 742,340" marker-end="url(#tg)"/>
+        <text class="ar-lbl" x="710" y="332">yes</text>
+        <polyline class="ar ar-guard" points="706,380 728,380 728,426 742,426" marker-end="url(#tr)"/>
+        <text class="ar-lbl" x="710" y="406">no</text>
+
+        <rect class="nd lane-fb" x="746" y="14" width="240" height="52" stroke-width="2"/>
+        <text class="nd-title" x="762" y="36" font-size="12">corroborated</text>
+        <text class="nd-sub" x="762" y="54">case 5 · 200 in the demo</text>
+
+        <rect class="nd lane-sig" x="746" y="100" width="240" height="52" stroke-width="2"/>
+        <text class="nd-title" x="762" y="122" font-size="12">signature_override</text>
+        <text class="nd-sub" x="762" y="140">case 6 · 0 in the demo</text>
+
+        <rect class="nd lane-sig" x="746" y="170" width="240" height="52" stroke-width="2"/>
+        <text class="nd-title" x="762" y="192" font-size="12">signature_override</text>
+        <text class="nd-sub" x="762" y="210">case 4 · 0 in the demo</text>
+
+        <rect class="nd lane-ml" x="746" y="314" width="240" height="52" stroke-width="2"/>
+        <text class="nd-title" x="762" y="336" font-size="12">ml_only</text>
+        <text class="nd-sub" x="762" y="354">case 3 · 796 in the demo</text>
+
+        <rect class="nd lane-store" x="746" y="400" width="240" height="52" stroke-width="2"/>
+        <text class="nd-title" x="762" y="422" font-size="12">none</text>
+        <text class="nd-sub" x="762" y="440">case 2 · 4,004 in the demo</text>
+
+        <rect class="nd lane-store" x="746" y="474" width="240" height="52" stroke-width="2"/>
+        <text class="nd-title" x="762" y="496" font-size="12">none</text>
+        <text class="nd-sub" x="762" y="514">case 1 · 0 in the demo</text>
+
+        <text class="ar-lbl" x="14" y="336" fill="#656d79">Cases 1, 4 and 6 have no instances in the</text>
+        <text class="ar-lbl" x="14" y="352" fill="#656d79">demo sample — see the table below.</text>
+      </svg>
+    </div>
+    <figcaption>Fig 3 — the complete fusion input space. Note Q2a's "no" branch: a rule match with
+    <b>no model prediction</b> falls into <code>signature_override</code>, because the agreement test
+    fails when there is nothing to agree with. A model outage therefore produces alerts that are
+    always review-flagged and frozen against feedback.</figcaption>
+  </figure>
+
+  <h3>Every case, with its full output</h3>
+  <div class="scroll" style="margin-bottom:14px">
+    <table>
+      <thead>
+        <tr><th>#</th><th>Rule</th><th>Model</th><th>Agrees</th><th>Evidence class</th><th>Score</th><th>Category</th><th>Review</th><th>Priority</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="m">1</td><td class="m">—</td><td class="m">unavailable</td><td class="m">—</td>
+          <td class="k">none</td><td class="m">0.00</td><td class="m">null</td>
+          <td><span class="chip c-critical">always</span><br><span style="color:var(--dim);font-size:11px">no prediction</span></td><td class="m">3</td>
+        </tr>
+        <tr>
+          <td class="m">2</td><td class="m">—</td><td class="m">Benign</td><td class="m">—</td>
+          <td class="k">none</td><td class="m">ml × 100</td><td class="m">null</td>
+          <td>if score ≥ 80</td><td class="m">3</td>
+        </tr>
+        <tr>
+          <td class="m">3</td><td class="m">—</td><td class="m">an attack</td><td class="m">—</td>
+          <td class="k">ml_only</td><td class="m">ml × 100</td><td class="m">predicted</td>
+          <td>if score ≥ 80</td><td class="m">2</td>
+        </tr>
+        <tr>
+          <td class="m">4</td><td class="m">matched</td><td class="m">unavailable</td><td class="m">—</td>
+          <td class="k">signature_override</td><td class="m">sig × 100</td><td class="m">severest match</td>
+          <td><span class="chip c-critical">always</span><br><span style="color:var(--dim);font-size:11px">I2</span></td><td class="m">1</td>
+        </tr>
+        <tr>
+          <td class="m">5</td><td class="m">matched</td><td class="m">that rule's class</td><td class="m">yes</td>
+          <td class="k">corroborated</td><td class="m">min(100, max(sig,ml)×100 + 5)</td><td class="m">predicted</td>
+          <td>if score ≥ 80</td><td class="m">0</td>
+        </tr>
+        <tr>
+          <td class="m">6</td><td class="m">matched</td><td class="m">a different class</td><td class="m">no</td>
+          <td class="k">signature_override</td><td class="m">sig × 100</td><td class="m">severest match</td>
+          <td><span class="chip c-critical">always</span><br><span style="color:var(--dim);font-size:11px">I2</span></td><td class="m">1</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="note bad">
+    <b>Three of the six cases never occur in the demo sample.</b> Cases <b>1, 4 and 6</b> — every
+    path through a missing or disagreeing model prediction — have <b>zero</b> instances in
+    <code>data/demo.db</code>. The demo exercises only cases 2 (4,004), 3 (796) and 5 (200). That is
+    why the weakened detector exists: <code>data/stress.db</code> produces <b>52 signature-override
+    alerts</b>, giving invariant I3 — the freeze on disputed rules — its first testable instances.
+    A design that has never run a branch has not been shown to work on it.
+  </div>
+
+  <h3>What each evidence class then produces downstream</h3>
+  <p>Score and review are decided at fusion. Everything below is placement: the band an alert lands
+  in, which depends on evidence class, any family offset, and whether it is a Tier 2 candidate.</p>
+  <div class="scroll" style="margin-bottom:14px">
+    <table>
+      <thead>
+        <tr><th>Evidence class</th><th>Band, no offset</th><th>If it meets E1/E3</th><th>Can it be demoted?</th><th>Frozen?</th></tr>
+      </thead>
+      <tbody>
+        <tr><td class="k">corroborated</td><td class="m">corroborated</td><td class="m">tier2_candidate</td><td>yes, by offset</td><td>no</td></tr>
+        <tr><td class="k">signature_override</td><td class="m">signature_override</td><td class="m"><b>never</b></td><td><b>no</b> — offset ignored</td><td><b>yes, I3</b></td></tr>
+        <tr><td class="k">ml_only</td><td class="m">ml_only</td><td class="m">tier2_candidate</td><td>yes, but never below ml_only</td><td>no</td></tr>
+        <tr><td class="k">none</td><td class="m">none</td><td class="m">never</td><td>yes</td><td>no</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>Two properties in that table are worth naming. A <code>signature_override</code> ignores its
+  family's offset entirely — it cannot be promoted or demoted, by anything. And a detector-flagged
+  alert is <b>protected against tier loss</b>: an <code>ml_only</code> alert that a family pushes down
+  stops at the <code>ml_only</code> band and never falls into <code>none</code>, so feedback cannot
+  silently turn a flagged alert into an unflagged one. <code>none</code> alerts are never Tier 2
+  candidates, because both E1 and E3 require an attack class, and <code>none</code> has none.</p>
+
+  <h3>Every verdict, on every kind of alert</h3>
+  <div class="scroll" style="margin-bottom:14px">
+    <table>
+      <thead>
+        <tr><th>Verdict</th><th>Requests</th><th>On a normal alert</th><th>On <code>signature_override</code></th><th>Also forces review</th></tr>
+      </thead>
+      <tbody>
+        <tr><td class="k">confirm_true_positive</td><td class="m">+10</td><td class="m">applied</td><td><span class="chip c-critical">rejected → Δ 0</span></td><td class="m">yes</td></tr>
+        <tr><td class="k">escalate</td><td class="m">+15</td><td class="m">applied</td><td><span class="chip c-critical">rejected → Δ 0</span></td><td class="m">yes</td></tr>
+        <tr><td class="k">needs_investigation</td><td class="m">0</td><td class="m">applied</td><td class="m">applied — review preserved</td><td class="m">yes</td></tr>
+        <tr><td class="k">mark_expected_activity</td><td class="m">−15</td><td class="m">applied</td><td><span class="chip c-critical">rejected → Δ 0</span></td><td class="m">—</td></tr>
+        <tr><td class="k">mark_false_positive</td><td class="m">−30</td><td class="m">applied</td><td><span class="chip c-critical">rejected → Δ 0</span></td><td class="m">—</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="note">
+    <b>Read the "applied" column carefully — it is the non-obvious result.</b> At the committed
+    settings the <b>caps never bind</b>. Every category's requested change (+10, +15, 0, −15, −30)
+    already lies inside the permitted range of [−30, +20], and a family's accumulated adjustment is
+    clamped to those same bounds before it is ever proposed. So on the direct path the cap is
+    <b>defence in depth, not a working constraint</b> — it exists for when an administrator
+    reconfigures the bounds (NFR-08) and for a family whose arithmetic would otherwise run past them.
+    <b>The checks that actually fire are the floors and the 0–100 range clamp</b>, which is exactly
+    what the three-arm run measured: all 40 verdicts recorded as <code>capped</code>, every one of
+    them the 100 ceiling rather than a guardrail cap.
+  </div>
+
+  <h3>Every gate state</h3>
+  <p>The agreement gate stands between a family's learning and the queue. It has one open state and
+  six closed ones, each with its own recorded reason:</p>
+  <div class="scroll" style="margin-bottom:14px">
+    <table>
+      <thead><tr><th>Condition</th><th>Gate</th><th>Reason recorded</th></tr></thead>
+      <tbody>
+        <tr><td class="m">no learning verdicts in the family</td><td><span class="chip c-medium">closed</span></td><td class="m">cold start</td></tr>
+        <tr><td class="m">fewer than 3 learning verdicts</td><td><span class="chip c-medium">closed</span></td><td class="m">not enough learning verdicts: n of 3</td></tr>
+        <tr><td class="m">confirmations = dismissals</td><td><span class="chip c-medium">closed</span></td><td class="m">the verdicts conflict: no dominant category</td></tr>
+        <tr><td class="m">dominant share &lt; 0.67</td><td><span class="chip c-medium">closed</span></td><td class="m">agreement n is below 0.67</td></tr>
+        <tr><td class="m">dominant = expected activity, propagation off</td><td><span class="chip c-medium">closed</span></td><td class="m">expected activity does not propagate</td></tr>
+        <tr><td class="m">dominant = expected activity, &lt; 5 verdicts or &lt; 0.90</td><td><span class="chip c-medium">closed</span></td><td class="m">needs 5 verdicts at agreement ≥ 0.9</td></tr>
+        <tr style="background:rgba(63,185,80,.07)"><td class="m">≥ 3 verdicts, no tie, dominant ≥ 0.67, and the dominant direction is confirm or false positive</td><td><span class="chip c-low">open</span></td><td class="m">n of m verdicts agree: &lt;category&gt;</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>Agreement is rounded to four places, so <b>2 of 3 is 0.6667 and fails the 0.67 gate</b> — a
+  family needs a clean 3-of-3, or 4-of-5, before anything it learned reaches the queue.</p>
+</section>
+
+<section>
+  <h2><span class="num">05</span>Severity: the band, then the ceiling</h2>
   <p class="sub">Confidence answers <i>how sure is the model?</i>. It cannot answer <i>how bad is this?</i>
   The project answers the second question from the severity chart (decision Q27), and caps the band
   by it — so a confidently-detected port scan cannot outrank an uncertain botnet.</p>
@@ -514,7 +740,7 @@ from config/severity-chart.json</i></pre>
         <text class="band-lbl" x="840" y="186" fill="#656d79" text-anchor="middle">is_critical · review flag · Critical floor</text>
       </svg>
     </div>
-    <figcaption>Fig 3a — One number, three consequences. Before the ceiling existed, <b>994 of 996</b>
+    <figcaption>Fig 4 — One number, three consequences. Before the ceiling existed, <b>994 of 996</b>
     flagged demo alerts read Critical — every one of the seven attack classes among them.</figcaption>
   </figure>
 
@@ -540,7 +766,7 @@ from config/severity-chart.json</i></pre>
 </section>
 
 <section>
-  <h2><span class="num">05</span>What orders the queue</h2>
+  <h2><span class="num">06</span>What orders the queue</h2>
   <p class="sub">One definition, in <code>db.queue_order(alias)</code>, from which the queue, the API,
   the metrics module, the scenario module and <code>cef.queue_key</code> all derive. It had been
   written out in five places before this.</p>
@@ -599,7 +825,7 @@ from config/severity-chart.json</i></pre>
 </section>
 
 <section>
-  <h2><span class="num">06</span>One verdict's journey</h2>
+  <h2><span class="num">07</span>One verdict's journey</h2>
   <p class="sub">A verdict reaches a score only through the guardrail gates, and reaches other alerts
   only through the family. Both paths are below. The base is always the alert's
   <code>detection_score</code>: <b>feedback does not stack</b>, so an alert's score is its detection
@@ -696,7 +922,7 @@ from config/severity-chart.json</i></pre>
         <text class="ar-lbl" x="490" y="326">any gate firing also raises the review flag</text>
       </svg>
     </div>
-    <figcaption>Fig 3b — <code>apply_guardrails()</code> in <code>guardrail/policy.py</code>. Two
+    <figcaption>Fig 5 — <code>apply_guardrails()</code> in <code>guardrail/policy.py</code>. Two
     deliberate departures from the collaborator's JS engine: a floor protects an alert only when its
     base score is at or above the floor (<b>a "false positive" verdict must never raise a score</b>),
     and <code>signature_override</code> is frozen rather than merely review-flagged.</figcaption>
@@ -748,10 +974,37 @@ every member with no verdict of its own is re-scored:
   <p>Note that the cap binds after three verdicts — more confirmations past that point change the
   band, not the score. That is the guardrail doing its job: without the positive cap, repeated
   "confirm true positive" would inflate a family's score without bound.</p>
+
+  <h3>And the verdict says which alerts it moved</h3>
+  <p>The re-placement above has run inside the verdict's transaction since S7b. Until v1.32 the only
+  thing that reached the screen was the <em>count</em> — and a count cannot be checked, clicked
+  through to, or audited. The response now names each moved member: <b>score, queue band and queue
+  rank, before and after</b>. Rank is the part that carries the claim; a score change nobody can
+  locate in the queue demonstrates nothing. It is measured either side of the same transaction with
+  one window query over the contract order, and the audit entry records the same list.</p>
+
+  <pre class="f"><i>three dismissals of  ["Botnet",8080,"tcp","-"]  — 150 members, none judged</i>
+
+  verdict 1    <b>0</b> moved   <i>not enough learning verdicts: 1 of 3 required</i>
+  verdict 2    <b>0</b> moved   <i>not enough learning verdicts: 2 of 3 required</i>
+  verdict 3    <b>147</b> moved  <i>3 of 3 verdicts agree: mark_false_positive</i>
+
+      AL-00932   100.0 → 91.0   tier2_candidate → corroborated   rank   28 →   31
+      AL-01914   100.0 → 91.0   tier2_candidate → corroborated   rank   29 →   32
+      AL-01618   100.0 → 91.0   tier2_candidate → corroborated   rank   30 →   33
+      …                                                    family best rank   27 →   31</pre>
+
+  <div class="note">
+    <b>Why the worked example dismisses rather than confirms.</b> 975 of the 996 flagged alerts sit
+    at exactly <code>100.0</code> (section 06's saturation), so a <em>confirming</em> verdict on a
+    flagged family clamps and moves the band without moving the score. The movement above is real
+    because it is downward. Both directions are the mechanism; only one of them is visible on this
+    sample.
+  </div>
 </section>
 
 <section>
-  <h2><span class="num">07</span>How the formula was chosen — and how thin the win is</h2>
+  <h2><span class="num">08</span>How the formula was chosen — and how thin the win is</h2>
   <p class="sub">Section 06 said <i>what</i> the learning formula does. This section is about <i>why
   that one</i> — because it was not picked by preference. Sixteen candidate designs were simulated
   against a fixed set of metrics, and a rule written down <b>before</b> the run chose the winner.
@@ -911,7 +1164,7 @@ every member with no verdict of its own is re-scored:
           <td>How many benign alerts reached the top 50. Should be <b>zero</b>.</td>
           <td>The most visible failure mode: a false alarm at rank 1 destroys trust in the whole
           console.</td>
-          <td>Again a gate rather than a gradient — but see section 11, where one design failed it.</td>
+          <td>Again a gate rather than a gradient — but see section 12, where one design failed it.</td>
         </tr>
       </tbody>
     </table>
@@ -1012,7 +1265,7 @@ every member with no verdict of its own is re-scored:
         <text class="nd-sub" x="610" y="454">but the ladder never gets that far.</text>
       </svg>
     </div>
-    <figcaption>Fig 5 — sel-3 as a filter chain. Twelve of sixteen candidates survive the policy gate;
+    <figcaption>Fig 6 — sel-3 as a filter chain. Twelve of sixteen candidates survive the policy gate;
     several criteria then tie; one that does not tie — mean attack position — decides between C1 and C2
     by 0.0001.</figcaption>
   </figure>
@@ -1105,7 +1358,7 @@ every member with no verdict of its own is re-scored:
 </section>
 
 <section>
-  <h2><span class="num">08</span>Escalation and the family key</h2>
+  <h2><span class="num">09</span>Escalation and the family key</h2>
   <p class="sub">Two definitions the loop depends on: what makes an alert a Tier 2 candidate, and
   what counts as "the alerts like it".</p>
 
@@ -1144,11 +1397,46 @@ every member with no verdict of its own is re-scored:
 
   <p>Weighted similarity (the collaborator's engine, threshold 0.7) was <b>not ported</b>: the
   experiment that chose the formula and the gate grouped by exact family, which scores 1.0 under
-  those weights. S15 later gave the coarse key a concrete cost — see section 11.</p>
+  those weights. S15 later gave the coarse key a concrete cost — see section 12.</p>
+
+  <h3>The membership test, as the console states it</h3>
+  <p>The key is stored positionally because it is an <em>identity</em>, not a document. Since v1.32
+  the API returns it parsed back into named fields, so "what makes these alerts similar" is answered
+  on screen instead of in this file. Every field is an <b>exact match</b> requirement — there is no
+  similarity score anywhere in the running system, and the interface no longer implies one.</p>
+
+  <div class="scroll">
+  <table>
+    <thead><tr><th>Field</th><th>Example</th><th>Must match</th><th>Why it is in the key</th></tr></thead>
+    <tbody>
+      <tr><td class="k">attackCategory</td><td class="m">Botnet</td><td class="m">exactly</td>
+          <td>Fusion's class, else the model's prediction. Two different attacks are not each other's evidence.</td></tr>
+      <tr><td class="k">dstPort</td><td class="m">8080</td><td class="m">exactly</td>
+          <td>The service under attack. Same class on a different port is a different campaign.</td></tr>
+      <tr><td class="k">protocol</td><td class="m">tcp</td><td class="m">exactly</td>
+          <td>Canonicalised as the collaborator's engine does it: <code>6</code> → <code>"tcp"</code>.</td></tr>
+      <tr><td class="k">ruleId</td><td class="m">SIG-FTP-BRUTE-FORCE</td><td class="m">exactly, or both absent</td>
+          <td>The first rule that fired. A checkable reason and a model-only guess are not alike.</td></tr>
+      <tr><td class="k">dstIp</td><td class="m">169.254.169.254</td><td class="m">only when nothing flagged the flow</td>
+          <td>Without it, one verdict on an unflagged flow would spread across every benign flow on that port.</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <h3>Grouping the queue by it</h3>
+  <p><code>GET /api/alerts/families</code> folds the queue into these groups, and the console has a
+  <b>Group by: None | Family</b> control. It is <b>grouping, not a second ranking</b>: families are
+  ordered by their best-ranked member's position in the contract queue order (section 06), and the
+  endpoint does not accept <code>sort</code> at all — the parameter is absent from the document
+  rather than ignored by the handler. <code>familyKey</code> is a queue filter, so a group reads its
+  own members back through the ordinary endpoint, in the same order, from the same source.</p>
+  <p>On <code>data/demo.db</code>: <b>1,315 families</b> over 5,000 alerts. Alerts with no family
+  are excluded from the grouped view — a group of things similar to nothing is not a group — and
+  remain in the ungrouped queue.</p>
 </section>
 
 <section>
-  <h2><span class="num">09</span>The decisions this map encodes</h2>
+  <h2><span class="num">10</span>The decisions this map encodes</h2>
   <p class="sub">Each of these was confirmed by the project lead and is load-bearing somewhere above.
   The reasoning and the evidence behind each is in <code>plan-changelog.md</code>.</p>
   <div class="scroll">
@@ -1174,7 +1462,7 @@ every member with no verdict of its own is re-scored:
 </section>
 
 <section>
-  <h2><span class="num">10</span>Reversed, rejected, retired</h2>
+  <h2><span class="num">11</span>Reversed, rejected, retired</h2>
   <p class="sub">These were believed and then disproved, or designed and then rejected. Each one is
   a cycle that does not need to be spent again.</p>
   <div class="scroll">
@@ -1197,7 +1485,7 @@ every member with no verdict of its own is re-scored:
 </section>
 
 <section>
-  <h2><span class="num">11</span>The finding the project reports against itself</h2>
+  <h2><span class="num">12</span>The finding the project reports against itself</h2>
   <p class="sub">The three-arm evaluation did not produce the result the project wanted, and the honest
   version is the one to present.</p>
   <div class="note bad">
@@ -1241,7 +1529,7 @@ every member with no verdict of its own is re-scored:
 </section>
 
 <section>
-  <h2><span class="num">12</span>Where the build stands</h2>
+  <h2><span class="num">13</span>Where the build stands</h2>
   <p class="sub">Status is from the plan's own <i>Step status</i> table, which is canonical for what
   to build next. Phase numbering is the plan's and is not negotiable.</p>
 
@@ -1326,12 +1614,12 @@ every member with no verdict of its own is re-scored:
         <text class="band-lbl" x="1116" y="282" fill="#656d79">graph — confirm the order before starting either.</text>
       </svg>
     </div>
-    <figcaption>Fig 4 — Phases 0–5 done; the S16 demo gate passed. Phase 6 has not started.</figcaption>
+    <figcaption>Fig 7 — Phases 0–5 done; the S16 demo gate passed. Phase 6 has not started.</figcaption>
   </figure>
 </section>
 
 <section>
-  <h2><span class="num">13</span>Still open</h2>
+  <h2><span class="num">14</span>Still open</h2>
   <div class="cols">
     <div>
       <h4>Ranking</h4>

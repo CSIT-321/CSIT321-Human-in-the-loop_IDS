@@ -17,7 +17,7 @@ import { useLastGood } from "../../features/alert/useLastGood";
 import { AlertPane } from "../../features/workstation/AlertPane";
 import { ContextRail } from "../../features/workstation/ContextRail";
 import { KpiStrip } from "../../features/workstation/KpiStrip";
-import { QUEUE_TABS, QueuePane, type QueueTab } from "../../features/workstation/QueuePane";
+import { QUEUE_TABS, QueuePane, type QueueGrouping, type QueueTab } from "../../features/workstation/QueuePane";
 
 const PAGE_SIZE = 50;
 
@@ -32,6 +32,11 @@ export function WorkstationPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const tab = QUEUE_TABS.find((option) => option.key === searchParams.get("tab")) ?? QUEUE_TABS[0];
   const search = searchParams.get("search") ?? "";
+  // A family deep-link (`?familyKey=…`) narrows the flat queue to the alerts one verdict moved;
+  // `?group=family` folds the whole queue into those groups. They are different questions, so they
+  // are different parameters.
+  const familyKey = searchParams.get("familyKey");
+  const grouping: QueueGrouping = searchParams.get("group") === "family" ? "family" : "none";
   const offsetParam = Number.parseInt(searchParams.get("offset") ?? "0", 10);
   const offset = Number.isFinite(offsetParam) && offsetParam > 0 ? offsetParam : 0;
   const selectedParam = searchParams.get("alert");
@@ -75,12 +80,36 @@ export function WorkstationPage() {
               evidenceClass: tab.evidenceClass === null ? null : [tab.evidenceClass],
               requiresReview: tab.requiresReview ? true : null,
               search: search === "" ? null : search,
+              familyKey,
             },
           },
           signal,
         }),
       ),
-    [tab.key, search, offset, queueVersion],
+    [tab.key, search, offset, familyKey, queueVersion],
+  );
+  // The same filters, grouped by what the system calls similar. Loaded only while that view is on
+  // screen: the grouped query scans the whole queue to rank the groups.
+  const families = useApi(
+    (signal) =>
+      grouping === "family"
+        ? unwrap(
+            api.GET("/api/alerts/families", {
+              params: {
+                query: {
+                  limit: PAGE_SIZE,
+                  offset,
+                  queueClass: tab.queueClass === null ? null : [tab.queueClass],
+                  evidenceClass: tab.evidenceClass === null ? null : [tab.evidenceClass],
+                  requiresReview: tab.requiresReview ? true : null,
+                  search: search === "" ? null : search,
+                },
+              },
+              signal,
+            }),
+          )
+        : new Promise<never>(() => undefined),
+    [grouping, tab.key, search, offset, queueVersion],
   );
   const queueData = useLastGood(queue);
   const items = queueData?.items ?? [];
@@ -179,6 +208,9 @@ export function WorkstationPage() {
       <div className="grid min-h-0 flex-1 grid-cols-[minmax(18rem,20rem)_minmax(0,1fr)] xl:grid-cols-[21rem_minmax(0,1fr)_20rem]">
         <QueuePane
           queue={queue}
+          families={families}
+          grouping={grouping}
+          onGrouping={(next) => update({ group: next === "family" ? "family" : null, offset: null, familyKey: null })}
           tab={tab}
           onTab={(next: QueueTab) => update({ tab: next.key === "all" ? null : next.key, offset: null, alert: null })}
           counts={counts}

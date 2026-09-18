@@ -1225,7 +1225,95 @@ that is correct, not a bug.
 | Apply v0.3 + v1.0 changes to `plans/hitl-ids-demo-build.md` | none | Claude |
 | `gh` PR/CI workflow steps | `gh auth login` not run | User |
 
-## v1.31 — The queue ranks by severity, and the band becomes a label (2026-09-16) ← **current**
+## v1.32 — Similar-alert learning made visible: the moved members, and grouping by family (2026-09-18) ← **current**
+
+Asked by the user: *"when showcasing a verdict, the specific alert is reranked in operational score
+BUT we do not see how similar alerts are also reranked (which is the main feature of this product),
+and also how we determine what is similar to allow another group by function to show this"*.
+
+### The finding
+
+The mechanism was never missing — **its evidence was**. `feedback/service.py:refresh_family` has
+re-placed every unjudged member of a family since S7b (v1.14), inside the same transaction as the
+verdict. What reached the screen was a single sentence: *"Similar-alert learning applied: 3 other
+alerts in this family moved."* The console could not answer *which* three, *from where to where*, or
+*why those*:
+
+* `FamilyEffect` carried `membersMoved` as an integer, and nothing else about the members.
+* The audit entry recorded the same integer — so a score no analyst ever touched was **counted but
+  not traceable**, which the audit trail exists to prevent.
+* `store.FILTERABLE` had no `family_key`, so a family could not be listed at all. Its members sat
+  scattered through 5,000 rows with nothing naming them as a group.
+* The family key was shown raw (`["Web Attack",80,"tcp","-"]`) in the alert panel. "What makes these
+  similar" was answerable only by reading `learning.py`.
+
+A demo in that state can *describe* the product's central claim but cannot *show* it.
+
+### CHG — the verdict names the alerts it moved
+
+`refresh_family` now returns `MemberMove` records — alert ref, source record id, score before/after,
+band before/after — instead of a count; `members_moved` becomes `len(moves)`, so the number and the
+list cannot disagree. The API adds **queue rank before and after**, snapshotted either side of the
+transaction with one `ROW_NUMBER()` query over the contract order (`store.queue_ranks`). Rank is the
+part that carries: a score change nobody can locate in the queue demonstrates nothing.
+
+Measured on a copy of `data/demo.db` — three dismissals of the `Botnet · port 8080 · tcp` family
+(150 members, none judged): the first two move nothing (*"not enough learning verdicts: 1 of 3
+required"*), the third opens the gate and moves **147 alerts**, each `100.0 → 91.0`,
+`tier2_candidate → corroborated`, and the family's best rank falls **27 → 31**. That is the demo
+beat, and it is now on screen rather than in a log.
+
+### ADD — `GET /api/alerts/families`, the queue grouped by what it learns from
+
+Same filters as `GET /api/alerts` (one shared FastAPI dependency, so a band tab or a search can
+never mean two different things), ordered by each family's **best-ranked member** — the grouped view
+is the contract queue order folded, not a second ranking. `sort` and `direction` are **omitted from
+the document rather than ignored by the handler**. Each row carries members, judged count, gate
+state, agreement and the applied adjustment; `familyKey` is now a queue filter, so a group reads its
+own members back through the ordinary endpoint.
+
+The console gains a **Group by: None | Family** control in the workstation queue. A group expands to
+its top members in place, and the row states *"147 unjudged alerts carry this"* — the sentence the
+project has been making in prose since v1.11.
+
+### ADD — what "similar" means, on screen
+
+`learning.parse_family_key` is the inverse of `family_key`, written beside it so the two cannot
+drift. The API returns the key as named fields plus the membership rule in one sentence; the console
+renders them as chips. The rule stated is the real one: **exact match** on attack class, destination
+port, protocol and matched rule, plus destination IP for an unflagged flow — no similarity score, no
+threshold. The collaborator's weighted matcher is still not ported (v1.14), and the screen now says
+so rather than implying a similarity metric that does not exist.
+
+### FIX — the audit entry names the moved members
+
+`SIMILAR_ALERT_LEARNING` details gain `members` (capped at 50, with `members_truncated` stated) and
+keep the exact count. Rationale in one line: *"3 alerts moved" is not a record of which three.*
+
+### Caught by the project's own guards, and worth recording
+
+1. `test_no_wire_model_exposes_ground_truth` **rejected the field name `label`** — it is a
+   ground-truth column name (`deviations.md` A7). Renamed to `familyLabel` throughout. The guard
+   fired on a display string, which is exactly the false positive it is designed to over-catch.
+2. `test_no_endpoint_beyond_the_demo_path` refused the new endpoint until it was **declared** in
+   `REQUIRED_OPERATIONS`. Adding a surface is now a deliberate act with a comment saying why.
+3. A first draft asserted every moved member left the `tier2_candidate` band. The fixture's
+   Critical-85 member starts in `ml_only` and stays there — the **test was wrong, not the code**,
+   and the record now shows the band each member actually left.
+
+**466 Python tests pass (was 460), 157 web tests (was 152), `build_openapi.py --check` and
+`npm run check:api` both clean.** No schema migration: every column this reads already existed.
+
+### Known, and not fixed here
+
+* `data/demo.db` **is no longer pristine** — it holds 4 verdicts recorded on 2026-09-16, against
+  HANDOVER §0b item 5's "0 verdicts". Rebuild with `python scripts/run_detection.py` before
+  presenting. All probing for this entry was done on copies.
+* On the real detector a *confirming* verdict moves flagged families' scores by nothing, because 975
+  of 996 flagged alerts sit at exactly 100.0 (the v1.28 saturation). Only the band moves. The
+  visible score movement above comes from **dismissals**, which is the honest beat to demo.
+
+## v1.31 — The queue ranks by severity, and the band becomes a label (2026-09-16)
 
 Asked by the user: *"keep band tier 2 candidate as a label only and rank by severity - operational
 instead"*, because *"tier 2 candidates are meant to be automatically escalated to the next tier and not

@@ -1,3 +1,5 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <title>IDS Console Showcase</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -312,8 +314,9 @@
 <span class="p">PS&gt; </span>.venv\Scripts\Activate.ps1               <span class="c"># or this, in PowerShell</span>
 <span class="p">&gt; </span>python --version                         <span class="c"># must print Python 3.11.x</span>
 
-<span class="c"># before every audience</span>
-<span class="p">&gt; </span>python scripts/run_detection.py          <span class="c"># fresh data/demo.db: 5,000 flows → 5,000 alerts</span>
+<span class="c"># before every audience  —  DELETE FIRST: run_detection appends, it does not replace</span>
+<span class="p">&gt; </span>del data\demo.db                         <span class="c"># skip this and you get 10,000 alerts and two runs</span>
+<span class="p">&gt; </span>python scripts/run_detection.py          <span class="c"># fresh data/demo.db: 5,000 flows → 5,000 alerts, ~21 s</span>
 <span class="p">&gt; </span>python scripts/rehearse_demo.py          <span class="c"># 41 checks on a copy; must end "holds end to end"</span>
 
 <span class="c"># start the API on :8000 and leave this terminal open</span>
@@ -377,7 +380,7 @@
             <tr><td>Charts</td><td>Recharts</td><td class="mono">3.10</td><td>Dashboard charts and the Overview's capture-hour histogram</td></tr>
             <tr><td>API client</td><td>openapi-fetch · openapi-typescript</td><td class="mono">0.17 · 7.13</td><td>A typed client generated from the API contract, so a wrong field fails the build</td></tr>
             <tr><td>Dev server / build</td><td>Vite</td><td class="mono">8.3</td><td>Serves the console on :5173 and forwards <code>/api</code> to the API</td></tr>
-            <tr><td>API</td><td>FastAPI on Uvicorn</td><td class="mono">0.136 · 0.37</td><td>20 JSON operations plus <code>/api/health</code>, on :8000; interactive docs at <code>/docs</code></td></tr>
+            <tr><td>API</td><td>FastAPI on Uvicorn</td><td class="mono">0.136 · 0.37</td><td>25 JSON operations plus <code>/api/health</code>, on :8000; interactive docs at <code>/docs</code></td></tr>
             <tr><td>Contracts</td><td>Pydantic</td><td class="mono">2.11</td><td>Every row and every request/response body is a validated model</td></tr>
             <tr><td>Database</td><td>SQLite (Python <code>sqlite3</code>)</td><td class="mono">—</td><td><code>data/demo.db</code>; append-only tables enforced by triggers</td></tr>
             <tr><td>Detection model</td><td>XGBoost · native TreeSHAP</td><td class="mono">3.2</td><td>8-class classifier and a per-alert explanation</td></tr>
@@ -529,10 +532,11 @@
           <thead><tr><th>Area</th><th>Operations</th><th>Used by</th></tr></thead>
           <tbody>
             <tr><td>Queue and alert</td><td class="mono">GET /api/alerts · GET /api/alerts/{ref} · GET …/score-adjustment · GET …/feedback-history</td><td>Workstation, Alert Queue, alert page</td></tr>
+            <tr><td>Similar alerts</td><td class="mono">GET /api/alerts/families</td><td>The queue's <em>Group by: Family</em> view; <code>GET /api/alerts?familyKey=…</code> reads a group's members back</td></tr>
             <tr><td>Verdicts</td><td class="mono">POST /api/alerts/{ref}/feedback</td><td>Verdict form</td></tr>
             <tr><td>Triage</td><td class="mono">POST …/status · POST …/assign · GET/POST …/notes</td><td>Workstation header and Notes tab</td></tr>
             <tr><td>Overview and context</td><td class="mono">GET /api/dashboard/summary · GET /api/dashboard/breakdowns · GET /api/entities/ip/{ip}</td><td>KPI strip, Dashboard, Overview, IP address page, context rail, System Status</td></tr>
-            <tr><td>Administration</td><td class="mono">GET/PUT /api/config/guardrails · GET /api/audit-log · POST /api/detection/run</td><td>Guardrails, Audit Trail, System Status</td></tr>
+            <tr><td>Administration</td><td class="mono">GET/PUT /api/config/guardrails · GET /api/audit-log · POST /api/detection/run · GET /api/admin/reports/ips · GET /api/admin/reports/ip/{ip}</td><td>Guardrails, Audit Trail, System Status, IP security report</td></tr>
             <tr><td>Evaluation</td><td class="mono">GET /api/evaluation/scenarios · GET /api/evaluation/runs · GET …/runs/{id} · GET …/runs/{id}/detection</td><td>Evaluator screens</td></tr>
             <tr><td>Health</td><td class="mono">GET /api/health</td><td>Check the API is up and which database it serves</td></tr>
           </tbody>
@@ -876,6 +880,7 @@
       </div>
       <div class="prose">
         <p>It is labelled <strong>Capped by a guardrail</strong>, with the guardrail's own sentence: <em>"This alert is Critical, so its score was held at the floor of 70."</em> The band moves from <span class="band b-tier2">Tier 2 candidate</span> to <span class="band b-model">Model only</span>, and the alert drops from rank 639 to <strong>rank 996</strong>.</p>
+      <div class="note"><b>Expect the question: the sentence says “Critical”, the badge says HIGH.</b> Two different things are being measured, and only the wording conflates them. <b>The floor triggers on the score:</b> <code>is_critical</code> means the detection score reached 80, and this alert scored 99.89. <b>The badge is capped by the attack class:</b> since v1.29 a Web Attack cannot display above High however high it scores. Measured on <code>data/demo.db</code>: <code>is_critical = 1</code> matches <code>combined_score ≥ 80</code> on all <b>996</b> alerts, with zero mismatches either way — so the trigger is exactly right, and it is the sentence that is stale. <b>Do not describe the guardrail as “too wide”:</b> the 996 it protects coincides with the 996 flagged alerts only because every flagged alert scores 80 or more and the highest unflagged one is 42.77.</div>
       </div>
       <blockquote class="say"><p>The verdict is recorded in full. The guardrail limited how far one verdict may move a Critical alert; it didn't overrule the analyst's finding. And it gives the number.</p></blockquote>
       <div class="pair">
@@ -955,7 +960,7 @@
         </figure>
         <figure class="screen">
           <div class="frame"><img src="img/demo-guide/16-family-open.png" alt="Similar alerts (family) card with the learning gate Open and True Positive as the dominant verdict"></div>
-          <figcaption><span class="path">Similar alerts (family)</span><span>Gate open; all three verdicts agree.</span></figcaption>
+          <figcaption><span class="path">Similar alerts (family)</span><span>Gate open; all three verdicts agree. Beneath, <b>what makes these similar</b> — the four fields that must match exactly.</span></figcaption>
         </figure>
       </div>
       <figure class="screen">
@@ -963,6 +968,49 @@
         <figcaption><span class="path">/analyst/queue?search=AL-03044</span><span>Moved by its family's learning, not by a verdict of its own.</span></figcaption>
       </figure>
       <blockquote class="say"><p>One analyst cannot move a family; three who agree can. Nothing outside the family moved, and all five alerts are real Port Scans. The same mechanism can go wrong, though, and the evaluator view shows where it did.</p></blockquote>
+
+      <h3>Do not read the count aloud and move on — the verdict names what it moved</h3>
+      <div class="prose">
+        <p><strong>"2 other alerts moved" is an assertion. The table under it is the evidence.</strong> Since v1.32 the verdict outcome lists every member the learning re-placed, with the three things that make the movement checkable: <strong>score</strong>, <strong>queue band</strong> and <strong>queue rank</strong>, each before and after. Rank is the one that carries the claim — a score change nobody can locate in the 5,000-row queue demonstrates nothing. It is measured either side of the same transaction, and every alert in the table is one <em>nobody opened</em>, let alone judged.</p>
+        <p>Each row links to its alert, and a link under the table opens the whole family in the queue. The same list goes into the audit entry, so a score no analyst touched stays traceable — which is the point of having an audit trail at all.</p>
+      </div>
+      <figure class="screen">
+        <div class="frame"><img src="img/demo-guide/15b-family-moved.png" alt="The verdict outcome for AL-03153: similar-alert learning applied, 2 other alerts in this family moved, the family named as Port Scan port 445 tcp with 5 alerts, and a table of the two re-ranked alerts AL-03044 and AL-04526 with their score, band and queue rank before and after"></div>
+        <figcaption><span class="path">AL-03153 · verdict outcome</span><span>The two alerts the family moved, named. <b>Read the band column, not the score:</b> both members sit at 100.0, so the score is clamped and the movement is <span class="mono">ml_only → tier2_candidate</span>. This is the saturation, visible in the one place it matters.</span></figcaption>
+      </figure>
+      <div class="note"><b>Why one rank went <i>down</i>.</b> <span class="mono">AL-04526</span> reads <span class="mono">969 → 970</span>. Nothing was done to it; alerts promoted <em>above</em> it pushed it one place. Rank is a position in a queue, not a property of an alert, which is exactly why it is the column that shows the re-ranking rather than the score.</div>
+
+      <h3>The question that follows immediately: what counts as "similar"?</h3>
+      <div class="prose">
+        <p>The panel answers it as <strong>fields, not prose</strong>. Alerts are one family when the <strong>attack class, destination port, protocol and matched rule all match exactly</strong> — and, for a flow no detector flagged, the destination address too, so one verdict cannot spread across every benign flow on a port. <strong>There is no similarity score and no threshold.</strong> The collaborator's weighted matcher (threshold 0.7) was deliberately not ported, because the experiment that chose the ranking formula and the gate grouped by exact family; the screen now says so rather than implying a metric the system does not have.</p>
+        <p>Before v1.32 this panel printed the key raw — <code class="mono">["Web Attack",80,"tcp","-"]</code> — and the only way to answer the question was to read <code>learning.py</code>.</p>
+      </div>
+      <figure class="screen">
+        <div class="frame"><img src="img/demo-guide/07-family-closed.png" alt="The Similar alerts (family) card for a Web Attack alert: family Web Attack port 80 tcp, 61 members, learning gate Closed, no dominant verdict, applied adjustment zero, the line No verdict has been recorded for this family yet, and a What makes these similar block with chips for attack class Web Attack, dest port 80, protocol tcp and rule none matched"></div>
+        <figcaption><span class="path">Similar alerts (family) · before any verdict</span><span>The same card on an <b>unjudged</b> family. Gate <b>Closed</b>, nothing applied — and the membership test stated regardless, because the question is about the grouping, not about what it has learned. The family line reads <span class="mono">Web Attack · port 80 · tcp</span>; it used to print the raw key.</span></figcaption>
+      </figure>
+
+      <h3>Group by Family: the queue folded into what the learning acts on</h3>
+      <div class="prose">
+        <p><span class="click">Set Group by to Family</span> above the queue. The 5,000 alerts fold into <strong>1,315 families</strong>, each row stating its size, how many members a person judged, its gate state, its agreement, and what it applied. A family that has learned reads <em>gate open · 100% agree · 147 unjudged alerts carry this</em> — the sentence this project has been making in prose since the thesis was written. Expand a row to see its members in place.</p>
+        <p><strong>It is grouping, not a second ranking.</strong> Families are ordered by their best-ranked member's position in the contract queue order, and the endpoint does not accept a sort parameter at all. The band tabs and the search narrow the groups exactly as they narrow the rows, because both views share one filter definition.</p>
+      </div>
+      <div class="pair">
+        <figure class="screen">
+          <div class="frame"><img src="img/demo-guide/17b-group-by-family.png" alt="The alert queue with Group by set to Family, reading 1,315 families, listing family rows such as Port Scan port 445 tcp with their rank, member count, judged count and gate state"></div>
+          <figcaption><span class="path">Group by · Family</span><span>5,000 alerts as <b>1,315 families</b>. Each row: queue position, size, how many a person judged, gate state.</span></figcaption>
+        </figure>
+        <figure class="screen">
+          <div class="frame"><img src="img/demo-guide/17c-family-expanded.png" alt="The Port Scan port 445 tcp family expanded in the grouped queue, reading 5 alerts, 3 judged, gate open, applied plus 20, True Positive, 100% agree, 2 unjudged alerts carry this, with its member alerts listed beneath"></div>
+          <figcaption><span class="path">Port Scan · port 445 · tcp, expanded</span><span><b>gate open · applied +20 · 2 unjudged alerts carry this.</b> The thesis, as a queue row.</span></figcaption>
+        </figure>
+      </div>
+      <div class="note"><b>For the strongest version of this beat, dismiss rather than confirm.</b> 975 of the 996 flagged alerts sit at exactly <span class="mono">100.00</span>, so a <em>confirming</em> verdict on a flagged family moves the band but not the score — the saturation the evaluation report records as finding 4. Dismissing three members of <b>Botnet · port 8080 · tcp</b> (150 alerts, none judged) moves <b>147</b> of them <span class="mono">100.0 → 91.0</span>, <span class="mono">tier2_candidate → corroborated</span>, and the family's best position in the queue from <b>rank 27 to rank 31</b>. Measured on a copy of the demo database, 2026-09-18.</div>
+      <figure class="screen">
+        <div class="frame"><img src="img/demo-guide/15d-family-moved-dismissal.png" alt="The verdict outcome after three dismissals in the Botnet port 8080 tcp family: 147 similar alerts re-ranked, showing the top 25, each moving from score 100 to 91, band tier2_candidate to corroborated, and each dropping three places in the queue"></div>
+        <figcaption><span class="path">Botnet · port 8080 · tcp · three dismissals</span><span><b>147 alerts re-ranked by three verdicts</b>, score and band and rank together — <span class="mono">100 → 91</span>, <span class="mono">tier2_candidate → corroborated</span>. "Showing the top 25" is stated on the table: the count is exact, the list is capped.</span></figcaption>
+      </figure>
+
       <h3>The "verdict done" view: the queue, filtered to what has been judged</h3>
       <div class="prose">
         <p><strong>A verdict moves the alert, and it moves the queue with it.</strong> That is the mechanism working — but it means the alert you just judged is no longer where you left it. Two things keep it findable: <strong>every judged row carries a "Verdict recorded" pill</strong>, and the new <strong>Judged</strong> filter turns the same queue into the list of work already done.</p>
@@ -1004,7 +1052,7 @@
         <div class="frame"><img src="img/demo-guide/20-dashboard-after.png" alt="Analyst dashboard after the verdicts, with Moved by feedback no longer zero"></div>
         <figcaption><span class="path">/analyst/dashboard</span><span>Back on the dashboard, "Moved by feedback" now counts real movement.</span></figcaption>
       </figure>
-      <div class="proves"><span>Shows</span><span class="tag">similar-alert learning</span><span class="tag">3-verdict agreement gate</span><span class="tag">untouched members promoted</span><span class="tag">Investigations</span><span class="tag">Feedback Impact</span></div>
+      <div class="proves"><span>Shows</span><span class="tag">similar-alert learning</span><span class="tag">3-verdict agreement gate</span><span class="tag">untouched members promoted</span><span class="tag">moved members, with rank</span><span class="tag">what "similar" means</span><span class="tag">group by family</span><span class="tag">Investigations</span><span class="tag">Feedback Impact</span></div>
     </section>
 
     <section class="part" id="act6">
@@ -1073,7 +1121,7 @@
         <span class="route">/evaluator/scenarios · /evaluator/runs/&lt;newest&gt; · /evaluator/metrics</span>
       </div>
       <ol class="steps">
-        <li><strong>Sign out</strong>, then sign in as <code>evaluator</code> / <code>evaluator-demo</code>. Show the <strong>newest</strong> run — the list is newest-first, so it is the top row; the id is deliberately not pinned here, because the evaluation re-runs and a hard-coded id goes stale — its pre-registration (rule <code>s15-preregistration-1</code>, 40 verdicts fixed before any arm ran), and <strong>Newest run at a glance</strong>: thethree arms side by side, with precision@50 already showing its <span class="neg">−0.020</span> fall against control.</li>
+        <li><strong>Sign out</strong>, then sign in as <code>evaluator</code> / <code>evaluator-demo</code>. Show the <strong>newest</strong> run — the list is newest-first, so it is the top row; the id is deliberately not pinned here, because the evaluation re-runs and a hard-coded id goes stale — its pre-registration (rule <code>s15-preregistration-1</code>, 40 verdicts fixed before any arm ran), and <strong>Newest run at a glance</strong>: the three arms side by side, with precision@50 holding at <strong>1.000</strong> in all three — the −0.020 fall belonged to the old band order and no longer happens.</li>
         <li>Click <strong>Open run →</strong>. Read the banner aloud, then the figures row, <strong>What was compared</strong> beside <strong>What the guardrails prevented</strong>, and the <strong>Arms</strong>, <strong>Deltas</strong> and <strong>Who moved</strong> tables.</li>
         <li>Click <strong>Detection Metrics</strong>: the testbed caution, the figures row, the per-class table and a precision / recall / F1 panel for each class, then precision at k and score saturation.</li>
       </ol>
@@ -1311,8 +1359,10 @@
       <pre class="cmd"><span class="c"># in the API terminal: stop it (Ctrl+C), rebuild the database, start it again</span>
 <span class="p">&gt; </span>cd "C:\Users\Glenn Ang\Desktop\SIM Assignments\FYP\CSIT321-Human-in-the-loop_IDS\hitl-ids"
 <span class="p">&gt; </span>.venv\Scripts\activate
+<span class="p">&gt; </span>del data\demo.db                         <span class="c"># required: the script appends to an existing file</span>
 <span class="p">&gt; </span>python scripts/run_detection.py
 <span class="p">&gt; </span>python -m uvicorn apps.api.main:app</pre>
+      <div class="note"><b>Delete the database before rebuilding, or the reset does the opposite of what you want.</b> <code>run_detection.py</code> <em>adds</em> a run to whatever database it finds: running it over a used one leaves <b>10,000 alerts across two runs</b>, with every verdict from the last demo still in place. Deleting first is what makes it a reset. The file is gitignored and takes about 21 seconds to rebuild, and the three sign-in accounts re-seed themselves the first time someone signs in. Verify with the KPI strip: <b>5,000 total alerts, 644 Tier 2 candidates, 0 verdicts</b>.</div>
       <div class="table-wrap">
         <table>
           <thead><tr><th>You see</th><th>Cause</th><th>Fix</th></tr></thead>
@@ -1326,6 +1376,8 @@
             <tr><td>Every panel says "Cannot reach the API" · <code>NETWORK_UNREACHABLE</code>; buttons do nothing</td><td>The API isn't running on :8000 (the console on :5173 still loads)</td><td>Start <code>python -m uvicorn apps.api.main:app</code> from <code>hitl-ids/</code>, then reload</td></tr>
             <tr><td>The workstation loads, but the KPI strip shows dashes, or Claim, notes or the address panel fail with <code>NOT_FOUND</code></td><td>The API was started before the latest code</td><td>Stop the API and start it again</td></tr>
             <tr><td>"Something went wrong" · <code>DATABASE_MISSING</code> · HTTP 503</td><td>There is no <code>data/demo.db</code></td><td>Run <code>python scripts/run_detection.py</code></td></tr>
+            <tr><td>The KPI strip reads <b>10,000</b> total alerts, and System Status lists two detection runs</td><td><code>run_detection.py</code> was run over an existing database — it appends a run rather than replacing the file</td><td>Stop the API, <code>del data\demo.db</code>, run it again, restart the API. Expect 5,000 alerts and one run</td></tr>
+            <tr><td>The KPI strip shows verdicts, false positives or guardrail actions before anyone has judged anything</td><td>The database still carries a previous session’s verdicts</td><td>The same reset. A clean database reads <b>0 verdicts</b></td></tr>
             <tr><td>Alerts already say "Verdict recorded"</td><td>This database was demonstrated on</td><td>Rebuild it, as above</td></tr>
             <tr><td><code>AL-00478</code> isn't in the Tier 2 band</td><td>An earlier run dismissed it</td><td>Rebuild it</td></tr>
             <tr><td>Port 8000 or 5173 already in use</td><td>A previous server is still running; two copies of <code>npm run dev</code> is a common one</td><td>Stop it, or close its terminal</td></tr>
@@ -1386,6 +1438,9 @@
             <tr><td>Critical floor · Infiltration floor · score clamp</td><td class="mono">AL-00478 · AL-01707 · AL-03066</td><td>3, 6</td></tr>
             <tr><td>Persistence across refresh; verdict history and amendment</td><td class="mono">Verdict history</td><td>3, 6</td></tr>
             <tr><td>Similar-alert learning, agreement gate, untouched members moved</td><td class="mono">Port Scan / 445</td><td>5</td></tr>
+            <tr><td>The moved members named: score, band and queue rank before and after</td><td class="mono">Verdict outcome</td><td>5</td></tr>
+            <tr><td>What "similar" means: the four exact-match fields, no score, no threshold</td><td class="mono">Similar alerts (family)</td><td>5</td></tr>
+            <tr><td>Group by Family: 1,315 groups, each with its gate, agreement and applied adjustment</td><td class="mono">Workstation · Group by</td><td>5</td></tr>
             <tr><td>Investigations · Feedback Impact</td><td class="mono">/analyst/investigations · /analyst/feedback-impact</td><td>5</td></tr>
             <tr><td>Operations figures, service health, detector hits and run provenance</td><td class="mono">/admin/status</td><td>7</td></tr>
             <tr><td>Guardrail settings with validation and a required reason; guardrail log</td><td class="mono">/admin/guardrails</td><td>7</td></tr>
