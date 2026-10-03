@@ -31,7 +31,11 @@ CREATE TABLE datasets (
     name               TEXT    NOT NULL,
     version            TEXT    NOT NULL,
     source_file        TEXT    NOT NULL,
-    preparation_meta   TEXT    CHECK (json_valid(preparation_meta)),
+    -- LOCAL PATCH (not upstream, machine-specific): SQLite 3.38.4 (this Python 3.11.0's bundled
+    -- version) fails json_valid(NULL)-based CHECKs that pass on other SQLite versions. Added
+    -- explicit `IS NULL OR` escapes to every nullable json_valid column below. Do not push as-is;
+    -- report upstream instead (see conversation).
+    preparation_meta   TEXT    CHECK (preparation_meta IS NULL OR json_valid(preparation_meta)),
     total_records      INTEGER NOT NULL CHECK (total_records >= 0),
     class_distribution TEXT    NOT NULL CHECK (json_valid(class_distribution)),
     is_held_out        INTEGER NOT NULL DEFAULT 0 CHECK (is_held_out IN (0, 1)),
@@ -98,10 +102,10 @@ CREATE TABLE alerts (
     confidence         NUMERIC NOT NULL CHECK (confidence BETWEEN 0 AND 1),
     signature_severity NUMERIC CHECK (signature_severity BETWEEN 0 AND 1),
     ml_probability     NUMERIC CHECK (ml_probability BETWEEN 0 AND 1),
-    signature_rules    TEXT    CHECK (json_valid(signature_rules) AND json_type(signature_rules) = 'array'),
+    signature_rules    TEXT    CHECK (signature_rules IS NULL OR (json_valid(signature_rules) AND json_type(signature_rules) = 'array')),
     ml_predicted_class TEXT,
     attack_category    TEXT,
-    shap_attributions  TEXT    CHECK (json_valid(shap_attributions) AND json_type(shap_attributions) = 'object'),
+    shap_attributions  TEXT    CHECK (shap_attributions IS NULL OR (json_valid(shap_attributions) AND json_type(shap_attributions) = 'object')),
     explanation        TEXT    NOT NULL CHECK (length(explanation) > 0),
     status             TEXT    NOT NULL DEFAULT 'new' CHECK (status IN ('new', 'claimed', 'in_progress', 'resolved', 'dismissed')),
     owner_id           INTEGER REFERENCES users (id),
@@ -122,7 +126,7 @@ CREATE TABLE alerts (
     queue_class        TEXT    NOT NULL CHECK (queue_class IN ('tier2_candidate', 'corroborated', 'signature_override', 'ml_only', 'none')),
     queue_priority     INTEGER NOT NULL,
     -- DEVIATION (S7b): the similar-alert family; NULL keeps the alert out of similar-alert learning.
-    family_key         TEXT    CHECK (json_valid(family_key) AND json_type(family_key) = 'array'),
+    family_key         TEXT    CHECK (family_key IS NULL OR (json_valid(family_key) AND json_type(family_key) = 'array')),
     -- Evidence class must agree with which detectors fired. Repeated from the Pydantic model so
     -- raw-SQL writers cannot bypass it.
     CHECK ((evidence_class IN ('corroborated', 'signature_override'))
@@ -236,11 +240,11 @@ CREATE TABLE evaluation_runs (
     id               INTEGER PRIMARY KEY AUTOINCREMENT,
     scenario_id      INTEGER NOT NULL REFERENCES evaluation_scenarios (id),
     status           TEXT    NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'running', 'completed', 'failed')),
-    metrics          TEXT    CHECK (json_valid(metrics)),
+    metrics          TEXT    CHECK (metrics IS NULL OR json_valid(metrics)),
     fpr_reduction    NUMERIC,
     rank_improvement NUMERIC,
     guardrail_pass   INTEGER CHECK (guardrail_pass IN (0, 1)),
-    usability_data   TEXT    CHECK (json_valid(usability_data)),
+    usability_data   TEXT    CHECK (usability_data IS NULL OR json_valid(usability_data)),
     started_at       TEXT    NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%f', 'now') || '000Z'),
     completed_at     TEXT
 );
