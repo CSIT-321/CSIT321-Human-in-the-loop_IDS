@@ -30,6 +30,7 @@ from __future__ import annotations
 
 import sqlite3
 from collections import Counter
+from collections.abc import Sequence
 from dataclasses import dataclass, replace
 from datetime import datetime
 from typing import Any, get_args
@@ -301,3 +302,37 @@ def submit_feedback(conn: sqlite3.Connection, *, alert_id: int, user_id: int, ca
     return FeedbackResult(feedback=db.get(conn, m.FeedbackEvent, feedback_id),
                           alert=db.get(conn, m.Alert, alert_id), outcome=outcome, audit=audit,
                           learning=refresh)
+
+
+@dataclass(frozen=True)
+class BulkFeedbackItem:
+    """One alert's outcome within a bulk submission — success, or why it was skipped."""
+
+    alert_id: int
+    result: FeedbackResult | None
+    error: str | None
+
+
+def submit_bulk_feedback(conn: sqlite3.Connection, *, alert_ids: Sequence[int], user_id: int,
+                         category: str, note: str | None = None,
+                         policy: GuardrailPolicy | None = None,
+                         learning: LearningPolicy | None = None,
+                         chart: SeverityChart | None = None,
+                         now: datetime | None = None) -> list[BulkFeedbackItem]:
+    """Apply one verdict to many alerts. Each alert is its own submit_feedback() transaction, so
+    one stale id does not block the rest - losing 39 good verdicts to 1 bad one would be worse
+    than reporting that one separately, which is how an analyst actually works a selection.
+
+    Duplicate ids are processed once, in their first-seen order.
+    """
+    seen = dict.fromkeys(alert_ids)  # de-duplicates, keeps first-seen order
+    results: list[BulkFeedbackItem] = []
+    for alert_id in seen:
+        try:
+            result = submit_feedback(conn, alert_id=alert_id, user_id=user_id, category=category,
+                                     note=note, policy=policy, learning=learning, chart=chart,
+                                     now=now)
+            results.append(BulkFeedbackItem(alert_id=alert_id, result=result, error=None))
+        except (LookupError, ValueError) as error:
+            results.append(BulkFeedbackItem(alert_id=alert_id, result=None, error=str(error)))
+    return results
