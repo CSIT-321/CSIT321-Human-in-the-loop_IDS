@@ -21,7 +21,9 @@ non-finite floats; the observable view reads such a field as 0, as it always has
 
 from __future__ import annotations
 
+import csv
 import math
+import time
 from collections.abc import Iterator, Sequence
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -95,6 +97,86 @@ class CsvReplaySource:
         for record in frame.to_dict("records"):
             yield Flow(source_record_id=str(record[self.id_column]),
                        features={column: _python(record[column]) for column in columns})
+
+
+class ExporterSource:
+    """Reads flows from a CSV that grows over time - the shape a live flow exporter (S17: the
+    GintsEngelen CICFlowMeter fork, run against live traffic instead of a recorded capture) is
+    expected to produce: one header written once, then one row appended per completed flow.
+
+    This is the live counterpart to ``CsvReplaySource``, and the two are deliberately
+    interchangeable: both satisfy ``FlowSource``, so nothing downstream of this module -
+    signature matching, the model, fusion, storage - knows or needs to know which one is running
+    (D7).
+
+    Scope: this class solves reading a file as it grows, correctly, without losing or corrupting
+    a flow whose row is only half-written when a poll happens. It does not run a capture tool -
+    something else has to be writing rows to ``path`` for this to see anything. Wiring up a real
+    exporter needs its own setup, its own machine permissions, and its own authorisation for
+    whatever network it watches; deliberately out of scope here.
+
+    Not handled yet, and worth knowing before relying on this beyond a skeleton: the exporter
+    process restarting and writing a new file, rotated or renamed files, and a writer that is not
+    strictly append-only.
+    """
+
+    def __init__(self, path: str | Path, *, id_column: str = "alert_id",
+                poll_interval: float = 1.0, idle_polls_before_stop: int | None = None) -> None:
+        self.path = Path(path)
+        self.id_column = id_column
+        self.poll_interval = poll_interval
+        # None: poll forever, as a real live source would. A finite number lets a test (or a
+        # one-off replay of a file nothing is appending to any more) stop instead of hanging.
+        self.idle_polls_before_stop = idle_polls_before_stop
+        self.name = f"exporter-tail:{self.path.name}"
+
+    def flows(self) -> Iterator[Flow]:
+        with self.path.open("r", encoding="utf-8", newline="") as handle:
+            header = next(csv.reader([handle.readline()]))
+            missing = [column for column in (self.id_column, "Timestamp", *OBSERVABLE_FIELDS,
+                                             *FLOW_COLUMNS) if column not in header]
+            if missing:
+                raise KeyError(f"{self.path.name} lacks the columns detection needs: {missing}")
+            columns = [column for column in header if column not in NON_FEATURE_COLUMNS]
+
+            buffer = ""
+            idle_polls = 0
+            while True:
+                chunk = handle.read()
+                if chunk:
+                    idle_polls = 0
+                    buffer += chunk
+                    lines = buffer.split("\n")
+                    # The last piece is either a partial line still being written (kept for the
+                    # next poll) or "" if this chunk happened to end exactly on a newline.
+                    buffer = lines.pop()
+                    for line in lines:
+                        if not line.strip():
+                            continue
+                        values = next(csv.reader([line]))
+                        record = dict(zip(header, values, strict=True))
+                        yield Flow(source_record_id=str(record[self.id_column]),
+                                  features={column: _coerce(record[column])
+                                           for column in columns})
+                    continue
+                idle_polls += 1
+                if (self.idle_polls_before_stop is not None
+                        and idle_polls >= self.idle_polls_before_stop):
+                    return
+                time.sleep(self.poll_interval)
+
+
+def _coerce(value: str) -> Any:
+    """One tailed row's raw string value, coerced the way pandas infers a column's dtype for
+    ``CsvReplaySource``. A tailed file is read one row at a time rather than as a whole
+    DataFrame, so each value is coerced on its own instead."""
+    if value == "":
+        return value
+    try:
+        number = float(value)
+    except ValueError:
+        return value
+    return int(number) if number.is_integer() else number
 
 
 def flow_record(flow: Flow) -> m.FlowRecord:
