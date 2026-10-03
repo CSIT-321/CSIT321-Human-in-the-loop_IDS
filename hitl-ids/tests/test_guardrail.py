@@ -16,13 +16,14 @@ import pytest
 
 from packages.contracts import db
 from packages.contracts import models as m
+from packages.detection.feedback.learning import family_key_of
 from packages.detection.feedback.service import (
     FEEDBACK_EFFECTS,
     current_feedback,
     load_policy,
+    submit_bulk_feedback,
     submit_feedback,
 )
-from packages.detection.feedback.learning import family_key_of
 from packages.detection.fusion.cef import (
     EVIDENCE_PRIORITY,
     FusionConfig,
@@ -369,6 +370,34 @@ def test_unknown_category_and_alert_are_refused(conn, seeded):
     with pytest.raises(LookupError):
         submit_feedback(conn, alert_id=12345, user_id=seeded["user"],
                         category="mark_false_positive")
+
+
+def test_bulk_feedback_applies_each_alert_independently_and_reports_failures(conn, seeded):
+    """One stale id in a selection must not cost the other, good verdicts (see service.py)."""
+    results = submit_bulk_feedback(
+        conn, alert_ids=[seeded["missed_attack"], 999999, seeded["moderate"],
+                         seeded["missed_attack"]],  # duplicate: must be applied once, not twice
+        user_id=seeded["user"], category="confirm_true_positive", now=T0)
+
+    assert len(results) == 3  # the duplicate id collapses to a single entry
+    by_id = {item.alert_id: item for item in results}
+
+    missed = by_id[seeded["missed_attack"]]
+    assert missed.error is None
+    assert missed.result.alert.combined_score == pytest.approx(36.94 + 10)
+
+    moderate = by_id[seeded["moderate"]]
+    assert moderate.error is None
+    assert moderate.result.alert.combined_score == pytest.approx(75 + 10)
+
+    missing = by_id[999999]
+    assert missing.result is None
+    assert "no alert with id" in missing.error
+
+    # the duplicate id must not have produced a second feedback_events row
+    count = conn.execute("SELECT COUNT(*) AS n FROM feedback_events WHERE alert_id = ?",
+                         (seeded["missed_attack"],)).fetchone()["n"]
+    assert count == 1
 
 
 def test_guardrails_off_arm_through_the_service(conn, seeded):
