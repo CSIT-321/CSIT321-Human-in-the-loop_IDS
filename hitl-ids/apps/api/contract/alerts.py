@@ -28,6 +28,7 @@ from pydantic import Field
 
 from apps.api.contract.common import Actor, ApiModel
 from packages.contracts import models as m
+from packages.contracts.canonical import CanonicalAlert
 
 # --------------------------------------------------------------------------------------------
 # The queue
@@ -363,6 +364,7 @@ class AlertDetail(ApiModel):
     """``GET /api/alerts/{alertRef}`` — the summary plus the four panels and the family."""
 
     alert: AlertSummary
+    detector: CanonicalAlert | None = None
     flow: FlowPanel
     signature: SignaturePanel
     ml: MlPanel

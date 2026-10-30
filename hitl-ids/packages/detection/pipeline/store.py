@@ -22,6 +22,25 @@ from packages.contracts import models as m
 GROUPABLE = frozenset({"evidence_class", "queue_class", "severity", "status"})
 
 
+def detector_for_alert(conn: sqlite3.Connection, alert: m.Alert, flow: m.FlowRecord):
+    """Read a snapshot, or project legacy immutable evidence without rewriting old rows."""
+    from packages.detection.adapters.current import CurrentDetectorAdapter, CurrentDetectorOutput
+    from packages.detection.fusion.cef import FusionConfig, severity_for
+
+    if alert.detector is not None:
+        return alert.detector
+    run = db.get(conn, m.DetectionRun, alert.run_id)
+    if run is None:
+        raise LookupError(f"detection run {alert.run_id} is missing")
+    config = FusionConfig.from_snapshot(run.fusion_weights)
+    original = alert.model_copy(update={
+        "severity": severity_for(alert.detection_score, alert.attack_category,
+                                 config.class_ceilings, critical_threshold=config.critical_threshold),
+    })
+    return CurrentDetectorAdapter().adapt(CurrentDetectorOutput(
+        original, flow, run.model_version, run.rule_set_version, legacy_projection=True))
+
+
 def guardrail_snapshot(conn: sqlite3.Connection) -> dict[str, float]:
     """Every guardrail setting as configured now, for ``detection_runs.guardrail_config``."""
     return {row["config_key"]: row["config_value"]

@@ -486,6 +486,8 @@ export interface components {
             alert: components["schemas"]["AlertSummary"];
             /** @default null */
             currentFeedback: components["schemas"]["FeedbackRecord"] | null;
+            /** @default null */
+            detector: components["schemas"]["CanonicalAlert"] | null;
             evidence: components["schemas"]["EvidencePanel"];
             family: components["schemas"]["FamilyPanel"];
             /** Feedbackcount */
@@ -706,6 +708,80 @@ export interface components {
              * @default null
              */
             rationale: string | null;
+        };
+        /**
+         * CanonicalAlert
+         * @description Immutable detector facts, never a ranking score or an analyst verdict.
+         *
+         *     A naive occurredAt preserves a capture-local timestamp; provenance states its basis.
+         *     Severity keeps the detector's native scale. No cross-detector severity conversion is implied.
+         */
+        CanonicalAlert: {
+            /**
+             * Canonicalalertid
+             * Format: uuid
+             */
+            canonicalAlertId: string;
+            /**
+             * Confidence
+             * @default null
+             */
+            confidence: number | null;
+            /** Destinationip */
+            destinationIp: string;
+            /**
+             * Destinationport
+             * @default null
+             */
+            destinationPort: number | null;
+            /**
+             * Detectioncategory
+             * @default null
+             */
+            detectionCategory: string | null;
+            /** Detectiontitle */
+            detectionTitle: string;
+            /** Detectorname */
+            detectorName: string;
+            /** Detectorseverity */
+            detectorSeverity: string | number;
+            /** Detectorsource */
+            detectorSource: string;
+            /**
+             * Detectorversion
+             * @default null
+             */
+            detectorVersion: string | null;
+            /** Evidenceclass */
+            evidenceClass: string;
+            /**
+             * Occurredat
+             * Format: date-time
+             */
+            occurredAt: string;
+            /** Originaldetectorfields */
+            originalDetectorFields: {
+                [key: string]: components["schemas"]["JsonValue"];
+            };
+            /** Protocol */
+            protocol: string;
+            /** Provenance */
+            provenance: {
+                [key: string]: components["schemas"]["JsonValue"];
+            };
+            /** Sourceip */
+            sourceIp: string;
+            /**
+             * Sourceport
+             * @default null
+             */
+            sourcePort: number | null;
+            /** Sourcerecordreference */
+            sourceRecordReference: string;
+            /** Structuredevidence */
+            structuredEvidence: {
+                [key: string]: components["schemas"]["JsonValue"];
+            };
         };
         /** ClassMetrics */
         ClassMetrics: {
@@ -1711,6 +1787,7 @@ export interface components {
              */
             lastSeen: string | null;
         };
+        JsonValue: unknown;
         /**
          * LoginRequest
          * @description What the sign-in form sends. A wrong username and a wrong password answer identically.

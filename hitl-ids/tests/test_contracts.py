@@ -62,7 +62,7 @@ DEVIATION_COLUMNS = {
     "signature_rules": {"attack_category", "rationale"},
     "detection_runs": {"seed"},
     "alerts": {"detection_score", "evidence_class", "evidence_priority", "requires_review",
-               "queue_class", "queue_priority", "family_key"},
+               "queue_class", "queue_priority", "family_key", "detector"},
     "flow_data": {"source_record_id"},
 }
 DEVIATION_TABLES = {

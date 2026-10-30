@@ -1,0 +1,37 @@
+[
+  {
+    "timestamp": "2026-09-18T06:13:41.532140+0000",
+    "event_type": "alert",
+    "src_ip": "192.0.2.10",
+    "dest_ip": "198.51.100.20",
+    "src_port": 51514,
+    "dest_port": 443,
+    "proto": "TCP",
+    "flow_id": 1676750115612680,
+    "alert": {
+      "signature": "TEST Suspicious outbound connection",
+      "signature_id": 9000001,
+      "category": "Potentially Bad Traffic",
+      "severity": 2,
+      "action": "allowed",
+      "rev": 3,
+      "metadata": {"deployment": ["Perimeter"], "confidence": ["High"]}
+    },
+    "community_id": "1:fixture",
+    "future_extension": {"safe": true}
+  },
+  {
+    "timestamp": "2026-09-18T14:13:42+0800",
+    "event_type": "alert",
+    "src_ip": "2001:db8::1",
+    "dest_ip": "2001:db8::2",
+    "proto": "ICMPv6",
+    "alert": {
+      "signature": "TEST ICMPv6 policy event",
+      "signature_id": 9000002,
+      "category": "Misc activity",
+      "severity": 3,
+      "action": "allowed"
+    }
+  }
+]

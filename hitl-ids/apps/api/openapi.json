@@ -69,6 +69,17 @@
             ],
             "default": null
           },
+          "detector": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/CanonicalAlert"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
           "evidence": {
             "$ref": "#/components/schemas/EvidencePanel"
           },
@@ -545,6 +556,178 @@
           "createdAt"
         ],
         "title": "AuditEntryOut",
+        "type": "object"
+      },
+      "CanonicalAlert": {
+        "additionalProperties": false,
+        "description": "Immutable detector facts, never a ranking score or an analyst verdict.\n\nA naive occurredAt preserves a capture-local timestamp; provenance states its basis.\nSeverity keeps the detector's native scale. No cross-detector severity conversion is implied.",
+        "properties": {
+          "canonicalAlertId": {
+            "format": "uuid",
+            "title": "Canonicalalertid",
+            "type": "string"
+          },
+          "confidence": {
+            "anyOf": [
+              {
+                "maximum": 1,
+                "minimum": 0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Confidence"
+          },
+          "destinationIp": {
+            "minLength": 1,
+            "title": "Destinationip",
+            "type": "string"
+          },
+          "destinationPort": {
+            "anyOf": [
+              {
+                "maximum": 65535,
+                "minimum": 0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Destinationport"
+          },
+          "detectionCategory": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Detectioncategory"
+          },
+          "detectionTitle": {
+            "minLength": 1,
+            "title": "Detectiontitle",
+            "type": "string"
+          },
+          "detectorName": {
+            "minLength": 1,
+            "title": "Detectorname",
+            "type": "string"
+          },
+          "detectorSeverity": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "integer"
+              }
+            ],
+            "title": "Detectorseverity"
+          },
+          "detectorSource": {
+            "minLength": 1,
+            "title": "Detectorsource",
+            "type": "string"
+          },
+          "detectorVersion": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Detectorversion"
+          },
+          "evidenceClass": {
+            "minLength": 1,
+            "title": "Evidenceclass",
+            "type": "string"
+          },
+          "occurredAt": {
+            "format": "date-time",
+            "title": "Occurredat",
+            "type": "string"
+          },
+          "originalDetectorFields": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/JsonValue"
+            },
+            "title": "Originaldetectorfields",
+            "type": "object"
+          },
+          "protocol": {
+            "minLength": 1,
+            "title": "Protocol",
+            "type": "string"
+          },
+          "provenance": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/JsonValue"
+            },
+            "title": "Provenance",
+            "type": "object"
+          },
+          "sourceIp": {
+            "minLength": 1,
+            "title": "Sourceip",
+            "type": "string"
+          },
+          "sourcePort": {
+            "anyOf": [
+              {
+                "maximum": 65535,
+                "minimum": 0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Sourceport"
+          },
+          "sourceRecordReference": {
+            "minLength": 1,
+            "title": "Sourcerecordreference",
+            "type": "string"
+          },
+          "structuredEvidence": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/JsonValue"
+            },
+            "title": "Structuredevidence",
+            "type": "object"
+          }
+        },
+        "required": [
+          "canonicalAlertId",
+          "occurredAt",
+          "detectorSource",
+          "detectorName",
+          "detectionTitle",
+          "detectorSeverity",
+          "sourceIp",
+          "destinationIp",
+          "protocol",
+          "evidenceClass",
+          "structuredEvidence",
+          "provenance",
+          "sourceRecordReference",
+          "originalDetectorFields"
+        ],
+        "title": "CanonicalAlert",
         "type": "object"
       },
       "ClassMetrics": {
@@ -2634,6 +2817,7 @@
         "title": "IpTargetHost",
         "type": "object"
       },
+      "JsonValue": {},
       "LoginRequest": {
         "additionalProperties": false,
         "description": "What the sign-in form sends. A wrong username and a wrong password answer identically.",

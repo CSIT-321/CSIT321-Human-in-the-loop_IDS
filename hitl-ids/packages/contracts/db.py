@@ -98,8 +98,8 @@ def create_schema(conn: sqlite3.Connection) -> None:
 
 #: Schema changes after S9 consumed schema.sql are migrations, never edits to it (plan S2). Each
 #: entry is (version, description, SQL); `PRAGMA user_version` records the last one applied. A fresh
-#: database runs schema.sql and then every migration, so both paths end at the same schema. Every
-#: statement is IF NOT EXISTS, so two connections racing to apply one migration both succeed.
+#: database runs schema.sql and then every migration, so both paths end at the same schema.
+#: Migration 2 adds a nullable column; migrate rechecks the version under a write lock.
 MIGRATIONS: tuple[tuple[int, str, str], ...] = (
     (1, "alert_notes: the append-only analyst notes thread (console rebuild B2)", """
 CREATE TABLE IF NOT EXISTS alert_notes (
@@ -119,6 +119,19 @@ WHEN NEW.id IS NOT NULL AND EXISTS (SELECT 1 FROM alert_notes WHERE id = NEW.id)
 BEGIN SELECT RAISE(ABORT, 'alert_notes is append-only: add a new note'); END;
 """),
 )
+MIGRATIONS += ((2, "immutable canonical detector snapshot", """
+ALTER TABLE alerts ADD COLUMN detector TEXT CHECK (detector IS NULL OR json_valid(detector));
+CREATE TRIGGER IF NOT EXISTS trg_detector_no_update BEFORE UPDATE OF detector ON alerts
+WHEN OLD.detector IS NOT NEW.detector
+BEGIN SELECT RAISE(ABORT, 'detector evidence is immutable'); END;
+CREATE TRIGGER IF NOT EXISTS trg_detector_no_delete BEFORE DELETE ON alerts
+WHEN OLD.detector IS NOT NULL
+BEGIN SELECT RAISE(ABORT, 'detector evidence is immutable'); END;
+CREATE TRIGGER IF NOT EXISTS trg_detector_no_replace BEFORE INSERT ON alerts
+WHEN EXISTS (SELECT 1 FROM alerts WHERE detector IS NOT NULL
+             AND (id = NEW.id OR alert_ref = NEW.alert_ref))
+BEGIN SELECT RAISE(ABORT, 'detector evidence is immutable'); END;
+"""),)
 SCHEMA_VERSION = MIGRATIONS[-1][0]
 
 
@@ -133,8 +146,21 @@ def migrate(conn: sqlite3.Connection) -> list[int]:
         if version <= current:
             continue
         try:
-            conn.executescript(
-                f"BEGIN IMMEDIATE;\n{sql}\nPRAGMA user_version = {int(version)};\nCOMMIT;")
+            conn.execute("BEGIN IMMEDIATE")
+            # Another API request may have migrated while this connection waited for the lock.
+            if int(conn.execute("PRAGMA user_version").fetchone()[0]) >= version:
+                conn.commit()
+                continue
+            statement = ""
+            for line in sql.splitlines(keepends=True):
+                statement += line
+                if sqlite3.complete_statement(statement):
+                    conn.execute(statement)
+                    statement = ""
+            if statement.strip():
+                raise sqlite3.OperationalError("incomplete migration SQL")
+            conn.execute(f"PRAGMA user_version = {int(version)}")
+            conn.commit()
         except sqlite3.Error:
             conn.rollback()
             raise

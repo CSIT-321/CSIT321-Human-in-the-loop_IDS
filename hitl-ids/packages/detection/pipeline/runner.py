@@ -25,6 +25,7 @@ from pathlib import Path
 
 from packages.contracts import db
 from packages.contracts import models as m
+from packages.detection.adapters.current import CurrentDetectorAdapter, CurrentDetectorOutput
 from packages.detection.audit.writer import AuditWriter
 from packages.detection.feedback.learning import family_key_of, member_placement
 from packages.detection.fusion.cef import FusionConfig, fuse, severity_for
@@ -106,9 +107,11 @@ def run_detection(conn: sqlite3.Connection, source: FlowSource, predictor: Predi
                 record = project_record(flow.features)
                 decision = fuse(match_all(record, rules), prediction, config)
                 stored = flow_record(flow)
-                alert = _place(conn, decision.to_alert(dataset_id=dataset_id, run_id=run_id,
-                                                       created_at=now), stored, chart, policy,
-                               config)
+                original = decision.to_alert(dataset_id=dataset_id, run_id=run_id, created_at=now)
+                canonical = CurrentDetectorAdapter().adapt(CurrentDetectorOutput(
+                    original, stored, predictor.version, rules[0].version, prediction))
+                alert = _place(conn, original.model_copy(update={"detector": canonical}),
+                               stored, chart, policy, config)
                 store.insert_alert(conn, alert, stored)
                 alerts += 1
         run = store.finish_run(conn, run_id, alert_count=alerts, now=now)

@@ -35,6 +35,8 @@ from pydantic import (
 )
 from pydantic.alias_generators import to_camel
 
+from packages.contracts.canonical import CanonicalAlert
+
 # --------------------------------------------------------------------------------------------
 # Vocabularies
 # --------------------------------------------------------------------------------------------
@@ -438,6 +440,8 @@ class Alert(Contract):
     # DEVIATION (S7b): the alert's similar-alert family (feedback.learning.family_key). None keeps
     # the alert out of similar-alert learning.
     family_key: str | None = Field(default=None, min_length=2)
+    # Additive detector snapshot; legacy databases retain null until read projection.
+    detector: CanonicalAlert | None = None
 
     @model_validator(mode="before")
     @classmethod
@@ -452,6 +456,8 @@ class Alert(Contract):
 
     @model_validator(mode="after")
     def _evidence_matches_detectors(self) -> Alert:
+        if self.detector is not None and self.detector.canonical_alert_id != self.alert_ref:
+            raise ValueError("canonical alert identity must match alert_ref")
         # Necessary conditions only. How S6 assigns classes and priorities is S6's to specify.
         signature_fired = bool(self.signature_rules)
         if signature_fired != (self.evidence_class in SIGNATURE_EVIDENCE):

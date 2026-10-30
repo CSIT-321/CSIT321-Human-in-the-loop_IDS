@@ -256,6 +256,7 @@ def get_alert(alertRef: str, conn: Conn, principal: Principal) -> ca.AlertDetail
     family = store.family_by_key(conn, alert.family_key)
 
     return ca.AlertDetail(
+        detector=store.detector_for_alert(conn, alert, flow),
         alert=_summary(conn, alert, flow),
         flow=flow_panel(flow),
         signature=signature_panel(alert),

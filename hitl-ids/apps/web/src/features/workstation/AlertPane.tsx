@@ -15,6 +15,7 @@ import { ErrorState, LoadingState } from "../../components/states";
 import { BandBadge, Card, EvidenceBadge, Pill, SeverityBadge } from "../../components/ui";
 import { formatDateTime, formatPercent, formatScore, humanise } from "../../design/format";
 import { EvidencePanelCard } from "../alert/EvidencePanelCard";
+import { DetectorProvenance } from "../alert/DetectorProvenance";
 import { FeedbackHistoryCard } from "../alert/FeedbackHistoryCard";
 import { FlowPanelCard } from "../alert/FlowPanelCard";
 import { MlPanelCard } from "../alert/MlPanelCard";
@@ -259,14 +260,16 @@ export function AlertPane({
         <div className="mt-3 grid gap-4 sm:grid-cols-3">
           <Meter label="Operational score" value={alert.combinedScore} max={100} display={formatScore(alert.combinedScore)} tone="bg-primary" hint="What analyst feedback moves" />
           <Meter label="Detection score" value={alert.detectionScore} max={100} display={formatScore(alert.detectionScore)} tone="bg-muted" hint="What detection produced; never changes" />
-          <Meter
+          {detail.detector && detail.detector.confidence == null ? (
+            <div className="text-xs text-muted">Model confidence: Not provided</div>
+          ) : <Meter
             label="Model confidence"
-            value={alert.confidence}
+            value={detail.detector?.confidence ?? alert.confidence}
             max={1}
-            display={formatPercent(alert.confidence)}
+            display={formatPercent(detail.detector?.confidence ?? alert.confidence)}
             tone="bg-accent"
             hint="The model's probability for its predicted class — not a false-positive probability"
-          />
+          />}
         </div>
       </header>
 
@@ -293,6 +296,7 @@ export function AlertPane({
       <div role="tabpanel" aria-label={tab} className="min-h-0 flex-1 space-y-4 overflow-y-auto p-5">
         {tab === "Overview" && (
           <>
+            <DetectorProvenance detector={detail.detector} />
             <EvidencePanelCard evidence={detail.evidence} />
             <div className="grid gap-4 2xl:grid-cols-2">
               <SignaturePanelCard signature={detail.signature} />

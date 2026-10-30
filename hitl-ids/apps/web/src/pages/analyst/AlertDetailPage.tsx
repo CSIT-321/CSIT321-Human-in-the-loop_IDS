@@ -28,6 +28,7 @@ import {
 } from "../../components/ui";
 import { formatNumber, formatPercent, formatScore, humanise } from "../../design/format";
 import { EvidencePanelCard } from "../../features/alert/EvidencePanelCard";
+import { DetectorProvenance } from "../../features/alert/DetectorProvenance";
 import { FamilyPanelCard } from "../../features/alert/FamilyPanelCard";
 import { FeedbackHistoryCard } from "../../features/alert/FeedbackHistoryCard";
 import { FlowPanelCard } from "../../features/alert/FlowPanelCard";
@@ -123,7 +124,8 @@ export function AlertDetailPage() {
               "Operational score",
               <ScorePair detection={alert.detectionScore} combined={alert.combinedScore} />,
             ],
-            ["Model confidence", formatPercent(alert.confidence)],
+            ["Model confidence", detail.detector && detail.detector.confidence == null
+              ? "Not provided" : formatPercent(detail.detector?.confidence ?? alert.confidence)],
             ["Status", humanise(alert.status)],
             ["Needs review", alert.requiresReview ? "Yes" : "No"],
             ["Verdicts recorded", formatNumber(detail.feedbackCount)],
@@ -131,6 +133,7 @@ export function AlertDetailPage() {
         />
       </Card>
 
+      <DetectorProvenance detector={detail.detector} />
       <div className="grid gap-4 lg:grid-cols-2">
         <FlowPanelCard flow={detail.flow} />
         <SignaturePanelCard signature={detail.signature} />

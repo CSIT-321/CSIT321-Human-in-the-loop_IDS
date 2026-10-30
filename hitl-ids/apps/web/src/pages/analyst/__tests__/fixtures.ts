@@ -159,6 +159,7 @@ export const FAMILY: Schemas["FamilyPanel"] = {
 };
 
 export const ALERT_DETAIL: Schemas["AlertDetail"] = {
+  detector: null,
   alert: CRITICAL_ALERT,
   flow: FLOW,
   signature: SIGNATURE,
