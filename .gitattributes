@@ -1,0 +1,2 @@
+# openapi-typescript --check compares exact text and emits LF on every platform.
+hitl-ids/apps/web/src/api/schema.d.ts text eol=lf
