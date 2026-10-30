@@ -3,11 +3,32 @@
 from __future__ import annotations
 
 from datetime import datetime
+import re
 from typing import Annotated, Any
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict, Field, JsonValue, field_validator
+from pydantic import BaseModel, ConfigDict, Field, JsonValue, field_validator, model_validator
 from pydantic.alias_generators import to_camel
+
+
+TIMESTAMP_PATTERN = (
+    r"^\d{4}-\d{2}-\d{2}[T ]\d{2}:\d{2}:\d{2}(?:\.\d+)?"
+    r"(?:Z|[+-](?:[01]\d|2[0-3]):?[0-5]\d)?$"
+)
+
+
+def timestamp_offset(value: str) -> str | None:
+    """Validate source text without changing it; normalize only explicit offset metadata."""
+    if not re.fullmatch(TIMESTAMP_PATTERN, value):
+        raise ValueError("occurredAt must be a valid ISO source timestamp")
+    try:
+        datetime.fromisoformat(value)
+    except ValueError as exc:
+        raise ValueError("occurredAt must be a valid ISO source timestamp") from exc
+    if value.endswith("Z"):
+        return "+00:00"
+    offset = re.search(r"([+-]\d{2}):?(\d{2})$", value)
+    return None if offset is None else f"{offset[1]}:{offset[2]}"
 
 
 def reject_ground_truth(value: Any) -> None:
@@ -60,7 +81,7 @@ def _freeze(value: Any) -> Any:
 class CanonicalAlert(BaseModel):
     """Immutable detector facts, never a ranking score or an analyst verdict.
 
-    A naive occurredAt preserves a capture-local timestamp; provenance states its basis.
+    occurredAt preserves validated source text; a null offset means the timezone is unknown.
     Severity keeps the detector's native scale. No cross-detector severity conversion is implied.
     """
 
@@ -70,7 +91,13 @@ class CanonicalAlert(BaseModel):
     )
 
     canonical_alert_id: UUID
-    occurred_at: datetime
+    occurred_at: str = Field(
+        strict=True, pattern=TIMESTAMP_PATTERN,
+        description="Validated source timestamp preserved verbatim. May be source-local; "
+                    "not an RFC 3339 date-time promise.")
+    occurred_at_timezone_offset: str | None = Field(
+        default=None, pattern=r"^[+-](?:[01]\d|2[0-3]):[0-5]\d$",
+        description="Explicit source offset as +/-HH:MM; null when unknown. Never inferred.")
     detector_source: str = Field(min_length=1)
     detector_name: str = Field(min_length=1)
     detector_version: str | None = None
@@ -88,6 +115,23 @@ class CanonicalAlert(BaseModel):
     provenance: dict[str, JsonValue]
     source_record_reference: str = Field(min_length=1)
     original_detector_fields: dict[str, JsonValue]
+
+    @model_validator(mode="before")
+    @classmethod
+    def _offset_for_existing_snapshots(cls, value):
+        if isinstance(value, dict):
+            stamp = value.get("occurredAt", value.get("occurred_at"))
+            if isinstance(stamp, str):
+                offset = timestamp_offset(stamp)
+                if not {"occurredAtTimezoneOffset", "occurred_at_timezone_offset"} & value.keys():
+                    value = {**value, "occurred_at_timezone_offset": offset}
+        return value
+
+    @model_validator(mode="after")
+    def _offset_matches_source(self):
+        if self.occurred_at_timezone_offset != timestamp_offset(self.occurred_at):
+            raise ValueError("occurredAtTimezoneOffset must match the explicit source offset")
+        return self
 
     @field_validator("structured_evidence", "provenance", "original_detector_fields")
     @classmethod

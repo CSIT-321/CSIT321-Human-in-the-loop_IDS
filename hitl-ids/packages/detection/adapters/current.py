@@ -1,6 +1,5 @@
 """Compatibility adapter for Signature + XGBoost/TreeSHAP."""
 from dataclasses import dataclass
-from datetime import datetime
 
 from packages.contracts import models as m
 from packages.contracts.canonical import CanonicalAlert
@@ -20,7 +19,7 @@ class CurrentDetectorAdapter:
     def adapt(self, output: CurrentDetectorOutput) -> CanonicalAlert:
         alert, flow = output.alert, output.flow
         capture = flow.flow_features.get("Timestamp")
-        occurred = datetime.fromisoformat(str(capture)) if capture is not None else alert.created_at
+        occurred = str(capture) if capture is not None else alert.created_at.isoformat()
         prediction = output.prediction
         confidence = (prediction.model_confidence if prediction is not None
                       and prediction.prediction_status == "available" else None)

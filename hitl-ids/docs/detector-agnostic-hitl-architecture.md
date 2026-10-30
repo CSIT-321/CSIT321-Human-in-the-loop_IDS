@@ -58,11 +58,32 @@ The legacy fused confidence stays available as legacyFusionConfidence, not ML co
 Historical capture-local time is retained without inventing a UTC offset; timestampBasis
 distinguishes it from the fallback detection-time timestamp.
 
+occurredAt is validated ISO source text, preserved verbatim, including its separator, fractional
+precision and any explicit offset. OpenAPI describes a patterned string, without format: date-time.
+occurredAtTimezoneOffset is a nullable string: null for source-local time whose offset is unknown,
+or the explicit source offset normalized as +/-HH:MM. A source Z yields +00:00 metadata while
+the original Z stays in occurredAt. An explicit +0800 similarly yields +08:00 metadata.
+No timezone is inferred and no timestamp is converted to UTC.
+
+| Source occurredAt (unchanged) | occurredAtTimezoneOffset |
+|---|---|
+| 2018-02-14T12:28:54.334391 | null |
+| 2018-02-14 12:28:54.334391 | null |
+| 2026-10-29T15:30:10.123456+08:00 | +08:00 |
+
+The current adapter uses the original capture text; only a missing capture timestamp falls back
+to the already offset-aware detection time. Existing canonical JSON snapshots can be read without
+the new metadata field: it is derived only from an offset explicitly present in their stored text.
+The read does not rewrite that JSON or reinterpret any database timestamp. Explicit metadata
+that contradicts the text is rejected. Operational created_at/updated_at, flow Timestamp and
+queue sorting are unaffected.
+
 ### Canonical contract
 
 | Fields | Meaning |
 |---|---|
-| canonicalAlertId, occurredAt | Existing UUID for current alerts; event occurrence time |
+| canonicalAlertId, occurredAt | Existing UUID for current alerts; validated original timestamp string |
+| occurredAtTimezoneOffset | Explicit source offset as +/-HH:MM, or null when unknown |
 | detectorSource, detectorName, detectorVersion | Source and version; unavailable version is null |
 | detectionTitle, detectionCategory | Detector-native signature/model description and category |
 | detectorSeverity | Native severity value/scale, separate from probability |
@@ -84,7 +105,13 @@ alert event type, offset-aware timestamp, IPs, protocol and required signature f
 flow ID, action, metadata and engine version may be absent. Safe extensions are retained in the
 original snapshot. Known truth keys are rejected recursively even inside unknown extensions.
 It maps timestamp, endpoints, proto, flow_id, signature, signature_id, category, severity, action
-and rule metadata. UUID5 uses sensor identity plus raw-event reference, not flow_id alone.
+and rule metadata. UUID5 uses the deterministic UTF-8 JSON encoding of
+["suricata", sensor_id, raw_event_reference] as its NAMESPACE_URL name. Serialization uses
+ensure_ascii=False and separators=(",", ":"); no repr(), unordered dictionaries, delimiter
+concatenation or Unicode normalization is involved. Thus ["suricata","a","b:c"] and
+["suricata","a:b","c"] remain distinct, including for Unicode/delimiter-containing inputs.
+Suricata fixture IDs change from the original foundation algorithm, but remain deterministic.
+Suricata has no operational admission/storage path, so no operational alert ID migration is needed.
 Callers must supply a stable, unique per-record reference (for example immutable file ID + line).
 Reusing that reference for a different event is a caller error; no ingestion/dedup service exists.
 
@@ -166,7 +193,7 @@ Because npx is absent, browser smoke used an ignored test-results/foundation.con
 to invoke Vite with Node directly; the committed Playwright configuration is unchanged.
 Browser servers used disposable database copies and were stopped by Playwright afterward.
 
-Exact changed files, relative to hitl-ids/:
+Original foundation commit's changed files, relative to hitl-ids/:
 
 - docs/detector-agnostic-hitl-architecture.md
 - packages/contracts/canonical.py
@@ -192,3 +219,29 @@ Exact changed files, relative to hitl-ids/:
 - tests/test_canonical_api.py
 - tests/test_contracts.py
 - tests/test_triage.py
+
+## Final-review corrections
+
+The focused follow-up to 52f10f77b9997241c66b6711f058954118b311e7 corrects timestamp
+representation and Suricata identity only. It also strengthens the committed migration test:
+a populated legacy alert with signature/SHAP evidence, adjusted score, owner, review flag, family
+key, queue state, flow timestamp, feedback and audit survives migration 2 unchanged. The new
+detector column is null and repeated migration is a no-op. Migration implementation is unchanged.
+
+Follow-up verification (Python 3.11.9): targeted contract/adapter/migration/API checks
+172 passed / 1 existing fixture skip; full Python 521 passed / the same 5 fixture skips;
+frontend 160 passed; TypeScript, both schema checks and Vite build passed; all 3
+Analyst/Admin/Evaluator browser smoke paths passed. The original chunk-size and jsdom warnings
+remain. No runtime UI changes were required because the provenance timestamp remains text.
+
+Fix files, relative to hitl-ids/:
+
+- packages/contracts/canonical.py
+- packages/detection/adapters/current.py
+- packages/detection/adapters/suricata.py
+- apps/api/openapi.json
+- apps/web/src/api/schema.d.ts
+- apps/web/src/features/alert/DetectorProvenance.test.tsx
+- tests/test_detector_timestamp_identity.py
+- tests/test_canonical_api.py
+- docs/detector-agnostic-hitl-architecture.md

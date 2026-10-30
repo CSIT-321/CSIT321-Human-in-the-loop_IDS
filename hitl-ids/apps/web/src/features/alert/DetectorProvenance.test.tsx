@@ -6,6 +6,7 @@ import { DetectorProvenance } from "./DetectorProvenance";
 const detector: Schemas["CanonicalAlert"] = {
   canonicalAlertId: "8f22e741-c776-4999-b347-17a0c42aca6a",
   occurredAt: "2026-09-18T00:00:00Z",
+  occurredAtTimezoneOffset: "+00:00",
   detectorSource: "suricata", detectorName: "Suricata", detectorVersion: "7.0.14",
   detectionTitle: "TEST Network signature", detectionCategory: "Policy",
   detectorSeverity: 2, confidence: null, sourceIp: "192.0.2.1",

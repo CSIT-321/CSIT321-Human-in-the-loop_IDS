@@ -713,7 +713,7 @@ export interface components {
          * CanonicalAlert
          * @description Immutable detector facts, never a ranking score or an analyst verdict.
          *
-         *     A naive occurredAt preserves a capture-local timestamp; provenance states its basis.
+         *     occurredAt preserves validated source text; a null offset means the timezone is unknown.
          *     Severity keeps the detector's native scale. No cross-detector severity conversion is implied.
          */
         CanonicalAlert: {
@@ -756,9 +756,15 @@ export interface components {
             evidenceClass: string;
             /**
              * Occurredat
-             * Format: date-time
+             * @description Validated source timestamp preserved verbatim. May be source-local; not an RFC 3339 date-time promise.
              */
             occurredAt: string;
+            /**
+             * Occurredattimezoneoffset
+             * @description Explicit source offset as +/-HH:MM; null when unknown. Never inferred.
+             * @default null
+             */
+            occurredAtTimezoneOffset: string | null;
             /** Originaldetectorfields */
             originalDetectorFields: {
                 [key: string]: components["schemas"]["JsonValue"];

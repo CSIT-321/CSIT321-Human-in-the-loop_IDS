@@ -1,5 +1,6 @@
 """Fixture-only EVE alert adapter. No capture or response actions."""
 from dataclasses import dataclass
+import json
 from typing import Any, Literal
 from uuid import NAMESPACE_URL, uuid5
 
@@ -46,10 +47,12 @@ class SuricataEveAdapter:
         event = EveAlert.model_validate(output.event)
         signature = event.alert
         # A reference identifies a record (file+line), not a flow containing many alerts.
-        identity = f"suricata:{output.sensor_id}:{output.raw_event_reference}"
+        identity = json.dumps(
+            ["suricata", output.sensor_id, output.raw_event_reference],
+            ensure_ascii=False, separators=(",", ":"))
         return CanonicalAlert(
             canonical_alert_id=uuid5(NAMESPACE_URL, identity),
-            occurred_at=event.timestamp, detector_source="suricata", detector_name="Suricata",
+            occurred_at=output.event["timestamp"], detector_source="suricata", detector_name="Suricata",
             detector_version=output.detector_version, detection_title=signature.signature,
             detection_category=signature.category, detector_severity=signature.severity,
             confidence=None, source_ip=str(event.src_ip), destination_ip=str(event.dest_ip),
