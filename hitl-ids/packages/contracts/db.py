@@ -132,6 +132,8 @@ WHEN EXISTS (SELECT 1 FROM alerts WHERE detector IS NOT NULL
              AND (id = NEW.id OR alert_ref = NEW.alert_ref))
 BEGIN SELECT RAISE(ABORT, 'detector evidence is immutable'); END;
 """),)
+MIGRATIONS += ((3, "isolated immutable external alert inbox",
+                Path(__file__).with_name("external_inbox.sql").read_text(encoding="utf-8")),)
 SCHEMA_VERSION = MIGRATIONS[-1][0]
 
 

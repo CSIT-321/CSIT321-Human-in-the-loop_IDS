@@ -1,0 +1,11 @@
+{
+  "version": "suricata-offline-v1",
+  "accepted_sources": ["suricata"],
+  "severity_to_priority": {"1": 85, "2": 65, "3": 40, "4": 20},
+  "requires_review": true,
+  "evidence_class": "external_rule",
+  "duplicate_handling": "canonical_identity",
+  "learning_eligible": false,
+  "learning_reason": "External rule alerts are isolated until a source-specific family policy is validated.",
+  "evaluation_included": false
+}

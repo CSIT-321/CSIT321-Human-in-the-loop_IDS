@@ -72,6 +72,16 @@ DEVIATION_TABLES = {
                        "applied_adjustment", "applied_offset", "updated_at"},
     # Console rebuild B2; added by migration 1 (db.MIGRATIONS), not schema.sql.
     "alert_notes": {"id", "alert_id", "user_id", "body", "created_at"},
+    # Migration 3: isolated staging, documented in detector-agnostic-hitl-architecture.md.
+    "external_alert_inbox": {
+        "id", "canonical_alert_id", "detector_source", "sensor_id", "raw_reference",
+        "occurred_at", "occurred_at_timezone_offset", "native_severity", "confidence",
+        "detection_title", "detection_category", "source_ip", "destination_ip", "source_port",
+        "destination_port", "protocol", "canonical_snapshot", "admission_policy_version",
+        "admission_decision", "admission_reason", "review_required", "learning_eligible",
+        "evaluation_eligible", "proposed_operational_priority", "proposed_evidence_class",
+        "policy_snapshot", "import_status", "imported_at",
+    },
 }
 ENGINE_FEEDBACK_CATEGORIES = {"confirm_true_positive", "mark_false_positive",
                               "mark_expected_activity", "needs_investigation", "escalate"}
@@ -248,7 +258,8 @@ def test_columns_are_tdm_names_plus_logged_deviations(conn):
 
 
 def test_every_table_model_matches_its_columns(conn):
-    assert set(db.TABLE_MODELS) == table_names(conn)
+    # The inbox uses the canonical contract and staging writer, not a legacy operational model.
+    assert set(db.TABLE_MODELS) == table_names(conn) - {"external_alert_inbox"}
     for table, model in db.TABLE_MODELS.items():
         assert set(model.model_fields) == set(columns(conn, table)), table
 

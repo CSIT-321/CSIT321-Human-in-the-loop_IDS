@@ -80,7 +80,7 @@ def test_migration_preserves_existing_rows_and_is_idempotent(tmp_path):
     tables = ("datasets", "alerts", "flow_data", "feedback_events", "audit_log")
     before = {table: [dict(row) for row in conn.execute(f"SELECT * FROM {table} ORDER BY id")]
               for table in tables}
-    assert db.migrate(conn) == [2]
+    assert db.migrate(conn) == [2, 3]
     migrated = dict(conn.execute("SELECT * FROM alerts").fetchone())
     assert migrated.pop("detector") is None
     assert migrated == before["alerts"][0]
@@ -110,4 +110,4 @@ def test_concurrent_first_requests_can_migrate_the_same_database(tmp_path):
             connection.close()
 
     with ThreadPoolExecutor(max_workers=2) as pool:
-        assert list(pool.map(lambda _: upgrade(), range(2))) == [2, 2]
+        assert list(pool.map(lambda _: upgrade(), range(2))) == [db.SCHEMA_VERSION] * 2

@@ -245,3 +245,128 @@ Fix files, relative to hitl-ids/:
 - tests/test_detector_timestamp_identity.py
 - tests/test_canonical_api.py
 - docs/detector-agnostic-hitl-architecture.md
+
+## Offline Suricata staging increment
+
+Base: `f1b44d063d0fde50d86f509d8969a68a9b6a80ae`.
+Branch: `feat/suricata-admission-staging`.
+
+The implemented boundary is:
+
+`EVE JSON/JSONL -> existing Suricata adapter -> canonical alert -> admission policy -> external_alert_inbox`
+
+**Operational admission: pending.** Staged evidence has no operational alert ID, feedback,
+family membership, evaluator denominator entry, Workstation row, or Admin IP report entry.
+Inspection is CLI-only; no API contract or frontend changes are needed.
+
+### Why Alert Contract V2 is required
+
+The proposed core-table rebuild was rejected by automatic approval review, and that rejection
+was accepted. Disabling foreign keys and reconstructing core tables exceeded the strictly
+additive requirement and risked existing evidence and linked records. No such migration ran.
+
+The existing schema is intentionally specialised:
+
+- `alerts.confidence` is NOT NULL; Suricata has no model probability.
+- Evidence classes describe Signature/XGBoost agreement, not external rules.
+- Queue classes reuse those legacy meanings and promotion rules.
+- `dataset_id` and `run_id` are mandatory, tied to current detection runs.
+- `flow_data` requires CIC-oriented ports, duration and counters that EVE may omit.
+- `feedback_events` references legacy alerts.
+- Family learning uses current attack classes, rule fields and flow context.
+
+A separately reviewed Alert Contract V2 must define source-neutral identity, nullable confidence
+and observations, detector-native severity, operational priority, evidence and run provenance,
+feedback references, explicit source-isolated learning eligibility, evaluation eligibility,
+and a backward-compatible API/UI transition. It must define migration and rollback safety before
+any operational admission. Fake model values or reusing an inaccurate evidence class are not an
+acceptable bridge. V2 is not implemented in this increment.
+
+### Policy and inbox
+
+The original standalone policy and its 19 tests are retained. `config/external-admission.json`
+maps native priorities 1/2/3/4 to proposed scores 85/65/40/20. This gives higher rule priorities
+higher proposed review urgency on the current 0-100 scale; it is a configurable operational
+proposal, not calibrated maliciousness probability. Unmapped severities are rejected.
+Confidence stays null. Review is mandatory; learning and evaluation eligibility are false.
+The proposed evidence type is `external_rule`; the canonical snapshot keeps `external_signature`.
+
+Migration 3 only creates `external_alert_inbox` and three immutability triggers. It uses the
+existing transactional, version-checked migration runner and leaves foreign keys enabled.
+There is no foreign key to `alerts`, no core ALTER/DROP, and no core-row backfill. The unique
+canonical identity index serves duplicate lookup; CLI listing uses the integer primary key,
+so no additional secondary indexes are justified yet.
+
+The inbox stores canonical identity, source/sensor/reference, exact timestamp and nullable offset,
+native severity, nullable confidence and ports, title/category, addresses/protocol, complete
+canonical JSON, full policy JSON/version, proposed score/evidence, review and eligibility flags,
+decision/reason, import status and import time. All columns are immutable. UPDATE, DELETE and
+replacement INSERT are rejected, including replacement on a plain SQLite connection with
+recursive triggers disabled. Policy changes never rewrite a previously staged decision.
+
+Accepted events are stored as `staged` / `hold_for_review`, with the pending V2 reason. Duplicate,
+skipped, invalid and policy-rejected events are reported, not stored as incomplete inbox rows.
+This preserves uniqueness and prevents invalid or ground-truth-bearing evidence being persisted.
+
+### Commands and import semantics
+
+Run from `hitl-ids` using an existing project database (use a disposable database for rehearsal):
+
+```powershell
+python scripts/import_suricata_eve.py --input tests/fixtures/suricata-alerts.json --sensor-id lab-a --database <existing-database>
+python scripts/import_suricata_eve.py --input <eve.jsonl> --sensor-id lab-a --database <existing-database> --dry-run
+python scripts/import_suricata_eve.py --database <existing-database> --list --limit 50
+```
+
+`--policy <json>` selects a validated policy. No database is created by a misspelled path.
+Dry-run works with a missing database without creating it; existing databases are opened read-only
+and are not migrated. Its `staged` count means would-stage. Listing is also read-only, including
+against an older database without an inbox.
+
+Identity uses the adapter's unambiguous JSON-encoded sensor/reference tuple. The importer supplies
+`eve-sha256:<digest>` over sorted, compact event JSON. Moving/reformatting/reordering a file does
+not change identities. Identical event objects from one sensor deliberately collapse; different
+sensors remain separate. Changing any event content creates a new identity. This is content-based
+replay deduplication, not semantic flow deduplication; V2 may need an explicit upstream event ID.
+
+Output reports `parsed`, `staged`, `duplicate`, `skipped`, `invalid`, `rejected_by_policy` and
+per-record reasons. `parsed` counts successfully decoded JSON records, including unsupported or
+invalid-shaped ones; malformed JSON contributes only to `invalid`. Unsupported non-alert events
+are skipped. Known ground-truth keys are rejected recursively by the existing adapter. Duplicate
+JSON keys and non-finite JSON values are rejected. Raw validation input is not echoed in errors.
+
+Import uses one write transaction and checks duplicates under its write lock. Invalid records do
+not partially write rows; valid records in a mixed file can still be staged. Infrastructure errors
+roll back the entire staging batch. Exit status is 0 for clean/duplicate/skipped results, 2 when
+invalid or policy-rejected records occurred, and 1 for infrastructure/input-file errors.
+Files are read into memory; bounded streaming and import-attempt audit history are future work.
+
+### Verification boundary
+
+Tests compare all existing operational table values before/after staging, and populated v2 schema
+root pages/SQL before/after migration. They cover migration idempotence/concurrency, enabled foreign
+keys, immutable evidence, concurrent/idempotent imports, dry-run byte preservation, invalid input,
+rollback, CLI inspection, queue/detail/feedback isolation, evaluator inputs and Admin IP reports.
+Tests use temporary databases only. Existing canonical identity regression tests remain in place.
+No live capture, process management, operational admission or automated response is introduced.
+
+Verified on Python 3.11.9: 57 targeted checks passed; full Python 551 passed with the same five
+missing-fixture skips; frontend 160 passed across 21 files; TypeScript, Python OpenAPI check,
+generated frontend schema check and Vite production build passed; all three Analyst/Admin IP
+Report/Evaluator browser smoke paths passed. Existing jsdom navigation and Vite chunk-size
+warnings remain non-failing. The browser used a disposable copy of the demo database.
+
+Exact staging increment file manifest (relative to `hitl-ids/`):
+
+- config/external-admission.json
+- docs/detector-agnostic-hitl-architecture.md
+- packages/contracts/db.py
+- packages/contracts/external_inbox.sql
+- packages/detection/adapters/admission_policy.py
+- packages/detection/adapters/staging.py
+- scripts/import_suricata_eve.py
+- tests/test_canonical_api.py
+- tests/test_contracts.py
+- tests/test_external_admission_policy.py
+- tests/test_external_staging.py
+- tests/test_triage.py
