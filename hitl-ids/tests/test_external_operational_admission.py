@@ -243,7 +243,7 @@ def test_migration_seven_preserves_existing_rows(tmp_path, monkeypatch):
         db.create_schema(conn)
         stage_file(conn, FIXTURE, 'migration-test')
         before = snapshot(conn)
-        monkeypatch.setattr(db, 'MIGRATIONS', migrations)
+        monkeypatch.setattr(db, 'MIGRATIONS', migrations[:7])
         trace = []
         conn.set_trace_callback(trace.append)
         assert db.migrate(conn) == [7] and db.migrate(conn) == []

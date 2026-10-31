@@ -780,6 +780,252 @@
         "title": "CanonicalAlert",
         "type": "object"
       },
+      "CaseCommand": {
+        "additionalProperties": false,
+        "properties": {
+          "expectedRevision": {
+            "minimum": 1,
+            "title": "Expectedrevision",
+            "type": "integer"
+          },
+          "reason": {
+            "maxLength": 4000,
+            "minLength": 1,
+            "title": "Reason",
+            "type": "string"
+          },
+          "requestId": {
+            "format": "uuid",
+            "title": "Requestid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "requestId",
+          "reason",
+          "expectedRevision"
+        ],
+        "title": "CaseCommand",
+        "type": "object"
+      },
+      "CaseEvent": {
+        "additionalProperties": false,
+        "properties": {
+          "action": {
+            "enum": [
+              "create",
+              "link",
+              "note",
+              "finding",
+              "start"
+            ],
+            "title": "Action",
+            "type": "string"
+          },
+          "actorId": {
+            "title": "Actorid",
+            "type": "integer"
+          },
+          "afterState": {
+            "additionalProperties": true,
+            "title": "Afterstate",
+            "type": "object"
+          },
+          "beforeState": {
+            "additionalProperties": true,
+            "title": "Beforestate",
+            "type": "object"
+          },
+          "caseRef": {
+            "format": "uuid",
+            "title": "Caseref",
+            "type": "string"
+          },
+          "createdAt": {
+            "title": "Createdat",
+            "type": "string"
+          },
+          "eventType": {
+            "title": "Eventtype",
+            "type": "string"
+          },
+          "finding": {
+            "anyOf": [
+              {
+                "enum": [
+                  "confirmed_malicious",
+                  "suspicious",
+                  "inconclusive",
+                  "expected_activity"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Finding"
+          },
+          "id": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "linkedAlertRef": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Linkedalertref"
+          },
+          "reason": {
+            "title": "Reason",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "caseRef",
+          "actorId",
+          "action",
+          "eventType",
+          "reason",
+          "finding",
+          "linkedAlertRef",
+          "beforeState",
+          "afterState",
+          "createdAt"
+        ],
+        "title": "CaseEvent",
+        "type": "object"
+      },
+      "CaseMutation": {
+        "additionalProperties": false,
+        "properties": {
+          "case": {
+            "$ref": "#/components/schemas/CaseView"
+          },
+          "eventId": {
+            "title": "Eventid",
+            "type": "integer"
+          },
+          "replayed": {
+            "title": "Replayed",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "case",
+          "eventId",
+          "replayed"
+        ],
+        "title": "CaseMutation",
+        "type": "object"
+      },
+      "CaseSnapshot": {
+        "additionalProperties": false,
+        "properties": {
+          "creationReason": {
+            "title": "Creationreason",
+            "type": "string"
+          },
+          "detector": {
+            "$ref": "#/components/schemas/OperationalAlertV2"
+          },
+          "escalationReason": {
+            "title": "Escalationreason",
+            "type": "string"
+          },
+          "routingDecision": {
+            "$ref": "#/components/schemas/RoutingAudit"
+          },
+          "tier1HandoffSummary": {
+            "title": "Tier1Handoffsummary",
+            "type": "string"
+          },
+          "triage": {
+            "$ref": "#/components/schemas/OperationalTriageStateV2"
+          }
+        },
+        "required": [
+          "detector",
+          "triage",
+          "routingDecision",
+          "escalationReason",
+          "tier1HandoffSummary",
+          "creationReason"
+        ],
+        "title": "CaseSnapshot",
+        "type": "object"
+      },
+      "CaseView": {
+        "additionalProperties": false,
+        "properties": {
+          "caseRef": {
+            "format": "uuid",
+            "title": "Caseref",
+            "type": "string"
+          },
+          "createdAt": {
+            "title": "Createdat",
+            "type": "string"
+          },
+          "createdByActorId": {
+            "title": "Createdbyactorid",
+            "type": "integer"
+          },
+          "ownerActorId": {
+            "title": "Owneractorid",
+            "type": "integer"
+          },
+          "primaryOperationalAlertRef": {
+            "format": "uuid",
+            "title": "Primaryoperationalalertref",
+            "type": "string"
+          },
+          "revision": {
+            "title": "Revision",
+            "type": "integer"
+          },
+          "snapshot": {
+            "$ref": "#/components/schemas/CaseSnapshot"
+          },
+          "status": {
+            "enum": [
+              "open",
+              "investigating"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          },
+          "updatedAt": {
+            "title": "Updatedat",
+            "type": "string"
+          }
+        },
+        "required": [
+          "caseRef",
+          "primaryOperationalAlertRef",
+          "title",
+          "ownerActorId",
+          "createdByActorId",
+          "createdAt",
+          "updatedAt",
+          "status",
+          "revision",
+          "snapshot"
+        ],
+        "title": "CaseView",
+        "type": "object"
+      },
       "ClassMetrics": {
         "additionalProperties": false,
         "properties": {
@@ -824,6 +1070,48 @@
           "fnr"
         ],
         "title": "ClassMetrics",
+        "type": "object"
+      },
+      "CreateCaseRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "expectedStateVersion": {
+            "pattern": "^[0-9a-f]{64}$",
+            "title": "Expectedstateversion",
+            "type": "string"
+          },
+          "reason": {
+            "maxLength": 4000,
+            "minLength": 1,
+            "title": "Reason",
+            "type": "string"
+          },
+          "requestId": {
+            "format": "uuid",
+            "title": "Requestid",
+            "type": "string"
+          },
+          "tier1HandoffSummary": {
+            "maxLength": 4000,
+            "minLength": 1,
+            "title": "Tier1Handoffsummary",
+            "type": "string"
+          },
+          "title": {
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "requestId",
+          "expectedStateVersion",
+          "title",
+          "tier1HandoffSummary",
+          "reason"
+        ],
+        "title": "CreateCaseRequest",
         "type": "object"
       },
       "DashboardBreakdowns": {
@@ -1924,6 +2212,82 @@
         "title": "ExternalAdmissionView",
         "type": "object"
       },
+      "ExternalSourceProvenanceV2": {
+        "additionalProperties": false,
+        "properties": {
+          "admissionDecision": {
+            "const": "hold_for_review",
+            "title": "Admissiondecision",
+            "type": "string"
+          },
+          "admissionPolicyVersion": {
+            "minLength": 1,
+            "title": "Admissionpolicyversion",
+            "type": "string"
+          },
+          "admissionReason": {
+            "minLength": 1,
+            "title": "Admissionreason",
+            "type": "string"
+          },
+          "evaluationEligible": {
+            "const": false,
+            "title": "Evaluationeligible",
+            "type": "boolean"
+          },
+          "learningEligible": {
+            "const": false,
+            "title": "Learningeligible",
+            "type": "boolean"
+          },
+          "proposedEvidenceClass": {
+            "const": "external_rule",
+            "title": "Proposedevidenceclass",
+            "type": "string"
+          },
+          "proposedOperationalPriority": {
+            "maximum": 100,
+            "minimum": 0,
+            "title": "Proposedoperationalpriority",
+            "type": "number"
+          },
+          "rawReference": {
+            "minLength": 1,
+            "title": "Rawreference",
+            "type": "string"
+          },
+          "reviewRequired": {
+            "const": true,
+            "title": "Reviewrequired",
+            "type": "boolean"
+          },
+          "sensorId": {
+            "minLength": 1,
+            "title": "Sensorid",
+            "type": "string"
+          },
+          "sourceKind": {
+            "const": "external_nids_alert",
+            "default": "external_nids_alert",
+            "title": "Sourcekind",
+            "type": "string"
+          }
+        },
+        "required": [
+          "sensorId",
+          "rawReference",
+          "admissionPolicyVersion",
+          "admissionDecision",
+          "admissionReason",
+          "proposedOperationalPriority",
+          "proposedEvidenceClass",
+          "reviewRequired",
+          "learningEligible",
+          "evaluationEligible"
+        ],
+        "title": "ExternalSourceProvenanceV2",
+        "type": "object"
+      },
       "FamilyEffect": {
         "additionalProperties": false,
         "description": "What this verdict taught the alerts like it. Zero members moved is a normal answer — the\ngate needs three verdicts before it opens.",
@@ -2473,6 +2837,45 @@
           "family"
         ],
         "title": "FeedbackResponse",
+        "type": "object"
+      },
+      "FindingRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "expectedRevision": {
+            "minimum": 1,
+            "title": "Expectedrevision",
+            "type": "integer"
+          },
+          "finding": {
+            "enum": [
+              "confirmed_malicious",
+              "suspicious",
+              "inconclusive",
+              "expected_activity"
+            ],
+            "title": "Finding",
+            "type": "string"
+          },
+          "reason": {
+            "maxLength": 4000,
+            "minLength": 1,
+            "title": "Reason",
+            "type": "string"
+          },
+          "requestId": {
+            "format": "uuid",
+            "title": "Requestid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "requestId",
+          "reason",
+          "expectedRevision",
+          "finding"
+        ],
+        "title": "FindingRequest",
         "type": "object"
       },
       "FlowPanel": {
@@ -3174,6 +3577,87 @@
         "type": "object"
       },
       "JsonValue": {},
+      "LegacySourceProvenanceV2": {
+        "additionalProperties": false,
+        "properties": {
+          "datasetId": {
+            "exclusiveMinimum": 0,
+            "title": "Datasetid",
+            "type": "integer"
+          },
+          "detectionScore": {
+            "maximum": 100,
+            "minimum": 0,
+            "title": "Detectionscore",
+            "type": "number"
+          },
+          "legacyAlertRef": {
+            "format": "uuid",
+            "title": "Legacyalertref",
+            "type": "string"
+          },
+          "legacyFusionConfidence": {
+            "maximum": 1,
+            "minimum": 0,
+            "title": "Legacyfusionconfidence",
+            "type": "number"
+          },
+          "runId": {
+            "exclusiveMinimum": 0,
+            "title": "Runid",
+            "type": "integer"
+          },
+          "sourceKind": {
+            "const": "legacy_flow_alert",
+            "default": "legacy_flow_alert",
+            "title": "Sourcekind",
+            "type": "string"
+          }
+        },
+        "required": [
+          "datasetId",
+          "runId",
+          "legacyAlertRef",
+          "detectionScore",
+          "legacyFusionConfidence"
+        ],
+        "title": "LegacySourceProvenanceV2",
+        "type": "object"
+      },
+      "LinkCaseRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "expectedRevision": {
+            "minimum": 1,
+            "title": "Expectedrevision",
+            "type": "integer"
+          },
+          "operationalAlertRef": {
+            "format": "uuid",
+            "title": "Operationalalertref",
+            "type": "string"
+          },
+          "reason": {
+            "maxLength": 4000,
+            "minLength": 1,
+            "title": "Reason",
+            "type": "string"
+          },
+          "requestId": {
+            "format": "uuid",
+            "title": "Requestid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "requestId",
+          "reason",
+          "expectedRevision",
+          "operationalAlertRef"
+        ],
+        "title": "LinkCaseRequest",
+        "type": "object"
+      },
       "LoginRequest": {
         "additionalProperties": false,
         "description": "What the sign-in form sends. A wrong username and a wrong password answer identically.",
@@ -3613,6 +4097,226 @@
           "body"
         ],
         "title": "NoteRequest",
+        "type": "object"
+      },
+      "OperationalAlertV2": {
+        "additionalProperties": false,
+        "properties": {
+          "canonicalAlertId": {
+            "format": "uuid",
+            "title": "Canonicalalertid",
+            "type": "string"
+          },
+          "destinationIp": {
+            "title": "Destinationip",
+            "type": "string"
+          },
+          "destinationPort": {
+            "anyOf": [
+              {
+                "maximum": 65535,
+                "minimum": 0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Destinationport"
+          },
+          "detectionCategory": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Detectioncategory"
+          },
+          "detectionTitle": {
+            "minLength": 1,
+            "title": "Detectiontitle",
+            "type": "string"
+          },
+          "detectorConfidence": {
+            "anyOf": [
+              {
+                "maximum": 1,
+                "minimum": 0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Detectorconfidence"
+          },
+          "detectorEvidence": {
+            "$ref": "#/components/schemas/CanonicalAlert"
+          },
+          "detectorName": {
+            "minLength": 1,
+            "title": "Detectorname",
+            "type": "string"
+          },
+          "detectorSource": {
+            "minLength": 1,
+            "title": "Detectorsource",
+            "type": "string"
+          },
+          "detectorVersion": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Detectorversion"
+          },
+          "externalInboxId": {
+            "anyOf": [
+              {
+                "exclusiveMinimum": 0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Externalinboxid"
+          },
+          "id": {
+            "anyOf": [
+              {
+                "exclusiveMinimum": 0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Id"
+          },
+          "legacyAlertId": {
+            "anyOf": [
+              {
+                "exclusiveMinimum": 0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Legacyalertid"
+          },
+          "nativeSeverity": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "integer"
+              }
+            ],
+            "title": "Nativeseverity"
+          },
+          "occurredAt": {
+            "title": "Occurredat",
+            "type": "string"
+          },
+          "occurredAtTimezoneOffset": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Occurredattimezoneoffset"
+          },
+          "operationalAlertRef": {
+            "format": "uuid",
+            "title": "Operationalalertref",
+            "type": "string"
+          },
+          "protocol": {
+            "title": "Protocol",
+            "type": "string"
+          },
+          "sourceIp": {
+            "title": "Sourceip",
+            "type": "string"
+          },
+          "sourceKind": {
+            "enum": [
+              "legacy_flow_alert",
+              "external_nids_alert"
+            ],
+            "title": "Sourcekind",
+            "type": "string"
+          },
+          "sourcePort": {
+            "anyOf": [
+              {
+                "maximum": 65535,
+                "minimum": 0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sourceport"
+          },
+          "sourceProvenance": {
+            "discriminator": {
+              "mapping": {
+                "external_nids_alert": "#/components/schemas/ExternalSourceProvenanceV2",
+                "legacy_flow_alert": "#/components/schemas/LegacySourceProvenanceV2"
+              },
+              "propertyName": "sourceKind"
+            },
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/LegacySourceProvenanceV2"
+              },
+              {
+                "$ref": "#/components/schemas/ExternalSourceProvenanceV2"
+              }
+            ],
+            "title": "Sourceprovenance"
+          }
+        },
+        "required": [
+          "operationalAlertRef",
+          "canonicalAlertId",
+          "sourceKind",
+          "detectorSource",
+          "detectorName",
+          "detectorVersion",
+          "detectionTitle",
+          "detectionCategory",
+          "nativeSeverity",
+          "detectorConfidence",
+          "detectorEvidence",
+          "sourceProvenance",
+          "occurredAt",
+          "occurredAtTimezoneOffset",
+          "sourceIp",
+          "destinationIp",
+          "sourcePort",
+          "destinationPort",
+          "protocol"
+        ],
+        "title": "OperationalAlertV2",
         "type": "object"
       },
       "OperationalTriageStateV2": {
@@ -7959,6 +8663,113 @@
         ]
       }
     },
+    "/api/v2/alerts/{alertRef}/tier2/case": {
+      "post": {
+        "operationId": "createTier2Case",
+        "parameters": [
+          {
+            "description": "`Bearer <token>` from POST /api/auth/login",
+            "in": "header",
+            "name": "Authorization",
+            "required": false,
+            "schema": {
+              "example": "Bearer eyJhbGciOiJIUzI1NiJ9...",
+              "type": "string"
+            }
+          },
+          {
+            "description": "The alert's public UUID",
+            "in": "path",
+            "name": "alertRef",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateCaseRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CaseMutation"
+                }
+              }
+            },
+            "description": "Audited case decision"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Validation failed"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not signed in, or the token expired"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Role not permitted"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          }
+        },
+        "summary": "createTier2Case",
+        "tags": [
+          "Tier 2 cases"
+        ],
+        "x-required-roles": [
+          "security_analyst",
+          "system_admin"
+        ]
+      }
+    },
     "/api/v2/alerts/{alertRef}/tier2/escalate": {
       "post": {
         "operationId": "escalateV2Tier2",
@@ -8613,6 +9424,716 @@
           "system_admin"
         ]
       }
+    },
+    "/api/v2/tier2/cases": {
+      "get": {
+        "operationId": "listTier2Cases",
+        "parameters": [
+          {
+            "description": "`Bearer <token>` from POST /api/auth/login",
+            "in": "header",
+            "name": "Authorization",
+            "required": false,
+            "schema": {
+              "example": "Bearer eyJhbGciOiJIUzI1NiJ9...",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "schema": {
+              "default": 50,
+              "maximum": 200,
+              "minimum": 1,
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "offset",
+            "schema": {
+              "default": 0,
+              "minimum": 0,
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "items": {
+                      "items": {
+                        "$ref": "#/components/schemas/CaseView"
+                      },
+                      "type": "array"
+                    },
+                    "page": {
+                      "$ref": "#/components/schemas/PageInfo"
+                    }
+                  },
+                  "required": [
+                    "items",
+                    "page"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Case page"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Validation failed"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not signed in, or the token expired"
+          }
+        },
+        "summary": "List formal Tier 2 cases",
+        "tags": [
+          "Tier 2 cases"
+        ]
+      }
+    },
+    "/api/v2/tier2/cases/{caseRef}": {
+      "get": {
+        "operationId": "getTier2Case",
+        "parameters": [
+          {
+            "description": "`Bearer <token>` from POST /api/auth/login",
+            "in": "header",
+            "name": "Authorization",
+            "required": false,
+            "schema": {
+              "example": "Bearer eyJhbGciOiJIUzI1NiJ9...",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "caseRef",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CaseView"
+                }
+              }
+            },
+            "description": "Case"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Validation failed"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not signed in, or the token expired"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not found"
+          }
+        },
+        "summary": "Read case and immutable handoff",
+        "tags": [
+          "Tier 2 cases"
+        ]
+      }
+    },
+    "/api/v2/tier2/cases/{caseRef}/alerts": {
+      "post": {
+        "operationId": "linkTier2CaseAlert",
+        "parameters": [
+          {
+            "description": "`Bearer <token>` from POST /api/auth/login",
+            "in": "header",
+            "name": "Authorization",
+            "required": false,
+            "schema": {
+              "example": "Bearer eyJhbGciOiJIUzI1NiJ9...",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "caseRef",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LinkCaseRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CaseMutation"
+                }
+              }
+            },
+            "description": "Audited case decision"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Validation failed"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not signed in, or the token expired"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Role not permitted"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          }
+        },
+        "summary": "linkTier2CaseAlert",
+        "tags": [
+          "Tier 2 cases"
+        ],
+        "x-required-roles": [
+          "security_analyst",
+          "system_admin"
+        ]
+      }
+    },
+    "/api/v2/tier2/cases/{caseRef}/events": {
+      "get": {
+        "operationId": "listTier2CaseEvents",
+        "parameters": [
+          {
+            "description": "`Bearer <token>` from POST /api/auth/login",
+            "in": "header",
+            "name": "Authorization",
+            "required": false,
+            "schema": {
+              "example": "Bearer eyJhbGciOiJIUzI1NiJ9...",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "caseRef",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "schema": {
+              "default": 50,
+              "maximum": 200,
+              "minimum": 1,
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "offset",
+            "schema": {
+              "default": 0,
+              "minimum": 0,
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "action",
+            "schema": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "create",
+                    "link",
+                    "note",
+                    "finding",
+                    "start"
+                  ],
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "items": {
+                      "items": {
+                        "$ref": "#/components/schemas/CaseEvent"
+                      },
+                      "type": "array"
+                    },
+                    "page": {
+                      "$ref": "#/components/schemas/PageInfo"
+                    }
+                  },
+                  "required": [
+                    "items",
+                    "page"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Case history page"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Validation failed"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not signed in, or the token expired"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not found"
+          }
+        },
+        "summary": "Read immutable investigation timeline",
+        "tags": [
+          "Tier 2 cases"
+        ]
+      }
+    },
+    "/api/v2/tier2/cases/{caseRef}/findings": {
+      "post": {
+        "operationId": "recordTier2CaseFinding",
+        "parameters": [
+          {
+            "description": "`Bearer <token>` from POST /api/auth/login",
+            "in": "header",
+            "name": "Authorization",
+            "required": false,
+            "schema": {
+              "example": "Bearer eyJhbGciOiJIUzI1NiJ9...",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "caseRef",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FindingRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CaseMutation"
+                }
+              }
+            },
+            "description": "Audited case decision"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Validation failed"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not signed in, or the token expired"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Role not permitted"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          }
+        },
+        "summary": "recordTier2CaseFinding",
+        "tags": [
+          "Tier 2 cases"
+        ],
+        "x-required-roles": [
+          "security_analyst",
+          "system_admin"
+        ]
+      }
+    },
+    "/api/v2/tier2/cases/{caseRef}/notes": {
+      "post": {
+        "operationId": "addTier2CaseNote",
+        "parameters": [
+          {
+            "description": "`Bearer <token>` from POST /api/auth/login",
+            "in": "header",
+            "name": "Authorization",
+            "required": false,
+            "schema": {
+              "example": "Bearer eyJhbGciOiJIUzI1NiJ9...",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "caseRef",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CaseCommand"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CaseMutation"
+                }
+              }
+            },
+            "description": "Audited case decision"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Validation failed"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not signed in, or the token expired"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Role not permitted"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          }
+        },
+        "summary": "addTier2CaseNote",
+        "tags": [
+          "Tier 2 cases"
+        ],
+        "x-required-roles": [
+          "security_analyst",
+          "system_admin"
+        ]
+      }
+    },
+    "/api/v2/tier2/cases/{caseRef}/start-investigation": {
+      "post": {
+        "operationId": "startTier2Investigation",
+        "parameters": [
+          {
+            "description": "`Bearer <token>` from POST /api/auth/login",
+            "in": "header",
+            "name": "Authorization",
+            "required": false,
+            "schema": {
+              "example": "Bearer eyJhbGciOiJIUzI1NiJ9...",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "caseRef",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CaseCommand"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CaseMutation"
+                }
+              }
+            },
+            "description": "Audited case decision"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Validation failed"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not signed in, or the token expired"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Role not permitted"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          }
+        },
+        "summary": "startTier2Investigation",
+        "tags": [
+          "Tier 2 cases"
+        ],
+        "x-required-roles": [
+          "security_analyst",
+          "system_admin"
+        ]
+      }
     }
   },
   "servers": [
@@ -8622,6 +10143,10 @@
     }
   ],
   "tags": [
+    {
+      "description": "Explicit investigation cases, not automated response",
+      "name": "Tier 2 cases"
+    },
     {
       "description": "Eligibility review and atomic operational admission",
       "name": "External admission"

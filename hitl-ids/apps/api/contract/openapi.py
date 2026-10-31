@@ -30,6 +30,9 @@ from apps.api.contract.routing import RoutingView, RoutingResponse
 from packages.detection.routing import RoutingRequest
 from apps.api.contract.external_admission import ExternalAdmissionView, ExternalAdmissionResponse
 from packages.detection.external_admission import AdmissionRequest, EligibilityRequest
+from packages.detection.tier2_cases import (
+    CaseView, CaseEvent, CaseMutation, CreateCaseRequest, CaseCommand, LinkCaseRequest, FindingRequest,
+)
 from apps.api.contract.common import (
     FAMILY_QUERY_OMITS,
     MAX_PAGE_SIZE,
@@ -46,6 +49,7 @@ SCHEMA_REF = "#/components/schemas/{model}"
 #: Every model that appears on the wire. Listed explicitly rather than discovered, so adding a
 #: model to the API is a deliberate act.
 MODELS: tuple[type[BaseModel], ...] = (
+    CaseView, CaseEvent, CaseMutation, CreateCaseRequest, CaseCommand, LinkCaseRequest, FindingRequest,
     ExternalAdmissionView, ExternalAdmissionResponse, AdmissionRequest, EligibilityRequest,
     RoutingView, RoutingResponse, RoutingRequest,
     ErrorResponse,
@@ -598,6 +602,35 @@ def _paths() -> dict[str, Any]:
             'requestBody': {'required': True, **_json(request_model)},
             'responses': {'200': {'description': 'Audited external admission decision', **_json(response_model)},
                           **_errors(400, 403, 404, 409)}}}
+    case_ref = {'name':'caseRef','in':'path','required':True,'schema':{'type':'string','format':'uuid'}}
+    paging = [
+        {'name':'limit','in':'query','schema':{'type':'integer','minimum':1,'maximum':200,'default':50}},
+        {'name':'offset','in':'query','schema':{'type':'integer','minimum':0,'default':0}}]
+    paths['/api/v2/tier2/cases'] = {'get': {
+        'operationId':'listTier2Cases','summary':'List formal Tier 2 cases','tags':['Tier 2 cases'],
+        'parameters':[AUTH_PARAMETER,*paging],
+        'responses':{'200':{'description':'Case page',**_page_of(CaseView)},**_errors(400)}}}
+    paths['/api/v2/tier2/cases/{caseRef}'] = {'get': {
+        'operationId':'getTier2Case','summary':'Read case and immutable handoff','tags':['Tier 2 cases'],
+        'parameters':[AUTH_PARAMETER,case_ref],
+        'responses':{'200':{'description':'Case',**_json(CaseView)},**_errors(400,404)}}}
+    paths['/api/v2/tier2/cases/{caseRef}/events'] = {'get': {
+        'operationId':'listTier2CaseEvents','summary':'Read immutable investigation timeline','tags':['Tier 2 cases'],
+        'parameters':[AUTH_PARAMETER,case_ref,*paging,
+            {'name':'action','in':'query','schema':{'anyOf':[{'type':'string','enum':['create','link','note','finding','start']},{'type':'null'}]}}],
+        'responses':{'200':{'description':'Case history page',**_page_of(CaseEvent)},**_errors(400,404)}}}
+    case_operations = [
+        ('/api/v2/alerts/{alertRef}/tier2/case','createTier2Case',CreateCaseRequest,ALERT_REF),
+        ('/api/v2/tier2/cases/{caseRef}/alerts','linkTier2CaseAlert',LinkCaseRequest,case_ref),
+        ('/api/v2/tier2/cases/{caseRef}/notes','addTier2CaseNote',CaseCommand,case_ref),
+        ('/api/v2/tier2/cases/{caseRef}/findings','recordTier2CaseFinding',FindingRequest,case_ref),
+        ('/api/v2/tier2/cases/{caseRef}/start-investigation','startTier2Investigation',CaseCommand,case_ref)]
+    for path, operation, request_model, ref in case_operations:
+        paths[path] = {'post': {
+            'operationId':operation,'summary':operation,'tags':['Tier 2 cases'],
+            'parameters':[AUTH_PARAMETER,ref], 'x-required-roles':['security_analyst','system_admin'],
+            'requestBody':{'required':True,**_json(request_model)},
+            'responses':{'200':{'description':'Audited case decision',**_json(CaseMutation)},**_errors(400,403,404,409)}}}
     for path, operations in paths.items():
         if path == "/api/auth/login":
             continue
@@ -618,6 +651,7 @@ def openapi_document() -> dict[str, Any]:
         },
         "servers": [{"url": "http://localhost:8000", "description": "Local demo"}],
         "tags": [
+            {"name":"Tier 2 cases","description":"Explicit investigation cases, not automated response"},
             {"name": "External admission", "description": "Eligibility review and atomic operational admission"},
             {"name": "V2 routing", "description": "Explicit authenticated operational routing"},
             {"name": "auth", "description": "Sign-in and the current session"},

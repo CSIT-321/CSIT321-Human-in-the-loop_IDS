@@ -503,6 +503,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v2/alerts/{alertRef}/tier2/case": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** createTier2Case */
+        post: operations["createTier2Case"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v2/alerts/{alertRef}/tier2/escalate": {
         parameters: {
             query?: never;
@@ -616,6 +633,125 @@ export interface paths {
         put?: never;
         /** reviewExternalEligibility */
         post: operations["reviewExternalEligibility"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/tier2/cases": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List formal Tier 2 cases */
+        get: operations["listTier2Cases"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/tier2/cases/{caseRef}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Read case and immutable handoff */
+        get: operations["getTier2Case"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/tier2/cases/{caseRef}/alerts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** linkTier2CaseAlert */
+        post: operations["linkTier2CaseAlert"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/tier2/cases/{caseRef}/events": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Read immutable investigation timeline */
+        get: operations["listTier2CaseEvents"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/tier2/cases/{caseRef}/findings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** recordTier2CaseFinding */
+        post: operations["recordTier2CaseFinding"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/tier2/cases/{caseRef}/notes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** addTier2CaseNote */
+        post: operations["addTier2CaseNote"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/tier2/cases/{caseRef}/start-investigation": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** startTier2Investigation */
+        post: operations["startTier2Investigation"];
         delete?: never;
         options?: never;
         head?: never;
@@ -971,6 +1107,104 @@ export interface components {
                 [key: string]: components["schemas"]["JsonValue"];
             };
         };
+        /** CaseCommand */
+        CaseCommand: {
+            /** Expectedrevision */
+            expectedRevision: number;
+            /** Reason */
+            reason: string;
+            /**
+             * Requestid
+             * Format: uuid
+             */
+            requestId: string;
+        };
+        /** CaseEvent */
+        CaseEvent: {
+            /**
+             * Action
+             * @enum {string}
+             */
+            action: "create" | "link" | "note" | "finding" | "start";
+            /** Actorid */
+            actorId: number;
+            /** Afterstate */
+            afterState: {
+                [key: string]: unknown;
+            };
+            /** Beforestate */
+            beforeState: {
+                [key: string]: unknown;
+            };
+            /**
+             * Caseref
+             * Format: uuid
+             */
+            caseRef: string;
+            /** Createdat */
+            createdAt: string;
+            /** Eventtype */
+            eventType: string;
+            /** Finding */
+            finding: ("confirmed_malicious" | "suspicious" | "inconclusive" | "expected_activity") | null;
+            /** Id */
+            id: number;
+            /** Linkedalertref */
+            linkedAlertRef: string | null;
+            /** Reason */
+            reason: string;
+        };
+        /** CaseMutation */
+        CaseMutation: {
+            case: components["schemas"]["CaseView"];
+            /** Eventid */
+            eventId: number;
+            /** Replayed */
+            replayed: boolean;
+        };
+        /** CaseSnapshot */
+        CaseSnapshot: {
+            /** Creationreason */
+            creationReason: string;
+            detector: components["schemas"]["OperationalAlertV2"];
+            /** Escalationreason */
+            escalationReason: string;
+            routingDecision: components["schemas"]["RoutingAudit"];
+            /** Tier1Handoffsummary */
+            tier1HandoffSummary: string;
+            triage: components["schemas"]["OperationalTriageStateV2"];
+        };
+        /** CaseView */
+        CaseView: {
+            /**
+             * Caseref
+             * Format: uuid
+             */
+            caseRef: string;
+            /** Createdat */
+            createdAt: string;
+            /** Createdbyactorid */
+            createdByActorId: number;
+            /** Owneractorid */
+            ownerActorId: number;
+            /**
+             * Primaryoperationalalertref
+             * Format: uuid
+             */
+            primaryOperationalAlertRef: string;
+            /** Revision */
+            revision: number;
+            snapshot: components["schemas"]["CaseSnapshot"];
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "open" | "investigating";
+            /** Title */
+            title: string;
+            /** Updatedat */
+            updatedAt: string;
+        };
         /** ClassMetrics */
         ClassMetrics: {
             /** F1 */
@@ -987,6 +1221,22 @@ export interface components {
             recall: number;
             /** Support */
             support: number;
+        };
+        /** CreateCaseRequest */
+        CreateCaseRequest: {
+            /** Expectedstateversion */
+            expectedStateVersion: string;
+            /** Reason */
+            reason: string;
+            /**
+             * Requestid
+             * Format: uuid
+             */
+            requestId: string;
+            /** Tier1Handoffsummary */
+            tier1HandoffSummary: string;
+            /** Title */
+            title: string;
         };
         /**
          * DashboardBreakdowns
@@ -1488,6 +1738,49 @@ export interface components {
             /** Statusreason */
             statusReason: string;
         };
+        /** ExternalSourceProvenanceV2 */
+        ExternalSourceProvenanceV2: {
+            /**
+             * Admissiondecision
+             * @constant
+             */
+            admissionDecision: "hold_for_review";
+            /** Admissionpolicyversion */
+            admissionPolicyVersion: string;
+            /** Admissionreason */
+            admissionReason: string;
+            /**
+             * Evaluationeligible
+             * @constant
+             */
+            evaluationEligible: false;
+            /**
+             * Learningeligible
+             * @constant
+             */
+            learningEligible: false;
+            /**
+             * Proposedevidenceclass
+             * @constant
+             */
+            proposedEvidenceClass: "external_rule";
+            /** Proposedoperationalpriority */
+            proposedOperationalPriority: number;
+            /** Rawreference */
+            rawReference: string;
+            /**
+             * Reviewrequired
+             * @constant
+             */
+            reviewRequired: true;
+            /** Sensorid */
+            sensorId: string;
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            sourceKind: "external_nids_alert";
+        };
         /**
          * FamilyEffect
          * @description What this verdict taught the alerts like it. Zero members moved is a normal answer — the
@@ -1788,6 +2081,23 @@ export interface components {
             family: components["schemas"]["FamilyEffect"];
             feedback: components["schemas"]["FeedbackRecord"];
         };
+        /** FindingRequest */
+        FindingRequest: {
+            /** Expectedrevision */
+            expectedRevision: number;
+            /**
+             * Finding
+             * @enum {string}
+             */
+            finding: "confirmed_malicious" | "suspicious" | "inconclusive" | "expected_activity";
+            /** Reason */
+            reason: string;
+            /**
+             * Requestid
+             * Format: uuid
+             */
+            requestId: string;
+        };
         /**
          * FlowPanel
          * @description Panel 1 — what the flow was.
@@ -2066,6 +2376,44 @@ export interface components {
             lastSeen: string | null;
         };
         JsonValue: unknown;
+        /** LegacySourceProvenanceV2 */
+        LegacySourceProvenanceV2: {
+            /** Datasetid */
+            datasetId: number;
+            /** Detectionscore */
+            detectionScore: number;
+            /**
+             * Legacyalertref
+             * Format: uuid
+             */
+            legacyAlertRef: string;
+            /** Legacyfusionconfidence */
+            legacyFusionConfidence: number;
+            /** Runid */
+            runId: number;
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            sourceKind: "legacy_flow_alert";
+        };
+        /** LinkCaseRequest */
+        LinkCaseRequest: {
+            /** Expectedrevision */
+            expectedRevision: number;
+            /**
+             * Operationalalertref
+             * Format: uuid
+             */
+            operationalAlertRef: string;
+            /** Reason */
+            reason: string;
+            /**
+             * Requestid
+             * Format: uuid
+             */
+            requestId: string;
+        };
         /**
          * LoginRequest
          * @description What the sign-in form sends. A wrong username and a wrong password answer identically.
@@ -2266,6 +2614,70 @@ export interface components {
         NoteRequest: {
             /** Body */
             body: string;
+        };
+        /** OperationalAlertV2 */
+        OperationalAlertV2: {
+            /**
+             * Canonicalalertid
+             * Format: uuid
+             */
+            canonicalAlertId: string;
+            /** Destinationip */
+            destinationIp: string;
+            /** Destinationport */
+            destinationPort: number | null;
+            /** Detectioncategory */
+            detectionCategory: string | null;
+            /** Detectiontitle */
+            detectionTitle: string;
+            /** Detectorconfidence */
+            detectorConfidence: number | null;
+            detectorEvidence: components["schemas"]["CanonicalAlert"];
+            /** Detectorname */
+            detectorName: string;
+            /** Detectorsource */
+            detectorSource: string;
+            /** Detectorversion */
+            detectorVersion: string | null;
+            /**
+             * Externalinboxid
+             * @default null
+             */
+            externalInboxId: number | null;
+            /**
+             * Id
+             * @default null
+             */
+            id: number | null;
+            /**
+             * Legacyalertid
+             * @default null
+             */
+            legacyAlertId: number | null;
+            /** Nativeseverity */
+            nativeSeverity: string | number;
+            /** Occurredat */
+            occurredAt: string;
+            /** Occurredattimezoneoffset */
+            occurredAtTimezoneOffset: string | null;
+            /**
+             * Operationalalertref
+             * Format: uuid
+             */
+            operationalAlertRef: string;
+            /** Protocol */
+            protocol: string;
+            /** Sourceip */
+            sourceIp: string;
+            /**
+             * Sourcekind
+             * @enum {string}
+             */
+            sourceKind: "legacy_flow_alert" | "external_nids_alert";
+            /** Sourceport */
+            sourcePort: number | null;
+            /** Sourceprovenance */
+            sourceProvenance: components["schemas"]["LegacySourceProvenanceV2"] | components["schemas"]["ExternalSourceProvenanceV2"];
         };
         /** OperationalTriageStateV2 */
         OperationalTriageStateV2: {
@@ -4309,6 +4721,81 @@ export interface operations {
             };
         };
     };
+    createTier2Case: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description `Bearer <token>` from POST /api/auth/login */
+                Authorization?: string;
+            };
+            path: {
+                /** @description The alert's public UUID */
+                alertRef: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateCaseRequest"];
+            };
+        };
+        responses: {
+            /** @description Audited case decision */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CaseMutation"];
+                };
+            };
+            /** @description Validation failed */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not signed in, or the token expired */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Role not permitted */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
     escalateV2Tier2: {
         parameters: {
             query?: never;
@@ -4710,6 +5197,460 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ExternalAdmissionView"];
+                };
+            };
+            /** @description Validation failed */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not signed in, or the token expired */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Role not permitted */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    listTier2Cases: {
+        parameters: {
+            query?: {
+                limit?: number;
+                offset?: number;
+            };
+            header?: {
+                /** @description `Bearer <token>` from POST /api/auth/login */
+                Authorization?: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Case page */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        items: components["schemas"]["CaseView"][];
+                        page: components["schemas"]["PageInfo"];
+                    };
+                };
+            };
+            /** @description Validation failed */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not signed in, or the token expired */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    getTier2Case: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description `Bearer <token>` from POST /api/auth/login */
+                Authorization?: string;
+            };
+            path: {
+                caseRef: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Case */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CaseView"];
+                };
+            };
+            /** @description Validation failed */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not signed in, or the token expired */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    linkTier2CaseAlert: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description `Bearer <token>` from POST /api/auth/login */
+                Authorization?: string;
+            };
+            path: {
+                caseRef: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["LinkCaseRequest"];
+            };
+        };
+        responses: {
+            /** @description Audited case decision */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CaseMutation"];
+                };
+            };
+            /** @description Validation failed */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not signed in, or the token expired */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Role not permitted */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    listTier2CaseEvents: {
+        parameters: {
+            query?: {
+                limit?: number;
+                offset?: number;
+                action?: ("create" | "link" | "note" | "finding" | "start") | null;
+            };
+            header?: {
+                /** @description `Bearer <token>` from POST /api/auth/login */
+                Authorization?: string;
+            };
+            path: {
+                caseRef: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Case history page */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        items: components["schemas"]["CaseEvent"][];
+                        page: components["schemas"]["PageInfo"];
+                    };
+                };
+            };
+            /** @description Validation failed */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not signed in, or the token expired */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    recordTier2CaseFinding: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description `Bearer <token>` from POST /api/auth/login */
+                Authorization?: string;
+            };
+            path: {
+                caseRef: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["FindingRequest"];
+            };
+        };
+        responses: {
+            /** @description Audited case decision */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CaseMutation"];
+                };
+            };
+            /** @description Validation failed */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not signed in, or the token expired */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Role not permitted */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    addTier2CaseNote: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description `Bearer <token>` from POST /api/auth/login */
+                Authorization?: string;
+            };
+            path: {
+                caseRef: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CaseCommand"];
+            };
+        };
+        responses: {
+            /** @description Audited case decision */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CaseMutation"];
+                };
+            };
+            /** @description Validation failed */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not signed in, or the token expired */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Role not permitted */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    startTier2Investigation: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description `Bearer <token>` from POST /api/auth/login */
+                Authorization?: string;
+            };
+            path: {
+                caseRef: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CaseCommand"];
+            };
+        };
+        responses: {
+            /** @description Audited case decision */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CaseMutation"];
                 };
             };
             /** @description Validation failed */

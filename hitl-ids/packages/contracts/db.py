@@ -142,6 +142,8 @@ MIGRATIONS += ((6, "append-only authenticated V2 routing audit",
                 Path(__file__).with_name("routing_workflow.sql").read_text(encoding="utf-8")),)
 MIGRATIONS += ((7, "immutable external eligibility and atomic operational admission",
                 Path(__file__).with_name("external_operational_admission.sql").read_text(encoding="utf-8")),)
+MIGRATIONS += ((8, "Tier 2 cases, lifecycle and immutable investigation ledger",
+                Path(__file__).with_name("tier2_cases.sql").read_text(encoding="utf-8")),)
 SCHEMA_VERSION = MIGRATIONS[-1][0]
 
 

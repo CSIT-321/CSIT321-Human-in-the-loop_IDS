@@ -3,6 +3,7 @@ import { useSearchParams } from "react-router";
 import { api, unwrap, type Schemas } from "../../api/client";
 import { useApi } from "../../api/useApi";
 import { PageHeader, Pill } from "../../components/ui";
+import { CreateCasePanel } from "./Tier2CasesPage";
 
 type View = Schemas["RoutingView"];
 type Action = View["allowedActions"][number];
@@ -83,6 +84,7 @@ export function RoutingDetail({ initial, refresh }: { initial: View; refresh: ()
     </div>}
     {error && <p role="alert" className="text-sm text-danger">{error}</p>}
     {done && <p role="status" className="text-sm text-ok">{done}</p>}
+    {state.handlingRoute === "tier2_candidate" && state.workflowStage === "assessment" && <CreateCasePanel alert={view} />}
     <button className={button} disabled={busy} onClick={refresh}>Refresh state</button>
   </section>;
 }

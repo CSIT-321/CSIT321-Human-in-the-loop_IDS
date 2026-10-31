@@ -1,19 +1,20 @@
 # Detector-agnostic HITL alert foundation
 
 Original foundation base: feat/demo-build at 305c4d390ce9cd08bbc17f737053182a4ab61b7d.
-Current stacked increment: `feat/suricata-operational-admission`, based on routing commit
-`01ad4c9c4a145fa066f7c42c596b5e25e6869031`. Historical increment sections below retain their
-original scope; this current-status section and suricata-operational-admission.md describe the latest boundary.
+Current stacked increment: `feat/tier2-case-workflow`, based on admission commit
+`434ca2d3ec50fcfb33187c7c5021b37e31336c9d`. Historical increment sections below retain their
+original scope; this current-status section and tier2-case-workflow.md describe the latest boundary.
 
 ## Current external operational path
 
 Suricata EVE -> immutable external staging -> explicit authenticated eligibility review
 -> Operational Admission -> OperationalAlertV2 -> Triage Policy V1 -> Tier 1
--> existing human approval/manual escalation -> Tier 2 Candidate.
+-> existing human approval/manual escalation -> Tier 2 Candidate -> explicit Tier 2 Case -> Investigation.
 
 Implemented: Suricata adapter, external staging, OperationalAlertV2, Operational Triage Policy V1,
-Authenticated Tier Routing Workflow, and Suricata Operational Admission.
-Not implemented: live ingestion, Tier 2 Case management, Triage Memory, selective/no-immediate
+Authenticated Tier Routing Workflow, Suricata Operational Admission, and Tier 2 Case Workflow
+(explicit owner, immutable handoff/evidence snapshot, human-linked alerts, append-only notes/findings).
+Not implemented: live ingestion, response recommendations/approval/notifications, Triage Memory, selective/no-immediate
 review, automatic dismissal or SOAR/blocking.
 
 All historical staging holds remain immutable. An additional append-only eligibility decision,
@@ -23,8 +24,10 @@ Materialization, policy scoring, the existing Tier 1 routing action, and an admi
 commit together. Policy defers route mutation only in this private orchestration path;
 standalone policy and routing callers retain their prior behavior.
 
-See [Suricata Operational Admission](suricata-operational-admission.md) for authorization,
-failure behavior, audit linkage, tests and the exact change manifest.
+See [Suricata Operational Admission](suricata-operational-admission.md) and
+[Tier 2 Case Workflow](tier2-case-workflow.md) for authorization, failure behavior, audit linkage,
+tests and the exact change manifests. FUTURE: Case -> Response Recommendation -> Human Approval
+-> Notification / simulated SOAR. A finding never authorizes a response.
 This document separates implemented behavior from future work. The older system-workflow.md
 contains historical status statements; current code and HANDOVER.md take precedence.
 

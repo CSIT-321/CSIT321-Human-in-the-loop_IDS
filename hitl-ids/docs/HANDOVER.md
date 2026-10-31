@@ -3,6 +3,15 @@
 **Purpose.** Carry the full state of this project into a fresh session with zero loss of context
 and minimal token cost. Everything a new session needs is here or one link away.
 
+**Current stacked workflow (2026-10-31):** `feat/tier2-case-workflow`, based on
+`434ca2d3ec50fcfb33187c7c5021b37e31336c9d` (`feat/suricata-operational-admission`).
+The older September branch/phase narrative below is historical, not the current branch status.
+The external path now reaches explicit Tier 2 Cases and append-only investigation notes/findings:
+Suricata -> staging -> eligibility review -> operational admission -> V2 alert -> policy ->
+Tier 1 -> authenticated Tier 2 candidate -> explicit case -> investigation.
+See [Tier 2 Case Workflow](tier2-case-workflow.md) for the current contract, tests and limitations.
+Response Recommendation -> Human Approval -> Notification / simulated SOAR remains FUTURE.
+
 **Last updated:** 2026-09-18 (rev 24 — similar-alert learning made visible: the moved members, the
 family group-by, and the similarity basis on screen; changelog v1.32. Rev 23 notes below still
 stand) · **Branch:** `feat/demo-build` — tracking
@@ -60,7 +69,8 @@ inspection-sort tie-break fixed (v1.28):** it was a direction-blind `a.id ASC`, 
 scores all tied came back identical ascending and descending — and 4,789 of 5,000 alerts (95.8%)
 tie on their score. It now orders by evidence class, review flag, capture time and id, each
 following the requested direction ·
-**466 tests, 0 skipped** (Python, in `.venv`) + **157 web tests** (`apps/web`, `npm test`) +
+**699 tests, 5 skipped** (694 passed, Python 3.11; missing optional dataset fixtures) +
+**176 web tests** (`apps/web`, `npm test`) +
 the browser narrative (`npm run e2e`, passes with three real sign-ins) ·
 **Python runs from `hitl-ids\.venv` (3.11) — see §0b before running anything** ·
 **Presenting on a different machine? [`demo-machine-setup.md`](demo-machine-setup.md)** —

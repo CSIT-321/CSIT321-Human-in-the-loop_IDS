@@ -130,11 +130,12 @@ def test_the_handover_header_cites_the_current_changelog_version():
 
 
 def test_the_handover_quotes_the_real_test_count():
-    """'279 tests, 0 skipped' in a header is a claim, and it goes stale the moment a file lands."""
+    """The test-count claim must remain plausible and report optional-data skips honestly."""
     defined = sum(len(re.findall(r"^def test_", path.read_text(encoding="utf-8"), re.M))
                   for path in (HITL / "tests").glob("test_*.py"))
-    quoted = re.search(r"\*\*(\d+) tests, 0 skipped\*\*", read(HANDOVER))
+    quoted = re.search(r"\*\*(\d+) tests, (\d+) skipped\*\*", read(HANDOVER))
     assert quoted, "the handover no longer states a test count"
+    assert 0 <= int(quoted.group(2)) <= int(quoted.group(1)), "invalid skipped-test count"
     # Parametrised cases make the collected count >= the number of `def test_` functions.
     assert int(quoted.group(1)) >= defined, (
         f"the handover claims {quoted.group(1)} tests but {defined} test functions are defined; "

@@ -66,6 +66,10 @@ DEVIATION_COLUMNS = {
     "flow_data": {"source_record_id"},
 }
 DEVIATION_TABLES = {
+    "tier2_cases": {"id","case_ref","primary_operational_alert_id","title","owner_actor_id","created_by_actor_id","snapshot","created_at"},
+    "tier2_case_state": {"case_id","status","revision","updated_at"},
+    "tier2_case_events": {"id","case_id","actor_id","request_id","action","event_type","request_payload",
+                         "reason","finding","linked_alert_id","before_state","after_state","created_at"},
     "external_eligibility_review": {
         "id", "external_inbox_id", "actor_id", "request_id", "expected_review_id", "decision",
         "reason", "evidence_digest", "created_at",
@@ -292,7 +296,7 @@ def test_every_table_model_matches_its_columns(conn):
     assert set(db.TABLE_MODELS) == table_names(conn) - {
         "external_alert_inbox", "operational_alerts_v2", "operational_triage_state_v2",
         "operational_triage_policy_audit", "operational_routing_audit",
-        "external_eligibility_review", "external_operational_admission"}
+        "external_eligibility_review", "external_operational_admission", "tier2_cases", "tier2_case_state", "tier2_case_events"}
     for table, model in db.TABLE_MODELS.items():
         assert set(model.model_fields) == set(columns(conn, table)), table
 
@@ -310,6 +314,13 @@ EXPECTED_FOREIGN_KEYS = {
     ("external_operational_admission", "review_id", "external_eligibility_review", "id"),
     ("external_operational_admission", "policy_audit_id", "operational_triage_policy_audit", "id"),
     ("external_operational_admission", "routing_audit_id", "operational_routing_audit", "id"),
+    ("tier2_cases","primary_operational_alert_id","operational_alerts_v2","id"),
+    ("tier2_cases","owner_actor_id","users","id"),
+    ("tier2_cases","created_by_actor_id","users","id"),
+    ("tier2_case_state","case_id","tier2_cases","id"),
+    ("tier2_case_events","case_id","tier2_cases","id"),
+    ("tier2_case_events","actor_id","users","id"),
+    ("tier2_case_events","linked_alert_id","operational_alerts_v2","id"),
     ("operational_routing_audit", "operational_alert_id", "operational_alerts_v2", "id"),
     ("operational_alerts_v2", "legacy_alert_id", "alerts", "id"),
     ("operational_alerts_v2", "external_inbox_id", "external_alert_inbox", "id"),

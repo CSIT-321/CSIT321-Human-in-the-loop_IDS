@@ -28,6 +28,7 @@ import { ScenariosPage } from "./pages/evaluator/ScenariosPage";
 import { LoginPage } from "./pages/LoginPage";
 import { V2RoutingPage } from "./pages/analyst/V2RoutingPage";
 import { ExternalAdmissionPage } from "./pages/analyst/ExternalAdmissionPage";
+import { Tier2CasesPage, Tier2CaseDetailPage } from "./pages/analyst/Tier2CasesPage";
 import { HomeRedirect, RequireRole } from "./session/guards";
 import { SessionProvider } from "./session/SessionContext";
 
@@ -43,6 +44,8 @@ export const routes: RouteObject[] = [
     children: [
       { index: true, element: <HomeRedirect /> },
       { path: "workstation", element: <WorkstationPage /> },
+      { path: "tier2-cases", element: <Tier2CasesPage /> },
+      { path: "tier2-cases/:caseRef", element: <Tier2CaseDetailPage /> },
       { path: "external-admission", element: <ExternalAdmissionPage /> },
       { path: "v2-triage", element: <V2RoutingPage /> },
       { path: "overview", element: <OverviewPage /> },
@@ -64,6 +67,8 @@ export const routes: RouteObject[] = [
     children: [
       { index: true, element: <HomeRedirect /> },
       { path: "status", element: <StatusPage /> },
+      { path: "tier2-cases", element: <Tier2CasesPage /> },
+      { path: "tier2-cases/:caseRef", element: <Tier2CaseDetailPage /> },
       { path: "external-admission", element: <ExternalAdmissionPage /> },
       { path: "v2-triage", element: <V2RoutingPage /> },
       { path: "guardrails", element: <GuardrailsPage /> },
@@ -81,6 +86,8 @@ export const routes: RouteObject[] = [
     children: [
       { index: true, element: <HomeRedirect /> },
       { path: "scenarios", element: <ScenariosPage /> },
+      { path: "tier2-cases", element: <Tier2CasesPage /> },
+      { path: "tier2-cases/:caseRef", element: <Tier2CaseDetailPage /> },
       { path: "external-admission", element: <ExternalAdmissionPage /> },
       { path: "v2-triage", element: <V2RoutingPage /> },
       { path: "runs/:runId", element: <RunPage /> },
