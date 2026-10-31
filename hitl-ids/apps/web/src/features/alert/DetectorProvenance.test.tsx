@@ -1,7 +1,8 @@
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import type { Schemas } from "../../api/client";
-import { DetectorProvenance } from "./DetectorProvenance";
+import { DetectorEvidence, DetectorProvenance } from "./DetectorProvenance";
+import { ALERT_DETAIL } from "../../pages/analyst/__tests__/fixtures";
 
 const detector: Schemas["CanonicalAlert"] = {
   canonicalAlertId: "8f22e741-c776-4999-b347-17a0c42aca6a",
@@ -26,9 +27,30 @@ describe("detector provenance", () => {
   it("shows provided model confidence independently of severity", () => {
     render(<DetectorProvenance detector={{ ...detector, detectorSource: "current_flow",
       detectorName: "Signature + XGBoost", detectorSeverity: "Medium", confidence: 0.992 }} />);
-    expect(screen.getByText("Current Flow Detector")).toBeVisible();
+    expect(screen.getByText("Legacy Flow Detector")).toBeVisible();
     expect(screen.getByText("Medium")).toBeVisible();
     expect(screen.getByText(/99.2/)).toBeVisible();
+  });
+  it("never renders legacy fusion or ML panels on Suricata, even with stale flow fields", () => {
+    render(<DetectorEvidence detail={{ ...ALERT_DETAIL, detector }} />);
+    expect(screen.queryByText(/TreeSHAP|Model prediction|Combined explanation|Signature evidence/i)).toBeNull();
+  });
+  it("shows the supplied XGBoost model, prediction and confidence", () => {
+    render(<DetectorProvenance detector={{ ...detector, detectorSource: "xgboost", detectorName: "XGBoost",
+      detectorVersion: "model-v7", confidence: .82, structuredEvidence: { mlPredictedClass: "Port Scan" } }} />);
+    expect(screen.getByText("XGBoost")).toBeVisible();
+    expect(screen.getByText("XGBoost / model-v7")).toBeVisible();
+    expect(screen.getByText("Port Scan")).toBeVisible();
+    expect(screen.getByText(/82/)).toBeVisible();
+  });
+  it("retains historical evidence and only shows TreeSHAP when supplied", () => {
+    const result = render(<DetectorEvidence detail={ALERT_DETAIL} />);
+    expect(screen.getByText(/Legacy detector evidence/)).toBeVisible();
+    expect(screen.getByText(/Contributions are TreeSHAP/)).toBeVisible();
+    result.rerender(<DetectorEvidence detail={{ ...ALERT_DETAIL,
+      detector: { ...detector, detectorSource: "xgboost" },
+      ml: { ...ALERT_DETAIL.ml, topSupporting: [], topOpposing: [] } }} />);
+    expect(screen.queryByText(/TreeSHAP|Combined explanation/)).toBeNull();
   });
   it("supports legacy API responses without the additive field", () => {
     render(<DetectorProvenance detector={undefined} />);

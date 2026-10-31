@@ -14,12 +14,9 @@ import type { ApiResource } from "../../api/useApi";
 import { ErrorState, LoadingState } from "../../components/states";
 import { BandBadge, Card, EvidenceBadge, Pill, SeverityBadge } from "../../components/ui";
 import { formatDateTime, formatPercent, formatScore, humanise } from "../../design/format";
-import { EvidencePanelCard } from "../alert/EvidencePanelCard";
-import { DetectorProvenance } from "../alert/DetectorProvenance";
+import { DetectorEvidence, DetectorProvenance, detectorKind } from "../alert/DetectorProvenance";
 import { FeedbackHistoryCard } from "../alert/FeedbackHistoryCard";
 import { FlowPanelCard } from "../alert/FlowPanelCard";
-import { MlPanelCard } from "../alert/MlPanelCard";
-import { SignaturePanelCard } from "../alert/SignaturePanelCard";
 import { FeedbackPanel } from "../feedback/FeedbackPanel";
 import { ScoreAdjustmentChain } from "../feedback/ScoreAdjustmentChain";
 import { Meter } from "./Meter";
@@ -219,6 +216,7 @@ export function AlertPane({
   }
 
   const alert = detail.alert;
+  const legacy = detectorKind(detail.detector) === "legacy";
 
   return (
     <section aria-label="Alert detail" className="flex min-h-0 flex-col overflow-hidden bg-bg">
@@ -228,7 +226,7 @@ export function AlertPane({
             <p className="flex flex-wrap items-center gap-2">
               <span className="font-mono text-xs font-semibold text-accent">{alert.sourceRecordId}</span>
               <BandBadge queueClass={alert.queueClass} />
-              <EvidenceBadge evidenceClass={alert.evidenceClass} />
+              {legacy && <EvidenceBadge evidenceClass={alert.evidenceClass} />}
               {detail.evidence.tier2Candidate && alert.queueClass !== "tier2_candidate" && (
                 <Pill tone="danger">→ Tier 2 candidate</Pill>
               )}
@@ -261,19 +259,19 @@ export function AlertPane({
           <Meter label="Operational score" value={alert.combinedScore} max={100} display={formatScore(alert.combinedScore)} tone="bg-primary" hint="What analyst feedback moves" />
           <Meter label="Detection score" value={alert.detectionScore} max={100} display={formatScore(alert.detectionScore)} tone="bg-muted" hint="What detection produced; never changes" />
           {detail.detector && detail.detector.confidence == null ? (
-            <div className="text-xs text-muted">Model confidence: Not provided</div>
+            <div className="text-xs text-muted">Confidence: Not provided</div>
           ) : <Meter
-            label="Model confidence"
+            label={legacy ? "Model confidence" : "Confidence"}
             value={detail.detector?.confidence ?? alert.confidence}
             max={1}
             display={formatPercent(detail.detector?.confidence ?? alert.confidence)}
             tone="bg-accent"
-            hint="The model's probability for its predicted class — not a false-positive probability"
+            hint={legacy ? "The model's probability for its predicted class — not a false-positive probability" : "Detector-supplied confidence; separate from severity"}
           />}
         </div>
       </header>
 
-      <div role="tablist" aria-label="Alert sections" className="flex gap-1 border-b border-border bg-surface px-4">
+      <div role="tablist" aria-label="Alert sections" className="flex shrink-0 gap-1 overflow-x-auto whitespace-nowrap border-b border-border bg-surface px-4">
         {TABS.map((name) => (
           <button
             key={name}
@@ -297,11 +295,7 @@ export function AlertPane({
         {tab === "Overview" && (
           <>
             <DetectorProvenance detector={detail.detector} />
-            <EvidencePanelCard evidence={detail.evidence} />
-            <div className="grid gap-4 2xl:grid-cols-2">
-              <SignaturePanelCard signature={detail.signature} />
-              <MlPanelCard ml={detail.ml} />
-            </div>
+            <DetectorEvidence detail={detail} />
           </>
         )}
         {tab === "Verdict" && (

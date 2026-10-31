@@ -132,10 +132,10 @@ export function MlPanelCard({ ml }: { ml: MlPanel }) {
         </div>
       )}
 
-      <p className="mt-3 text-xs text-dim">
+      {chartRows.length > 0 && <p className="mt-3 text-xs text-dim">
         Contributions are TreeSHAP values in log-odds; they sum with the base value to the model's raw
         margin.
-      </p>
+      </p>}
     </Card>
   );
 }

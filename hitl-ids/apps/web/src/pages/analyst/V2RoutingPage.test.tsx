@@ -18,6 +18,27 @@ const view: Schemas["RoutingView"] = {
 };
 
 describe("V2 routing", () => {
+  it("manual escalation highlights the candidate and keeps case creation explicit", async () => {
+    const posts: string[] = [];
+    stubFetch(async request => {
+      posts.push(request.url);
+      return jsonResponse({ view: { ...view, allowedActions: [], state: { ...view.state,
+        handlingRoute: "tier2_candidate", workflowStage: "assessment" } }, audit: { id: 9 } });
+    });
+    sessionStorage.setItem("hitl-ids.session.v1", JSON.stringify({ username: "g.ang", displayName: "Analyst",
+      role: "security_analyst", token: "test" }));
+    render(<SessionProvider><MemoryRouter><RoutingDetail initial={view} refresh={vi.fn()} /></MemoryRouter></SessionProvider>);
+    await userEvent.type(screen.getByLabelText("Decision reason"), "Needs deeper investigation");
+    await userEvent.click(screen.getByRole("button", { name: "Manual Escalate" }));
+    expect(await screen.findByText("Escalated to Tier 2 Candidate")).toBeVisible();
+    expect(screen.getByText("A formal Tier 2 Case has not been created yet.")).toBeVisible();
+    expect(screen.getByLabelText("Case title")).toBeVisible();
+    expect(screen.getByLabelText("Tier 1 handoff summary")).toBeVisible();
+    expect(screen.getByLabelText("Case creation reason")).toBeVisible();
+    expect(screen.getByRole("button", { name: /^Create Tier 2 Case$/ })).toBeDisabled();
+    expect(posts).toHaveLength(1);
+    expect(posts[0]).toContain("/tier2/escalate");
+  });
   it("distinguishes recommendation from route and requires a reason", async () => {
     render(<RoutingDetail initial={view} refresh={vi.fn()} />);
     expect(screen.getByText("tier1 review")).toBeInTheDocument();

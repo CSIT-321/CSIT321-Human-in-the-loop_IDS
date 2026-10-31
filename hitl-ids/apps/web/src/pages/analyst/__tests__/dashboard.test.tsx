@@ -40,6 +40,8 @@ describe("Dashboard", () => {
 
     expect(await screen.findByRole("heading", { level: 1, name: "Dashboard" })).toBeInTheDocument();
     expect(screen.getByText("Detection run #3")).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Legacy Detector Composition" })).toBeVisible();
+    expect(screen.getByText("Historical Signature + XGBoost flow detector results.")).toBeVisible();
 
     expect(screen.getByText("5,000")).toBeInTheDocument();
     expect(screen.getByText("4,112")).toBeInTheDocument();

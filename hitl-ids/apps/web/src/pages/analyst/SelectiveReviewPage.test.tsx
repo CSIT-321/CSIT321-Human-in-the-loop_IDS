@@ -60,6 +60,7 @@ describe("Selective Human Review",()=>{
     });
     renderApp("/analyst/v2-triage?alertRef="+ref,{session});
     await screen.findByText("No Immediate Review",{exact:true});
+    await userEvent.click(screen.getByText("Advanced / Research & Evaluation"));
     await userEvent.click(screen.getByRole("button",{name:"Prospective Collection"}));
     await screen.findByRole("option",{name:/closed-demo/});
     await userEvent.selectOptions(screen.getByLabelText("Collection run"),runRef);

@@ -50,6 +50,38 @@
   --font-mono: "JetBrains Mono", "Cascadia Mono", ui-monospace, monospace;
 }
 
+:root { color-scheme: dark; }
+:root[data-theme="light"] {
+  color-scheme: light;
+  --color-bg: #f4f6f8;
+  --color-surface: #ffffff;
+  --color-raised: #eaf0f6;
+  --color-border: #cbd3dd;
+  --color-border-strong: #8b99aa;
+  --color-text: #182230;
+  --color-muted: #4c5c70;
+  --color-dim: #5d6b7d;
+  --color-accent: #125fb8;
+  --color-accent-dim: #e0edff;
+  --color-primary: #1965cb;
+  --color-primary-hover: #1456ad;
+  --color-warn: #994508;
+  --color-warn-dim: #fff0dc;
+  --color-ok: #1c7131;
+  --color-ok-dim: #e4f5e8;
+  --color-danger: #bd2923;
+  --color-danger-dim: #ffe9e8;
+  --color-violet: #7042ad;
+  --color-violet-dim: #f0e7ff;
+  --color-severity-critical: #bd2923;
+  --color-severity-high: #994508;
+  --color-severity-medium: #7d6000;
+  --color-severity-low: #1c7131;
+  --color-severity-info: #125fb8;
+  --color-stub: #7d6000;
+  --color-stub-bg: #fff4cb;
+}
+
 @layer base {
   html,
   body,
@@ -79,6 +111,24 @@
     scrollbar-width: thin;
     scrollbar-color: var(--color-border-strong) transparent;
   }
+
+  main { overflow-wrap: break-word; }
+  /* Fixed-size charts and tables scroll inside their original cards. */
+  main section, main .grid > * { min-width: 0; }
+}
+
+@media (max-width: 639px) {
+  .sidebar { display: flex; width: 100%; max-height: 8rem; border-bottom: 1px solid var(--color-border); padding: 4px 0; }
+  .sidebar > div { flex-shrink: 0; padding-bottom: 0; }
+  .sidebar > div p { display: none; }
+  .sidebar ul { display: flex; min-width: 0; overflow-x: auto; white-space: nowrap; }
+  .sidebar li { flex-shrink: 0; }
+  .workstation { height: auto; min-height: 0; }
+  .workstation-panes { display: flex; flex-direction: column; }
+  .workstation-panes > section:first-child { height: 28rem; flex-shrink: 0; }
+  .workstation-panes > section[aria-label="Alert detail"] { min-height: 40rem; }
+  .workstation [aria-label="Alert filter"] { flex-wrap: nowrap; overflow-x: auto; flex-shrink: 0; }
+  .workstation [aria-label="Alert filter"] button { flex: none; }
 }
 
 @layer components {

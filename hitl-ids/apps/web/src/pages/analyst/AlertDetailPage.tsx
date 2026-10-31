@@ -27,13 +27,10 @@ import {
   SeverityBadge,
 } from "../../components/ui";
 import { formatNumber, formatPercent, formatScore, humanise } from "../../design/format";
-import { EvidencePanelCard } from "../../features/alert/EvidencePanelCard";
-import { DetectorProvenance } from "../../features/alert/DetectorProvenance";
+import { DetectorEvidence, DetectorProvenance, detectorKind } from "../../features/alert/DetectorProvenance";
 import { FamilyPanelCard } from "../../features/alert/FamilyPanelCard";
 import { FeedbackHistoryCard } from "../../features/alert/FeedbackHistoryCard";
 import { FlowPanelCard } from "../../features/alert/FlowPanelCard";
-import { MlPanelCard } from "../../features/alert/MlPanelCard";
-import { SignaturePanelCard } from "../../features/alert/SignaturePanelCard";
 import { useLastGood } from "../../features/alert/useLastGood";
 import { FeedbackPanel } from "../../features/feedback/FeedbackPanel";
 import { ScoreAdjustmentChain } from "../../features/feedback/ScoreAdjustmentChain";
@@ -84,6 +81,7 @@ export function AlertDetailPage() {
   }
 
   const alert = detail.alert;
+  const legacy = detectorKind(detail.detector) === "legacy";
   const refreshing =
     detailResource.status === "loading" ||
     adjustmentResource.status === "loading" ||
@@ -105,7 +103,7 @@ export function AlertDetailPage() {
         subtitle={
           <span className="flex flex-wrap items-center gap-2">
             <BandBadge queueClass={alert.queueClass} />
-            <EvidenceBadge evidenceClass={alert.evidenceClass} />
+            {legacy && <EvidenceBadge evidenceClass={alert.evidenceClass} />}
             <SeverityBadge severity={alert.severity} />
             {detail.evidence.tier2Candidate && <Pill tone="danger">→ Tier 2 candidate</Pill>}
             <span className="font-mono text-xs text-dim">{alert.alertRef}</span>
@@ -124,7 +122,7 @@ export function AlertDetailPage() {
               "Operational score",
               <ScorePair detection={alert.detectionScore} combined={alert.combinedScore} />,
             ],
-            ["Model confidence", detail.detector && detail.detector.confidence == null
+            [legacy ? "Model confidence" : "Confidence", detail.detector && detail.detector.confidence == null
               ? "Not provided" : formatPercent(detail.detector?.confidence ?? alert.confidence)],
             ["Status", humanise(alert.status)],
             ["Needs review", alert.requiresReview ? "Yes" : "No"],
@@ -134,11 +132,10 @@ export function AlertDetailPage() {
       </Card>
 
       <DetectorProvenance detector={detail.detector} />
+      {legacy && <p className="text-xs text-muted">Legacy detector evidence — historical Signature + XGBoost flow results.</p>}
       <div className="grid gap-4 lg:grid-cols-2">
         <FlowPanelCard flow={detail.flow} />
-        <SignaturePanelCard signature={detail.signature} />
-        <MlPanelCard ml={detail.ml} />
-        <EvidencePanelCard evidence={detail.evidence} />
+        <DetectorEvidence detail={detail} layout="detail" />
       </div>
 
       <FamilyPanelCard family={detail.family} />

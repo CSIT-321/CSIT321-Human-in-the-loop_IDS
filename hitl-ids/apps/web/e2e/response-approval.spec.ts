@@ -7,7 +7,7 @@ test("Suricata to human-approved response plan without execution",async({page})=
   await page.getByLabel("Username").fill("g.ang");
   await page.getByLabel("Password",{exact:true}).fill("analyst-demo");
   await page.getByRole("button",{name:"Sign in"}).click();
-  await page.getByRole("link",{name:"Suricata Admission"}).click();
+  await page.getByRole("link",{name:"Incoming Alerts"}).click();
   const option=page.locator("#external-alert option").filter({hasText:"(staged)"}).first();
   await expect(option).toHaveCount(1);
   await page.getByLabel("Staged alert").selectOption((await option.getAttribute("value"))!);
@@ -18,7 +18,7 @@ test("Suricata to human-approved response plan without execution",async({page})=
   await page.getByLabel("Decision reason").fill("Explicit operational admission");
   await page.getByRole("button",{name:"Admit to HITL Workflow"}).click();
   await expect(page.getByRole("status")).toContainText("Operational admission completed");
-  await page.getByRole("link",{name:"Open V2 Routing"}).click();
+  await page.getByRole("link",{name:"Open Analyst Workspace"}).click();
   await expect(page.getByText("tier1 review",{exact:true})).toBeVisible();
   await page.getByLabel("Decision reason").fill("Unresolved attack evidence requires Tier 2");
   await page.getByRole("button",{name:"Manual Escalate"}).click();

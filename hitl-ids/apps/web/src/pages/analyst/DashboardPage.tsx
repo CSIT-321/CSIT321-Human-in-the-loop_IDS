@@ -178,6 +178,7 @@ export function DashboardPage() {
       <div className="space-y-1">
         <h1 className="text-2xl font-semibold text-text">Dashboard</h1>
         {runId !== null && <p className="text-sm text-muted">Detection run #{runId}</p>}
+        <p className="text-xs text-muted">Historical flow detector metrics; these cards do not represent all incoming IDS sources.</p>
       </div>
 
       <ApiView
@@ -241,7 +242,8 @@ export function DashboardPage() {
               </div>
 
               <section className="rounded-sm border border-border bg-surface p-5">
-                <h2 className="text-lg font-semibold text-text">Queue composition</h2>
+                <h2 className="text-lg font-semibold text-text">Legacy Detector Composition</h2>
+                <p className="mt-1 text-xs text-muted">Historical Signature + XGBoost flow detector results.</p>
                 <ul className="mt-4 space-y-4">
                   {QUEUE_BANDS.map((band) => {
                     const row = bands.find((entry) => entry.queueClass === band.key);

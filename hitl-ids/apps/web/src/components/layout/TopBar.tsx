@@ -36,6 +36,13 @@ function Clock() {
 export function TopBar() {
   const { session, signOut } = useSession();
   const navigate = useNavigate();
+  const [theme, setTheme] = useState(() => {
+    try { return localStorage.getItem("hitl-ids.theme") === "light" ? "light" : "dark"; } catch { return "dark"; }
+  });
+  useEffect(() => {
+    document.documentElement.dataset.theme = theme;
+    try { localStorage.setItem("hitl-ids.theme", theme); } catch { /* Storage may be disabled. */ }
+  }, [theme]);
 
   if (session === null) return null;
 
@@ -59,8 +66,14 @@ export function TopBar() {
           Recorded flows
         </span>
       </div>
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-2 sm:gap-3">
         <Clock />
+        <button type="button" aria-label="Light theme" aria-pressed={theme === "light"}
+          title={`Switch to ${theme === "dark" ? "Light" : "Dark"} theme`}
+          onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+          className="rounded-sm border border-border bg-raised px-2 py-1 text-xs text-text hover:border-border-strong">
+          {theme === "dark" ? "Light" : "Dark"}
+        </button>
         <span
           aria-hidden
           title={session.username}

@@ -196,7 +196,7 @@ export function WorkstationPage() {
     (detailResource.status === "loading" || adjustmentResource.status === "loading" || historyResource.status === "loading");
 
   return (
-    <div className="-mx-6 -my-5 flex h-[calc(100%+2.5rem)] min-h-[36rem] flex-col">
+    <div className="workstation -mx-6 -my-5 flex h-[calc(100%+2.5rem)] min-h-[36rem] flex-col">
       <div className="flex items-center justify-between gap-4 border-b border-border bg-bg px-4 py-2">
         <h1 className="text-sm font-semibold tracking-tight text-text">Workstation</h1>
         <p className="hidden font-mono text-[11px] text-dim md:block">
@@ -205,7 +205,7 @@ export function WorkstationPage() {
         </p>
       </div>
       <KpiStrip summary={summary} breakdowns={breakdowns} />
-      <div className="grid min-h-0 flex-1 grid-cols-[minmax(18rem,20rem)_minmax(0,1fr)] xl:grid-cols-[21rem_minmax(0,1fr)_20rem]">
+      <div className="workstation-panes grid min-h-0 flex-1 grid-cols-[minmax(18rem,20rem)_minmax(0,1fr)] xl:grid-cols-[21rem_minmax(0,1fr)_20rem]">
         <QueuePane
           queue={queue}
           families={families}

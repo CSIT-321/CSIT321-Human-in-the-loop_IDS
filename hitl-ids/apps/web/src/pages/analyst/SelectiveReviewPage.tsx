@@ -74,8 +74,10 @@ export function SelectiveReviewPanel({alertRef}:{alertRef:string}) {
   return <section aria-label="Selective Human Review" className="min-w-0 space-y-4 border-t border-border pt-5">
     <h2 className="text-base font-semibold">Selective Human Review</h2>
     <p className="text-sm font-semibold text-warn">{warning}</p>
+    <details className="rounded-sm border border-border p-3 text-muted"><summary className="cursor-pointer text-sm">Advanced / Research &amp; Evaluation</summary>
     <button className={button} aria-expanded={collectionOpen} onClick={()=>setCollectionOpen(!collectionOpen)}>Prospective Collection</button>
     {collectionOpen&&<CollectionDecisionPanel alertRef={alertRef} runRef={runRef} onSelect={setRunRef} onRun={setRun} refreshKey={resource.status==="success"?resource.data.version:""}/>}
+    </details>
     {canWrite&&<button className={button} aria-expanded={contextOpen} onClick={()=>setContextOpen(!contextOpen)}>Add Trusted Context</button>}
     {canWrite&&contextOpen&&<ContextCollectionForm key={alertRef} alertRef={alertRef} onSaved={()=>{setContextOpen(false);reload();}}/>}
     {resource.status==="loading"&&<p role="status">Checking current safety evidence...</p>}
@@ -124,7 +126,9 @@ export function SelectiveReviewPage() {
   useEffect(()=>{const timer=setInterval(()=>{reload();reloadMetrics();},15000);return()=>clearInterval(timer);},[reload,reloadMetrics]);
   return <div className="min-w-0 space-y-5 p-4 sm:p-6">
     <PageHeader title="Selective Human Review"/>
-    <CollectionRunsPanel/>
+    <details className="rounded-sm border border-border p-3 text-muted"><summary className="cursor-pointer text-sm">Advanced / Research &amp; Evaluation</summary>
+      <CollectionRunsPanel/>
+    </details>
     <p className="text-sm font-semibold text-warn">{warning}</p>
     {metrics.status==="success"&&<section className="space-y-3" aria-label="Review workload metrics">
       <dl className="grid grid-cols-2 gap-3 text-sm lg:grid-cols-4">

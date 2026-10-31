@@ -206,6 +206,29 @@ describe("shell: route guards", () => {
 });
 
 describe("shell: navigation", () => {
+  it("persists keyboard-operated sidebar and theme preferences across remounts", async () => {
+    localStorage.clear();
+    stubApi();
+    const user = userEvent.setup();
+    const mounted = renderApp("/analyst/dashboard", { session: ANALYST });
+    const collapse = screen.getByRole("button", { name: "Collapse sidebar" });
+    collapse.focus();
+    await user.keyboard("{Enter}");
+    expect(screen.getByRole("button", { name: "Expand sidebar" })).toHaveAttribute("aria-expanded", "false");
+    expect(screen.getByRole("link", { name: "Incoming Alerts" })).toHaveAttribute("href", "/analyst/external-admission");
+    expect(screen.getByRole("link", { name: "Analyst Workspace" })).toHaveAttribute("href", "/analyst/v2-triage");
+    screen.getByRole("button", { name: "Light theme" }).focus();
+    await user.keyboard(" ");
+    expect(document.documentElement).toHaveAttribute("data-theme", "light");
+    mounted.unmount();
+    renderApp("/analyst/dashboard", { session: ANALYST });
+    expect(screen.getByRole("button", { name: "Expand sidebar" })).toBeVisible();
+    expect(screen.getByRole("button", { name: "Light theme" })).toHaveAttribute("aria-pressed", "true");
+    await user.click(screen.getByRole("button", { name: "Expand sidebar" }));
+    await user.click(screen.getByRole("button", { name: "Light theme" }));
+    expect(document.documentElement).toHaveAttribute("data-theme", "dark");
+    localStorage.clear();
+  });
   it("shows the current account's nav items and no other role's", async () => {
     stubApi();
     renderApp("/analyst/queue", { session: ANALYST });

@@ -67,7 +67,7 @@ export function ExternalAdmissionDetail({ initial, refresh, prefix, onUpdate }: 
       <h3 className="text-sm font-semibold">Operational V2 Reference</h3>
       <p className="break-all font-mono text-xs">{view.operationalAlertRef}</p>
       {view.admittedAt && <p className="text-sm">Admitted by actor #{view.admissionActorId} at {view.admittedAt}</p>}
-      <Link className="inline-block text-sm text-accent underline" to={prefix + "/v2-triage?alertRef=" + view.operationalAlertRef}>Open V2 Routing</Link>
+      <Link className="inline-block text-sm text-accent underline" to={prefix + "/v2-triage?alertRef=" + view.operationalAlertRef}>Open Analyst Workspace</Link>
     </section>}
     {(view.canReview || view.canAdmit) && <section className="space-y-3 border-t border-border pt-4">
       {view.canReview && <div className="space-y-2">
@@ -105,7 +105,7 @@ export function ExternalAdmissionPage() {
   const current = items.find(item => item.externalInboxId === selected) ?? items[0];
   const refresh = () => { setUpdated({}); resource.reload(); };
   return <div className="min-w-0 space-y-5 p-4 sm:p-6">
-    <PageHeader title="Suricata Admission" />
+    <PageHeader title="Incoming Alerts" />
     {resource.status === "loading" && <p role="status">Loading staged alerts...</p>}
     {resource.status === "error" && <div><p role="alert">{resource.error.message}</p><button className={button} onClick={resource.reload}>Retry</button></div>}
     {resource.status === "success" && <>

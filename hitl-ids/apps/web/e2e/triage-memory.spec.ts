@@ -8,7 +8,7 @@ test("three human reviews, activation, future guidance and contradiction without
   await page.getByLabel("Username").fill("g.ang");
   await page.getByLabel("Password",{exact:true}).fill("analyst-demo");
   await page.getByRole("button",{name:"Sign in"}).click();
-  await page.getByRole("link",{name:"V2 Triage Routing"}).click();
+  await page.getByRole("link",{name:"Analyst Workspace"}).click();
   const options=page.locator("#v2-alert option").filter({hasText:"DEMO SSH scan"});
   await expect(options).toHaveCount(5);
   const refs=await options.evaluateAll(elements=>elements.map(element=>(element as HTMLOptionElement).value));

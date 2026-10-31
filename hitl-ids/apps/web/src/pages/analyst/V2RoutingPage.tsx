@@ -28,6 +28,7 @@ export function RoutingDetail({ initial, refresh }: { initial: View; refresh: ()
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [done, setDone] = useState("");
+  const caseForm = useRef<HTMLDivElement>(null);
   const pending = useRef<{ action: Action; body: Schemas["RoutingRequest"] } | null>(null);
   async function decide(action: Action) {
     if (busy || !reason.trim()) return;
@@ -86,7 +87,17 @@ export function RoutingDetail({ initial, refresh }: { initial: View; refresh: ()
     </div>}
     {error && <p role="alert" className="text-sm text-danger">{error}</p>}
     {done && <p role="status" className="text-sm text-ok">{done}</p>}
-    {state.handlingRoute === "tier2_candidate" && state.workflowStage === "assessment" && <CreateCasePanel alert={view} />}
+    {state.handlingRoute === "tier2_candidate" && state.workflowStage === "assessment" && <>
+      <div role="status" className="space-y-2 rounded-sm border border-warn/50 bg-warn-dim p-4">
+        <h3 className="font-semibold">Escalated to Tier 2 Candidate</h3>
+        <p className="text-sm">A formal Tier 2 Case has not been created yet.</p>
+        <button className={button} onClick={() => {
+          caseForm.current?.scrollIntoView({ block: "start" });
+          caseForm.current?.querySelector<HTMLInputElement>("#case-title")?.focus();
+        }}>Next step: Create Tier 2 Case</button>
+      </div>
+      <div ref={caseForm}><CreateCasePanel alert={view} /></div>
+    </>}
     <button className={button} disabled={busy} onClick={refresh}>Refresh state</button>
   </section>;
 }
@@ -108,7 +119,7 @@ export function V2RoutingPage() {
   const current = resource.status === "success"
     ? resource.data.items.find(item => item.operationalAlertRef === selected) ?? resource.data.items[0] : undefined;
   return <div className="min-w-0 space-y-5 p-4 sm:p-6">
-    <PageHeader title="V2 Triage Routing" />
+    <PageHeader title="Analyst Workspace" />
     {requestedRef && <button className={button} onClick={() => { setOffset(0); setSearch({}); }}>All V2 alerts</button>}
     {resource.status === "loading" && <p role="status">Loading V2 alerts...</p>}
     {resource.status === "error" && <div><p role="alert">{resource.error.message}</p><button className={button} onClick={resource.reload}>Retry</button></div>}

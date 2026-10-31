@@ -30,6 +30,7 @@ describe('prospective context collection',()=>{
   it('keeps evaluator collection management read-only',async()=>{
     stubFetch(req=>req.url.includes('/collection/runs')?jsonResponse({items:[]}):req.url.includes('/metrics')?jsonResponse({totalAlerts:0,eligibleAlerts:0,mustReviewCount:0,recommendedReviewCount:0,noImmediateReviewCount:0,immediateReviewReductionRate:0}):jsonResponse({items:[],page:{total:0}}));
     renderApp('/evaluator/selective-review',{session:{username:'evaluator',displayName:'Evaluator',role:'evaluator',token:'test'}});
+    await userEvent.click(screen.getByText('Advanced / Research & Evaluation'));
     await userEvent.click(screen.getByRole('button',{name:'Collection Runs'}));
     expect(screen.queryByRole('button',{name:'Create Draft Run'})).not.toBeInTheDocument();
     expect(screen.queryByLabelText('Holdout start')).not.toBeInTheDocument();
