@@ -741,6 +741,91 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v2/tier2/cases/{caseRef}/responses": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Read proposals and immutable human decisions */
+        get: operations["listCaseResponses"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/tier2/cases/{caseRef}/responses/manual": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** proposeManualCaseResponse */
+        post: operations["proposeManualCaseResponse"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/tier2/cases/{caseRef}/responses/recommend": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** recommendCaseResponse */
+        post: operations["recommendCaseResponse"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/tier2/cases/{caseRef}/responses/{recommendationRef}/approve": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** approveCaseResponse */
+        post: operations["approveCaseResponse"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/tier2/cases/{caseRef}/responses/{recommendationRef}/reject": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** rejectCaseResponse */
+        post: operations["rejectCaseResponse"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v2/tier2/cases/{caseRef}/start-investigation": {
         parameters: {
             query?: never;
@@ -2444,6 +2529,30 @@ export interface components {
             /** Username */
             username: string;
         };
+        /** ManualResponseRequest */
+        ManualResponseRequest: {
+            /** Expectedcaserevision */
+            expectedCaseRevision: number;
+            /** Reason */
+            reason: string;
+            /**
+             * Recommendationtype
+             * @enum {string}
+             */
+            recommendationType: "block_source_ip" | "isolate_host" | "disable_account" | "notify_security_team" | "monitor" | "further_investigation";
+            /**
+             * Requestid
+             * Format: uuid
+             */
+            requestId: string;
+            /**
+             * Targettype
+             * @enum {string}
+             */
+            targetType: "ip" | "host" | "account" | "case" | "operational_alert";
+            /** Targetvalue */
+            targetValue: string;
+        };
         /**
          * MeResponse
          * @description Who the token says is calling — the session check for `GET /api/auth/me`.
@@ -2793,6 +2902,161 @@ export interface components {
             queueClass: "tier2_candidate" | "corroborated" | "signature_override" | "ml_only" | "none";
             /** Requiresreview */
             requiresReview: number;
+        };
+        /** ResponseDecision */
+        ResponseDecision: {
+            /** Actorid */
+            actorId: number;
+            /** Createdat */
+            createdAt: string;
+            /**
+             * Decision
+             * @enum {string}
+             */
+            decision: "approved" | "rejected";
+            /** Eventtype */
+            eventType: string;
+            proposalSnapshot: components["schemas"]["ResponseProposal"];
+            /** Reason */
+            reason: string;
+        };
+        /** ResponseDecisionRequest */
+        ResponseDecisionRequest: {
+            /** Expectedcaserevision */
+            expectedCaseRevision: number;
+            /** Expectedrevision */
+            expectedRevision: number;
+            /** Reason */
+            reason: string;
+            /**
+             * Requestid
+             * Format: uuid
+             */
+            requestId: string;
+        };
+        /** ResponseEvidence */
+        ResponseEvidence: {
+            /**
+             * Caseref
+             * Format: uuid
+             */
+            caseRef: string;
+            /** Caserevision */
+            caseRevision: number;
+            finding: components["schemas"]["ResponseFinding"] | null;
+            /** Linkeventid */
+            linkEventId: number | null;
+            targetAlert: components["schemas"]["OperationalAlertV2"] | null;
+            /**
+             * Targetbasis
+             * @enum {string}
+             */
+            targetBasis: "primary_source_ip" | "linked_source_ip" | "case_scope" | "primary_alert" | "linked_alert";
+        };
+        /** ResponseFinding */
+        ResponseFinding: {
+            /** Actorid */
+            actorId: number;
+            /** Createdat */
+            createdAt: string;
+            /** Eventid */
+            eventId: number;
+            /**
+             * Finding
+             * @enum {string}
+             */
+            finding: "confirmed_malicious" | "suspicious" | "inconclusive" | "expected_activity";
+            /** Reason */
+            reason: string;
+        };
+        /** ResponseMutation */
+        ResponseMutation: {
+            /** Replayed */
+            replayed: boolean;
+            response: components["schemas"]["ResponseView"];
+        };
+        /** ResponsePage */
+        ResponsePage: {
+            /** Caserevision */
+            caseRevision: number;
+            /** Items */
+            items: components["schemas"]["ResponseView"][];
+            page: components["schemas"]["PageInfo"];
+        };
+        /** ResponseProposal */
+        ResponseProposal: {
+            /**
+             * Caseref
+             * Format: uuid
+             */
+            caseRef: string;
+            /** Caserevision */
+            caseRevision: number;
+            /** Createdat */
+            createdAt: string;
+            /** Eventtype */
+            eventType: string;
+            evidenceSnapshot: components["schemas"]["ResponseEvidence"];
+            /** Policyversion */
+            policyVersion: string | null;
+            /** Proposalreason */
+            proposalReason: string;
+            /**
+             * Proposalsource
+             * @enum {string}
+             */
+            proposalSource: "system_policy" | "analyst";
+            /** Proposedbyactorid */
+            proposedByActorId: number;
+            /** Rationale */
+            rationale: string;
+            /**
+             * Recommendationref
+             * Format: uuid
+             */
+            recommendationRef: string;
+            /**
+             * Recommendationtype
+             * @enum {string}
+             */
+            recommendationType: "block_source_ip" | "isolate_host" | "disable_account" | "notify_security_team" | "monitor" | "further_investigation";
+            /**
+             * Targettype
+             * @enum {string}
+             */
+            targetType: "ip" | "host" | "account" | "case" | "operational_alert";
+            /** Targetvalue */
+            targetValue: string;
+        };
+        /** ResponseRequest */
+        ResponseRequest: {
+            /** Expectedcaserevision */
+            expectedCaseRevision: number;
+            /** Reason */
+            reason: string;
+            /**
+             * Requestid
+             * Format: uuid
+             */
+            requestId: string;
+        };
+        /** ResponseView */
+        ResponseView: {
+            decision: components["schemas"]["ResponseDecision"] | null;
+            /**
+             * Executionstatus
+             * @default not_executed
+             * @constant
+             */
+            executionStatus: "not_executed";
+            proposal: components["schemas"]["ResponseProposal"];
+            /** Revision */
+            revision: number;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "pending" | "approved" | "rejected";
         };
         /** RoutingAudit */
         RoutingAudit: {
@@ -5577,6 +5841,359 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["CaseMutation"];
+                };
+            };
+            /** @description Validation failed */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not signed in, or the token expired */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Role not permitted */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    listCaseResponses: {
+        parameters: {
+            query?: {
+                limit?: number;
+                offset?: number;
+            };
+            header?: {
+                /** @description `Bearer <token>` from POST /api/auth/login */
+                Authorization?: string;
+            };
+            path: {
+                caseRef: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Response plans, never execution results */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ResponsePage"];
+                };
+            };
+            /** @description Validation failed */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not signed in, or the token expired */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    proposeManualCaseResponse: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description `Bearer <token>` from POST /api/auth/login */
+                Authorization?: string;
+            };
+            path: {
+                caseRef: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ManualResponseRequest"];
+            };
+        };
+        responses: {
+            /** @description Recorded proposal or human decision; not executed */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ResponseMutation"];
+                };
+            };
+            /** @description Validation failed */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not signed in, or the token expired */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Role not permitted */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    recommendCaseResponse: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description `Bearer <token>` from POST /api/auth/login */
+                Authorization?: string;
+            };
+            path: {
+                caseRef: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ResponseRequest"];
+            };
+        };
+        responses: {
+            /** @description Recorded proposal or human decision; not executed */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ResponseMutation"];
+                };
+            };
+            /** @description Validation failed */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not signed in, or the token expired */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Role not permitted */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    approveCaseResponse: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description `Bearer <token>` from POST /api/auth/login */
+                Authorization?: string;
+            };
+            path: {
+                caseRef: string;
+                recommendationRef: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ResponseDecisionRequest"];
+            };
+        };
+        responses: {
+            /** @description Recorded proposal or human decision; not executed */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ResponseMutation"];
+                };
+            };
+            /** @description Validation failed */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not signed in, or the token expired */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Role not permitted */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    rejectCaseResponse: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description `Bearer <token>` from POST /api/auth/login */
+                Authorization?: string;
+            };
+            path: {
+                caseRef: string;
+                recommendationRef: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ResponseDecisionRequest"];
+            };
+        };
+        responses: {
+            /** @description Recorded proposal or human decision; not executed */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ResponseMutation"];
                 };
             };
             /** @description Validation failed */

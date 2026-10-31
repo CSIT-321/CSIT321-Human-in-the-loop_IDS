@@ -30,18 +30,19 @@ describe("Tier 2 cases", () => {
   });
 
   it("preserves handoff and separates severity from priority and response", async () => {
-    stubFetch(request => jsonResponse(request.url.includes("/events") ? empty : record));
+    stubFetch(request => jsonResponse(request.url.includes("/responses") ? { ...empty,caseRevision:1 } : request.url.includes("/events") ? empty : record));
     renderApp("/analyst/tier2-cases/" + ref, { session });
     expect(await screen.findByText("Investigate source host")).toBeInTheDocument();
     expect(screen.getByText("Native Severity: 2")).toBeInTheDocument();
     expect(screen.getByText("P2 / 65")).toBeInTheDocument();
     expect(screen.getByText("Confidence: Not provided")).toBeInTheDocument();
-    expect(screen.getByText("Not yet recommended")).toBeInTheDocument();
+    expect(await screen.findByText("No response recommendations.")).toBeInTheDocument();
+    expect(screen.getByText("APPROVAL DOES NOT EXECUTE THE ACTION.")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Add investigation note" })).toBeDisabled();
   });
 
   it("evaluator can inspect but cannot append investigation records", async () => {
-    stubFetch(request => jsonResponse(request.url.includes("/events") ? empty : record));
+    stubFetch(request => jsonResponse(request.url.includes("/responses") ? { ...empty,caseRevision:1 } : request.url.includes("/events") ? empty : record));
     renderApp("/evaluator/tier2-cases/" + ref, { session: { ...session, role: "evaluator" } });
     await screen.findByText("Investigate source host");
     expect(screen.queryByLabelText("Investigation note")).not.toBeInTheDocument();
@@ -56,7 +57,7 @@ describe("Tier 2 cases", () => {
         bodies.push(await request.json());
         return jsonResponse({ error: { code: "CASE_CONFLICT", message: "Case changed; refresh" } }, 409);
       }
-      return jsonResponse(request.url.includes("/events") ? empty : record);
+      return jsonResponse(request.url.includes("/responses") ? { ...empty,caseRevision:1 } : request.url.includes("/events") ? empty : record);
     });
     renderApp("/analyst/tier2-cases/" + ref, { session });
     await userEvent.type(await screen.findByLabelText("Investigation note"), "Affected account identified");

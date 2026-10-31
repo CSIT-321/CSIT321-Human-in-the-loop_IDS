@@ -30,6 +30,8 @@ from apps.api.contract.routing import RoutingView, RoutingResponse
 from packages.detection.routing import RoutingRequest
 from apps.api.contract.external_admission import ExternalAdmissionView, ExternalAdmissionResponse
 from packages.detection.external_admission import AdmissionRequest, EligibilityRequest
+from apps.api.contract.responses import ResponsePage
+from packages.detection.response_approval import ResponseRequest,ManualResponseRequest,ResponseDecisionRequest,ResponseMutation
 from packages.detection.tier2_cases import (
     CaseView, CaseEvent, CaseMutation, CreateCaseRequest, CaseCommand, LinkCaseRequest, FindingRequest,
 )
@@ -49,6 +51,7 @@ SCHEMA_REF = "#/components/schemas/{model}"
 #: Every model that appears on the wire. Listed explicitly rather than discovered, so adding a
 #: model to the API is a deliberate act.
 MODELS: tuple[type[BaseModel], ...] = (
+    ResponsePage,ResponseRequest,ManualResponseRequest,ResponseDecisionRequest,ResponseMutation,
     CaseView, CaseEvent, CaseMutation, CreateCaseRequest, CaseCommand, LinkCaseRequest, FindingRequest,
     ExternalAdmissionView, ExternalAdmissionResponse, AdmissionRequest, EligibilityRequest,
     RoutingView, RoutingResponse, RoutingRequest,
@@ -631,6 +634,22 @@ def _paths() -> dict[str, Any]:
             'parameters':[AUTH_PARAMETER,ref], 'x-required-roles':['security_analyst','system_admin'],
             'requestBody':{'required':True,**_json(request_model)},
             'responses':{'200':{'description':'Audited case decision',**_json(CaseMutation)},**_errors(400,403,404,409)}}}
+    response_ref = {'name':'recommendationRef','in':'path','required':True,'schema':{'type':'string','format':'uuid'}}
+    response_root = '/api/v2/tier2/cases/{caseRef}/responses'
+    paths[response_root] = {'get': {
+        'operationId':'listCaseResponses','summary':'Read proposals and immutable human decisions','tags':['Response plans'],
+        'parameters':[AUTH_PARAMETER,case_ref,*paging],
+        'responses':{'200':{'description':'Response plans, never execution results',**_json(ResponsePage)},**_errors(400,404)}}}
+    for suffix,operation,model,parameters in [
+        ('/recommend','recommendCaseResponse',ResponseRequest,[AUTH_PARAMETER,case_ref]),
+        ('/manual','proposeManualCaseResponse',ManualResponseRequest,[AUTH_PARAMETER,case_ref]),
+        ('/{recommendationRef}/approve','approveCaseResponse',ResponseDecisionRequest,[AUTH_PARAMETER,case_ref,response_ref]),
+        ('/{recommendationRef}/reject','rejectCaseResponse',ResponseDecisionRequest,[AUTH_PARAMETER,case_ref,response_ref])]:
+        paths[response_root+suffix] = {'post':{
+            'operationId':operation,'summary':operation,'tags':['Response plans'],'parameters':parameters,
+            'x-required-roles':['security_analyst','system_admin'],'requestBody':{'required':True,**_json(model)},
+            'responses':{'200':{'description':'Recorded proposal or human decision; not executed',**_json(ResponseMutation)},
+                         **_errors(400,403,404,409)}}}
     for path, operations in paths.items():
         if path == "/api/auth/login":
             continue
@@ -651,6 +670,7 @@ def openapi_document() -> dict[str, Any]:
         },
         "servers": [{"url": "http://localhost:8000", "description": "Local demo"}],
         "tags": [
+            {"name":"Response plans","description":"Recommendations and human authorization; no execution"},
             {"name":"Tier 2 cases","description":"Explicit investigation cases, not automated response"},
             {"name": "External admission", "description": "Eligibility review and atomic operational admission"},
             {"name": "V2 routing", "description": "Explicit authenticated operational routing"},

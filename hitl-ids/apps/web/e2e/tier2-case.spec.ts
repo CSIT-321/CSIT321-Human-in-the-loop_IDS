@@ -30,7 +30,7 @@ test("Suricata admission to explicit Tier 2 case, investigation note and finding
   await page.getByRole("button", { name: "Create Tier 2 Case", exact: true }).click();
   await expect(page).toHaveURL(/tier2-cases\/[0-9a-f-]+$/);
   await expect(page.getByRole("heading", { name: "Suricata source-host investigation" })).toBeVisible();
-  await expect(page.getByText("Not yet recommended", { exact: true })).toBeVisible();
+  await expect(page.getByText("No response recommendations.", { exact: true })).toBeVisible();
   await page.getByRole("tab", { name: "Audit Timeline" }).click();
   await page.getByLabel("Decision reason").fill("Begin deeper analysis");
   await page.getByRole("button", { name: "Start investigation" }).click();

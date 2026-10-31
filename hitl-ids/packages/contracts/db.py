@@ -144,6 +144,8 @@ MIGRATIONS += ((7, "immutable external eligibility and atomic operational admiss
                 Path(__file__).with_name("external_operational_admission.sql").read_text(encoding="utf-8")),)
 MIGRATIONS += ((8, "Tier 2 cases, lifecycle and immutable investigation ledger",
                 Path(__file__).with_name("tier2_cases.sql").read_text(encoding="utf-8")),)
+MIGRATIONS += ((9, "immutable response proposals and human approval decisions",
+                Path(__file__).with_name("response_approval.sql").read_text(encoding="utf-8")),)
 SCHEMA_VERSION = MIGRATIONS[-1][0]
 
 

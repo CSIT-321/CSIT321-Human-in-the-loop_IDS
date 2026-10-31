@@ -1,5 +1,15 @@
 # System Workflow — From Network Traffic to the Dashboard, and Back
 
+**Current stacked increment (2026-10-31):** Suricata -> Staging -> Eligibility Review ->
+Operational Admission -> Triage Policy -> Tier 1 -> Tier 2 Candidate -> Tier 2 Case ->
+Investigation -> Response Recommendation -> Human Approval.
+The detector finding, case finding, proposed response, human decision and execution are
+separate records/boundaries. Human approval is a safety boundary, not a cosmetic UI step.
+The implemented end state is **Approved - Not Executed**. No external action is dispatched.
+**FUTURE:** Approved Response -> Notification / simulated SOAR.
+See [response-recommendation-approval.md](response-recommendation-approval.md).
+The September sections below remain historical context for the original detector/feedback pipeline.
+
 **As of:** 2026-09-11 · branch `feat/s6-fusion` · **Purpose:** one place that explains the whole
 system as it stands — where flow data comes from, how it runs locally today, how the detection
 score is built, and how analyst feedback, held inside the guardrails, produces the score the

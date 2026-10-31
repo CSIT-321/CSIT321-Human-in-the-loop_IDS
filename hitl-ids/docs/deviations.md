@@ -66,6 +66,19 @@ and are not amended** (D10). A divergence from them is recorded, not fixed.
 | C13 | **The queue is ordered by `db.QUEUE_ORDER_BY` (`queue_priority, combined_score DESC, id ASC`)**, not by `evidence_priority` as plan v1.0's S10a note said | `evidence_priority` predates S7b. Feedback moves an alert between queue *bands* (Q24); sorting on evidence class would make the re-ranking invisible in the API — the one thing the demo exists to show | plan v1.1 |
 | C14 | **The inspection sorts tie-break on evidence class, review flag and flow capture time**, and the capture-time key follows the requested direction. `db.QUEUE_ORDER_BY` itself is unchanged | `a.id ASC` was direction-blind, so a page whose scores all tied returned identical ascending and descending — measured on the 975 alerts tied at exactly 100.0. A tie is 95.8% of the queue, so the tie-break *is* the visible ranking. Pinning capture time to ASC did not fix it: the times are unique, so the `id` key never engaged | v1.28 |
 
+## Response authorization extension (2026-10-31)
+
+Migration 9 adds only `response_recommendations` and `response_decisions`, including
+their indexes and append-only triggers. It does not rebuild or change existing tables.
+Status is derived from the immutable decision record rather than updating a proposal.
+The immutable proposal carries target, actor, reason, policy version, case revision,
+latest finding and supporting detector/link snapshot. A decision retains the entire
+proposal snapshot. These extensions are enumerated in `tests/test_contracts.py`.
+Host/account targets remain unavailable until trusted structured identity evidence exists;
+IP addresses and free-text notes are not host/account identity. Existing analyst/admin
+permissions apply; a dedicated Tier 2/Senior Analyst role is deferred.
+See [Response Recommendation + Human Approval](response-recommendation-approval.md).
+
 ## D. Rejected, with the reason — do not re-propose
 
 These appear in `HANDOVER.md` §5 as well. Repeated here because the plan cites this file as the

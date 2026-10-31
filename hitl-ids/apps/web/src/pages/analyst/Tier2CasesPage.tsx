@@ -4,6 +4,7 @@ import { api, unwrap, type Schemas } from "../../api/client";
 import { useApi } from "../../api/useApi";
 import { PageHeader, Pill } from "../../components/ui";
 import { useSession } from "../../session/SessionContext";
+import { ResponseRecommendations } from "./ResponseRecommendations";
 
 const button = "rounded-sm border border-border px-3 py-2 text-sm hover:bg-raised disabled:opacity-50";
 const input = "w-full min-w-0 rounded-sm border border-border bg-surface p-2 text-sm";
@@ -138,7 +139,6 @@ export function CaseInvestigation({ initial, refresh }: { initial: Case; refresh
         <div><dt className="text-muted">Created</dt><dd>{current.createdAt}</dd></div>
         <div><dt className="text-muted">Operational Priority at Creation</dt><dd>{snapshot.triage.priorityBand ?? "Unassigned"} / {snapshot.triage.operationalPriority ?? "Not assigned"}</dd></div>
         <div><dt className="text-muted">Policy at Creation</dt><dd>{snapshot.triage.triagePolicyVersion ?? "Not applied"}</dd></div>
-        <div><dt className="text-muted">Response</dt><dd>Not yet recommended</dd></div>
       </dl>
     </section>
     <section className="space-y-2 border-t border-border pt-4" aria-label="Tier 1 handoff">
@@ -197,5 +197,6 @@ export function CaseInvestigation({ initial, refresh }: { initial: Case; refresh
       {message && <p role="status" className="text-sm text-ok">{message}</p>}
       <button className={button} disabled={busy} onClick={refresh}>Refresh case</button>
     </section>
+    <ResponseRecommendations key={current.caseRef} current={current} canWrite={canWrite} />
   </div>;
 }

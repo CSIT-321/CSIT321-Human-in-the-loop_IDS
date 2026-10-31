@@ -66,6 +66,11 @@ DEVIATION_COLUMNS = {
     "flow_data": {"source_record_id"},
 }
 DEVIATION_TABLES = {
+    "response_recommendations": {"id","recommendation_ref","case_id","proposed_by_actor_id","proposal_source",
+        "recommendation_type","target_type","target_value","rationale","proposal_reason","case_revision",
+        "policy_version","evidence_snapshot","request_id","request_payload","event_type","created_at"},
+    "response_decisions": {"id","recommendation_id","actor_id","decision","reason","request_id",
+        "request_payload","proposal_snapshot","event_type","created_at"},
     "tier2_cases": {"id","case_ref","primary_operational_alert_id","title","owner_actor_id","created_by_actor_id","snapshot","created_at"},
     "tier2_case_state": {"case_id","status","revision","updated_at"},
     "tier2_case_events": {"id","case_id","actor_id","request_id","action","event_type","request_payload",
@@ -296,7 +301,8 @@ def test_every_table_model_matches_its_columns(conn):
     assert set(db.TABLE_MODELS) == table_names(conn) - {
         "external_alert_inbox", "operational_alerts_v2", "operational_triage_state_v2",
         "operational_triage_policy_audit", "operational_routing_audit",
-        "external_eligibility_review", "external_operational_admission", "tier2_cases", "tier2_case_state", "tier2_case_events"}
+        "external_eligibility_review", "external_operational_admission", "tier2_cases", "tier2_case_state", "tier2_case_events",
+        "response_recommendations", "response_decisions"}
     for table, model in db.TABLE_MODELS.items():
         assert set(model.model_fields) == set(columns(conn, table)), table
 
@@ -321,6 +327,10 @@ EXPECTED_FOREIGN_KEYS = {
     ("tier2_case_events","case_id","tier2_cases","id"),
     ("tier2_case_events","actor_id","users","id"),
     ("tier2_case_events","linked_alert_id","operational_alerts_v2","id"),
+    ("response_recommendations","case_id","tier2_cases","id"),
+    ("response_recommendations","proposed_by_actor_id","users","id"),
+    ("response_decisions","recommendation_id","response_recommendations","id"),
+    ("response_decisions","actor_id","users","id"),
     ("operational_routing_audit", "operational_alert_id", "operational_alerts_v2", "id"),
     ("operational_alerts_v2", "legacy_alert_id", "alerts", "id"),
     ("operational_alerts_v2", "external_inbox_id", "external_alert_inbox", "id"),

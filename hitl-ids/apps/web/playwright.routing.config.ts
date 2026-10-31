@@ -4,7 +4,7 @@ const python = process.env.HITL_PYTHON ?? "python";
 export default {
   ...base,
   testDir: path.resolve("e2e"),
-  testMatch: ["routing-workflow.spec.ts", "detector-foundation.spec.ts", "external-admission.spec.ts", "tier2-case.spec.ts"],
+  testMatch: ["routing-workflow.spec.ts", "detector-foundation.spec.ts", "external-admission.spec.ts", "tier2-case.spec.ts", "response-approval.spec.ts"],
   outputDir: path.resolve("test-results/routing-browser-artifacts"),
   use: { ...base.use, baseURL: "http://127.0.0.1:5175" },
   webServer: [

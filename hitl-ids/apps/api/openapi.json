@@ -3718,6 +3718,66 @@
         "title": "LoginResponse",
         "type": "object"
       },
+      "ManualResponseRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "expectedCaseRevision": {
+            "minimum": 1,
+            "title": "Expectedcaserevision",
+            "type": "integer"
+          },
+          "reason": {
+            "maxLength": 4000,
+            "minLength": 1,
+            "title": "Reason",
+            "type": "string"
+          },
+          "recommendationType": {
+            "enum": [
+              "block_source_ip",
+              "isolate_host",
+              "disable_account",
+              "notify_security_team",
+              "monitor",
+              "further_investigation"
+            ],
+            "title": "Recommendationtype",
+            "type": "string"
+          },
+          "requestId": {
+            "format": "uuid",
+            "title": "Requestid",
+            "type": "string"
+          },
+          "targetType": {
+            "enum": [
+              "ip",
+              "host",
+              "account",
+              "case",
+              "operational_alert"
+            ],
+            "title": "Targettype",
+            "type": "string"
+          },
+          "targetValue": {
+            "maxLength": 500,
+            "minLength": 1,
+            "title": "Targetvalue",
+            "type": "string"
+          }
+        },
+        "required": [
+          "requestId",
+          "expectedCaseRevision",
+          "reason",
+          "recommendationType",
+          "targetType",
+          "targetValue"
+        ],
+        "title": "ManualResponseRequest",
+        "type": "object"
+      },
       "MeResponse": {
         "additionalProperties": false,
         "description": "Who the token says is calling — the session check for `GET /api/auth/me`.",
@@ -4556,6 +4616,411 @@
           "requiresReview"
         ],
         "title": "QueueBandCount",
+        "type": "object"
+      },
+      "ResponseDecision": {
+        "additionalProperties": false,
+        "properties": {
+          "actorId": {
+            "title": "Actorid",
+            "type": "integer"
+          },
+          "createdAt": {
+            "title": "Createdat",
+            "type": "string"
+          },
+          "decision": {
+            "enum": [
+              "approved",
+              "rejected"
+            ],
+            "title": "Decision",
+            "type": "string"
+          },
+          "eventType": {
+            "title": "Eventtype",
+            "type": "string"
+          },
+          "proposalSnapshot": {
+            "$ref": "#/components/schemas/ResponseProposal"
+          },
+          "reason": {
+            "title": "Reason",
+            "type": "string"
+          }
+        },
+        "required": [
+          "actorId",
+          "decision",
+          "reason",
+          "eventType",
+          "createdAt",
+          "proposalSnapshot"
+        ],
+        "title": "ResponseDecision",
+        "type": "object"
+      },
+      "ResponseDecisionRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "expectedCaseRevision": {
+            "minimum": 1,
+            "title": "Expectedcaserevision",
+            "type": "integer"
+          },
+          "expectedRevision": {
+            "minimum": 1,
+            "title": "Expectedrevision",
+            "type": "integer"
+          },
+          "reason": {
+            "maxLength": 4000,
+            "minLength": 1,
+            "title": "Reason",
+            "type": "string"
+          },
+          "requestId": {
+            "format": "uuid",
+            "title": "Requestid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "requestId",
+          "expectedCaseRevision",
+          "reason",
+          "expectedRevision"
+        ],
+        "title": "ResponseDecisionRequest",
+        "type": "object"
+      },
+      "ResponseEvidence": {
+        "additionalProperties": false,
+        "properties": {
+          "caseRef": {
+            "format": "uuid",
+            "title": "Caseref",
+            "type": "string"
+          },
+          "caseRevision": {
+            "title": "Caserevision",
+            "type": "integer"
+          },
+          "finding": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ResponseFinding"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "linkEventId": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Linkeventid"
+          },
+          "targetAlert": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/OperationalAlertV2"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "targetBasis": {
+            "enum": [
+              "primary_source_ip",
+              "linked_source_ip",
+              "case_scope",
+              "primary_alert",
+              "linked_alert"
+            ],
+            "title": "Targetbasis",
+            "type": "string"
+          }
+        },
+        "required": [
+          "caseRef",
+          "caseRevision",
+          "finding",
+          "targetBasis",
+          "targetAlert",
+          "linkEventId"
+        ],
+        "title": "ResponseEvidence",
+        "type": "object"
+      },
+      "ResponseFinding": {
+        "additionalProperties": false,
+        "properties": {
+          "actorId": {
+            "title": "Actorid",
+            "type": "integer"
+          },
+          "createdAt": {
+            "title": "Createdat",
+            "type": "string"
+          },
+          "eventId": {
+            "title": "Eventid",
+            "type": "integer"
+          },
+          "finding": {
+            "enum": [
+              "confirmed_malicious",
+              "suspicious",
+              "inconclusive",
+              "expected_activity"
+            ],
+            "title": "Finding",
+            "type": "string"
+          },
+          "reason": {
+            "title": "Reason",
+            "type": "string"
+          }
+        },
+        "required": [
+          "eventId",
+          "finding",
+          "actorId",
+          "reason",
+          "createdAt"
+        ],
+        "title": "ResponseFinding",
+        "type": "object"
+      },
+      "ResponseMutation": {
+        "additionalProperties": false,
+        "properties": {
+          "replayed": {
+            "title": "Replayed",
+            "type": "boolean"
+          },
+          "response": {
+            "$ref": "#/components/schemas/ResponseView"
+          }
+        },
+        "required": [
+          "response",
+          "replayed"
+        ],
+        "title": "ResponseMutation",
+        "type": "object"
+      },
+      "ResponsePage": {
+        "additionalProperties": false,
+        "properties": {
+          "caseRevision": {
+            "title": "Caserevision",
+            "type": "integer"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/ResponseView"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "page": {
+            "$ref": "#/components/schemas/PageInfo"
+          }
+        },
+        "required": [
+          "items",
+          "page",
+          "caseRevision"
+        ],
+        "title": "ResponsePage",
+        "type": "object"
+      },
+      "ResponseProposal": {
+        "additionalProperties": false,
+        "properties": {
+          "caseRef": {
+            "format": "uuid",
+            "title": "Caseref",
+            "type": "string"
+          },
+          "caseRevision": {
+            "title": "Caserevision",
+            "type": "integer"
+          },
+          "createdAt": {
+            "title": "Createdat",
+            "type": "string"
+          },
+          "eventType": {
+            "title": "Eventtype",
+            "type": "string"
+          },
+          "evidenceSnapshot": {
+            "$ref": "#/components/schemas/ResponseEvidence"
+          },
+          "policyVersion": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Policyversion"
+          },
+          "proposalReason": {
+            "title": "Proposalreason",
+            "type": "string"
+          },
+          "proposalSource": {
+            "enum": [
+              "system_policy",
+              "analyst"
+            ],
+            "title": "Proposalsource",
+            "type": "string"
+          },
+          "proposedByActorId": {
+            "title": "Proposedbyactorid",
+            "type": "integer"
+          },
+          "rationale": {
+            "title": "Rationale",
+            "type": "string"
+          },
+          "recommendationRef": {
+            "format": "uuid",
+            "title": "Recommendationref",
+            "type": "string"
+          },
+          "recommendationType": {
+            "enum": [
+              "block_source_ip",
+              "isolate_host",
+              "disable_account",
+              "notify_security_team",
+              "monitor",
+              "further_investigation"
+            ],
+            "title": "Recommendationtype",
+            "type": "string"
+          },
+          "targetType": {
+            "enum": [
+              "ip",
+              "host",
+              "account",
+              "case",
+              "operational_alert"
+            ],
+            "title": "Targettype",
+            "type": "string"
+          },
+          "targetValue": {
+            "title": "Targetvalue",
+            "type": "string"
+          }
+        },
+        "required": [
+          "recommendationRef",
+          "caseRef",
+          "proposedByActorId",
+          "proposalSource",
+          "recommendationType",
+          "targetType",
+          "targetValue",
+          "rationale",
+          "proposalReason",
+          "caseRevision",
+          "policyVersion",
+          "evidenceSnapshot",
+          "eventType",
+          "createdAt"
+        ],
+        "title": "ResponseProposal",
+        "type": "object"
+      },
+      "ResponseRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "expectedCaseRevision": {
+            "minimum": 1,
+            "title": "Expectedcaserevision",
+            "type": "integer"
+          },
+          "reason": {
+            "maxLength": 4000,
+            "minLength": 1,
+            "title": "Reason",
+            "type": "string"
+          },
+          "requestId": {
+            "format": "uuid",
+            "title": "Requestid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "requestId",
+          "expectedCaseRevision",
+          "reason"
+        ],
+        "title": "ResponseRequest",
+        "type": "object"
+      },
+      "ResponseView": {
+        "additionalProperties": false,
+        "properties": {
+          "decision": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ResponseDecision"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "executionStatus": {
+            "const": "not_executed",
+            "default": "not_executed",
+            "title": "Executionstatus",
+            "type": "string"
+          },
+          "proposal": {
+            "$ref": "#/components/schemas/ResponseProposal"
+          },
+          "revision": {
+            "title": "Revision",
+            "type": "integer"
+          },
+          "status": {
+            "enum": [
+              "pending",
+              "approved",
+              "rejected"
+            ],
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "proposal",
+          "status",
+          "revision",
+          "decision"
+        ],
+        "title": "ResponseView",
         "type": "object"
       },
       "RoutingAudit": {
@@ -10029,6 +10494,539 @@
         ]
       }
     },
+    "/api/v2/tier2/cases/{caseRef}/responses": {
+      "get": {
+        "operationId": "listCaseResponses",
+        "parameters": [
+          {
+            "description": "`Bearer <token>` from POST /api/auth/login",
+            "in": "header",
+            "name": "Authorization",
+            "required": false,
+            "schema": {
+              "example": "Bearer eyJhbGciOiJIUzI1NiJ9...",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "caseRef",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "schema": {
+              "default": 50,
+              "maximum": 200,
+              "minimum": 1,
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "offset",
+            "schema": {
+              "default": 0,
+              "minimum": 0,
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponsePage"
+                }
+              }
+            },
+            "description": "Response plans, never execution results"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Validation failed"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not signed in, or the token expired"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not found"
+          }
+        },
+        "summary": "Read proposals and immutable human decisions",
+        "tags": [
+          "Response plans"
+        ]
+      }
+    },
+    "/api/v2/tier2/cases/{caseRef}/responses/manual": {
+      "post": {
+        "operationId": "proposeManualCaseResponse",
+        "parameters": [
+          {
+            "description": "`Bearer <token>` from POST /api/auth/login",
+            "in": "header",
+            "name": "Authorization",
+            "required": false,
+            "schema": {
+              "example": "Bearer eyJhbGciOiJIUzI1NiJ9...",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "caseRef",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ManualResponseRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponseMutation"
+                }
+              }
+            },
+            "description": "Recorded proposal or human decision; not executed"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Validation failed"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not signed in, or the token expired"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Role not permitted"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          }
+        },
+        "summary": "proposeManualCaseResponse",
+        "tags": [
+          "Response plans"
+        ],
+        "x-required-roles": [
+          "security_analyst",
+          "system_admin"
+        ]
+      }
+    },
+    "/api/v2/tier2/cases/{caseRef}/responses/recommend": {
+      "post": {
+        "operationId": "recommendCaseResponse",
+        "parameters": [
+          {
+            "description": "`Bearer <token>` from POST /api/auth/login",
+            "in": "header",
+            "name": "Authorization",
+            "required": false,
+            "schema": {
+              "example": "Bearer eyJhbGciOiJIUzI1NiJ9...",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "caseRef",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ResponseRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponseMutation"
+                }
+              }
+            },
+            "description": "Recorded proposal or human decision; not executed"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Validation failed"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not signed in, or the token expired"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Role not permitted"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          }
+        },
+        "summary": "recommendCaseResponse",
+        "tags": [
+          "Response plans"
+        ],
+        "x-required-roles": [
+          "security_analyst",
+          "system_admin"
+        ]
+      }
+    },
+    "/api/v2/tier2/cases/{caseRef}/responses/{recommendationRef}/approve": {
+      "post": {
+        "operationId": "approveCaseResponse",
+        "parameters": [
+          {
+            "description": "`Bearer <token>` from POST /api/auth/login",
+            "in": "header",
+            "name": "Authorization",
+            "required": false,
+            "schema": {
+              "example": "Bearer eyJhbGciOiJIUzI1NiJ9...",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "caseRef",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "recommendationRef",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ResponseDecisionRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponseMutation"
+                }
+              }
+            },
+            "description": "Recorded proposal or human decision; not executed"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Validation failed"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not signed in, or the token expired"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Role not permitted"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          }
+        },
+        "summary": "approveCaseResponse",
+        "tags": [
+          "Response plans"
+        ],
+        "x-required-roles": [
+          "security_analyst",
+          "system_admin"
+        ]
+      }
+    },
+    "/api/v2/tier2/cases/{caseRef}/responses/{recommendationRef}/reject": {
+      "post": {
+        "operationId": "rejectCaseResponse",
+        "parameters": [
+          {
+            "description": "`Bearer <token>` from POST /api/auth/login",
+            "in": "header",
+            "name": "Authorization",
+            "required": false,
+            "schema": {
+              "example": "Bearer eyJhbGciOiJIUzI1NiJ9...",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "caseRef",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "recommendationRef",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ResponseDecisionRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponseMutation"
+                }
+              }
+            },
+            "description": "Recorded proposal or human decision; not executed"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Validation failed"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not signed in, or the token expired"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Role not permitted"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          }
+        },
+        "summary": "rejectCaseResponse",
+        "tags": [
+          "Response plans"
+        ],
+        "x-required-roles": [
+          "security_analyst",
+          "system_admin"
+        ]
+      }
+    },
     "/api/v2/tier2/cases/{caseRef}/start-investigation": {
       "post": {
         "operationId": "startTier2Investigation",
@@ -10143,6 +11141,10 @@
     }
   ],
   "tags": [
+    {
+      "description": "Recommendations and human authorization; no execution",
+      "name": "Response plans"
+    },
     {
       "description": "Explicit investigation cases, not automated response",
       "name": "Tier 2 cases"

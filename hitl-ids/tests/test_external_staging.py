@@ -28,7 +28,7 @@ def table_rows(conn):
                                         "'operational_alerts_v2','operational_triage_state_v2', "
                                         "'operational_triage_policy_audit', 'operational_routing_audit', "
                                         "'external_eligibility_review', 'external_operational_admission',"
-                                        "'tier2_cases','tier2_case_state','tier2_case_events')")}
+                                        "'tier2_cases','tier2_case_state','tier2_case_events','response_recommendations','response_decisions')")}
 
 
 def test_populated_migration_does_not_rebuild_or_change_core(tmp_path, sample, predictions, monkeypatch):
@@ -50,7 +50,7 @@ def test_populated_migration_does_not_rebuild_or_change_core(tmp_path, sample, p
         assert conn.execute("PRAGMA user_version").fetchone()[0] == 2
         statements = []
         conn.set_trace_callback(statements.append)
-        assert db.migrate(conn) == [3, 4, 5, 6, 7, 8]
+        assert db.migrate(conn) == [3, 4, 5, 6, 7, 8, 9]
         assert table_rows(conn) == before
         for name, rootpage, sql in schema:
             assert tuple(conn.execute("SELECT name, rootpage, sql FROM sqlite_master WHERE name=?",

@@ -229,7 +229,7 @@ def test_migration_eight_additive_and_idempotent(tmp_path,monkeypatch):
         monkeypatch.setattr(db,'MIGRATIONS',migrations[:7])
         db.create_schema(conn)
         before = snapshot(conn)
-        monkeypatch.setattr(db,'MIGRATIONS',migrations)
+        monkeypatch.setattr(db,'MIGRATIONS',migrations[:8])
         trace=[]
         conn.set_trace_callback(trace.append)
         assert db.migrate(conn) == [8] and db.migrate(conn) == []
