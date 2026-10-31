@@ -24,6 +24,7 @@ from fastapi.responses import JSONResponse
 from apps.api import routes, routing_routes, external_admission_routes
 from apps.api import tier2_case_routes
 from apps.api import response_routes
+from apps.api import memory_routes
 from apps.api.contract.common import ErrorBody, ErrorResponse
 from apps.api.contract.openapi import API_VERSION, DESCRIPTION, openapi_document
 from apps.api.deps import ApiError, database_path
@@ -77,6 +78,7 @@ def create_app(database: str | Path | None = None) -> FastAPI:
     app.include_router(external_admission_routes.router)
     app.include_router(tier2_case_routes.router)
     app.include_router(response_routes.router)
+    app.include_router(memory_routes.router)
 
     @app.get("/api/health", tags=["dashboard"], include_in_schema=False)
     def health() -> dict[str, object]:

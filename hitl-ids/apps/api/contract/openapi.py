@@ -31,6 +31,7 @@ from packages.detection.routing import RoutingRequest
 from apps.api.contract.external_admission import ExternalAdmissionView, ExternalAdmissionResponse
 from packages.detection.external_admission import AdmissionRequest, EligibilityRequest
 from apps.api.contract.responses import ResponsePage
+from packages.detection.triage_memory import MemoryReviewRequest,MemoryDecisionRequest,MemoryMutation,MemoryView,MemoryAudit,MemoryMatch
 from packages.detection.response_approval import ResponseRequest,ManualResponseRequest,ResponseDecisionRequest,ResponseMutation
 from packages.detection.tier2_cases import (
     CaseView, CaseEvent, CaseMutation, CreateCaseRequest, CaseCommand, LinkCaseRequest, FindingRequest,
@@ -51,6 +52,7 @@ SCHEMA_REF = "#/components/schemas/{model}"
 #: Every model that appears on the wire. Listed explicitly rather than discovered, so adding a
 #: model to the API is a deliberate act.
 MODELS: tuple[type[BaseModel], ...] = (
+    MemoryReviewRequest,MemoryDecisionRequest,MemoryMutation,MemoryView,MemoryAudit,MemoryMatch,
     ResponsePage,ResponseRequest,ManualResponseRequest,ResponseDecisionRequest,ResponseMutation,
     CaseView, CaseEvent, CaseMutation, CreateCaseRequest, CaseCommand, LinkCaseRequest, FindingRequest,
     ExternalAdmissionView, ExternalAdmissionResponse, AdmissionRequest, EligibilityRequest,
@@ -650,6 +652,22 @@ def _paths() -> dict[str, Any]:
             'x-required-roles':['security_analyst','system_admin'],'requestBody':{'required':True,**_json(model)},
             'responses':{'200':{'description':'Recorded proposal or human decision; not executed',**_json(ResponseMutation)},
                          **_errors(400,403,404,409)}}}
+    lesson_ref={'name':'lessonRef','in':'path','required':True,'schema':{'type':'string','format':'uuid'}}
+    alert_ref={'name':'alertRef','in':'path','required':True,'schema':{'type':'string','format':'uuid'}}
+    for path,operation,model,parameters in [
+        ('/api/v2/triage-memory','listTriageMemory',MemoryView,[AUTH_PARAMETER,*paging]),
+        ('/api/v2/triage-memory/{lessonRef}','getTriageMemory',MemoryView,[AUTH_PARAMETER,lesson_ref]),
+        ('/api/v2/triage-memory/{lessonRef}/events','listTriageMemoryEvents',MemoryAudit,[AUTH_PARAMETER,lesson_ref,*paging]),
+        ('/api/v2/alerts/{alertRef}/triage-memory/matches','matchTriageMemory',MemoryMatch,[AUTH_PARAMETER,alert_ref,*paging])]:
+        paths[path]={'get':{'operationId':operation,'summary':operation,'tags':['Triage memory'],'parameters':parameters,
+            'responses':{'200':{'description':'Advisory memory; human review remains required',**(_json(model) if operation=='getTriageMemory' else _page_of(model))},**_errors(400,404)}}}
+    for path,operation,model,ref in [
+        ('/api/v2/alerts/{alertRef}/triage-memory/candidate','recordMemoryHumanReview',MemoryReviewRequest,alert_ref),
+        ('/api/v2/triage-memory/{lessonRef}/activate','activateTriageMemory',MemoryDecisionRequest,lesson_ref),
+        ('/api/v2/triage-memory/{lessonRef}/reject','rejectTriageMemory',MemoryDecisionRequest,lesson_ref)]:
+        paths[path]={'post':{'operationId':operation,'summary':operation,'tags':['Triage memory'],'parameters':[AUTH_PARAMETER,ref],
+            'x-required-roles':['security_analyst','system_admin'],'requestBody':{'required':True,**_json(model)},
+            'responses':{'200':{'description':'Immutable human memory decision',**_json(MemoryMutation)},**_errors(400,403,404,409)}}}
     for path, operations in paths.items():
         if path == "/api/auth/login":
             continue
@@ -670,6 +688,7 @@ def openapi_document() -> dict[str, Any]:
         },
         "servers": [{"url": "http://localhost:8000", "description": "Local demo"}],
         "tags": [
+            {"name":"Triage memory","description":"Human lessons and advisory contextual matching"},
             {"name":"Response plans","description":"Recommendations and human authorization; no execution"},
             {"name":"Tier 2 cases","description":"Explicit investigation cases, not automated response"},
             {"name": "External admission", "description": "Eligibility review and atomic operational admission"},

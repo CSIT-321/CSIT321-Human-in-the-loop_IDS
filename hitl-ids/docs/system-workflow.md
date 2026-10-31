@@ -8,6 +8,11 @@ separate records/boundaries. Human approval is a safety boundary, not a cosmetic
 The implemented end state is **Approved - Not Executed**. No external action is dispatched.
 **FUTURE:** Approved Response -> Notification / simulated SOAR.
 See [response-recommendation-approval.md](response-recommendation-approval.md).
+**Triage Memory V1:** explicit human verdict + reason + structured detector context -> candidate
+lesson -> support/conflict -> human activation -> future contextual guidance. It is separate from
+legacy numeric family learning and does not alter priority, route or human review requirements.
+See [triage-memory-v1.md](triage-memory-v1.md). Selective Human Review and evidence-gated
+No Immediate Review are future work; V1 does not claim workload reduction.
 The September sections below remain historical context for the original detector/feedback pipeline.
 
 **As of:** 2026-09-11 · branch `feat/s6-fusion` · **Purpose:** one place that explains the whole

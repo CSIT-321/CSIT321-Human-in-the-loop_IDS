@@ -27,6 +27,7 @@ import { RunPage } from "./pages/evaluator/RunPage";
 import { ScenariosPage } from "./pages/evaluator/ScenariosPage";
 import { LoginPage } from "./pages/LoginPage";
 import { V2RoutingPage } from "./pages/analyst/V2RoutingPage";
+import { TriageMemoryPage } from "./pages/analyst/TriageMemoryPage";
 import { ExternalAdmissionPage } from "./pages/analyst/ExternalAdmissionPage";
 import { Tier2CasesPage, Tier2CaseDetailPage } from "./pages/analyst/Tier2CasesPage";
 import { HomeRedirect, RequireRole } from "./session/guards";
@@ -44,6 +45,7 @@ export const routes: RouteObject[] = [
     children: [
       { index: true, element: <HomeRedirect /> },
       { path: "workstation", element: <WorkstationPage /> },
+      { path: "triage-memory", element: <TriageMemoryPage /> },
       { path: "tier2-cases", element: <Tier2CasesPage /> },
       { path: "tier2-cases/:caseRef", element: <Tier2CaseDetailPage /> },
       { path: "external-admission", element: <ExternalAdmissionPage /> },
@@ -67,6 +69,7 @@ export const routes: RouteObject[] = [
     children: [
       { index: true, element: <HomeRedirect /> },
       { path: "status", element: <StatusPage /> },
+      { path: "triage-memory", element: <TriageMemoryPage /> },
       { path: "tier2-cases", element: <Tier2CasesPage /> },
       { path: "tier2-cases/:caseRef", element: <Tier2CaseDetailPage /> },
       { path: "external-admission", element: <ExternalAdmissionPage /> },
@@ -86,6 +89,7 @@ export const routes: RouteObject[] = [
     children: [
       { index: true, element: <HomeRedirect /> },
       { path: "scenarios", element: <ScenariosPage /> },
+      { path: "triage-memory", element: <TriageMemoryPage /> },
       { path: "tier2-cases", element: <Tier2CasesPage /> },
       { path: "tier2-cases/:caseRef", element: <Tier2CaseDetailPage /> },
       { path: "external-admission", element: <ExternalAdmissionPage /> },

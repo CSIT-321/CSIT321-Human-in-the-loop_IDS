@@ -35,6 +35,7 @@ export const ROLE_META: Readonly<Record<Role, RoleMeta>> = {
     nav: [
       { to: "/analyst/workstation", label: "Workstation" },
       { to: "/analyst/tier2-cases", label: "Tier 2 Cases" },
+      { to: "/analyst/triage-memory", label: "Triage Memory" },
       { to: "/analyst/external-admission", label: "Suricata Admission" },
       { to: "/analyst/v2-triage", label: "V2 Triage Routing" },
       { to: "/analyst/overview", label: "Overview" },
@@ -51,6 +52,7 @@ export const ROLE_META: Readonly<Record<Role, RoleMeta>> = {
     nav: [
       { to: "/admin/status", label: "System Status" },
       { to: "/admin/tier2-cases", label: "Tier 2 Cases" },
+      { to: "/admin/triage-memory", label: "Triage Memory" },
       { to: "/admin/external-admission", label: "Suricata Admission" },
       { to: "/admin/v2-triage", label: "V2 Triage Routing" },
       { to: "/admin/guardrails", label: "Guardrails" },
@@ -65,6 +67,7 @@ export const ROLE_META: Readonly<Record<Role, RoleMeta>> = {
     nav: [
       { to: "/evaluator/scenarios", label: "Scenarios" },
       { to: "/evaluator/tier2-cases", label: "Tier 2 Cases" },
+      { to: "/evaluator/triage-memory", label: "Triage Memory" },
       { to: "/evaluator/external-admission", label: "Suricata Admission" },
       { to: "/evaluator/v2-triage", label: "V2 Triage Routing" },
       { to: "/evaluator/metrics", label: "Detection Metrics" },

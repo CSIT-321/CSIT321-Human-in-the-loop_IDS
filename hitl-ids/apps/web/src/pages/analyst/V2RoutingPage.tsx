@@ -4,6 +4,7 @@ import { api, unwrap, type Schemas } from "../../api/client";
 import { useApi } from "../../api/useApi";
 import { PageHeader, Pill } from "../../components/ui";
 import { CreateCasePanel } from "./Tier2CasesPage";
+import { AlertMemoryPanel } from "./TriageMemoryPage";
 
 type View = Schemas["RoutingView"];
 type Action = View["allowedActions"][number];
@@ -124,6 +125,7 @@ export function V2RoutingPage() {
         <button className={button} disabled={offset + 50 >= resource.data.page.total} onClick={() => setOffset(offset + 50)}>Next</button>
       </div>
       {current && <RoutingDetail key={current.operationalAlertRef + current.stateVersion} initial={current} refresh={resource.reload} />}
+      {current && <AlertMemoryPanel key={"memory:"+current.operationalAlertRef+current.stateVersion} view={current}/>}
     </>}
   </div>;
 }

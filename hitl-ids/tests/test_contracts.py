@@ -66,6 +66,10 @@ DEVIATION_COLUMNS = {
     "flow_data": {"source_record_id"},
 }
 DEVIATION_TABLES = {
+    "triage_memory_lessons": {"id","lesson_ref","context_key","detector_source","source_alert_id","source_case_id","actor_id","snapshot","created_at"},
+    "triage_memory_support_events": {"id","lesson_id","source_alert_id","source_case_id","actor_id","outcome","relation","reason","evidence_snapshot","is_primary","request_id","request_payload","created_at"},
+    "triage_memory_decisions": {"id","lesson_id","actor_id","action","reason","lesson_snapshot","valid_from","expires_at","request_id","request_payload","created_at"},
+    "triage_memory_audit": {"id","lesson_id","actor_id","event_type","payload","created_at"},
     "response_recommendations": {"id","recommendation_ref","case_id","proposed_by_actor_id","proposal_source",
         "recommendation_type","target_type","target_value","rationale","proposal_reason","case_revision",
         "policy_version","evidence_snapshot","request_id","request_payload","event_type","created_at"},
@@ -302,12 +306,23 @@ def test_every_table_model_matches_its_columns(conn):
         "external_alert_inbox", "operational_alerts_v2", "operational_triage_state_v2",
         "operational_triage_policy_audit", "operational_routing_audit",
         "external_eligibility_review", "external_operational_admission", "tier2_cases", "tier2_case_state", "tier2_case_events",
-        "response_recommendations", "response_decisions"}
+        "response_recommendations", "response_decisions", "triage_memory_lessons", "triage_memory_support_events", "triage_memory_decisions", "triage_memory_audit"}
     for table, model in db.TABLE_MODELS.items():
         assert set(model.model_fields) == set(columns(conn, table)), table
 
 
 EXPECTED_FOREIGN_KEYS = {
+    ("triage_memory_lessons","source_alert_id","operational_alerts_v2","id"),
+    ("triage_memory_lessons","source_case_id","tier2_cases","id"),
+    ("triage_memory_lessons","actor_id","users","id"),
+    ("triage_memory_support_events","lesson_id","triage_memory_lessons","id"),
+    ("triage_memory_support_events","source_alert_id","operational_alerts_v2","id"),
+    ("triage_memory_support_events","source_case_id","tier2_cases","id"),
+    ("triage_memory_support_events","actor_id","users","id"),
+    ("triage_memory_decisions","lesson_id","triage_memory_lessons","id"),
+    ("triage_memory_decisions","actor_id","users","id"),
+    ("triage_memory_audit","lesson_id","triage_memory_lessons","id"),
+    ("triage_memory_audit","actor_id","users","id"),
     ("operational_triage_policy_audit", "operational_alert_id", "operational_alerts_v2", "id"),
     ("operational_triage_policy_audit", "actor_id", "users", "id"),
     ("operational_routing_audit", "actor_id", "users", "id"),

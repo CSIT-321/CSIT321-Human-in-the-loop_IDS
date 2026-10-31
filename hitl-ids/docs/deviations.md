@@ -79,6 +79,17 @@ IP addresses and free-text notes are not host/account identity. Existing analyst
 permissions apply; a dedicated Tier 2/Senior Analyst role is deferred.
 See [Response Recommendation + Human Approval](response-recommendation-approval.md).
 
+## Current additive memory extension
+
+Migration 10 adds four append-only `triage_memory_*` tables. Contextual human memory is
+separate from legacy score learning; external provenance's legacy `learningEligible=false`
+continues to mean no legacy family-score learning, not a ban on an authenticated contextual
+review. No source provenance is rewritten. V2 routing did not have outcome verdicts, so the
+memory candidate endpoint explicitly records a new human outcome/reason, never infers one
+from routing, severity, case finding or response approval. Exact/narrow scopes are supported;
+category-only scope and organisational enrichment/schedules are deferred. Configuration and
+approval snapshots are immutable. See [Triage Memory V1](triage-memory-v1.md).
+
 ## D. Rejected, with the reason — do not re-propose
 
 These appear in `HANDOVER.md` §5 as well. Repeated here because the plan cites this file as the

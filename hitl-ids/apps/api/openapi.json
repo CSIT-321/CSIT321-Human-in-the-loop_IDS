@@ -3808,6 +3808,705 @@
         "title": "MeResponse",
         "type": "object"
       },
+      "MemoryAudit": {
+        "additionalProperties": false,
+        "properties": {
+          "actorId": {
+            "title": "Actorid",
+            "type": "integer"
+          },
+          "createdAt": {
+            "title": "Createdat",
+            "type": "string"
+          },
+          "eventType": {
+            "title": "Eventtype",
+            "type": "string"
+          },
+          "evidence": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/MemoryEvidence"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "id": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "lessonRef": {
+            "format": "uuid",
+            "title": "Lessonref",
+            "type": "string"
+          },
+          "lessonSnapshot": {
+            "$ref": "#/components/schemas/MemoryView"
+          },
+          "reason": {
+            "title": "Reason",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "lessonRef",
+          "actorId",
+          "eventType",
+          "evidence",
+          "lessonSnapshot",
+          "reason",
+          "createdAt"
+        ],
+        "title": "MemoryAudit",
+        "type": "object"
+      },
+      "MemoryConfig": {
+        "additionalProperties": false,
+        "properties": {
+          "defaultValidityDays": {
+            "maximum": 365,
+            "minimum": 1,
+            "title": "Defaultvaliditydays",
+            "type": "integer"
+          },
+          "exactRequiredFields": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Exactrequiredfields",
+            "type": "array"
+          },
+          "maximumConflicts": {
+            "const": 0,
+            "title": "Maximumconflicts",
+            "type": "integer"
+          },
+          "minimumAgreementRatio": {
+            "maximum": 1,
+            "minimum": 0.67,
+            "title": "Minimumagreementratio",
+            "type": "number"
+          },
+          "minimumSupport": {
+            "minimum": 3,
+            "title": "Minimumsupport",
+            "type": "integer"
+          },
+          "narrowRequiredFields": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Narrowrequiredfields",
+            "type": "array"
+          },
+          "version": {
+            "minLength": 1,
+            "title": "Version",
+            "type": "string"
+          }
+        },
+        "required": [
+          "version",
+          "minimumSupport",
+          "minimumAgreementRatio",
+          "maximumConflicts",
+          "defaultValidityDays",
+          "exactRequiredFields",
+          "narrowRequiredFields"
+        ],
+        "title": "MemoryConfig",
+        "type": "object"
+      },
+      "MemoryContext": {
+        "additionalProperties": false,
+        "properties": {
+          "analystDefinedTag": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Analystdefinedtag"
+          },
+          "assetCriticality": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Assetcriticality"
+          },
+          "assetIdentifier": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Assetidentifier"
+          },
+          "authorisedActivityType": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Authorisedactivitytype"
+          },
+          "destinationIp": {
+            "title": "Destinationip",
+            "type": "string"
+          },
+          "destinationPort": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Destinationport"
+          },
+          "detectionCategory": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Detectioncategory"
+          },
+          "detectionTitle": {
+            "title": "Detectiontitle",
+            "type": "string"
+          },
+          "detectorSource": {
+            "title": "Detectorsource",
+            "type": "string"
+          },
+          "knownScannerIdentity": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Knownscanneridentity"
+          },
+          "protocol": {
+            "title": "Protocol",
+            "type": "string"
+          },
+          "scheduleWindow": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Schedulewindow"
+          },
+          "sourceIp": {
+            "title": "Sourceip",
+            "type": "string"
+          },
+          "sourcePort": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sourceport"
+          }
+        },
+        "required": [
+          "detectorSource",
+          "detectionTitle",
+          "detectionCategory",
+          "sourceIp",
+          "destinationIp",
+          "sourcePort",
+          "destinationPort",
+          "protocol"
+        ],
+        "title": "MemoryContext",
+        "type": "object"
+      },
+      "MemoryDecision": {
+        "additionalProperties": false,
+        "properties": {
+          "action": {
+            "enum": [
+              "activate",
+              "reject"
+            ],
+            "title": "Action",
+            "type": "string"
+          },
+          "actorId": {
+            "title": "Actorid",
+            "type": "integer"
+          },
+          "createdAt": {
+            "title": "Createdat",
+            "type": "string"
+          },
+          "reason": {
+            "title": "Reason",
+            "type": "string"
+          }
+        },
+        "required": [
+          "action",
+          "actorId",
+          "reason",
+          "createdAt"
+        ],
+        "title": "MemoryDecision",
+        "type": "object"
+      },
+      "MemoryDecisionRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "expectedRevision": {
+            "minimum": 1,
+            "title": "Expectedrevision",
+            "type": "integer"
+          },
+          "reason": {
+            "maxLength": 4000,
+            "minLength": 1,
+            "title": "Reason",
+            "type": "string"
+          },
+          "requestId": {
+            "format": "uuid",
+            "title": "Requestid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "requestId",
+          "reason",
+          "expectedRevision"
+        ],
+        "title": "MemoryDecisionRequest",
+        "type": "object"
+      },
+      "MemoryEvidence": {
+        "additionalProperties": false,
+        "properties": {
+          "actorId": {
+            "title": "Actorid",
+            "type": "integer"
+          },
+          "contextSnapshot": {
+            "$ref": "#/components/schemas/MemoryContext"
+          },
+          "createdAt": {
+            "title": "Createdat",
+            "type": "string"
+          },
+          "detectorSnapshot": {
+            "$ref": "#/components/schemas/OperationalAlertV2"
+          },
+          "humanReason": {
+            "title": "Humanreason",
+            "type": "string"
+          },
+          "outcome": {
+            "enum": [
+              "expected_activity",
+              "false_positive",
+              "confirmed_malicious",
+              "suspicious"
+            ],
+            "title": "Outcome",
+            "type": "string"
+          },
+          "relation": {
+            "enum": [
+              "support",
+              "conflict"
+            ],
+            "title": "Relation",
+            "type": "string"
+          },
+          "sourceCaseRef": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sourcecaseref"
+          },
+          "sourceOperationalAlertRef": {
+            "format": "uuid",
+            "title": "Sourceoperationalalertref",
+            "type": "string"
+          },
+          "sourceStateVersion": {
+            "title": "Sourcestateversion",
+            "type": "string"
+          }
+        },
+        "required": [
+          "sourceOperationalAlertRef",
+          "sourceCaseRef",
+          "actorId",
+          "outcome",
+          "humanReason",
+          "contextSnapshot",
+          "detectorSnapshot",
+          "sourceStateVersion",
+          "relation",
+          "createdAt"
+        ],
+        "title": "MemoryEvidence",
+        "type": "object"
+      },
+      "MemoryLesson": {
+        "additionalProperties": false,
+        "properties": {
+          "configuration": {
+            "$ref": "#/components/schemas/MemoryConfig"
+          },
+          "contextSnapshot": {
+            "$ref": "#/components/schemas/MemoryContext"
+          },
+          "createdAt": {
+            "title": "Createdat",
+            "type": "string"
+          },
+          "createdByActorId": {
+            "title": "Createdbyactorid",
+            "type": "integer"
+          },
+          "humanReason": {
+            "title": "Humanreason",
+            "type": "string"
+          },
+          "lessonRef": {
+            "format": "uuid",
+            "title": "Lessonref",
+            "type": "string"
+          },
+          "outcome": {
+            "enum": [
+              "expected_activity",
+              "false_positive",
+              "confirmed_malicious",
+              "suspicious"
+            ],
+            "title": "Outcome",
+            "type": "string"
+          },
+          "scope": {
+            "enum": [
+              "exact",
+              "narrow"
+            ],
+            "title": "Scope",
+            "type": "string"
+          },
+          "scopeFields": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Scopefields",
+            "type": "array"
+          },
+          "sourceCaseRef": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sourcecaseref"
+          },
+          "sourceOperationalAlertRef": {
+            "format": "uuid",
+            "title": "Sourceoperationalalertref",
+            "type": "string"
+          }
+        },
+        "required": [
+          "lessonRef",
+          "outcome",
+          "humanReason",
+          "contextSnapshot",
+          "scope",
+          "scopeFields",
+          "sourceOperationalAlertRef",
+          "sourceCaseRef",
+          "createdByActorId",
+          "createdAt",
+          "configuration"
+        ],
+        "title": "MemoryLesson",
+        "type": "object"
+      },
+      "MemoryMatch": {
+        "additionalProperties": false,
+        "properties": {
+          "guidanceActive": {
+            "title": "Guidanceactive",
+            "type": "boolean"
+          },
+          "matchedFields": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Matchedfields",
+            "type": "array"
+          },
+          "memory": {
+            "$ref": "#/components/schemas/MemoryView"
+          },
+          "mismatchedFields": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Mismatchedfields",
+            "type": "array"
+          },
+          "reviewRequired": {
+            "const": true,
+            "default": true,
+            "title": "Reviewrequired",
+            "type": "boolean"
+          },
+          "strength": {
+            "enum": [
+              "high",
+              "partial"
+            ],
+            "title": "Strength",
+            "type": "string"
+          },
+          "unavailableFields": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Unavailablefields",
+            "type": "array"
+          }
+        },
+        "required": [
+          "memory",
+          "strength",
+          "matchedFields",
+          "mismatchedFields",
+          "unavailableFields",
+          "guidanceActive"
+        ],
+        "title": "MemoryMatch",
+        "type": "object"
+      },
+      "MemoryMutation": {
+        "additionalProperties": false,
+        "properties": {
+          "memory": {
+            "$ref": "#/components/schemas/MemoryView"
+          },
+          "replayed": {
+            "title": "Replayed",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "memory",
+          "replayed"
+        ],
+        "title": "MemoryMutation",
+        "type": "object"
+      },
+      "MemoryReviewRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "expectedStateVersion": {
+            "pattern": "^[a-f0-9]{64}$",
+            "title": "Expectedstateversion",
+            "type": "string"
+          },
+          "outcome": {
+            "enum": [
+              "expected_activity",
+              "false_positive",
+              "confirmed_malicious",
+              "suspicious"
+            ],
+            "title": "Outcome",
+            "type": "string"
+          },
+          "reason": {
+            "maxLength": 4000,
+            "minLength": 1,
+            "title": "Reason",
+            "type": "string"
+          },
+          "requestId": {
+            "format": "uuid",
+            "title": "Requestid",
+            "type": "string"
+          },
+          "scope": {
+            "default": "exact",
+            "enum": [
+              "exact",
+              "narrow"
+            ],
+            "title": "Scope",
+            "type": "string"
+          }
+        },
+        "required": [
+          "requestId",
+          "reason",
+          "outcome",
+          "expectedStateVersion"
+        ],
+        "title": "MemoryReviewRequest",
+        "type": "object"
+      },
+      "MemoryView": {
+        "additionalProperties": false,
+        "properties": {
+          "agreementRatio": {
+            "title": "Agreementratio",
+            "type": "number"
+          },
+          "conflictCount": {
+            "title": "Conflictcount",
+            "type": "integer"
+          },
+          "decision": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/MemoryDecision"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "expiresAt": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Expiresat"
+          },
+          "lastConflictAt": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Lastconflictat"
+          },
+          "lastSupportedAt": {
+            "title": "Lastsupportedat",
+            "type": "string"
+          },
+          "lesson": {
+            "$ref": "#/components/schemas/MemoryLesson"
+          },
+          "revision": {
+            "title": "Revision",
+            "type": "integer"
+          },
+          "status": {
+            "enum": [
+              "candidate",
+              "eligible_for_activation",
+              "active",
+              "conflict_review",
+              "expired",
+              "rejected"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "supportCount": {
+            "title": "Supportcount",
+            "type": "integer"
+          },
+          "validFrom": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Validfrom"
+          }
+        },
+        "required": [
+          "lesson",
+          "status",
+          "revision",
+          "supportCount",
+          "conflictCount",
+          "agreementRatio",
+          "validFrom",
+          "expiresAt",
+          "lastSupportedAt",
+          "lastConflictAt",
+          "decision"
+        ],
+        "title": "MemoryView",
+        "type": "object"
+      },
       "MlPanel": {
         "additionalProperties": false,
         "description": "Panel 3 — what the model said, and why (NFR-01).\n\n``additivityPassed`` is not decoration: it is the check that the explanation actually explains\nthis prediction. 5,000/5,000 pass on the demo sample.",
@@ -9449,6 +10148,218 @@
         ]
       }
     },
+    "/api/v2/alerts/{alertRef}/triage-memory/candidate": {
+      "post": {
+        "operationId": "recordMemoryHumanReview",
+        "parameters": [
+          {
+            "description": "`Bearer <token>` from POST /api/auth/login",
+            "in": "header",
+            "name": "Authorization",
+            "required": false,
+            "schema": {
+              "example": "Bearer eyJhbGciOiJIUzI1NiJ9...",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "alertRef",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MemoryReviewRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MemoryMutation"
+                }
+              }
+            },
+            "description": "Immutable human memory decision"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Validation failed"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not signed in, or the token expired"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Role not permitted"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          }
+        },
+        "summary": "recordMemoryHumanReview",
+        "tags": [
+          "Triage memory"
+        ],
+        "x-required-roles": [
+          "security_analyst",
+          "system_admin"
+        ]
+      }
+    },
+    "/api/v2/alerts/{alertRef}/triage-memory/matches": {
+      "get": {
+        "operationId": "matchTriageMemory",
+        "parameters": [
+          {
+            "description": "`Bearer <token>` from POST /api/auth/login",
+            "in": "header",
+            "name": "Authorization",
+            "required": false,
+            "schema": {
+              "example": "Bearer eyJhbGciOiJIUzI1NiJ9...",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "alertRef",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "schema": {
+              "default": 50,
+              "maximum": 200,
+              "minimum": 1,
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "offset",
+            "schema": {
+              "default": 0,
+              "minimum": 0,
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "items": {
+                      "items": {
+                        "$ref": "#/components/schemas/MemoryMatch"
+                      },
+                      "type": "array"
+                    },
+                    "page": {
+                      "$ref": "#/components/schemas/PageInfo"
+                    }
+                  },
+                  "required": [
+                    "items",
+                    "page"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Advisory memory; human review remains required"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Validation failed"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not signed in, or the token expired"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not found"
+          }
+        },
+        "summary": "matchTriageMemory",
+        "tags": [
+          "Triage memory"
+        ]
+      }
+    },
     "/api/v2/alerts/{alertRef}/triage-state": {
       "get": {
         "operationId": "getV2Routing",
@@ -11132,6 +12043,493 @@
           "system_admin"
         ]
       }
+    },
+    "/api/v2/triage-memory": {
+      "get": {
+        "operationId": "listTriageMemory",
+        "parameters": [
+          {
+            "description": "`Bearer <token>` from POST /api/auth/login",
+            "in": "header",
+            "name": "Authorization",
+            "required": false,
+            "schema": {
+              "example": "Bearer eyJhbGciOiJIUzI1NiJ9...",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "schema": {
+              "default": 50,
+              "maximum": 200,
+              "minimum": 1,
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "offset",
+            "schema": {
+              "default": 0,
+              "minimum": 0,
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "items": {
+                      "items": {
+                        "$ref": "#/components/schemas/MemoryView"
+                      },
+                      "type": "array"
+                    },
+                    "page": {
+                      "$ref": "#/components/schemas/PageInfo"
+                    }
+                  },
+                  "required": [
+                    "items",
+                    "page"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Advisory memory; human review remains required"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Validation failed"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not signed in, or the token expired"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not found"
+          }
+        },
+        "summary": "listTriageMemory",
+        "tags": [
+          "Triage memory"
+        ]
+      }
+    },
+    "/api/v2/triage-memory/{lessonRef}": {
+      "get": {
+        "operationId": "getTriageMemory",
+        "parameters": [
+          {
+            "description": "`Bearer <token>` from POST /api/auth/login",
+            "in": "header",
+            "name": "Authorization",
+            "required": false,
+            "schema": {
+              "example": "Bearer eyJhbGciOiJIUzI1NiJ9...",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "lessonRef",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MemoryView"
+                }
+              }
+            },
+            "description": "Advisory memory; human review remains required"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Validation failed"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not signed in, or the token expired"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not found"
+          }
+        },
+        "summary": "getTriageMemory",
+        "tags": [
+          "Triage memory"
+        ]
+      }
+    },
+    "/api/v2/triage-memory/{lessonRef}/activate": {
+      "post": {
+        "operationId": "activateTriageMemory",
+        "parameters": [
+          {
+            "description": "`Bearer <token>` from POST /api/auth/login",
+            "in": "header",
+            "name": "Authorization",
+            "required": false,
+            "schema": {
+              "example": "Bearer eyJhbGciOiJIUzI1NiJ9...",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "lessonRef",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MemoryDecisionRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MemoryMutation"
+                }
+              }
+            },
+            "description": "Immutable human memory decision"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Validation failed"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not signed in, or the token expired"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Role not permitted"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          }
+        },
+        "summary": "activateTriageMemory",
+        "tags": [
+          "Triage memory"
+        ],
+        "x-required-roles": [
+          "security_analyst",
+          "system_admin"
+        ]
+      }
+    },
+    "/api/v2/triage-memory/{lessonRef}/events": {
+      "get": {
+        "operationId": "listTriageMemoryEvents",
+        "parameters": [
+          {
+            "description": "`Bearer <token>` from POST /api/auth/login",
+            "in": "header",
+            "name": "Authorization",
+            "required": false,
+            "schema": {
+              "example": "Bearer eyJhbGciOiJIUzI1NiJ9...",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "lessonRef",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "schema": {
+              "default": 50,
+              "maximum": 200,
+              "minimum": 1,
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "offset",
+            "schema": {
+              "default": 0,
+              "minimum": 0,
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "items": {
+                      "items": {
+                        "$ref": "#/components/schemas/MemoryAudit"
+                      },
+                      "type": "array"
+                    },
+                    "page": {
+                      "$ref": "#/components/schemas/PageInfo"
+                    }
+                  },
+                  "required": [
+                    "items",
+                    "page"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Advisory memory; human review remains required"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Validation failed"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not signed in, or the token expired"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not found"
+          }
+        },
+        "summary": "listTriageMemoryEvents",
+        "tags": [
+          "Triage memory"
+        ]
+      }
+    },
+    "/api/v2/triage-memory/{lessonRef}/reject": {
+      "post": {
+        "operationId": "rejectTriageMemory",
+        "parameters": [
+          {
+            "description": "`Bearer <token>` from POST /api/auth/login",
+            "in": "header",
+            "name": "Authorization",
+            "required": false,
+            "schema": {
+              "example": "Bearer eyJhbGciOiJIUzI1NiJ9...",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "lessonRef",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MemoryDecisionRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MemoryMutation"
+                }
+              }
+            },
+            "description": "Immutable human memory decision"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Validation failed"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not signed in, or the token expired"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Role not permitted"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          }
+        },
+        "summary": "rejectTriageMemory",
+        "tags": [
+          "Triage memory"
+        ],
+        "x-required-roles": [
+          "security_analyst",
+          "system_admin"
+        ]
+      }
     }
   },
   "servers": [
@@ -11141,6 +12539,10 @@
     }
   ],
   "tags": [
+    {
+      "description": "Human lessons and advisory contextual matching",
+      "name": "Triage memory"
+    },
     {
       "description": "Recommendations and human authorization; no execution",
       "name": "Response plans"

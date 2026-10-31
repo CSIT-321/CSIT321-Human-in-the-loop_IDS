@@ -554,6 +554,40 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v2/alerts/{alertRef}/triage-memory/candidate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** recordMemoryHumanReview */
+        post: operations["recordMemoryHumanReview"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/alerts/{alertRef}/triage-memory/matches": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** matchTriageMemory */
+        get: operations["matchTriageMemory"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v2/alerts/{alertRef}/triage-state": {
         parameters: {
             query?: never;
@@ -837,6 +871,91 @@ export interface paths {
         put?: never;
         /** startTier2Investigation */
         post: operations["startTier2Investigation"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/triage-memory": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** listTriageMemory */
+        get: operations["listTriageMemory"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/triage-memory/{lessonRef}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** getTriageMemory */
+        get: operations["getTriageMemory"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/triage-memory/{lessonRef}/activate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** activateTriageMemory */
+        post: operations["activateTriageMemory"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/triage-memory/{lessonRef}/events": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** listTriageMemoryEvents */
+        get: operations["listTriageMemoryEvents"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/triage-memory/{lessonRef}/reject": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** rejectTriageMemory */
+        post: operations["rejectTriageMemory"];
         delete?: never;
         options?: never;
         head?: never;
@@ -2567,6 +2686,264 @@ export interface components {
             role: "security_analyst" | "system_admin" | "evaluator";
             /** Username */
             username: string;
+        };
+        /** MemoryAudit */
+        MemoryAudit: {
+            /** Actorid */
+            actorId: number;
+            /** Createdat */
+            createdAt: string;
+            /** Eventtype */
+            eventType: string;
+            evidence: components["schemas"]["MemoryEvidence"] | null;
+            /** Id */
+            id: number;
+            /**
+             * Lessonref
+             * Format: uuid
+             */
+            lessonRef: string;
+            lessonSnapshot: components["schemas"]["MemoryView"];
+            /** Reason */
+            reason: string;
+        };
+        /** MemoryConfig */
+        MemoryConfig: {
+            /** Defaultvaliditydays */
+            defaultValidityDays: number;
+            /** Exactrequiredfields */
+            exactRequiredFields: string[];
+            /**
+             * Maximumconflicts
+             * @constant
+             */
+            maximumConflicts: 0;
+            /** Minimumagreementratio */
+            minimumAgreementRatio: number;
+            /** Minimumsupport */
+            minimumSupport: number;
+            /** Narrowrequiredfields */
+            narrowRequiredFields: string[];
+            /** Version */
+            version: string;
+        };
+        /** MemoryContext */
+        MemoryContext: {
+            /**
+             * Analystdefinedtag
+             * @default null
+             */
+            analystDefinedTag: string | null;
+            /**
+             * Assetcriticality
+             * @default null
+             */
+            assetCriticality: string | null;
+            /**
+             * Assetidentifier
+             * @default null
+             */
+            assetIdentifier: string | null;
+            /**
+             * Authorisedactivitytype
+             * @default null
+             */
+            authorisedActivityType: string | null;
+            /** Destinationip */
+            destinationIp: string;
+            /** Destinationport */
+            destinationPort: number | null;
+            /** Detectioncategory */
+            detectionCategory: string | null;
+            /** Detectiontitle */
+            detectionTitle: string;
+            /** Detectorsource */
+            detectorSource: string;
+            /**
+             * Knownscanneridentity
+             * @default null
+             */
+            knownScannerIdentity: string | null;
+            /** Protocol */
+            protocol: string;
+            /**
+             * Schedulewindow
+             * @default null
+             */
+            scheduleWindow: string | null;
+            /** Sourceip */
+            sourceIp: string;
+            /** Sourceport */
+            sourcePort: number | null;
+        };
+        /** MemoryDecision */
+        MemoryDecision: {
+            /**
+             * Action
+             * @enum {string}
+             */
+            action: "activate" | "reject";
+            /** Actorid */
+            actorId: number;
+            /** Createdat */
+            createdAt: string;
+            /** Reason */
+            reason: string;
+        };
+        /** MemoryDecisionRequest */
+        MemoryDecisionRequest: {
+            /** Expectedrevision */
+            expectedRevision: number;
+            /** Reason */
+            reason: string;
+            /**
+             * Requestid
+             * Format: uuid
+             */
+            requestId: string;
+        };
+        /** MemoryEvidence */
+        MemoryEvidence: {
+            /** Actorid */
+            actorId: number;
+            contextSnapshot: components["schemas"]["MemoryContext"];
+            /** Createdat */
+            createdAt: string;
+            detectorSnapshot: components["schemas"]["OperationalAlertV2"];
+            /** Humanreason */
+            humanReason: string;
+            /**
+             * Outcome
+             * @enum {string}
+             */
+            outcome: "expected_activity" | "false_positive" | "confirmed_malicious" | "suspicious";
+            /**
+             * Relation
+             * @enum {string}
+             */
+            relation: "support" | "conflict";
+            /** Sourcecaseref */
+            sourceCaseRef: string | null;
+            /**
+             * Sourceoperationalalertref
+             * Format: uuid
+             */
+            sourceOperationalAlertRef: string;
+            /** Sourcestateversion */
+            sourceStateVersion: string;
+        };
+        /** MemoryLesson */
+        MemoryLesson: {
+            configuration: components["schemas"]["MemoryConfig"];
+            contextSnapshot: components["schemas"]["MemoryContext"];
+            /** Createdat */
+            createdAt: string;
+            /** Createdbyactorid */
+            createdByActorId: number;
+            /** Humanreason */
+            humanReason: string;
+            /**
+             * Lessonref
+             * Format: uuid
+             */
+            lessonRef: string;
+            /**
+             * Outcome
+             * @enum {string}
+             */
+            outcome: "expected_activity" | "false_positive" | "confirmed_malicious" | "suspicious";
+            /**
+             * Scope
+             * @enum {string}
+             */
+            scope: "exact" | "narrow";
+            /** Scopefields */
+            scopeFields: string[];
+            /** Sourcecaseref */
+            sourceCaseRef: string | null;
+            /**
+             * Sourceoperationalalertref
+             * Format: uuid
+             */
+            sourceOperationalAlertRef: string;
+        };
+        /** MemoryMatch */
+        MemoryMatch: {
+            /** Guidanceactive */
+            guidanceActive: boolean;
+            /** Matchedfields */
+            matchedFields: string[];
+            memory: components["schemas"]["MemoryView"];
+            /** Mismatchedfields */
+            mismatchedFields: string[];
+            /**
+             * Reviewrequired
+             * @default true
+             * @constant
+             */
+            reviewRequired: true;
+            /**
+             * Strength
+             * @enum {string}
+             */
+            strength: "high" | "partial";
+            /** Unavailablefields */
+            unavailableFields: string[];
+        };
+        /** MemoryMutation */
+        MemoryMutation: {
+            memory: components["schemas"]["MemoryView"];
+            /** Replayed */
+            replayed: boolean;
+        };
+        /** MemoryReviewRequest */
+        MemoryReviewRequest: {
+            /** Expectedstateversion */
+            expectedStateVersion: string;
+            /**
+             * Outcome
+             * @enum {string}
+             */
+            outcome: "expected_activity" | "false_positive" | "confirmed_malicious" | "suspicious";
+            /** Reason */
+            reason: string;
+            /**
+             * Requestid
+             * Format: uuid
+             */
+            requestId: string;
+            /**
+             * Scope
+             * @default exact
+             * @enum {string}
+             */
+            scope: "exact" | "narrow";
+        };
+        /** MemoryView */
+        MemoryView: {
+            /** Agreementratio */
+            agreementRatio: number;
+            /** Conflictcount */
+            conflictCount: number;
+            decision: components["schemas"]["MemoryDecision"] | null;
+            /** Expiresat */
+            expiresAt: string | null;
+            /** Lastconflictat */
+            lastConflictAt: string | null;
+            /** Lastsupportedat */
+            lastSupportedAt: string;
+            lesson: components["schemas"]["MemoryLesson"];
+            /** Revision */
+            revision: number;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "candidate" | "eligible_for_activation" | "active" | "conflict_review" | "expired" | "rejected";
+            /** Supportcount */
+            supportCount: number;
+            /** Validfrom */
+            validFrom: string | null;
         };
         /**
          * MlPanel
@@ -5210,6 +5587,138 @@ export interface operations {
             };
         };
     };
+    recordMemoryHumanReview: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description `Bearer <token>` from POST /api/auth/login */
+                Authorization?: string;
+            };
+            path: {
+                alertRef: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["MemoryReviewRequest"];
+            };
+        };
+        responses: {
+            /** @description Immutable human memory decision */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MemoryMutation"];
+                };
+            };
+            /** @description Validation failed */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not signed in, or the token expired */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Role not permitted */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    matchTriageMemory: {
+        parameters: {
+            query?: {
+                limit?: number;
+                offset?: number;
+            };
+            header?: {
+                /** @description `Bearer <token>` from POST /api/auth/login */
+                Authorization?: string;
+            };
+            path: {
+                alertRef: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Advisory memory; human review remains required */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        items: components["schemas"]["MemoryMatch"][];
+                        page: components["schemas"]["PageInfo"];
+                    };
+                };
+            };
+            /** @description Validation failed */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not signed in, or the token expired */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
     getV2Routing: {
         parameters: {
             query?: never;
@@ -6268,6 +6777,320 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["CaseMutation"];
+                };
+            };
+            /** @description Validation failed */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not signed in, or the token expired */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Role not permitted */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    listTriageMemory: {
+        parameters: {
+            query?: {
+                limit?: number;
+                offset?: number;
+            };
+            header?: {
+                /** @description `Bearer <token>` from POST /api/auth/login */
+                Authorization?: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Advisory memory; human review remains required */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        items: components["schemas"]["MemoryView"][];
+                        page: components["schemas"]["PageInfo"];
+                    };
+                };
+            };
+            /** @description Validation failed */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not signed in, or the token expired */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    getTriageMemory: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description `Bearer <token>` from POST /api/auth/login */
+                Authorization?: string;
+            };
+            path: {
+                lessonRef: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Advisory memory; human review remains required */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MemoryView"];
+                };
+            };
+            /** @description Validation failed */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not signed in, or the token expired */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    activateTriageMemory: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description `Bearer <token>` from POST /api/auth/login */
+                Authorization?: string;
+            };
+            path: {
+                lessonRef: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["MemoryDecisionRequest"];
+            };
+        };
+        responses: {
+            /** @description Immutable human memory decision */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MemoryMutation"];
+                };
+            };
+            /** @description Validation failed */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not signed in, or the token expired */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Role not permitted */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    listTriageMemoryEvents: {
+        parameters: {
+            query?: {
+                limit?: number;
+                offset?: number;
+            };
+            header?: {
+                /** @description `Bearer <token>` from POST /api/auth/login */
+                Authorization?: string;
+            };
+            path: {
+                lessonRef: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Advisory memory; human review remains required */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        items: components["schemas"]["MemoryAudit"][];
+                        page: components["schemas"]["PageInfo"];
+                    };
+                };
+            };
+            /** @description Validation failed */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not signed in, or the token expired */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    rejectTriageMemory: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description `Bearer <token>` from POST /api/auth/login */
+                Authorization?: string;
+            };
+            path: {
+                lessonRef: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["MemoryDecisionRequest"];
+            };
+        };
+        responses: {
+            /** @description Immutable human memory decision */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MemoryMutation"];
                 };
             };
             /** @description Validation failed */

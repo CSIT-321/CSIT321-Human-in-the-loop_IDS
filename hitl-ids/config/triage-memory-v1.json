@@ -1,0 +1,9 @@
+{
+  "version": "triage-memory-v1",
+  "minimumSupport": 3,
+  "minimumAgreementRatio": 0.67,
+  "maximumConflicts": 0,
+  "defaultValidityDays": 30,
+  "exactRequiredFields": ["detectorSource", "detectionTitle", "sourceIp", "destinationIp", "protocol"],
+  "narrowRequiredFields": ["detectorSource", "detectionCategory", "sourceIp", "protocol"]
+}

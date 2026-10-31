@@ -5,6 +5,7 @@ import { MemoryRouter } from "react-router";
 import type { Schemas } from "../../api/client";
 import { jsonResponse, stubFetch } from "../../test/renderApp";
 import { RoutingDetail, V2RoutingPage } from "./V2RoutingPage";
+import { SessionProvider } from "../../session/SessionContext";
 
 const view: Schemas["RoutingView"] = {
   operationalAlertRef: "fe130e6f-af86-4fc6-89f2-bc76b6cad68b", title: "External NIDS alert", detectorName: "Suricata",
@@ -74,10 +75,10 @@ describe("V2 routing", () => {
   });
 
   it("loads a linked alert directly even outside the first queue page", async () => {
-    const seen = stubFetch(() => jsonResponse(view));
-    render(<MemoryRouter initialEntries={["/analyst/v2-triage?alertRef=" + view.operationalAlertRef]}>
+    const seen = stubFetch(request => jsonResponse(request.url.includes("/matches") ? {items:[],page:{total:0}} : view));
+    render(<SessionProvider><MemoryRouter initialEntries={["/analyst/v2-triage?alertRef=" + view.operationalAlertRef]}>
       <V2RoutingPage />
-    </MemoryRouter>);
+    </MemoryRouter></SessionProvider>);
     expect(await screen.findByText("External NIDS alert")).toBeInTheDocument();
     expect(seen[0]?.url).toContain("/" + view.operationalAlertRef + "/triage-state");
   });
