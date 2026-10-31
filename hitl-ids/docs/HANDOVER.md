@@ -3,8 +3,8 @@
 **Purpose.** Carry the full state of this project into a fresh session with zero loss of context
 and minimal token cost. Everything a new session needs is here or one link away.
 
-**Current stacked workflow (2026-10-31):** `feat/selective-human-review-v1`, based on
-`9a5133ba6c87ba6d11dedaac4b73a58b5590ec63` (`feat/triage-memory-v1`).
+**Current stacked workflow (2026-10-31):** `feat/selective-review-temporal-evaluation`, based on
+`8cda81b2b1fa14d2175160241d0ec669434bf229` (`feat/selective-human-review-v1`).
 The older September branch/phase narrative below is historical, not the current branch status.
 The external path now reaches an append-only human-authorized response plan:
 Suricata -> staging -> eligibility review -> operational admission -> V2 alert -> policy ->
@@ -21,6 +21,10 @@ Selective Human Review V1 adds a separate attention disposition, using fresh tru
 context and exact active benign memory. Unknown context forces Must Review. Deferral never
 changes priority, closes an alert, creates a verdict or executes a response. Human override is sticky.
 See [Selective Human Review V1](selective-human-review-v1.md) for metrics, replay and exact scope.
+Offline [Temporal Holdout Evaluation](selective-review-temporal-evaluation.md) now reconstructs
+historical memory from raw events, requires historical policy availability, and separates later truth
+from past decisions. JSON/Markdown reports are read-only; live policy and workflows remain unchanged.
+Missing triage at occurrence is excluded explicitly, never filled from present-day state.
 
 **Last updated:** 2026-09-18 (rev 24 — similar-alert learning made visible: the moved members, the
 family group-by, and the similarity basis on screen; changelog v1.32. Rev 23 notes below still

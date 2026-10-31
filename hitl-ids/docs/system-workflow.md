@@ -299,6 +299,10 @@ about what is done.
 
 ## Related documents
 
+- [`selective-review-temporal-evaluation.md`](selective-review-temporal-evaluation.md) - offline chronology:
+  prior human reviews -> explicit activation -> future alert at T -> unchanged selective policy ->
+  later truth scoring/recall. Strictly earlier memory and available-at-T context/policy only;
+  no live automation change or present-day-state backfill.
 - [`iteration-2-report.md`](iteration-2-report.md) — the fusion logic in full: formulas, charts, worked examples
 - [`iteration-report.md`](iteration-report.md) — Iteration 1: the corrected dataset and why the design changed
 - [`plan-changelog.md`](plan-changelog.md) — every decision with its evidence (Q23 in v1.9)
