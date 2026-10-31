@@ -14,7 +14,7 @@ import { TopBar } from "./TopBar";
 
 export function AppShell() {
   const { session } = useSession();
-  const routing = /\/(v2-triage|external-admission|tier2-cases|triage-memory)(\/[^/]+)?$/.test(useLocation().pathname);
+  const routing = /\/(v2-triage|external-admission|tier2-cases|triage-memory|selective-review)(\/[^/]+)?$/.test(useLocation().pathname);
 
   if (session === null) return null;
 

@@ -486,6 +486,74 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v2/alerts/{alertRef}/selective-review": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** getSelectiveReview */
+        get: operations["getSelectiveReview"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/alerts/{alertRef}/selective-review/evaluate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** applySelectiveReview */
+        post: operations["applySelectiveReview"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/alerts/{alertRef}/selective-review/events": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** selectiveReviewHistory */
+        get: operations["selectiveReviewHistory"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/alerts/{alertRef}/selective-review/require-human": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** requireHumanReview */
+        post: operations["requireHumanReview"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v2/alerts/{alertRef}/tier2/approve": {
         parameters: {
             query?: never;
@@ -667,6 +735,40 @@ export interface paths {
         put?: never;
         /** reviewExternalEligibility */
         post: operations["reviewExternalEligibility"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/selective-review": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** listSelectiveReviews */
+        get: operations["listSelectiveReviews"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/selective-review/metrics": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** selectiveReviewMetrics */
+        get: operations["selectiveReviewMetrics"];
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -3435,6 +3537,128 @@ export interface components {
              */
             status: "pending" | "approved" | "rejected";
         };
+        /** ReviewCommand */
+        ReviewCommand: {
+            /** Expectedversion */
+            expectedVersion: string;
+            /** Reason */
+            reason: string;
+            /**
+             * Requestid
+             * Format: uuid
+             */
+            requestId: string;
+        };
+        /** ReviewEvent */
+        ReviewEvent: {
+            /** Action */
+            action: string;
+            /** Actorid */
+            actorId: number;
+            /** Createdat */
+            createdAt: string;
+            /**
+             * Eventref
+             * Format: uuid
+             */
+            eventRef: string;
+            /** Eventtype */
+            eventType: string;
+            /** Id */
+            id: number;
+            /** Reason */
+            reason: string;
+            snapshot: components["schemas"]["ReviewSnapshot"];
+        };
+        /** ReviewInputs */
+        ReviewInputs: {
+            alert: components["schemas"]["OperationalAlertV2"];
+            context: components["schemas"]["TriageContext"];
+            /** Contextauditid */
+            contextAuditId: number | null;
+            /** Contextrecordedat */
+            contextRecordedAt: string | null;
+            /** Humanoverride */
+            humanOverride: boolean;
+            /** Humanverdictpresent */
+            humanVerdictPresent: boolean;
+            /** Matches */
+            matches: components["schemas"]["MemoryMatch"][];
+            triage: components["schemas"]["OperationalTriageStateV2"];
+        };
+        /** ReviewMetrics */
+        ReviewMetrics: {
+            /** Conflicttriggeredrecallcount */
+            conflictTriggeredRecallCount: number;
+            /**
+             * Databasis
+             * @default Observed local decisions and human outcomes; not a measured real-world workload benefit.
+             */
+            dataBasis: string;
+            /** Eligiblealerts */
+            eligibleAlerts: number;
+            /** Immediatereviewreductionrate */
+            immediateReviewReductionRate: number;
+            /** Mustreviewcount */
+            mustReviewCount: number;
+            /** Noimmediatereviewcount */
+            noImmediateReviewCount: number;
+            /** Recommendedreviewcount */
+            recommendedReviewCount: number;
+            /** Sampledoverridecount */
+            sampledOverrideCount: number;
+            /** Totalalerts */
+            totalAlerts: number;
+            /** Unsafesuppressioncount */
+            unsafeSuppressionCount: number;
+        };
+        /** ReviewMutation */
+        ReviewMutation: {
+            /** Replayed */
+            replayed: boolean;
+            view: components["schemas"]["ReviewView"];
+        };
+        /** ReviewSnapshot */
+        ReviewSnapshot: {
+            /** Inputversion */
+            inputVersion: string;
+            inputs: components["schemas"]["ReviewInputs"];
+            policyConfigSnapshot: components["schemas"]["SelectivePolicy"];
+            result: components["schemas"]["SelectiveResult"];
+        };
+        /** ReviewView */
+        ReviewView: {
+            /**
+             * Disposition
+             * @enum {string}
+             */
+            disposition: "must_review" | "recommended_review" | "no_immediate_review";
+            /** Eligiblealert */
+            eligibleAlert: boolean;
+            /** Explanation */
+            explanation: string;
+            /** Humanoverride */
+            humanOverride: boolean;
+            lastDecision: components["schemas"]["ReviewEvent"] | null;
+            /**
+             * Operationalalertref
+             * Format: uuid
+             */
+            operationalAlertRef: string;
+            policyEvaluation: components["schemas"]["ReviewSnapshot"];
+            /** Priority */
+            priority: number | null;
+            /** Reasoncodes */
+            reasonCodes: string[];
+            /** Recalled */
+            recalled: boolean;
+            /** Route */
+            route: string;
+            /** Title */
+            title: string;
+            /** Version */
+            version: string;
+        };
         /** RoutingAudit */
         RoutingAudit: {
             /**
@@ -3596,6 +3820,45 @@ export interface components {
              * @description One sentence stating what happened and what bound it
              */
             summary: string;
+        };
+        /** SelectivePolicy */
+        SelectivePolicy: {
+            /** Auditsamplepercent */
+            auditSamplePercent: number;
+            /** Campaignalertthreshold */
+            campaignAlertThreshold: number;
+            /** Contextmaximumagehours */
+            contextMaximumAgeHours: number;
+            /** Falsepositiveminimumsupport */
+            falsePositiveMinimumSupport: number;
+            /** Minimumagreementratio */
+            minimumAgreementRatio: number;
+            /** Minimumsupport */
+            minimumSupport: number;
+            /** Version */
+            version: string;
+        };
+        /** SelectiveResult */
+        SelectiveResult: {
+            /**
+             * Decisionsource
+             * @default selective_review_policy
+             * @enum {string}
+             */
+            decisionSource: "selective_review_policy" | "human_override";
+            /**
+             * Disposition
+             * @enum {string}
+             */
+            disposition: "must_review" | "recommended_review" | "no_immediate_review";
+            /** Explanation */
+            explanation: string;
+            /** Matchedlessonref */
+            matchedLessonRef: string | null;
+            /** Policyversion */
+            policyVersion: string;
+            /** Reasoncodes */
+            reasonCodes: string[];
         };
         /** ShapFeature */
         ShapFeature: {
@@ -3821,6 +4084,54 @@ export interface components {
             flagged: number;
             /** Value */
             value: string;
+        };
+        /** TriageContext */
+        TriageContext: {
+            /**
+             * Analystescalated
+             * @default null
+             */
+            analystEscalated: boolean | null;
+            /**
+             * Assetcriticality
+             * @default null
+             */
+            assetCriticality: ("low" | "medium" | "high" | "critical") | null;
+            /**
+             * Confirmedmalicious
+             * @default null
+             */
+            confirmedMalicious: boolean | null;
+            /**
+             * Correlatedalertcount
+             * @default null
+             */
+            correlatedAlertCount: number | null;
+            /**
+             * Evidenceconflict
+             * @default null
+             */
+            evidenceConflict: boolean | null;
+            /**
+             * Knownmaliciousindicator
+             * @default null
+             */
+            knownMaliciousIndicator: boolean | null;
+            /**
+             * Repeatedcampaign
+             * @default null
+             */
+            repeatedCampaign: boolean | null;
+            /**
+             * Responserequired
+             * @default null
+             */
+            responseRequired: boolean | null;
+            /**
+             * Unresolvedbytier1
+             * @default null
+             */
+            unresolvedByTier1: boolean | null;
         };
         /** TriageResponse */
         TriageResponse: {
@@ -5287,6 +5598,264 @@ export interface operations {
             };
         };
     };
+    getSelectiveReview: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description `Bearer <token>` from POST /api/auth/login */
+                Authorization?: string;
+            };
+            path: {
+                alertRef: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Live review disposition and immutable history */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReviewView"];
+                };
+            };
+            /** @description Validation failed */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not signed in, or the token expired */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    applySelectiveReview: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description `Bearer <token>` from POST /api/auth/login */
+                Authorization?: string;
+            };
+            path: {
+                alertRef: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReviewCommand"];
+            };
+        };
+        responses: {
+            /** @description Recorded policy or human override */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReviewMutation"];
+                };
+            };
+            /** @description Validation failed */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not signed in, or the token expired */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Role not permitted */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    selectiveReviewHistory: {
+        parameters: {
+            query?: {
+                limit?: number;
+                offset?: number;
+            };
+            header?: {
+                /** @description `Bearer <token>` from POST /api/auth/login */
+                Authorization?: string;
+            };
+            path: {
+                alertRef: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Live review disposition and immutable history */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        items: components["schemas"]["ReviewEvent"][];
+                        page: components["schemas"]["PageInfo"];
+                    };
+                };
+            };
+            /** @description Validation failed */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not signed in, or the token expired */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    requireHumanReview: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description `Bearer <token>` from POST /api/auth/login */
+                Authorization?: string;
+            };
+            path: {
+                alertRef: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReviewCommand"];
+            };
+        };
+        responses: {
+            /** @description Recorded policy or human override */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReviewMutation"];
+                };
+            };
+            /** @description Validation failed */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not signed in, or the token expired */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Role not permitted */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
     approveV2Tier2: {
         parameters: {
             query?: never;
@@ -6010,6 +6579,113 @@ export interface operations {
             };
             /** @description Conflict */
             409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    listSelectiveReviews: {
+        parameters: {
+            query?: {
+                limit?: number;
+                offset?: number;
+                disposition?: "must_review" | "recommended_review" | "no_immediate_review";
+            };
+            header?: {
+                /** @description `Bearer <token>` from POST /api/auth/login */
+                Authorization?: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Live review disposition and immutable history */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        items: components["schemas"]["ReviewView"][];
+                        page: components["schemas"]["PageInfo"];
+                    };
+                };
+            };
+            /** @description Validation failed */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not signed in, or the token expired */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    selectiveReviewMetrics: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description `Bearer <token>` from POST /api/auth/login */
+                Authorization?: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Live review disposition and immutable history */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReviewMetrics"];
+                };
+            };
+            /** @description Validation failed */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not signed in, or the token expired */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found */
+            404: {
                 headers: {
                     [name: string]: unknown;
                 };

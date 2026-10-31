@@ -3,8 +3,8 @@
 **Purpose.** Carry the full state of this project into a fresh session with zero loss of context
 and minimal token cost. Everything a new session needs is here or one link away.
 
-**Current stacked workflow (2026-10-31):** `feat/triage-memory-v1`, based on
-`f54958129957cf4c0671c903d6184d62b2ffb66b` (`feat/response-recommendation-approval`).
+**Current stacked workflow (2026-10-31):** `feat/selective-human-review-v1`, based on
+`9a5133ba6c87ba6d11dedaac4b73a58b5590ec63` (`feat/triage-memory-v1`).
 The older September branch/phase narrative below is historical, not the current branch status.
 The external path now reaches an append-only human-authorized response plan:
 Suricata -> staging -> eligibility review -> operational admission -> V2 alert -> policy ->
@@ -17,6 +17,10 @@ Triage Memory V1 adds a separate human-verdict/reason/context ledger: candidate 
 support/conflict -> explicit human activation -> advisory future-alert matching.
 It does not change legacy learning, priority, route, review requirements or response approval.
 See [Triage Memory V1](triage-memory-v1.md) for its safety rules, demo and file manifest.
+Selective Human Review V1 adds a separate attention disposition, using fresh trusted safety
+context and exact active benign memory. Unknown context forces Must Review. Deferral never
+changes priority, closes an alert, creates a verdict or executes a response. Human override is sticky.
+See [Selective Human Review V1](selective-human-review-v1.md) for metrics, replay and exact scope.
 
 **Last updated:** 2026-09-18 (rev 24 — similar-alert learning made visible: the moved members, the
 family group-by, and the similarity basis on screen; changelog v1.32. Rev 23 notes below still
@@ -75,8 +79,8 @@ inspection-sort tie-break fixed (v1.28):** it was a direction-blind `a.id ASC`, 
 scores all tied came back identical ascending and descending — and 4,789 of 5,000 alerts (95.8%)
 tie on their score. It now orders by evidence class, review flag, capture time and id, each
 following the requested direction ·
-**746 tests, 5 skipped** (741 passed, Python 3.11; missing optional dataset fixtures) +
-**192 web tests** (`apps/web`, `npm test`) +
+**781 tests, 5 skipped** (776 passed, Python 3.11; missing optional dataset fixtures) +
+**198 web tests** (`apps/web`, `npm test`) +
 the browser narrative (`npm run e2e`, passes with three real sign-ins) ·
 **Python runs from `hitl-ids\.venv` (3.11) — see §0b before running anything** ·
 **Presenting on a different machine? [`demo-machine-setup.md`](demo-machine-setup.md)** —

@@ -46,6 +46,17 @@ def main():
                     request_id=uuid4(),expected_review_id=None,decision='accepted',reason='Disposable memory scenario fixture verified'))
                 admit_external(conn,source_id,actor_id=actor,request=AdmissionRequest(
                     request_id=uuid4(),expected_review_id=review['id'],reason='Disposable demo admission; no memory verdict seeded'))
+            # Explicit synthetic safety facts for this disposable scenario only. Production admission keeps unknowns.
+            stage_file(conn,HITL/'tests/fixtures/selective-review-demo.json','selective-demo')
+            safe=TriageContext(asset_criticality='low',repeated_campaign=False,correlated_alert_count=1,
+                response_required=False,known_malicious_indicator=False,analyst_escalated=False,
+                unresolved_by_tier1=False,evidence_conflict=False,confirmed_malicious=False)
+            ids=[r[0] for r in conn.execute("SELECT id FROM external_alert_inbox WHERE sensor_id='selective-demo' ORDER BY id")]
+            for source_id in ids:
+                review=review_eligibility(conn,source_id,actor_id=actor,request=EligibilityRequest(
+                    request_id=uuid4(),expected_review_id=None,decision='accepted',reason='SYNTHETIC selective-review fixture; safety context is demo-only'))
+                admit_external(conn,source_id,actor_id=actor,request=AdmissionRequest(
+                    request_id=uuid4(),expected_review_id=review['id'],reason='SYNTHETIC safe context; not observed production evidence'),trusted_context=safe)
         print(f'Serving disposable routing fixture: {path}', flush=True)
         uvicorn.run(create_app(path), host='127.0.0.1', port=args.port, log_level='warning')
 

@@ -75,7 +75,7 @@ describe("V2 routing", () => {
   });
 
   it("loads a linked alert directly even outside the first queue page", async () => {
-    const seen = stubFetch(request => jsonResponse(request.url.includes("/matches") ? {items:[],page:{total:0}} : view));
+    const seen = stubFetch(request => request.url.includes("/selective-review") ? jsonResponse({error:{code:"OFFLINE",message:"Review service unavailable"}},503) : jsonResponse(request.url.includes("/matches") ? {items:[],page:{total:0}} : view));
     render(<SessionProvider><MemoryRouter initialEntries={["/analyst/v2-triage?alertRef=" + view.operationalAlertRef]}>
       <V2RoutingPage />
     </MemoryRouter></SessionProvider>);

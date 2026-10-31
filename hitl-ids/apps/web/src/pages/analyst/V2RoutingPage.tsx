@@ -5,6 +5,7 @@ import { useApi } from "../../api/useApi";
 import { PageHeader, Pill } from "../../components/ui";
 import { CreateCasePanel } from "./Tier2CasesPage";
 import { AlertMemoryPanel } from "./TriageMemoryPage";
+import { SelectiveReviewPanel } from "./SelectiveReviewPage";
 
 type View = Schemas["RoutingView"];
 type Action = View["allowedActions"][number];
@@ -126,6 +127,7 @@ export function V2RoutingPage() {
       </div>
       {current && <RoutingDetail key={current.operationalAlertRef + current.stateVersion} initial={current} refresh={resource.reload} />}
       {current && <AlertMemoryPanel key={"memory:"+current.operationalAlertRef+current.stateVersion} view={current}/>}
+      {current && <SelectiveReviewPanel key={"selective:"+current.operationalAlertRef+current.stateVersion} alertRef={current.operationalAlertRef}/>}
     </>}
   </div>;
 }

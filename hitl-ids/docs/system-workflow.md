@@ -11,8 +11,13 @@ See [response-recommendation-approval.md](response-recommendation-approval.md).
 **Triage Memory V1:** explicit human verdict + reason + structured detector context -> candidate
 lesson -> support/conflict -> human activation -> future contextual guidance. It is separate from
 legacy numeric family learning and does not alter priority, route or human review requirements.
-See [triage-memory-v1.md](triage-memory-v1.md). Selective Human Review and evidence-gated
-No Immediate Review are future work; V1 does not claim workload reduction.
+See [triage-memory-v1.md](triage-memory-v1.md). Triage Memory itself remains advisory.
+**Selective Human Review V1:** validated memory + current evidence + fresh trusted safety context
++ guardrails -> separate review disposition. Unknown context forces Must Review. No Immediate
+Review is not Closed, False Positive or a Human Verdict. Priority remains unchanged.
+See [selective-human-review-v1.md](selective-human-review-v1.md) for the attention queue,
+human override, safety recall, deterministic sampling and read-only counterfactual evaluation.
+Broader evidence-gated automation remains future work; fixture success is not a workload claim.
 The September sections below remain historical context for the original detector/feedback pipeline.
 
 **As of:** 2026-09-11 · branch `feat/s6-fusion` · **Purpose:** one place that explains the whole

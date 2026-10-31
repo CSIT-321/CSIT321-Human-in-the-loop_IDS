@@ -5722,6 +5722,345 @@
         "title": "ResponseView",
         "type": "object"
       },
+      "ReviewCommand": {
+        "additionalProperties": false,
+        "properties": {
+          "expectedVersion": {
+            "pattern": "^[a-f0-9]{64}$",
+            "title": "Expectedversion",
+            "type": "string"
+          },
+          "reason": {
+            "maxLength": 4000,
+            "minLength": 1,
+            "title": "Reason",
+            "type": "string"
+          },
+          "requestId": {
+            "format": "uuid",
+            "title": "Requestid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "requestId",
+          "reason",
+          "expectedVersion"
+        ],
+        "title": "ReviewCommand",
+        "type": "object"
+      },
+      "ReviewEvent": {
+        "additionalProperties": false,
+        "properties": {
+          "action": {
+            "title": "Action",
+            "type": "string"
+          },
+          "actorId": {
+            "title": "Actorid",
+            "type": "integer"
+          },
+          "createdAt": {
+            "title": "Createdat",
+            "type": "string"
+          },
+          "eventRef": {
+            "format": "uuid",
+            "title": "Eventref",
+            "type": "string"
+          },
+          "eventType": {
+            "title": "Eventtype",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "reason": {
+            "title": "Reason",
+            "type": "string"
+          },
+          "snapshot": {
+            "$ref": "#/components/schemas/ReviewSnapshot"
+          }
+        },
+        "required": [
+          "id",
+          "eventRef",
+          "actorId",
+          "action",
+          "reason",
+          "eventType",
+          "createdAt",
+          "snapshot"
+        ],
+        "title": "ReviewEvent",
+        "type": "object"
+      },
+      "ReviewInputs": {
+        "additionalProperties": false,
+        "properties": {
+          "alert": {
+            "$ref": "#/components/schemas/OperationalAlertV2"
+          },
+          "context": {
+            "$ref": "#/components/schemas/TriageContext"
+          },
+          "contextAuditId": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Contextauditid"
+          },
+          "contextRecordedAt": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Contextrecordedat"
+          },
+          "humanOverride": {
+            "title": "Humanoverride",
+            "type": "boolean"
+          },
+          "humanVerdictPresent": {
+            "title": "Humanverdictpresent",
+            "type": "boolean"
+          },
+          "matches": {
+            "items": {
+              "$ref": "#/components/schemas/MemoryMatch"
+            },
+            "title": "Matches",
+            "type": "array"
+          },
+          "triage": {
+            "$ref": "#/components/schemas/OperationalTriageStateV2"
+          }
+        },
+        "required": [
+          "alert",
+          "triage",
+          "context",
+          "contextAuditId",
+          "contextRecordedAt",
+          "matches",
+          "humanOverride",
+          "humanVerdictPresent"
+        ],
+        "title": "ReviewInputs",
+        "type": "object"
+      },
+      "ReviewMetrics": {
+        "additionalProperties": false,
+        "properties": {
+          "conflictTriggeredRecallCount": {
+            "title": "Conflicttriggeredrecallcount",
+            "type": "integer"
+          },
+          "dataBasis": {
+            "default": "Observed local decisions and human outcomes; not a measured real-world workload benefit.",
+            "title": "Databasis",
+            "type": "string"
+          },
+          "eligibleAlerts": {
+            "title": "Eligiblealerts",
+            "type": "integer"
+          },
+          "immediateReviewReductionRate": {
+            "title": "Immediatereviewreductionrate",
+            "type": "number"
+          },
+          "mustReviewCount": {
+            "title": "Mustreviewcount",
+            "type": "integer"
+          },
+          "noImmediateReviewCount": {
+            "title": "Noimmediatereviewcount",
+            "type": "integer"
+          },
+          "recommendedReviewCount": {
+            "title": "Recommendedreviewcount",
+            "type": "integer"
+          },
+          "sampledOverrideCount": {
+            "title": "Sampledoverridecount",
+            "type": "integer"
+          },
+          "totalAlerts": {
+            "title": "Totalalerts",
+            "type": "integer"
+          },
+          "unsafeSuppressionCount": {
+            "title": "Unsafesuppressioncount",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "totalAlerts",
+          "eligibleAlerts",
+          "mustReviewCount",
+          "recommendedReviewCount",
+          "noImmediateReviewCount",
+          "immediateReviewReductionRate",
+          "unsafeSuppressionCount",
+          "conflictTriggeredRecallCount",
+          "sampledOverrideCount"
+        ],
+        "title": "ReviewMetrics",
+        "type": "object"
+      },
+      "ReviewMutation": {
+        "additionalProperties": false,
+        "properties": {
+          "replayed": {
+            "title": "Replayed",
+            "type": "boolean"
+          },
+          "view": {
+            "$ref": "#/components/schemas/ReviewView"
+          }
+        },
+        "required": [
+          "view",
+          "replayed"
+        ],
+        "title": "ReviewMutation",
+        "type": "object"
+      },
+      "ReviewSnapshot": {
+        "additionalProperties": false,
+        "properties": {
+          "inputVersion": {
+            "title": "Inputversion",
+            "type": "string"
+          },
+          "inputs": {
+            "$ref": "#/components/schemas/ReviewInputs"
+          },
+          "policyConfigSnapshot": {
+            "$ref": "#/components/schemas/SelectivePolicy"
+          },
+          "result": {
+            "$ref": "#/components/schemas/SelectiveResult"
+          }
+        },
+        "required": [
+          "inputs",
+          "policyConfigSnapshot",
+          "result",
+          "inputVersion"
+        ],
+        "title": "ReviewSnapshot",
+        "type": "object"
+      },
+      "ReviewView": {
+        "additionalProperties": false,
+        "properties": {
+          "disposition": {
+            "enum": [
+              "must_review",
+              "recommended_review",
+              "no_immediate_review"
+            ],
+            "title": "Disposition",
+            "type": "string"
+          },
+          "eligibleAlert": {
+            "title": "Eligiblealert",
+            "type": "boolean"
+          },
+          "explanation": {
+            "title": "Explanation",
+            "type": "string"
+          },
+          "humanOverride": {
+            "title": "Humanoverride",
+            "type": "boolean"
+          },
+          "lastDecision": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ReviewEvent"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "operationalAlertRef": {
+            "format": "uuid",
+            "title": "Operationalalertref",
+            "type": "string"
+          },
+          "policyEvaluation": {
+            "$ref": "#/components/schemas/ReviewSnapshot"
+          },
+          "priority": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Priority"
+          },
+          "reasonCodes": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Reasoncodes",
+            "type": "array"
+          },
+          "recalled": {
+            "title": "Recalled",
+            "type": "boolean"
+          },
+          "route": {
+            "title": "Route",
+            "type": "string"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          },
+          "version": {
+            "title": "Version",
+            "type": "string"
+          }
+        },
+        "required": [
+          "operationalAlertRef",
+          "title",
+          "version",
+          "disposition",
+          "reasonCodes",
+          "explanation",
+          "priority",
+          "route",
+          "policyEvaluation",
+          "lastDecision",
+          "humanOverride",
+          "eligibleAlert",
+          "recalled"
+        ],
+        "title": "ReviewView",
+        "type": "object"
+      },
       "RoutingAudit": {
         "additionalProperties": false,
         "properties": {
@@ -6109,6 +6448,119 @@
           "summary"
         ],
         "title": "ScoreAdjustment",
+        "type": "object"
+      },
+      "SelectivePolicy": {
+        "additionalProperties": false,
+        "properties": {
+          "auditSamplePercent": {
+            "maximum": 100,
+            "minimum": 0,
+            "title": "Auditsamplepercent",
+            "type": "integer"
+          },
+          "campaignAlertThreshold": {
+            "minimum": 2,
+            "title": "Campaignalertthreshold",
+            "type": "integer"
+          },
+          "contextMaximumAgeHours": {
+            "maximum": 24,
+            "minimum": 1,
+            "title": "Contextmaximumagehours",
+            "type": "integer"
+          },
+          "falsePositiveMinimumSupport": {
+            "minimum": 3,
+            "title": "Falsepositiveminimumsupport",
+            "type": "integer"
+          },
+          "minimumAgreementRatio": {
+            "maximum": 1,
+            "minimum": 0.67,
+            "title": "Minimumagreementratio",
+            "type": "number"
+          },
+          "minimumSupport": {
+            "minimum": 3,
+            "title": "Minimumsupport",
+            "type": "integer"
+          },
+          "version": {
+            "minLength": 1,
+            "title": "Version",
+            "type": "string"
+          }
+        },
+        "required": [
+          "version",
+          "minimumSupport",
+          "minimumAgreementRatio",
+          "falsePositiveMinimumSupport",
+          "contextMaximumAgeHours",
+          "campaignAlertThreshold",
+          "auditSamplePercent"
+        ],
+        "title": "SelectivePolicy",
+        "type": "object"
+      },
+      "SelectiveResult": {
+        "additionalProperties": false,
+        "properties": {
+          "decisionSource": {
+            "default": "selective_review_policy",
+            "enum": [
+              "selective_review_policy",
+              "human_override"
+            ],
+            "title": "Decisionsource",
+            "type": "string"
+          },
+          "disposition": {
+            "enum": [
+              "must_review",
+              "recommended_review",
+              "no_immediate_review"
+            ],
+            "title": "Disposition",
+            "type": "string"
+          },
+          "explanation": {
+            "title": "Explanation",
+            "type": "string"
+          },
+          "matchedLessonRef": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Matchedlessonref"
+          },
+          "policyVersion": {
+            "title": "Policyversion",
+            "type": "string"
+          },
+          "reasonCodes": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Reasoncodes",
+            "type": "array"
+          }
+        },
+        "required": [
+          "disposition",
+          "reasonCodes",
+          "explanation",
+          "matchedLessonRef",
+          "policyVersion"
+        ],
+        "title": "SelectiveResult",
         "type": "object"
       },
       "ShapFeature": {
@@ -6600,6 +7052,128 @@
           "flagged"
         ],
         "title": "TopValue",
+        "type": "object"
+      },
+      "TriageContext": {
+        "additionalProperties": false,
+        "properties": {
+          "analystEscalated": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Analystescalated"
+          },
+          "assetCriticality": {
+            "anyOf": [
+              {
+                "enum": [
+                  "low",
+                  "medium",
+                  "high",
+                  "critical"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Assetcriticality"
+          },
+          "confirmedMalicious": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Confirmedmalicious"
+          },
+          "correlatedAlertCount": {
+            "anyOf": [
+              {
+                "minimum": 0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Correlatedalertcount"
+          },
+          "evidenceConflict": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Evidenceconflict"
+          },
+          "knownMaliciousIndicator": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Knownmaliciousindicator"
+          },
+          "repeatedCampaign": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Repeatedcampaign"
+          },
+          "responseRequired": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Responserequired"
+          },
+          "unresolvedByTier1": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Unresolvedbytier1"
+          }
+        },
+        "title": "TriageContext",
         "type": "object"
       },
       "TriageResponse": {
@@ -9720,6 +10294,396 @@
         ]
       }
     },
+    "/api/v2/alerts/{alertRef}/selective-review": {
+      "get": {
+        "operationId": "getSelectiveReview",
+        "parameters": [
+          {
+            "description": "`Bearer <token>` from POST /api/auth/login",
+            "in": "header",
+            "name": "Authorization",
+            "required": false,
+            "schema": {
+              "example": "Bearer eyJhbGciOiJIUzI1NiJ9...",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "alertRef",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReviewView"
+                }
+              }
+            },
+            "description": "Live review disposition and immutable history"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Validation failed"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not signed in, or the token expired"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not found"
+          }
+        },
+        "summary": "getSelectiveReview",
+        "tags": [
+          "Selective review"
+        ]
+      }
+    },
+    "/api/v2/alerts/{alertRef}/selective-review/evaluate": {
+      "post": {
+        "operationId": "applySelectiveReview",
+        "parameters": [
+          {
+            "description": "`Bearer <token>` from POST /api/auth/login",
+            "in": "header",
+            "name": "Authorization",
+            "required": false,
+            "schema": {
+              "example": "Bearer eyJhbGciOiJIUzI1NiJ9...",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "alertRef",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReviewCommand"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReviewMutation"
+                }
+              }
+            },
+            "description": "Recorded policy or human override"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Validation failed"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not signed in, or the token expired"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Role not permitted"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          }
+        },
+        "summary": "applySelectiveReview",
+        "tags": [
+          "Selective review"
+        ],
+        "x-required-roles": [
+          "security_analyst",
+          "system_admin"
+        ]
+      }
+    },
+    "/api/v2/alerts/{alertRef}/selective-review/events": {
+      "get": {
+        "operationId": "selectiveReviewHistory",
+        "parameters": [
+          {
+            "description": "`Bearer <token>` from POST /api/auth/login",
+            "in": "header",
+            "name": "Authorization",
+            "required": false,
+            "schema": {
+              "example": "Bearer eyJhbGciOiJIUzI1NiJ9...",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "alertRef",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "schema": {
+              "default": 50,
+              "maximum": 200,
+              "minimum": 1,
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "offset",
+            "schema": {
+              "default": 0,
+              "minimum": 0,
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "items": {
+                      "items": {
+                        "$ref": "#/components/schemas/ReviewEvent"
+                      },
+                      "type": "array"
+                    },
+                    "page": {
+                      "$ref": "#/components/schemas/PageInfo"
+                    }
+                  },
+                  "required": [
+                    "items",
+                    "page"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Live review disposition and immutable history"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Validation failed"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not signed in, or the token expired"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not found"
+          }
+        },
+        "summary": "selectiveReviewHistory",
+        "tags": [
+          "Selective review"
+        ]
+      }
+    },
+    "/api/v2/alerts/{alertRef}/selective-review/require-human": {
+      "post": {
+        "operationId": "requireHumanReview",
+        "parameters": [
+          {
+            "description": "`Bearer <token>` from POST /api/auth/login",
+            "in": "header",
+            "name": "Authorization",
+            "required": false,
+            "schema": {
+              "example": "Bearer eyJhbGciOiJIUzI1NiJ9...",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "alertRef",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReviewCommand"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReviewMutation"
+                }
+              }
+            },
+            "description": "Recorded policy or human override"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Validation failed"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not signed in, or the token expired"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Role not permitted"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          }
+        },
+        "summary": "requireHumanReview",
+        "tags": [
+          "Selective review"
+        ],
+        "x-required-roles": [
+          "security_analyst",
+          "system_admin"
+        ]
+      }
+    },
     "/api/v2/alerts/{alertRef}/tier2/approve": {
       "post": {
         "operationId": "approveV2Tier2",
@@ -10798,6 +11762,179 @@
         "x-required-roles": [
           "security_analyst",
           "system_admin"
+        ]
+      }
+    },
+    "/api/v2/selective-review": {
+      "get": {
+        "operationId": "listSelectiveReviews",
+        "parameters": [
+          {
+            "description": "`Bearer <token>` from POST /api/auth/login",
+            "in": "header",
+            "name": "Authorization",
+            "required": false,
+            "schema": {
+              "example": "Bearer eyJhbGciOiJIUzI1NiJ9...",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "schema": {
+              "default": 50,
+              "maximum": 200,
+              "minimum": 1,
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "offset",
+            "schema": {
+              "default": 0,
+              "minimum": 0,
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "disposition",
+            "required": false,
+            "schema": {
+              "enum": [
+                "must_review",
+                "recommended_review",
+                "no_immediate_review"
+              ],
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "items": {
+                      "items": {
+                        "$ref": "#/components/schemas/ReviewView"
+                      },
+                      "type": "array"
+                    },
+                    "page": {
+                      "$ref": "#/components/schemas/PageInfo"
+                    }
+                  },
+                  "required": [
+                    "items",
+                    "page"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Live review disposition and immutable history"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Validation failed"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not signed in, or the token expired"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not found"
+          }
+        },
+        "summary": "listSelectiveReviews",
+        "tags": [
+          "Selective review"
+        ]
+      }
+    },
+    "/api/v2/selective-review/metrics": {
+      "get": {
+        "operationId": "selectiveReviewMetrics",
+        "parameters": [
+          {
+            "description": "`Bearer <token>` from POST /api/auth/login",
+            "in": "header",
+            "name": "Authorization",
+            "required": false,
+            "schema": {
+              "example": "Bearer eyJhbGciOiJIUzI1NiJ9...",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReviewMetrics"
+                }
+              }
+            },
+            "description": "Live review disposition and immutable history"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Validation failed"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not signed in, or the token expired"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not found"
+          }
+        },
+        "summary": "selectiveReviewMetrics",
+        "tags": [
+          "Selective review"
         ]
       }
     },
@@ -12539,6 +13676,10 @@
     }
   ],
   "tags": [
+    {
+      "description": "Separate review disposition, never a human verdict or closure",
+      "name": "Selective review"
+    },
     {
       "description": "Human lessons and advisory contextual matching",
       "name": "Triage memory"

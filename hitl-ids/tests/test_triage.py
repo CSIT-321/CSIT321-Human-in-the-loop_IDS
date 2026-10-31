@@ -49,7 +49,7 @@ def test_a_database_from_before_the_migration_is_upgraded_in_place(tmp_path):
     conn = db.connect(tmp_path / "old.db")
     conn.executescript(db.SCHEMA_PATH.read_text(encoding="utf-8"))
     assert conn.execute("PRAGMA user_version").fetchone()[0] == 0
-    assert db.migrate(conn) == [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+    assert db.migrate(conn) == [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
     assert conn.execute("SELECT name FROM sqlite_master WHERE name = 'alert_notes'").fetchone()
     conn.close()
 

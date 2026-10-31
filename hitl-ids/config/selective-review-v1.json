@@ -1,0 +1,9 @@
+{
+  "version": "selective-review-v1",
+  "minimumSupport": 3,
+  "minimumAgreementRatio": 0.67,
+  "falsePositiveMinimumSupport": 5,
+  "contextMaximumAgeHours": 24,
+  "campaignAlertThreshold": 5,
+  "auditSamplePercent": 10
+}

@@ -90,6 +90,15 @@ from routing, severity, case finding or response approval. Exact/narrow scopes a
 category-only scope and organisational enrichment/schedules are deferred. Configuration and
 approval snapshots are immutable. See [Triage Memory V1](triage-memory-v1.md).
 
+## Selective review extension
+
+Migration 11 adds only append-only `selective_review_events`. Review disposition is separate
+from original triage state: handlingRoute/reviewRequired and priority are not rewritten.
+Fresh trusted policy-audit context is required; new HTTP callers cannot supply safety facts.
+The user approved explicit synthetic safe context only in the disposable demo. Live revalidation
+can revoke a deferral, never grant one without a recorded evaluation. See
+[Selective Human Review V1](selective-human-review-v1.md) for the exact semantics and limitations.
+
 ## D. Rejected, with the reason — do not re-propose
 
 These appear in `HANDOVER.md` §5 as well. Repeated here because the plan cites this file as the
