@@ -3,8 +3,8 @@
 **Purpose.** Carry the full state of this project into a fresh session with zero loss of context
 and minimal token cost. Everything a new session needs is here or one link away.
 
-**Current stacked workflow (2026-10-31):** `feat/selective-review-temporal-evaluation`, based on
-`8cda81b2b1fa14d2175160241d0ec669434bf229` (`feat/selective-human-review-v1`).
+**Current stacked workflow (2026-10-31):** `feat/prospective-context-provenance`, based on
+`81ba46cb2733a0fd7087d4c117dca4b0d5915d99` (`feat/selective-review-temporal-evaluation`).
 The older September branch/phase narrative below is historical, not the current branch status.
 The external path now reaches an append-only human-authorized response plan:
 Suricata -> staging -> eligibility review -> operational admission -> V2 alert -> policy ->
@@ -25,6 +25,10 @@ Offline [Temporal Holdout Evaluation](selective-review-temporal-evaluation.md) n
 historical memory from raw events, requires historical policy availability, and separates later truth
 from past decisions. JSON/Markdown reports are read-only; live policy and workflows remain unchanged.
 Missing triage at occurrence is excluded explicitly, never filled from present-day state.
+[Prospective Context Provenance](prospective-context-provenance.md) adds scoped append-only facts,
+server-stamped authenticated collection, freshness/conflict resolution and fact-backed review inputs.
+Unknown is never false. Migration 12 is additive; synthetic facts are seeded only in disposable tests.
+The pure selective policy is unchanged. The frozen prospective protocol gates evaluation on closure.
 
 **Last updated:** 2026-09-18 (rev 24 — similar-alert learning made visible: the moved members, the
 family group-by, and the similarity basis on screen; changelog v1.32. Rev 23 notes below still

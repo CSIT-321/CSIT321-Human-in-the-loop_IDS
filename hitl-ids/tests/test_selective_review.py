@@ -10,6 +10,7 @@ from packages.contracts import db,models as m
 from packages.detection import selective_review as service
 from packages.detection.selective_review_policy import evaluate_review,load_policy
 from packages.detection.triage_policy import TriageContext
+from packages.detection.context_store import seed_synthetic_facts
 from packages.detection.adapters.staging import stage_file
 from packages.detection.adapters.operational_v2 import read_projection
 from packages.detection.external_admission import admit_external
@@ -34,6 +35,7 @@ def alerts(client,database):
         for (source,) in conn.execute("SELECT id FROM external_alert_inbox WHERE sensor_id='selective-demo' ORDER BY id").fetchall():
             receipt,_=admit_external(conn,source,actor_id=actor,request=admit_request(accept(conn,actor,source)),trusted_context=safe_context())
             items.append(read_projection(conn,receipt['operational_alert_id']))
+            seed_synthetic_facts(conn,items[-1],safe_context(),m.utc_now())
         return actor,items
 
 

@@ -150,6 +150,8 @@ MIGRATIONS += ((10, "advisory triage memory and immutable human evidence",
                 Path(__file__).with_name("triage_memory.sql").read_text(encoding="utf-8")),)
 MIGRATIONS += ((11, "separate append-only selective review decisions and human overrides",
                 Path(__file__).with_name("selective_review.sql").read_text(encoding="utf-8")),)
+MIGRATIONS += ((12, "append-only trusted safety facts and triage context provenance",
+                Path(__file__).with_name("trusted_context.sql").read_text(encoding="utf-8")),)
 SCHEMA_VERSION = MIGRATIONS[-1][0]
 
 

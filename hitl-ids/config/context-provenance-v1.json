@@ -1,0 +1,14 @@
+{
+  "version": "context-provenance-v1",
+  "maximumAgeHours": {
+    "assetCriticality": 168,
+    "knownMaliciousIndicator": 4,
+    "responseRequired": 8,
+    "confirmedMalicious": 8,
+    "evidenceConflict": 8,
+    "repeatedCampaign": 4,
+    "correlatedAlertCount": 4,
+    "analystEscalated": 8,
+    "unresolvedByTier1": 8
+  }
+}

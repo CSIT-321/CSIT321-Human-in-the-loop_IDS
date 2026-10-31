@@ -1072,6 +1072,29 @@
         "title": "ClassMetrics",
         "type": "object"
       },
+      "ContextPolicy": {
+        "additionalProperties": false,
+        "properties": {
+          "maximumAgeHours": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "title": "Maximumagehours",
+            "type": "object"
+          },
+          "version": {
+            "minLength": 1,
+            "title": "Version",
+            "type": "string"
+          }
+        },
+        "required": [
+          "version",
+          "maximumAgeHours"
+        ],
+        "title": "ContextPolicy",
+        "type": "object"
+      },
       "CreateCaseRequest": {
         "additionalProperties": false,
         "properties": {
@@ -2286,6 +2309,171 @@
           "evaluationEligible"
         ],
         "title": "ExternalSourceProvenanceV2",
+        "type": "object"
+      },
+      "FactMutation": {
+        "additionalProperties": false,
+        "properties": {
+          "fact": {
+            "$ref": "#/components/schemas/TrustedContextFact"
+          },
+          "replayed": {
+            "title": "Replayed",
+            "type": "boolean"
+          },
+          "revision": {
+            "title": "Revision",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "fact",
+          "revision",
+          "replayed"
+        ],
+        "title": "FactMutation",
+        "type": "object"
+      },
+      "FactPage": {
+        "additionalProperties": false,
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/TrustedContextFact"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "limit": {
+            "title": "Limit",
+            "type": "integer"
+          },
+          "offset": {
+            "title": "Offset",
+            "type": "integer"
+          },
+          "revision": {
+            "title": "Revision",
+            "type": "integer"
+          },
+          "total": {
+            "title": "Total",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "items",
+          "revision",
+          "total",
+          "limit",
+          "offset"
+        ],
+        "title": "FactPage",
+        "type": "object"
+      },
+      "FactRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "contextKey": {
+            "enum": [
+              "assetCriticality",
+              "knownMaliciousIndicator",
+              "responseRequired",
+              "confirmedMalicious",
+              "evidenceConflict",
+              "repeatedCampaign",
+              "correlatedAlertCount",
+              "analystEscalated",
+              "unresolvedByTier1"
+            ],
+            "title": "Contextkey",
+            "type": "string"
+          },
+          "expectedRevision": {
+            "minimum": 0,
+            "title": "Expectedrevision",
+            "type": "integer"
+          },
+          "expiresAt": {
+            "format": "date-time",
+            "title": "Expiresat",
+            "type": "string"
+          },
+          "observedAt": {
+            "format": "date-time",
+            "title": "Observedat",
+            "type": "string"
+          },
+          "reason": {
+            "maxLength": 4000,
+            "minLength": 1,
+            "title": "Reason",
+            "type": "string"
+          },
+          "requestId": {
+            "format": "uuid",
+            "title": "Requestid",
+            "type": "string"
+          },
+          "sourceReference": {
+            "maxLength": 500,
+            "minLength": 1,
+            "title": "Sourcereference",
+            "type": "string"
+          },
+          "subjectType": {
+            "enum": [
+              "asset",
+              "ip",
+              "operational_alert",
+              "case"
+            ],
+            "title": "Subjecttype",
+            "type": "string"
+          },
+          "subjectValue": {
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Subjectvalue",
+            "type": "string"
+          },
+          "validFrom": {
+            "format": "date-time",
+            "title": "Validfrom",
+            "type": "string"
+          },
+          "value": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "integer"
+              },
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Value"
+          }
+        },
+        "required": [
+          "subjectType",
+          "subjectValue",
+          "contextKey",
+          "value",
+          "requestId",
+          "expectedRevision",
+          "observedAt",
+          "validFrom",
+          "expiresAt",
+          "reason",
+          "sourceReference"
+        ],
+        "title": "FactRequest",
         "type": "object"
       },
       "FamilyEffect": {
@@ -5317,6 +5505,144 @@
         "title": "QueueBandCount",
         "type": "object"
       },
+      "ResolvedField": {
+        "additionalProperties": false,
+        "properties": {
+          "availableAt": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Availableat"
+          },
+          "contextKey": {
+            "enum": [
+              "assetCriticality",
+              "knownMaliciousIndicator",
+              "responseRequired",
+              "confirmedMalicious",
+              "evidenceConflict",
+              "repeatedCampaign",
+              "correlatedAlertCount",
+              "analystEscalated",
+              "unresolvedByTier1"
+            ],
+            "title": "Contextkey",
+            "type": "string"
+          },
+          "expiresAt": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Expiresat"
+          },
+          "explanation": {
+            "title": "Explanation",
+            "type": "string"
+          },
+          "facts": {
+            "items": {
+              "$ref": "#/components/schemas/TrustedContextFact"
+            },
+            "title": "Facts",
+            "type": "array"
+          },
+          "status": {
+            "enum": [
+              "trusted",
+              "unknown",
+              "expired",
+              "conflict",
+              "not_applicable"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "value": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "integer"
+              },
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Value"
+          }
+        },
+        "required": [
+          "contextKey",
+          "value",
+          "status",
+          "facts",
+          "availableAt",
+          "expiresAt",
+          "explanation"
+        ],
+        "title": "ResolvedField",
+        "type": "object"
+      },
+      "ResolvedTrustedContext": {
+        "additionalProperties": false,
+        "properties": {
+          "complete": {
+            "title": "Complete",
+            "type": "boolean"
+          },
+          "context": {
+            "$ref": "#/components/schemas/TriageContext"
+          },
+          "evaluatedAt": {
+            "format": "date-time",
+            "title": "Evaluatedat",
+            "type": "string"
+          },
+          "fields": {
+            "items": {
+              "$ref": "#/components/schemas/ResolvedField"
+            },
+            "title": "Fields",
+            "type": "array"
+          },
+          "operationalAlertRef": {
+            "format": "uuid",
+            "title": "Operationalalertref",
+            "type": "string"
+          },
+          "resolverVersion": {
+            "const": "context-resolver-v1",
+            "default": "context-resolver-v1",
+            "title": "Resolverversion",
+            "type": "string"
+          }
+        },
+        "required": [
+          "operationalAlertRef",
+          "evaluatedAt",
+          "fields",
+          "context",
+          "complete"
+        ],
+        "title": "ResolvedTrustedContext",
+        "type": "object"
+      },
       "ResponseDecision": {
         "additionalProperties": false,
         "properties": {
@@ -5943,6 +6269,17 @@
       "ReviewSnapshot": {
         "additionalProperties": false,
         "properties": {
+          "contextProvenance": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ResolvedTrustedContext"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
           "inputVersion": {
             "title": "Inputversion",
             "type": "string"
@@ -7194,6 +7531,193 @@
           "auditEventId"
         ],
         "title": "TriageResponse",
+        "type": "object"
+      },
+      "TrustedContextFact": {
+        "additionalProperties": false,
+        "properties": {
+          "availableAt": {
+            "format": "date-time",
+            "title": "Availableat",
+            "type": "string"
+          },
+          "confidenceBasis": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Confidencebasis"
+          },
+          "contextKey": {
+            "enum": [
+              "assetCriticality",
+              "knownMaliciousIndicator",
+              "responseRequired",
+              "confirmedMalicious",
+              "evidenceConflict",
+              "repeatedCampaign",
+              "correlatedAlertCount",
+              "analystEscalated",
+              "unresolvedByTier1"
+            ],
+            "title": "Contextkey",
+            "type": "string"
+          },
+          "createdByActorId": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Createdbyactorid"
+          },
+          "expiresAt": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Expiresat"
+          },
+          "factRef": {
+            "format": "uuid",
+            "title": "Factref",
+            "type": "string"
+          },
+          "freshnessPolicy": {
+            "$ref": "#/components/schemas/ContextPolicy"
+          },
+          "id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Id"
+          },
+          "observedAt": {
+            "format": "date-time",
+            "title": "Observedat",
+            "type": "string"
+          },
+          "reason": {
+            "maxLength": 4000,
+            "minLength": 1,
+            "title": "Reason",
+            "type": "string"
+          },
+          "recordedAt": {
+            "format": "date-time",
+            "title": "Recordedat",
+            "type": "string"
+          },
+          "sourceReference": {
+            "maxLength": 500,
+            "minLength": 1,
+            "title": "Sourcereference",
+            "type": "string"
+          },
+          "sourceSnapshot": {
+            "additionalProperties": true,
+            "title": "Sourcesnapshot",
+            "type": "object"
+          },
+          "sourceType": {
+            "enum": [
+              "asset_inventory",
+              "threat_intelligence",
+              "analyst_assessment",
+              "detector_context",
+              "case_context",
+              "approved_registry",
+              "synthetic_fixture"
+            ],
+            "title": "Sourcetype",
+            "type": "string"
+          },
+          "status": {
+            "default": "active",
+            "enum": [
+              "active",
+              "withdrawn"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "subjectType": {
+            "enum": [
+              "asset",
+              "ip",
+              "operational_alert",
+              "case"
+            ],
+            "title": "Subjecttype",
+            "type": "string"
+          },
+          "subjectValue": {
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Subjectvalue",
+            "type": "string"
+          },
+          "validFrom": {
+            "format": "date-time",
+            "title": "Validfrom",
+            "type": "string"
+          },
+          "value": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "integer"
+              },
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Value"
+          }
+        },
+        "required": [
+          "subjectType",
+          "subjectValue",
+          "contextKey",
+          "value",
+          "factRef",
+          "sourceType",
+          "sourceReference",
+          "observedAt",
+          "availableAt",
+          "validFrom",
+          "expiresAt",
+          "recordedAt",
+          "createdByActorId",
+          "reason",
+          "sourceSnapshot",
+          "freshnessPolicy"
+        ],
+        "title": "TrustedContextFact",
         "type": "object"
       }
     }
@@ -10294,6 +10818,78 @@
         ]
       }
     },
+    "/api/v2/alerts/{alertRef}/context": {
+      "get": {
+        "operationId": "getTrustedAlertContext",
+        "parameters": [
+          {
+            "description": "`Bearer <token>` from POST /api/auth/login",
+            "in": "header",
+            "name": "Authorization",
+            "required": false,
+            "schema": {
+              "example": "Bearer eyJhbGciOiJIUzI1NiJ9...",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "alertRef",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResolvedTrustedContext"
+                }
+              }
+            },
+            "description": "Per-field provenance, freshness and conflict state"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Validation failed"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not signed in, or the token expired"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not found"
+          }
+        },
+        "summary": "Resolve current scoped safety evidence",
+        "tags": [
+          "Trusted context"
+        ]
+      }
+    },
     "/api/v2/alerts/{alertRef}/selective-review": {
       "get": {
         "operationId": "getSelectiveReview",
@@ -11394,6 +11990,173 @@
         "summary": "Read V2 state and latest routing decision",
         "tags": [
           "V2 routing"
+        ]
+      }
+    },
+    "/api/v2/context/facts": {
+      "get": {
+        "operationId": "listTrustedContextFacts",
+        "parameters": [
+          {
+            "description": "`Bearer <token>` from POST /api/auth/login",
+            "in": "header",
+            "name": "Authorization",
+            "required": false,
+            "schema": {
+              "example": "Bearer eyJhbGciOiJIUzI1NiJ9...",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "schema": {
+              "default": 50,
+              "maximum": 200,
+              "minimum": 1,
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "offset",
+            "schema": {
+              "default": 0,
+              "minimum": 0,
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FactPage"
+                }
+              }
+            },
+            "description": "Facts and global revision"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Validation failed"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not signed in, or the token expired"
+          }
+        },
+        "summary": "Append-only safety fact history",
+        "tags": [
+          "Trusted context"
+        ]
+      },
+      "post": {
+        "operationId": "collectTrustedContextFact",
+        "parameters": [
+          {
+            "description": "`Bearer <token>` from POST /api/auth/login",
+            "in": "header",
+            "name": "Authorization",
+            "required": false,
+            "schema": {
+              "example": "Bearer eyJhbGciOiJIUzI1NiJ9...",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FactRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FactMutation"
+                }
+              }
+            },
+            "description": "Immutable fact or idempotent retry"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Validation failed"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not signed in, or the token expired"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Role not permitted"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          }
+        },
+        "summary": "Record structured prospective analyst assessment",
+        "tags": [
+          "Trusted context"
+        ],
+        "x-required-roles": [
+          "security_analyst",
+          "system_admin"
         ]
       }
     },
@@ -13676,6 +14439,10 @@
     }
   ],
   "tags": [
+    {
+      "description": "Prospective scoped facts; no external enrichment",
+      "name": "Trusted context"
+    },
     {
       "description": "Separate review disposition, never a human verdict or closure",
       "name": "Selective review"

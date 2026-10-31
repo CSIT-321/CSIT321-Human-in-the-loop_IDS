@@ -8,6 +8,8 @@ from packages.contracts.operational_v2 import V2Contract
 from packages.detection.adapters.operational_v2 import read_projection,read_triage
 from packages.detection.triage_memory import MemoryCommand,lookup_memory
 from packages.detection.triage_policy import TriageContext
+from packages.detection.context_store import resolved_for
+from packages.detection.trusted_context import ResolvedTrustedContext
 from packages.detection.selective_review_policy import (
     Disposition,SelectivePolicy,SelectiveResult,ReviewInputs,load_policy,evaluate_review,
 )
@@ -26,6 +28,7 @@ class ReviewSnapshot(V2Contract):
     policy_config_snapshot: SelectivePolicy
     result: SelectiveResult
     input_version: str
+    context_provenance: ResolvedTrustedContext | None = None
 
 
 class ReviewEvent(V2Contract):
@@ -97,8 +100,11 @@ def current_snapshot(conn,ref):
     aid=_id(conn,ref)
     alert=read_projection(conn,aid)
     triage=read_triage(conn,aid)
-    audit=conn.execute('SELECT * FROM operational_triage_policy_audit WHERE operational_alert_id=? ORDER BY id DESC LIMIT 1',(aid,)).fetchone()
-    context=TriageContext.model_validate_json(audit['context_snapshot']) if audit else TriageContext()
+    now=m.utc_now()
+    provenance=resolved_for(conn,ref,now)
+    context=provenance.context
+    trusted=[field for field in provenance.fields if field.status=='trusted']
+    context_ids=[fact.id for field in trusted for fact in field.facts if fact.id is not None]
     matches=[];offset=0
     while True:
         page,total=lookup_memory(conn,ref,200,offset)
@@ -107,12 +113,13 @@ def current_snapshot(conn,ref):
     override=conn.execute("SELECT 1 FROM selective_review_events WHERE operational_alert_id=? AND action='require_review' LIMIT 1",(aid,)).fetchone() is not None
     reviewed=conn.execute('SELECT 1 FROM triage_memory_support_events WHERE source_alert_id=? LIMIT 1',(aid,)).fetchone() is not None
     reviewed=reviewed or conn.execute("SELECT 1 FROM tier2_cases c JOIN tier2_case_events e ON e.case_id=c.id WHERE c.primary_operational_alert_id=? AND e.action='finding' LIMIT 1",(aid,)).fetchone() is not None
-    inputs=ReviewInputs(alert=alert,triage=triage,context=context,context_audit_id=audit['id'] if audit else None,
-        context_recorded_at=audit['created_at'] if audit else None,matches=matches,human_override=override,human_verdict_present=reviewed)
+    inputs=ReviewInputs(alert=alert,triage=triage,context=context,context_audit_id=max(context_ids,default=None),
+        context_recorded_at=min((field.available_at for field in trusted),default=None),matches=matches,human_override=override,human_verdict_present=reviewed)
     policy=load_policy()
-    result=evaluate_review(inputs,policy,m.utc_now())
-    version=_hash(dict(inputs=inputs.model_dump(mode='json'),policy=policy.model_dump(mode='json'),result=result.model_dump(mode='json')))
-    return ReviewSnapshot(inputs=inputs,policy_config_snapshot=policy,result=result,input_version=version)
+    result=evaluate_review(inputs,policy,now)
+    version=_hash(dict(inputs=inputs.model_dump(mode='json'),policy=policy.model_dump(mode='json'),result=result.model_dump(mode='json'),
+        provenance=provenance.model_dump(mode='json',exclude={'evaluated_at'})))
+    return ReviewSnapshot(inputs=inputs,policy_config_snapshot=policy,result=result,input_version=version,context_provenance=provenance)
 
 
 def read_review(conn,ref):

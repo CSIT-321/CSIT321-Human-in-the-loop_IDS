@@ -7,6 +7,7 @@ import sqlite3
 from packages.detection.adapters.operational_v2 import read_projection
 from packages.detection.triage_memory import MemoryLesson
 from packages.evaluation.temporal_review import TemporalArchive
+from packages.detection.context_store import read_facts
 
 
 def load_database(path, policies, holdout_start, holdout_end):
@@ -45,6 +46,7 @@ def load_database(path, policies, holdout_start, holdout_end):
                 available_at=row['created_at'], outcome=row['finding']))
         for row in conn.execute("SELECT * FROM selective_review_events WHERE action='require_review' ORDER BY id"):
             overrides.append(dict(alert_ref=refs[row['operational_alert_id']], available_at=row['created_at']))
+        facts=read_facts(conn) if conn.execute("SELECT 1 FROM sqlite_master WHERE type='table' AND name='trusted_context_facts'").fetchone() else None
         return TemporalArchive(data_basis='historical-inputs-unverified', provenance='Immutable SQLite history: '+Path(path).name,
             holdout_start=holdout_start, holdout_end=holdout_end, alerts=alerts, states=states, contexts=contexts,
-            policies=policies, lessons=lessons, supports=supports, activations=activations, outcomes=outcomes, overrides=overrides)
+            policies=policies, lessons=lessons, supports=supports, activations=activations, outcomes=outcomes, overrides=overrides,context_facts=facts)

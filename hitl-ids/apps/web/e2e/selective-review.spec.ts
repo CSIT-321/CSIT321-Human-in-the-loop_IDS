@@ -32,6 +32,9 @@ test("human lessons earn deferral, conflict recalls it, and human override is st
   await expect(section.getByText("Operational priority: 85",{exact:true})).toBeVisible();
   await expect(section.getByText("No Immediate Review is an automation decision, not a human verdict.")).toBeVisible();
   await expect(section.getByText("Support: 3 / Conflicts: 0 / Match: high")).toBeVisible();
+  const safety=section.getByRole("region",{name:"Trusted Context / Safety Evidence"});
+  await expect(safety.getByText("Source: synthetic_fixture",{exact:true})).toHaveCount(9);
+  await expect(safety.getByText("Status: trusted",{exact:true})).toHaveCount(9);
   await section.evaluate(el=>el.scrollIntoView({block:"start"}));
   await page.screenshot({path:"test-results/selective-review-desktop.png",fullPage:true});
   await page.setViewportSize({width:390,height:844});

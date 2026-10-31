@@ -305,7 +305,7 @@ def test_migration_five_is_additive_and_preserves_existing_band_encoding(tmp_pat
         old_state = dict(conn.execute("SELECT * FROM operational_triage_state_v2").fetchone())
         legacy = snapshot(conn)
         root = conn.execute("SELECT rootpage FROM sqlite_master WHERE name='operational_triage_state_v2'").fetchone()[0]
-        assert db.migrate(conn) == [5, 6, 7, 8, 9, 10, 11] and db.migrate(conn) == []
+        assert db.migrate(conn) == [5, 6, 7, 8, 9, 10, 11, 12] and db.migrate(conn) == []
         state = dict(conn.execute("SELECT * FROM operational_triage_state_v2").fetchone())
         assert state.pop("priority_band_scheme") == "legacy_labels"
         assert state == old_state and read_triage(conn, 1).priority_band == "high"

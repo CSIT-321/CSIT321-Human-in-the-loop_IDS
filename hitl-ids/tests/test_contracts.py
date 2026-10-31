@@ -66,6 +66,8 @@ DEVIATION_COLUMNS = {
     "flow_data": {"source_record_id"},
 }
 DEVIATION_TABLES = {
+    "trusted_context_facts": {"id","fact_ref","actor_id","request_id","request_payload","snapshot"},
+    "triage_context_provenance": {"id","policy_audit_id","snapshot"},
     "selective_review_events": {"id","event_ref","operational_alert_id","actor_id","action","reason","request_id","request_payload","decision_snapshot","event_type","created_at"},
     "triage_memory_lessons": {"id","lesson_ref","context_key","detector_source","source_alert_id","source_case_id","actor_id","snapshot","created_at"},
     "triage_memory_support_events": {"id","lesson_id","source_alert_id","source_case_id","actor_id","outcome","relation","reason","evidence_snapshot","is_primary","request_id","request_payload","created_at"},
@@ -307,12 +309,14 @@ def test_every_table_model_matches_its_columns(conn):
         "external_alert_inbox", "operational_alerts_v2", "operational_triage_state_v2",
         "operational_triage_policy_audit", "operational_routing_audit",
         "external_eligibility_review", "external_operational_admission", "tier2_cases", "tier2_case_state", "tier2_case_events",
-        "response_recommendations", "response_decisions", "triage_memory_lessons", "triage_memory_support_events", "triage_memory_decisions", "triage_memory_audit", "selective_review_events"}
+        "response_recommendations", "response_decisions", "triage_memory_lessons", "triage_memory_support_events", "triage_memory_decisions", "triage_memory_audit", "selective_review_events", "trusted_context_facts", "triage_context_provenance"}
     for table, model in db.TABLE_MODELS.items():
         assert set(model.model_fields) == set(columns(conn, table)), table
 
 
 EXPECTED_FOREIGN_KEYS = {
+    ("trusted_context_facts","actor_id","users","id"),
+    ("triage_context_provenance","policy_audit_id","operational_triage_policy_audit","id"),
     ("selective_review_events","operational_alert_id","operational_alerts_v2","id"),
     ("selective_review_events","actor_id","users","id"),
     ("triage_memory_lessons","source_alert_id","operational_alerts_v2","id"),

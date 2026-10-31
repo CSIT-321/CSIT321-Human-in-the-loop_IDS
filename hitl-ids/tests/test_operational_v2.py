@@ -33,7 +33,7 @@ def snapshot(conn):
                                       "'operational_triage_state_v2', 'operational_triage_policy_audit', 'operational_routing_audit', "
                                       "'external_eligibility_review', 'external_operational_admission',"
                                       "'tier2_cases','tier2_case_state','tier2_case_events','response_recommendations','response_decisions',"
-                                      "'triage_memory_lessons','triage_memory_support_events','triage_memory_decisions','triage_memory_audit','selective_review_events')")]
+                                      "'triage_memory_lessons','triage_memory_support_events','triage_memory_decisions','triage_memory_audit','selective_review_events','trusted_context_facts','triage_context_provenance')")]
     return {name: [tuple(r) for r in conn.execute(f'SELECT * FROM "{name}" ORDER BY 1')]
             for name in names}
 
@@ -207,7 +207,7 @@ def test_migration_four_preserves_populated_v3_rows_schema_and_foreign_keys(tmp_
                                              "WHERE name NOT LIKE 'sqlite_%' ORDER BY name")))
         trace = []
         conn.set_trace_callback(trace.append)
-        assert db.migrate(conn) == [4, 5, 6, 7, 8, 9, 10, 11]
+        assert db.migrate(conn) == [4, 5, 6, 7, 8, 9, 10, 11, 12]
         assert db.migrate(conn) == []
         assert snapshot(conn) == before
         for name, rootpage, sql in schema:

@@ -9,12 +9,13 @@ from packages.detection.selective_review_policy import load_policy
 from packages.detection.triage_memory import MemoryLesson, context_for, load_config
 from packages.detection.triage_policy import TriageContext
 from packages.evaluation.temporal_review import TemporalArchive
+from packages.detection.trusted_context import fixture_facts
 
 
 SCENARIOS = ('safe_learning', 'conflict', 'leakage_trap', 'unknown_context')
 
 
-def synthetic_archive(scenario):
+def synthetic_archive(scenario, *, with_provenance=False):
     if scenario not in SCENARIOS:
         raise ValueError('unknown synthetic scenario')
     origin = datetime(2026, 1, 1, tzinfo=timezone.utc)
@@ -62,7 +63,8 @@ def synthetic_archive(scenario):
         if malicious:
             supports.append(dict(event_id='contradiction', lesson_ref=lesson.lesson_ref, alert_ref=alerts[index].operational_alert_ref,
                 available_at=moment(minute), outcome=outcome, relation='conflict'))
-    return TemporalArchive(data_basis='synthetic/demo', provenance='Deterministic synthetic scenario: '+scenario,
+    facts=[f for alert, observation in zip(alerts,contexts) for f in fixture_facts(alert,observation['context'],observation['available_at'])] if with_provenance else None
+    return TemporalArchive(data_basis='synthetic/demo', provenance='Deterministic synthetic scenario: '+scenario,context_facts=facts,
         holdout_start=moment(7), holdout_end=moment(20), alerts=alerts, states=states, contexts=contexts,
         policies=[dict(effective_at=moment(-1), available_at=moment(-1), configuration=load_policy())], lessons=[lesson],
         supports=supports, outcomes=outcomes,

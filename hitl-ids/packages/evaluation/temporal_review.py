@@ -11,6 +11,7 @@ from packages.contracts.operational_v2 import OperationalAlertV2, OperationalTri
 from packages.detection.selective_review_policy import ReviewInputs, SelectivePolicy, evaluate_review
 from packages.detection.triage_memory import MemoryDecision, MemoryLesson, MemoryView, Outcome, context_for, explain_match
 from packages.detection.triage_policy import TriageContext
+from packages.detection.trusted_context import TrustedContextFact, resolve_context
 
 
 def timestamp(value):
@@ -85,6 +86,7 @@ class TemporalArchive(V2Contract):
     activations: list[ActivationEvent]
     outcomes: list[OutcomeEvent]
     overrides: list[OverrideEvent] = Field(default_factory=list)
+    context_facts: list[TrustedContextFact] | None = None
 
     @model_validator(mode='after')
     def coherent_history(self):
@@ -96,6 +98,8 @@ class TemporalArchive(V2Contract):
             raise ValueError('duplicate alert or lesson identity')
         for alert in self.alerts:
             timestamp(alert.occurred_at)
+        if self.context_facts is not None and len({f.fact_ref for f in self.context_facts})!=len(self.context_facts):
+            raise ValueError('duplicate context fact reference')
         for lesson in self.lessons:
             if lesson.source_operational_alert_ref not in alerts:
                 raise ValueError('lesson source alert is missing')
@@ -234,6 +238,8 @@ def evaluate_temporal(archive: TemporalArchive):
         ref = alert.operational_alert_ref
         state = _latest([e for e in archive.states if e.alert_ref == ref], at)
         context = _latest([e for e in archive.contexts if e.alert_ref == ref], at)
+        provenance = resolve_context(alert,archive.context_facts,at) if archive.context_facts is not None else None
+        trusted = [field for field in provenance.fields if field.status=='trusted'] if provenance else []
         period = max((p for p in archive.policies if p.available_at <= at and p.effective_at <= at),
             key=lambda p: p.effective_at, default=None)
         matches = related_matches(memory_at(archive, at), alert)
@@ -241,8 +247,9 @@ def evaluate_temporal(archive: TemporalArchive):
         inputs = None
         result = None
         if state is not None:
-            inputs = ReviewInputs(alert=alert, triage=state.state, context=context.context if context else TriageContext(),
-                context_audit_id=context.audit_id if context else None, context_recorded_at=context.available_at if context else None,
+            inputs = ReviewInputs(alert=alert, triage=state.state, context=provenance.context if provenance else context.context if context else TriageContext(),
+                context_audit_id=(max((fact.id or 1 for field in trusted for fact in field.facts),default=None) if provenance else context.audit_id if context else None),
+                context_recorded_at=(min((field.available_at for field in trusted),default=None) if provenance else context.available_at if context else None),
                 matches=matches, human_override=any(e.alert_ref == ref and e.available_at < at for e in archive.overrides),
                 human_verdict_present=any(e.alert_ref == ref and e.available_at < at for e in [*archive.outcomes, *archive.supports]))
             if period:
@@ -270,6 +277,7 @@ def evaluate_temporal(archive: TemporalArchive):
             policySnapshot=period.configuration.model_dump(mode='json', by_alias=True) if period else None,
             policyEffectiveAt=period.effective_at.isoformat() if period else None,
             inputs=inputs.model_dump(mode='json', by_alias=True) if inputs else None,
+            contextProvenance=provenance.model_dump(mode='json',by_alias=True) if provenance else None,
             memoryCoverage=bool(matches), activeLessonCoverage=any(m.guidance_active for m in matches),
             laterOutcome=later_outcome, laterOutcomeAvailableAt=truth_at.isoformat() if truth_at else None,
             laterOutcomeHistory=[e.model_dump(mode='json', by_alias=True) for e in truth],
@@ -312,7 +320,7 @@ def evaluate_temporal(archive: TemporalArchive):
             'Historical inputs supplied; provenance and label completeness require independent validation. Not proof of production safety.',
         provenance=archive.provenance, inputSha256=digest, holdoutStart=archive.holdout_start.isoformat(), holdoutEnd=archive.holdout_end.isoformat(),
         totalHoldoutAlerts=len(rows), excludedAlerts=sum(not r['eligible'] for r in rows),
-        metrics=_metrics(rows), memoryMetrics=memory_metrics, breakdowns=groups, decisions=rows,
+        metrics=_metrics(rows), contextCoverage=context_coverage(rows), memoryMetrics=memory_metrics, breakdowns=groups, decisions=rows,
         limitations=['Observed-feedback replay, not a causal simulation of feedback lost through deferral.',
             'Any strictly later malicious/suspicious outcome before holdout end scores unsafe; otherwise the latest outcome scores. Missing/inconclusive outcomes are not safe labels.',
             'Recall counts unique deferred alerts receiving a related later conflict; it does not erase the original workload/safety result.',
@@ -320,15 +328,31 @@ def evaluate_temporal(archive: TemporalArchive):
             'Historical triage missing at occurrence excludes the alert; policy gaps force review. No present-day fallback.'])
 
 
+def context_coverage(rows):
+    eligible=[r for r in rows if r['eligible']]
+    complete=[r for r in eligible if r.get('contextProvenance') and r['contextProvenance']['complete']]
+    def blocked(statuses):
+        return sum(any(f['status'] in statuses for f in (r.get('contextProvenance') or {}).get('fields',[])) for r in eligible)
+    return dict(eligibleAlerts=len(eligible),completeTrustedSafetyContext=len(complete),
+        blockedByUnknownContext=blocked(('unknown','not_applicable')),blockedByExpiredContext=blocked(('expired',)),
+        blockedByConflictingContext=blocked(('conflict',)),legacySnapshotsWithoutFactProvenance=sum(r.get('contextProvenance') is None for r in eligible),
+        contextCoverageRate=len(complete)/len(eligible) if eligible else 0,
+        trustedContextDeferralRate=sum(r['disposition']=='no_immediate_review' for r in complete)/len(complete) if complete else None)
+
+
 def render_markdown(report):
     lines = ['# Selective Review Temporal Holdout', '', report['evidenceWarning'], '',
         f"Window: [{report['holdoutStart']}, {report['holdoutEnd']})", f"Input SHA-256: `{report['inputSha256']}`", '',
         '## Workload and Safety', '', '| Metric | Value |', '| --- | --- |']
     lines += [f'| {key} | {value if value is not None else "unavailable"} |' for key, value in report['metrics'].items()]
-    lines += ['', f"Excluded alerts: {report['excludedAlerts']} / {report['totalHoldoutAlerts']}", '', '## Memory', '',
+    lines += ['', '## Context Coverage', '', '```json', json.dumps(report['contextCoverage'],indent=2), '```',
+        '', f"Excluded alerts: {report['excludedAlerts']} / {report['totalHoldoutAlerts']}", '', '## Memory', '',
         '```json', json.dumps(report['memoryMetrics'], indent=2), '```']
     for group, entries in report['breakdowns'].items():
         lines += ['', f'## By {group}', '', '| Group | Eligible | Deferred | Unsafe |', '| --- | --- | --- |']
         lines += [f"| {str(key).replace('|', '/').replace(chr(10), ' ')} | {m['totalEligibleAlerts']} | {m['noImmediateReviewCount']} | {m['maliciousOrSuspiciousIncorrectlyDeferred']} |" for key, m in entries.items()]
     lines += ['', '## Interpretation', '', *['- '+s for s in report['limitations']]]
+    if 'prospectiveProtocol' in report:
+        lines += ['', '## Prospective Protocol', '', '```json',json.dumps(report['prospectiveProtocol'],indent=2),'```',
+            '```json',json.dumps(report['outcomeCompleteness'],indent=2),'```']
     return '\n'.join(lines)+'\n'

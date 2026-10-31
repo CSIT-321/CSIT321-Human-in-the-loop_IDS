@@ -1,0 +1,23 @@
+{
+  "version": "prospective-context-protocol-v1",
+  "registeredAt": "2026-10-31T13:30:15Z",
+  "holdoutStart": "2026-11-01T00:00:00+08:00",
+  "holdoutEnd": "2026-11-15T00:00:00+08:00",
+  "minimumEligibleAlerts": 100,
+  "minimumOutcomeCompleteness": 0.95,
+  "selectivePolicyVersion": "selective-review-v1",
+  "contextPolicyVersion": "context-provenance-v1",
+  "selectivePolicy": {
+    "version": "selective-review-v1", "minimumSupport": 3, "minimumAgreementRatio": 0.67,
+    "falsePositiveMinimumSupport": 5, "contextMaximumAgeHours": 24,
+    "campaignAlertThreshold": 5, "auditSamplePercent": 10
+  },
+  "contextPolicy": {
+    "version": "context-provenance-v1",
+    "maximumAgeHours": {
+      "assetCriticality": 168, "knownMaliciousIndicator": 4, "responseRequired": 8,
+      "confirmedMalicious": 8, "evidenceConflict": 8, "repeatedCampaign": 4,
+      "correlatedAlertCount": 4, "analystEscalated": 8, "unresolvedByTier1": 8
+    }
+  }
+}

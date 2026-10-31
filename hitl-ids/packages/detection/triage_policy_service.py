@@ -7,6 +7,7 @@ import sqlite3
 from packages.contracts import db, models as m
 from packages.contracts.operational_v2 import OperationalTriageStateV2, POLICY_BAND_STORAGE
 from packages.detection.adapters.operational_v2 import read_projection, read_triage
+from packages.detection.context_store import resolved_for
 from packages.detection.triage_policy import (
     TriageContext, TriagePolicy, TriagePolicyResult, evaluate_triage, load_triage_policy,
 )
@@ -113,6 +114,9 @@ def apply_triage_policy(conn: sqlite3.Connection, operational_id: int, *, actor_
             "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
             (operational_id, actor_id, policy.version, policy_json, context_json, result_json,
              before_json, _json(after), db.format_timestamp(moment)))
+        provenance = resolved_for(conn, alert.operational_alert_ref, moment)
+        conn.execute('INSERT INTO triage_context_provenance (policy_audit_id,snapshot) VALUES (?,?)',
+                     (audit.lastrowid, provenance.model_dump_json(by_alias=True)))
         persisted = read_triage(conn, operational_id)
         if persisted != after:
             raise ValueError("triage storage round-trip mismatch")

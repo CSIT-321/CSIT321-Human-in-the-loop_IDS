@@ -299,6 +299,9 @@ about what is done.
 
 ## Related documents
 
+- [`prospective-context-provenance.md`](prospective-context-provenance.md) - scoped fact -> append-only
+  temporal history -> deterministic resolution -> existing safety gates. Unknown/expired/conflicting
+  context still requires review. No external enrichment or response execution.
 - [`selective-review-temporal-evaluation.md`](selective-review-temporal-evaluation.md) - offline chronology:
   prior human reviews -> explicit activation -> future alert at T -> unchanged selective policy ->
   later truth scoring/recall. Strictly earlier memory and available-at-T context/policy only;

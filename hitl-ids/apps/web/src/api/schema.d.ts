@@ -486,6 +486,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v2/alerts/{alertRef}/context": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Resolve current scoped safety evidence */
+        get: operations["getTrustedAlertContext"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v2/alerts/{alertRef}/selective-review": {
         parameters: {
             query?: never;
@@ -667,6 +684,24 @@ export interface paths {
         get: operations["getV2Routing"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/context/facts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Append-only safety fact history */
+        get: operations["listTrustedContextFacts"];
+        put?: never;
+        /** Record structured prospective analyst assessment */
+        post: operations["collectTrustedContextFact"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1528,6 +1563,15 @@ export interface components {
             /** Support */
             support: number;
         };
+        /** ContextPolicy */
+        ContextPolicy: {
+            /** Maximumagehours */
+            maximumAgeHours: {
+                [key: string]: number;
+            };
+            /** Version */
+            version: string;
+        };
         /** CreateCaseRequest */
         CreateCaseRequest: {
             /** Expectedstateversion */
@@ -2086,6 +2130,70 @@ export interface components {
              * @enum {string}
              */
             sourceKind: "external_nids_alert";
+        };
+        /** FactMutation */
+        FactMutation: {
+            fact: components["schemas"]["TrustedContextFact"];
+            /** Replayed */
+            replayed: boolean;
+            /** Revision */
+            revision: number;
+        };
+        /** FactPage */
+        FactPage: {
+            /** Items */
+            items: components["schemas"]["TrustedContextFact"][];
+            /** Limit */
+            limit: number;
+            /** Offset */
+            offset: number;
+            /** Revision */
+            revision: number;
+            /** Total */
+            total: number;
+        };
+        /** FactRequest */
+        FactRequest: {
+            /**
+             * Contextkey
+             * @enum {string}
+             */
+            contextKey: "assetCriticality" | "knownMaliciousIndicator" | "responseRequired" | "confirmedMalicious" | "evidenceConflict" | "repeatedCampaign" | "correlatedAlertCount" | "analystEscalated" | "unresolvedByTier1";
+            /** Expectedrevision */
+            expectedRevision: number;
+            /**
+             * Expiresat
+             * Format: date-time
+             */
+            expiresAt: string;
+            /**
+             * Observedat
+             * Format: date-time
+             */
+            observedAt: string;
+            /** Reason */
+            reason: string;
+            /**
+             * Requestid
+             * Format: uuid
+             */
+            requestId: string;
+            /** Sourcereference */
+            sourceReference: string;
+            /**
+             * Subjecttype
+             * @enum {string}
+             */
+            subjectType: "asset" | "ip" | "operational_alert" | "case";
+            /** Subjectvalue */
+            subjectValue: string;
+            /**
+             * Validfrom
+             * Format: date-time
+             */
+            validFrom: string;
+            /** Value */
+            value: boolean | number | string | null;
         };
         /**
          * FamilyEffect
@@ -3382,6 +3490,53 @@ export interface components {
             /** Requiresreview */
             requiresReview: number;
         };
+        /** ResolvedField */
+        ResolvedField: {
+            /** Availableat */
+            availableAt: string | null;
+            /**
+             * Contextkey
+             * @enum {string}
+             */
+            contextKey: "assetCriticality" | "knownMaliciousIndicator" | "responseRequired" | "confirmedMalicious" | "evidenceConflict" | "repeatedCampaign" | "correlatedAlertCount" | "analystEscalated" | "unresolvedByTier1";
+            /** Expiresat */
+            expiresAt: string | null;
+            /** Explanation */
+            explanation: string;
+            /** Facts */
+            facts: components["schemas"]["TrustedContextFact"][];
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "trusted" | "unknown" | "expired" | "conflict" | "not_applicable";
+            /** Value */
+            value: boolean | number | string | null;
+        };
+        /** ResolvedTrustedContext */
+        ResolvedTrustedContext: {
+            /** Complete */
+            complete: boolean;
+            context: components["schemas"]["TriageContext"];
+            /**
+             * Evaluatedat
+             * Format: date-time
+             */
+            evaluatedAt: string;
+            /** Fields */
+            fields: components["schemas"]["ResolvedField"][];
+            /**
+             * Operationalalertref
+             * Format: uuid
+             */
+            operationalAlertRef: string;
+            /**
+             * Resolverversion
+             * @default context-resolver-v1
+             * @constant
+             */
+            resolverVersion: "context-resolver-v1";
+        };
         /** ResponseDecision */
         ResponseDecision: {
             /** Actorid */
@@ -3620,6 +3775,8 @@ export interface components {
         };
         /** ReviewSnapshot */
         ReviewSnapshot: {
+            /** @default null */
+            contextProvenance: components["schemas"]["ResolvedTrustedContext"] | null;
             /** Inputversion */
             inputVersion: string;
             inputs: components["schemas"]["ReviewInputs"];
@@ -4141,6 +4298,82 @@ export interface components {
              * @description The ALERT_STATUS_CHANGE entry this wrote
              */
             auditEventId: number;
+        };
+        /** TrustedContextFact */
+        TrustedContextFact: {
+            /**
+             * Availableat
+             * Format: date-time
+             */
+            availableAt: string;
+            /**
+             * Confidencebasis
+             * @default null
+             */
+            confidenceBasis: string | null;
+            /**
+             * Contextkey
+             * @enum {string}
+             */
+            contextKey: "assetCriticality" | "knownMaliciousIndicator" | "responseRequired" | "confirmedMalicious" | "evidenceConflict" | "repeatedCampaign" | "correlatedAlertCount" | "analystEscalated" | "unresolvedByTier1";
+            /** Createdbyactorid */
+            createdByActorId: number | null;
+            /** Expiresat */
+            expiresAt: string | null;
+            /**
+             * Factref
+             * Format: uuid
+             */
+            factRef: string;
+            freshnessPolicy: components["schemas"]["ContextPolicy"];
+            /**
+             * Id
+             * @default null
+             */
+            id: number | null;
+            /**
+             * Observedat
+             * Format: date-time
+             */
+            observedAt: string;
+            /** Reason */
+            reason: string;
+            /**
+             * Recordedat
+             * Format: date-time
+             */
+            recordedAt: string;
+            /** Sourcereference */
+            sourceReference: string;
+            /** Sourcesnapshot */
+            sourceSnapshot: {
+                [key: string]: unknown;
+            };
+            /**
+             * Sourcetype
+             * @enum {string}
+             */
+            sourceType: "asset_inventory" | "threat_intelligence" | "analyst_assessment" | "detector_context" | "case_context" | "approved_registry" | "synthetic_fixture";
+            /**
+             * Status
+             * @default active
+             * @enum {string}
+             */
+            status: "active" | "withdrawn";
+            /**
+             * Subjecttype
+             * @enum {string}
+             */
+            subjectType: "asset" | "ip" | "operational_alert" | "case";
+            /** Subjectvalue */
+            subjectValue: string;
+            /**
+             * Validfrom
+             * Format: date-time
+             */
+            validFrom: string;
+            /** Value */
+            value: boolean | number | string | null;
         };
     };
     responses: never;
@@ -5598,6 +5831,58 @@ export interface operations {
             };
         };
     };
+    getTrustedAlertContext: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description `Bearer <token>` from POST /api/auth/login */
+                Authorization?: string;
+            };
+            path: {
+                alertRef: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Per-field provenance, freshness and conflict state */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ResolvedTrustedContext"];
+                };
+            };
+            /** @description Validation failed */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not signed in, or the token expired */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
     getSelectiveReview: {
         parameters: {
             query?: never;
@@ -6332,6 +6617,122 @@ export interface operations {
             };
             /** @description Not found */
             404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    listTrustedContextFacts: {
+        parameters: {
+            query?: {
+                limit?: number;
+                offset?: number;
+            };
+            header?: {
+                /** @description `Bearer <token>` from POST /api/auth/login */
+                Authorization?: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Facts and global revision */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FactPage"];
+                };
+            };
+            /** @description Validation failed */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not signed in, or the token expired */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    collectTrustedContextFact: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description `Bearer <token>` from POST /api/auth/login */
+                Authorization?: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["FactRequest"];
+            };
+        };
+        responses: {
+            /** @description Immutable fact or idempotent retry */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FactMutation"];
+                };
+            };
+            /** @description Validation failed */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not signed in, or the token expired */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Role not permitted */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
                 headers: {
                     [name: string]: unknown;
                 };

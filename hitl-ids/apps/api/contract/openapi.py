@@ -33,6 +33,8 @@ from packages.detection.external_admission import AdmissionRequest, EligibilityR
 from apps.api.contract.responses import ResponsePage
 from packages.detection.triage_memory import MemoryReviewRequest,MemoryDecisionRequest,MemoryMutation,MemoryView,MemoryAudit,MemoryMatch
 from packages.detection.selective_review import ReviewCommand,ReviewView,ReviewMutation,ReviewEvent,ReviewMetrics
+from packages.detection.context_store import FactRequest,FactPage,FactMutation
+from packages.detection.trusted_context import ResolvedTrustedContext
 from packages.detection.response_approval import ResponseRequest,ManualResponseRequest,ResponseDecisionRequest,ResponseMutation
 from packages.detection.tier2_cases import (
     CaseView, CaseEvent, CaseMutation, CreateCaseRequest, CaseCommand, LinkCaseRequest, FindingRequest,
@@ -53,6 +55,7 @@ SCHEMA_REF = "#/components/schemas/{model}"
 #: Every model that appears on the wire. Listed explicitly rather than discovered, so adding a
 #: model to the API is a deliberate act.
 MODELS: tuple[type[BaseModel], ...] = (
+    FactRequest,FactPage,FactMutation,ResolvedTrustedContext,
     ReviewCommand,ReviewView,ReviewMutation,ReviewEvent,ReviewMetrics,
     MemoryReviewRequest,MemoryDecisionRequest,MemoryMutation,MemoryView,MemoryAudit,MemoryMatch,
     ResponsePage,ResponseRequest,ManualResponseRequest,ResponseDecisionRequest,ResponseMutation,
@@ -681,6 +684,16 @@ def _paths() -> dict[str, Any]:
         paths['/api/v2/alerts/{alertRef}/selective-review/'+suffix]={'post':{'operationId':operation,'summary':operation,
             'tags':['Selective review'],'parameters':[AUTH_PARAMETER,alert_ref],'x-required-roles':['security_analyst','system_admin'],
             'requestBody':{'required':True,**_json(ReviewCommand)},'responses':{'200':{'description':'Recorded policy or human override',**_json(ReviewMutation)},**_errors(400,403,404,409)}}}
+    paths['/api/v2/context/facts']={
+        'get':{'operationId':'listTrustedContextFacts','summary':'Append-only safety fact history','tags':['Trusted context'],
+            'parameters':[AUTH_PARAMETER,*paging],'responses':{'200':{'description':'Facts and global revision',**_json(FactPage)},**_errors(400)}},
+        'post':{'operationId':'collectTrustedContextFact','summary':'Record structured prospective analyst assessment','tags':['Trusted context'],
+            'parameters':[AUTH_PARAMETER],'x-required-roles':['security_analyst','system_admin'],
+            'requestBody':{'required':True,**_json(FactRequest)},
+            'responses':{'200':{'description':'Immutable fact or idempotent retry',**_json(FactMutation)},**_errors(400,403,404,409)}}}
+    paths['/api/v2/alerts/{alertRef}/context']={'get':{'operationId':'getTrustedAlertContext','summary':'Resolve current scoped safety evidence',
+        'tags':['Trusted context'],'parameters':[AUTH_PARAMETER,alert_ref],
+        'responses':{'200':{'description':'Per-field provenance, freshness and conflict state',**_json(ResolvedTrustedContext)},**_errors(400,404)}}}
     for path, operations in paths.items():
         if path == "/api/auth/login":
             continue
@@ -701,6 +714,7 @@ def openapi_document() -> dict[str, Any]:
         },
         "servers": [{"url": "http://localhost:8000", "description": "Local demo"}],
         "tags": [
+            {"name":"Trusted context","description":"Prospective scoped facts; no external enrichment"},
             {"name":"Selective review","description":"Separate review disposition, never a human verdict or closure"},
             {"name":"Triage memory","description":"Human lessons and advisory contextual matching"},
             {"name":"Response plans","description":"Recommendations and human authorization; no execution"},

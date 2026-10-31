@@ -4,6 +4,7 @@ import { api,unwrap,type Schemas } from "../../api/client";
 import { useApi } from "../../api/useApi";
 import { PageHeader,Pill } from "../../components/ui";
 import { useSession } from "../../session/SessionContext";
+import { TrustedContextPanel } from "./TrustedContextPanel";
 
 type View=Schemas["ReviewView"];
 type Disposition=View["disposition"];
@@ -31,6 +32,7 @@ export function ReviewSummary({view}:{view:View}) {
       <p className="text-sm">Support: {memory.memory.supportCount} / Conflicts: {memory.memory.conflictCount} / Match: {memory.strength}</p>
       <Link className="text-sm text-accent underline" to={prefix(session?.role)+"/triage-memory?lessonRef="+memory.memory.lesson.lessonRef}>Inspect memory lesson</Link>
     </section>}
+    <TrustedContextPanel context={view.policyEvaluation.contextProvenance}/>
     <details><summary className="cursor-pointer text-sm">Current safety evidence</summary><pre className="max-h-96 overflow-auto whitespace-pre-wrap break-all text-xs">{JSON.stringify(view.policyEvaluation,null,2)}</pre></details>
   </div>;
 }

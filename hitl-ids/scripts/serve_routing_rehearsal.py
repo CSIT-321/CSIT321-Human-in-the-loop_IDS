@@ -13,8 +13,9 @@ sys.path.insert(0, str(HITL))
 import uvicorn
 from apps.api import auth
 from apps.api.main import create_app
-from packages.contracts import db
-from packages.detection.adapters.operational_v2 import materialize_source, read_triage
+from packages.contracts import db, models as m
+from packages.detection.context_store import seed_synthetic_facts
+from packages.detection.adapters.operational_v2 import materialize_source, read_triage, read_projection
 from packages.detection.adapters.staging import stage_file
 from packages.detection.triage_policy import TriageContext
 from packages.detection.triage_policy_service import apply_triage_policy
@@ -55,8 +56,9 @@ def main():
             for source_id in ids:
                 review=review_eligibility(conn,source_id,actor_id=actor,request=EligibilityRequest(
                     request_id=uuid4(),expected_review_id=None,decision='accepted',reason='SYNTHETIC selective-review fixture; safety context is demo-only'))
-                admit_external(conn,source_id,actor_id=actor,request=AdmissionRequest(
+                receipt,_=admit_external(conn,source_id,actor_id=actor,request=AdmissionRequest(
                     request_id=uuid4(),expected_review_id=review['id'],reason='SYNTHETIC safe context; not observed production evidence'),trusted_context=safe)
+                seed_synthetic_facts(conn,read_projection(conn,receipt['operational_alert_id']),safe,m.utc_now())
         print(f'Serving disposable routing fixture: {path}', flush=True)
         uvicorn.run(create_app(path), host='127.0.0.1', port=args.port, log_level='warning')
 

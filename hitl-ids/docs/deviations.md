@@ -1,5 +1,15 @@
 # Deviations register
 
+## Prospective context extension (2026-10-31)
+
+Migration 12 adds append-only `trusted_context_facts` and `triage_context_provenance`, not a core table
+rebuild. Structured authenticated assessments receive server availability/actor provenance. Selective
+Review now consumes resolved facts; its pure policy and thresholds are unchanged. Triage scoring is
+unchanged, with provenance stored alongside its audit. Temporal fact resolution, coverage reports,
+a frozen prospective protocol and a minimal read-only Safety Evidence panel are additive. Synthetic
+facts are disposable only; there is no production backfill, external enrichment or response execution.
+See [Prospective Context Provenance](prospective-context-provenance.md) for scope and limitations.
+
 **What this file is for.** The plan mandates it in two places — decision D10 (*"Deviations logged in
 `hitl-ids/docs/deviations.md`"*) and the plan mutation protocol (*"Steps may be split, inserted,
 reordered or abandoned. Record the change and its reason in `docs/deviations.md`"*) — and it is
