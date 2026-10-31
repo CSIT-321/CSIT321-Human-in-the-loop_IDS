@@ -3,8 +3,8 @@
 **Purpose.** Carry the full state of this project into a fresh session with zero loss of context
 and minimal token cost. Everything a new session needs is here or one link away.
 
-**Current stacked workflow (2026-11-01):** `feat/prospective-readiness-final-integrity-fixes`, based on
-`20fb6d7d11c3e5540f9650595463d8fd876d3231` (`feat/prospective-readiness-blocker-fixes`).
+**Current stacked workflow (2026-11-01):** `feat/prospective-readiness-unbound-override-integrity`, based on
+`f403359d8b3c9e70fbe96b459b652448d3efbe91` (`feat/prospective-readiness-final-integrity-fixes`).
 The older September branch/phase narrative below is historical, not the current branch status.
 The external path now reaches an append-only human-authorized response plan:
 Suricata -> staging -> eligibility review -> operational admission -> V2 alert -> policy ->
@@ -40,6 +40,9 @@ The subsequent independent review found two remaining blockers. The
 [final integrity fixes](prospective-readiness-final-integrity-fixes.md) cover all 40 database inspection
 GETs, including RBAC/filter dependencies, and validate raw event/request identity plus global uniqueness.
 The previous readiness review failed; these fixes require a NEW independent review. Do not start collection.
+The latest review found an unbound-override recall validation gap. See
+[consumed override integrity](prospective-unbound-override-integrity.md) for the separate metric-evidence
+validation boundary. This does not change operational overrides, collection counts or Tier 1/Tier 2 UX.
 
 **Last updated:** 2026-09-18 (rev 24 — similar-alert learning made visible: the moved members, the
 family group-by, and the similarity basis on screen; changelog v1.32. Rev 23 notes below still

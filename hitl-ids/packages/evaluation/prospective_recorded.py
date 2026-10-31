@@ -76,10 +76,24 @@ def _validated_review_event(event):
             or raw.event_type != expected_type):
         _integrity('raw review event and originating request identities differ')
     if (raw.operational_alert_id != snapshot.inputs.alert.id
+            or raw.operational_alert_id != snapshot.inputs.triage.operational_alert_id
             or raw.alert_ref != snapshot.inputs.alert.operational_alert_ref
             or snapshot.context_provenance is None
             or raw.created_at != snapshot.context_provenance.evaluated_at):
         _integrity('raw review identity/time differs from its original snapshot')
+    if raw.action == 'require_review':
+        result = snapshot.result
+        if (result.disposition != 'must_review' or result.decision_source != 'human_override'
+                or result.policy_version != snapshot.policy_config_snapshot.version
+                or result.reason_codes != ['HUMAN_REVIEW_OVERRIDE']
+                or result.matched_lesson_ref is not None
+                or result.explanation != 'Authenticated human requires Tier 1 review: '+raw.reason
+                or (snapshot.inputs.triage.handling_route, snapshot.inputs.triage.workflow_stage)
+                    != ('tier1_review', 'triage')):
+            _integrity('human override snapshot action/state is inconsistent')
+    receipt = payload.collection_recording
+    if receipt is not None and receipt.run_ref != payload.request.collection_run_ref:
+        _integrity('collection receipt and original request run differ')
     return raw
 
 
@@ -186,6 +200,64 @@ def reconcile_decisions(archive):
     return {key:value[0] for key,value in bound.items()}
 
 
+def _recall_evidence(archive, cohort):
+    """Metric evidence is validated independently of collection ledger membership."""
+    selected = {ref: [] for ref in cohort}
+    cutoff = archive.run.protocol.registration.outcome_cutoff
+    for event in archive.review_events:
+        payload = json.loads(event['request_payload'])
+        try:
+            snapshot = json.loads(event.get('decision_snapshot', '{}'))
+        except (ValueError, TypeError):
+            snapshot = {}
+        if not isinstance(snapshot, dict):
+            snapshot = {}
+        inputs = snapshot.get('inputs')
+        alert = inputs.get('alert', {}) if isinstance(inputs, dict) else {}
+        if not isinstance(alert, dict):
+            alert = {}
+        result = snapshot.get('result')
+        if not (event.get('action') == 'require_review' or payload.get('action') == 'require_review'
+                or event.get('event_type') == 'V2_HUMAN_REVIEW_REQUIRED'
+                or isinstance(result, dict) and result.get('decisionSource') == 'human_override'):
+            continue
+        refs = set()
+        for value in (event.get('alertRef'), payload.get('alertRef'), alert.get('operationalAlertRef')):
+            try:
+                refs.add(UUID(value))
+            except (ValueError, TypeError, AttributeError):
+                pass
+        relevant = refs & cohort.keys()
+        if not relevant:
+            continue
+        provenance = snapshot.get('contextProvenance')
+        times = [event.get('created_at')]
+        if isinstance(provenance, dict):
+            times.append(provenance.get('evaluatedAt'))
+        parsed = []
+        for value in times:
+            try:
+                stamp = _time(value)
+                if not isinstance(stamp, datetime) or stamp.tzinfo is None or stamp.utcoffset() is None:
+                    raise ValueError('aware timestamp required')
+                parsed.append(stamp)
+            except (ValueError, TypeError, AttributeError):
+                _integrity('invalid recall evidence timestamp')
+        # Either original timestamp can reveal a corrupted attempt to move evidence outside the window.
+        if not any(cohort[ref].decision_at < stamp < cutoff for ref in relevant for stamp in parsed):
+            continue
+        raw = _validated_review_event(event)
+        if raw.action != 'require_review' or raw.alert_ref not in cohort:
+            _integrity('recall evidence action/alert differs from its cohort')
+        decision = cohort[raw.alert_ref]
+        if raw.operational_alert_id != decision.snapshot.inputs.alert.id:
+            _integrity('recall numeric alert identity differs from its cohort')
+        if not decision.decision_at < raw.created_at < cutoff:
+            _integrity('recall evidence is outside its permitted window')
+        selected[raw.alert_ref].append(event)
+    return selected
+
+
 def evaluate_recorded(archive: RecordedArchive, *, now=None):
     if not isinstance(archive,RecordedArchive): raise ValueError('registered evaluation rejects reconstructed-only data')
     archive=RecordedArchive.model_validate(archive.model_dump())
@@ -245,13 +317,14 @@ def evaluate_recorded(archive: RecordedArchive, *, now=None):
         inputs=decision.snapshot.inputs
         eligible=(inputs.triage.handling_route,inputs.triage.workflow_stage)==('tier1_review','triage') and not inputs.human_verdict_present
         if decision.action=='apply' and eligible: by_alert.setdefault(decision.operational_alert_ref,decision)
+    recalls = _recall_evidence(archive, by_alert)
     rows=[]; scoped_outcomes=[]; scoped_observations=[]; scoped_events=[]
     for ref,decision in by_alert.items():
         truth=sorted((e for e in archive.outcomes if e.alert_ref==ref and decision.decision_at<e.available_at<plan.outcome_cutoff),key=lambda e:(e.available_at,e.event_id))
         malicious=[e for e in truth if e.outcome in ('confirmed_malicious','suspicious')]
         outcome=malicious[0] if malicious else truth[-1] if truth else None
         observations=[e for e in archive.observations if e.request.operational_alert_ref==ref and decision.decision_at<=e.available_at<plan.outcome_cutoff]
-        overrides=[e for e in archive.review_events if e['alertRef']==str(ref) and e['action']=='require_review' and decision.decision_at<_time(e['created_at'])<plan.outcome_cutoff]
+        overrides=recalls[ref]
         scoped_outcomes.extend(truth); scoped_observations.extend(observations); scoped_events.extend(overrides)
         deferred=decision.snapshot.result.disposition=='no_immediate_review'
         rows.append(dict(decisionRef=str(decision.decision_ref),alertRef=str(ref),alertOccurredAt=decision.alert_occurred_at.isoformat(),

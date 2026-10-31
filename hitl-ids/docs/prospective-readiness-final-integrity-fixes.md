@@ -9,6 +9,11 @@ The latest independent review was FAIL. Another independent final read-only revi
 before registered collection. Protocol V2 remains unchanged, draft, undated and unopened; V1 is unchanged.
 All automated collection windows below exist only in disposable synthetic test databases.
 
+Subsequent independent review: FAIL because unbound operational overrides could bypass full validation
+and still contribute to recall. The stacked [unbound override integrity fix](prospective-unbound-override-integrity.md)
+addresses that remaining finding. A new independent PASS is still required; this historical test report
+is not authorization to preregister or open collection.
+
 ## Complete inspection route inventory
 
 All 40 database-backed GETs use the same non-migrating path. The 25 marked **new** are converted by
