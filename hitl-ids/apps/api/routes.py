@@ -70,6 +70,7 @@ router = APIRouter()
 Conn = Annotated[sqlite3.Connection, Depends(get_connection)]
 Principal = Annotated[auth.Principal, Depends(auth.current_user)]
 AdminOnly = Depends(auth.require_role("system_admin"))
+ReadAdminOnly = Depends(auth.require_role("system_admin", readonly=True))
 
 
 # --------------------------------------------------------------------------------------------
@@ -117,7 +118,7 @@ def _page(items: list[Any], total: int, limit: int, offset: int) -> dict[str, An
 
 
 def queue_filters(
-    principal: Principal,
+    principal: ReadPrincipal,
     queue_class: list[str] | None = Query(None, alias="queueClass"),
     evidence_class: list[str] | None = Query(None, alias="evidenceClass"),
     severity: list[str] | None = Query(None),
@@ -164,7 +165,7 @@ Filters = Annotated[dict[str, Any], Depends(queue_filters)]
 @router.get("/api/alerts", response_model=Page[ca.AlertSummary], tags=["alerts"],
             operation_id="listAlerts")
 def list_alerts(
-    conn: Conn,
+    conn: ReadConn,
     filters: Filters,
     limit: int = Query(DEFAULT_PAGE_SIZE, ge=1, le=MAX_PAGE_SIZE),
     offset: int = Query(0, ge=0),
@@ -187,7 +188,7 @@ def list_alerts(
 @router.get("/api/alerts/families", response_model=Page[ca.FamilyRow], tags=["alerts"],
             operation_id="listAlertFamilies")
 def list_alert_families(
-    conn: Conn,
+    conn: ReadConn,
     filters: Filters,
     limit: int = Query(DEFAULT_PAGE_SIZE, ge=1, le=MAX_PAGE_SIZE),
     offset: int = Query(0, ge=0),
@@ -244,7 +245,7 @@ def _load_alert(conn: sqlite3.Connection, alert_ref: str) -> m.Alert:
 
 @router.get("/api/alerts/{alertRef}", response_model=ca.AlertDetail, tags=["alerts"],
             operation_id="getAlert")
-def get_alert(alertRef: str, conn: Conn, principal: Principal) -> ca.AlertDetail:  # noqa: N803
+def get_alert(alertRef: str, conn: ReadConn, principal: ReadPrincipal) -> ca.AlertDetail:  # noqa: N803
     """One alert and its four evidence panels. An unflagged alert is a valid response, not a 404."""
     alert = _load_alert(conn, alertRef)
     flow = store.flow_for_alert(conn, alert.id)
@@ -342,7 +343,7 @@ def _moved_members(conn: sqlite3.Connection, moves: list[MemberMove],
 
 @router.get("/api/alerts/{alertRef}/score-adjustment", response_model=ca.ScoreAdjustment,
             tags=["alerts", "feedback"], operation_id="getScoreAdjustment")
-def get_score_adjustment(alertRef: str, conn: Conn, principal: Principal) -> ca.ScoreAdjustment:  # noqa: N803
+def get_score_adjustment(alertRef: str, conn: ReadConn, principal: ReadPrincipal) -> ca.ScoreAdjustment:  # noqa: N803
     alert = _load_alert(conn, alertRef)
     return score_adjustment(alert, current_feedback(conn, alert.id),
                             settings=guardrail_values(conn))
@@ -350,7 +351,7 @@ def get_score_adjustment(alertRef: str, conn: Conn, principal: Principal) -> ca.
 
 @router.get("/api/alerts/{alertRef}/feedback-history", response_model=ca.FeedbackHistory,
             tags=["alerts", "feedback"], operation_id="getFeedbackHistory")
-def get_feedback_history(alertRef: str, conn: Conn, principal: Principal) -> ca.FeedbackHistory:  # noqa: N803
+def get_feedback_history(alertRef: str, conn: ReadConn, principal: ReadPrincipal) -> ca.FeedbackHistory:  # noqa: N803
     alert = _load_alert(conn, alertRef)
     events = store.feedback_for_alert(conn, alert.id)
     users = store.users_by_id(conn, [e.user_id for e in events])
@@ -409,7 +410,7 @@ def post_assign(alertRef: str, body: ca.AssignRequest, conn: Conn,  # noqa: N803
 
 @router.get("/api/alerts/{alertRef}/notes", response_model=ca.AlertNotes,
             tags=["alerts", "triage"], operation_id="listAlertNotes")
-def get_notes(alertRef: str, conn: Conn, principal: Principal) -> ca.AlertNotes:  # noqa: N803
+def get_notes(alertRef: str, conn: ReadConn, principal: ReadPrincipal) -> ca.AlertNotes:  # noqa: N803
     alert = _load_alert(conn, alertRef)
     notes = triage.notes_for_alert(conn, int(alert.id or 0))
     users = store.users_by_id(conn, [note.user_id for note in notes])
@@ -433,14 +434,14 @@ def post_note(alertRef: str, body: ca.NoteRequest, conn: Conn,  # noqa: N803
 
 @router.get("/api/dashboard/breakdowns", response_model=co.DashboardBreakdowns,
             tags=["dashboard"], operation_id="getDashboardBreakdowns")
-def dashboard_breakdowns(conn: Conn, principal: Principal,
+def dashboard_breakdowns(conn: ReadConn, principal: ReadPrincipal,
                          limit: int = Query(10, ge=1, le=50)) -> co.DashboardBreakdowns:
     return co.DashboardBreakdowns(generated_at=m.utc_now(), **store.breakdowns(conn, limit=limit))
 
 
 @router.get("/api/entities/ip/{ip}", response_model=co.EntityIp, tags=["entities"],
             operation_id="getIpEntity")
-def get_ip_entity(ip: str, conn: Conn, principal: Principal,
+def get_ip_entity(ip: str, conn: ReadConn, principal: ReadPrincipal,
                   limit: int = Query(10, ge=1, le=50)) -> co.EntityIp:
     try:
         ipaddress.ip_address(ip)
@@ -464,9 +465,9 @@ def _validate_report_dates(from_date: str | None, to_date: str | None) -> None:
 
 @router.get("/api/admin/reports/ips", response_model=co.SourceIpOverviewPage,
             tags=["reports"], operation_id="getAdminSourceIpOverview",
-            dependencies=[AdminOnly])
+            dependencies=[ReadAdminOnly])
 def get_admin_source_ip_overview(
-    conn: Conn,
+    conn: ReadConn,
     from_date: str | None = Query(None, alias="fromDate", pattern=r"^\d{4}-\d{2}-\d{2}$"),
     to_date: str | None = Query(None, alias="toDate", pattern=r"^\d{4}-\d{2}-\d{2}$"),
     search: str | None = Query(None, max_length=200),
@@ -502,10 +503,10 @@ def get_admin_source_ip_overview(
 
 @router.get("/api/admin/reports/ip/{ip}", response_model=co.IpSecurityReport,
             tags=["reports"], operation_id="getAdminIpSecurityReport",
-            dependencies=[AdminOnly])
+            dependencies=[ReadAdminOnly])
 def get_admin_ip_security_report(
     ip: str,
-    conn: Conn,
+    conn: ReadConn,
     from_date: str | None = Query(None, alias="fromDate", pattern=r"^\d{4}-\d{2}-\d{2}$"),
     to_date: str | None = Query(None, alias="toDate", pattern=r"^\d{4}-\d{2}-\d{2}$"),
 ) -> co.IpSecurityReport:
@@ -525,7 +526,7 @@ def get_admin_ip_security_report(
 
 @router.get("/api/dashboard/summary", response_model=co.DashboardSummary, tags=["dashboard"],
             operation_id="getDashboardSummary")
-def dashboard_summary(conn: Conn, principal: Principal) -> co.DashboardSummary:
+def dashboard_summary(conn: ReadConn, principal: ReadPrincipal) -> co.DashboardSummary:
     run = store.latest_run(conn)
     counts = store.dashboard_counts(conn)
     return co.DashboardSummary(
@@ -574,8 +575,8 @@ def _alert_refs(conn: sqlite3.Connection, alert_ids: list[int | None]) -> dict[i
 @router.get("/api/audit-log", response_model=Page[co.AuditEntryOut], tags=["audit"],
             operation_id="listAuditLog")
 def list_audit_log(
-    conn: Conn,
-    principal: Principal,
+    conn: ReadConn,
+    principal: ReadPrincipal,
     limit: int = Query(100, ge=1, le=500),
     offset: int = Query(0, ge=0),
     event_type: list[str] | None = Query(None, alias="eventType"),
@@ -594,7 +595,7 @@ def list_audit_log(
 
 @router.get("/api/config/guardrails", response_model=co.GuardrailConfig, tags=["config"],
             operation_id="getGuardrailConfig")
-def get_guardrail_config(conn: Conn, principal: Principal) -> co.GuardrailConfig:
+def get_guardrail_config(conn: ReadConn, principal: ReadPrincipal) -> co.GuardrailConfig:
     return co.GuardrailConfig(
         settings=[guardrail_setting(entry) for entry in store.guardrail_settings(conn)])
 

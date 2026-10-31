@@ -7,6 +7,12 @@ Status: fixes implemented; a NEW independent final read-only review is required.
 The previous review was FAIL. No readiness PASS or authorization to collect is claimed.
 Protocol V2 remains unchanged, draft, undated and unopened. V1 is unchanged.
 
+Historical increment: the next independent review reproduced two remaining gaps in the unconverted
+inspection GETs and raw event/request identities. The stacked
+[final integrity fixes](prospective-readiness-final-integrity-fixes.md) supersede the limited 15-route
+scope below, with all 40 database GETs and explicit global event/request uniqueness. Neither document
+is an independent readiness PASS. Do not start collection.
+
 ## Operational override is independent of collection
 
 The existing serialized selective-review transaction retains RBAC, state, reason, version and policy checks.

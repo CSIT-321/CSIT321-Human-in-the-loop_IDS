@@ -5,6 +5,7 @@ from apps.api.contract.common import PageInfo
 from apps.api.contract.responses import ResponsePage
 from apps.api.deps import ApiError
 from apps.api.routing_routes import Conn,Principal,MutationRole
+from apps.api.read_only import ReadConn, ReadPrincipal
 from packages.detection.response_approval import (
     ResponseRequest,ManualResponseRequest,ResponseDecisionRequest,ResponseView,ResponseMutation,
     ResponseConflict,list_responses,propose_response,decide_response,
@@ -23,7 +24,7 @@ def _error(exc):
 
 
 @router.get('/{caseRef}/responses',response_model=ResponsePage,operation_id='listCaseResponses')
-def responses(caseRef:UUID,conn:Conn,principal:Principal,limit:int=Query(50,ge=1,le=200),offset:int=Query(0,ge=0)):
+def responses(caseRef:UUID,conn:ReadConn,principal:ReadPrincipal,limit:int=Query(50,ge=1,le=200),offset:int=Query(0,ge=0)):
     try:
         with conn:
             conn.execute('BEGIN')

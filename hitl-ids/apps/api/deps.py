@@ -86,7 +86,10 @@ def get_readonly_connection(request: Request) -> Iterator[sqlite3.Connection]:
         connection = sqlite3.connect(path.as_uri() + "?mode=ro", uri=True, check_same_thread=False)
     except sqlite3.OperationalError as exc:
         code = "DATABASE_MISSING" if not path.exists() else "DATABASE_UNAVAILABLE"
-        raise ApiError(503, code, "Read-only database is unavailable; no database was created.") from exc
+        message = "Read-only database is unavailable; no database was created."
+        if code == "DATABASE_MISSING":
+            message += " Build it explicitly with: python scripts/run_detection.py"
+        raise ApiError(503, code, message) from exc
     try:
         connection.execute("PRAGMA query_only=ON")
         connection.row_factory = sqlite3.Row

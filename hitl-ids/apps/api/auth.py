@@ -184,14 +184,15 @@ def _authenticated_user(credentials, conn) -> Principal:
                      display_name=user.display_name, role=user.role)
 
 
-def require_role(*allowed: str):
+def require_role(*allowed: str, readonly: bool = False):
     """Dependency factory: refuse a caller whose account role is not in ``allowed``.
 
     Used only where a role genuinely gates an action, as before — sprinkling it everywhere would
     imply an access-control model finer than the demo has.
+    Inspection routes opt into readonly=True so RBAC shares their non-migrating connection.
     """
 
-    def check(principal: Principal = Depends(current_user)) -> Principal:
+    def check(principal: Principal = Depends(current_readonly_user if readonly else current_user)) -> Principal:
         if principal.role not in allowed:
             raise ApiError(
                 403, "FORBIDDEN_ROLE",

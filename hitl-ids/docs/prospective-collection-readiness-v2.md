@@ -4,6 +4,9 @@ Stacked base: `feat/prospective-context-provenance` at `2c921a87edeca7a0dc4272e2
 Branch: `feat/prospective-collection-readiness-v2`.
 Historical implementation baseline; the final review identified three blockers. The stacked
 [blocker fixes](prospective-readiness-blocker-fixes.md) require a new independent readiness review.
+The subsequent review found two remaining blockers; the
+[final integrity fixes](prospective-readiness-final-integrity-fixes.md) document the complete 40-route
+read-only inventory and source event/request identity enforcement. A new independent PASS is still required.
 Registered collection has NOT started.
 Protocol V1 is unchanged. `config/prospective-context-protocol-v2-draft.json` is undated and not open.
 
@@ -73,7 +76,7 @@ Referenced incompatible configurations still fail. Both SQLite exporter and eval
 mode=ro/query_only and never migrates or creates a missing database.
 API inspection routes and their authentication dependency now also use mode=ro/query_only from connection
 open, never the migrating dependency. Unsupported schemas fail explicitly without upgrade; mutable endpoints
-retain the existing migration path. See the blocker-fix document for the exact endpoint scope.
+retain the existing migration path. See the final-integrity document for the complete endpoint scope.
 
 Before reporting, reconcile every immutable recorded decision with run.decisionCount, unique decision/raw
 event identities, run-bound review events, receipts and matching snapshots. Missing/duplicate/inconsistent

@@ -3,8 +3,8 @@
 **Purpose.** Carry the full state of this project into a fresh session with zero loss of context
 and minimal token cost. Everything a new session needs is here or one link away.
 
-**Current stacked workflow (2026-11-01):** `feat/prospective-readiness-blocker-fixes`, based on
-`dd49cf4cfe979430912fa1a90c61cc594c81e75c` (`feat/prospective-collection-readiness-v2`).
+**Current stacked workflow (2026-11-01):** `feat/prospective-readiness-final-integrity-fixes`, based on
+`20fb6d7d11c3e5540f9650595463d8fd876d3231` (`feat/prospective-readiness-blocker-fixes`).
 The older September branch/phase narrative below is historical, not the current branch status.
 The external path now reaches an append-only human-authorized response plan:
 Suricata -> staging -> eligibility review -> operational admission -> V2 alert -> policy ->
@@ -36,6 +36,9 @@ The [manual UAT checklist](prospective-collection-uat.md) has no fabricated part
 [Readiness blocker fixes](prospective-readiness-blocker-fixes.md) make human override independent of
 collection eligibility, open inspection/authentication connections read-only without migration, and
 reject incomplete recorded archives. Ledger decision counts and unique eligible-alert counts remain distinct.
+The subsequent independent review found two remaining blockers. The
+[final integrity fixes](prospective-readiness-final-integrity-fixes.md) cover all 40 database inspection
+GETs, including RBAC/filter dependencies, and validate raw event/request identity plus global uniqueness.
 The previous readiness review failed; these fixes require a NEW independent review. Do not start collection.
 
 **Last updated:** 2026-09-18 (rev 24 — similar-alert learning made visible: the moved members, the

@@ -7,14 +7,14 @@ import sqlite3
 from typing import Any, Literal
 from uuid import UUID
 
-from pydantic import AwareDatetime, Field
+from pydantic import AwareDatetime, BaseModel, Field, Json, field_validator
 from packages.contracts import models as m
 from packages.contracts.operational_v2 import V2Contract
 from packages.detection.prospective_collection import (
     RunView, RecordedDecision, RecordedObservation, read_run, decisions, digest,
 )
 from packages.evaluation.temporal_review import OutcomeEvent
-from packages.detection.selective_review import CollectionRecording
+from packages.detection.selective_review import CollectionRecording, ReviewCommand, ReviewSnapshot
 
 
 class ArchiveIntegrityError(ValueError):
@@ -23,6 +23,64 @@ class ArchiveIntegrityError(ValueError):
 
 def _integrity(message):
     raise ArchiveIntegrityError('archive-integrity: '+message)
+
+
+class _RawReviewIdentity(BaseModel):
+    id: int = Field(strict=True, gt=0)
+    event_ref: UUID
+    request_id: UUID
+
+    @field_validator('event_ref', 'request_id', mode='before')
+    @classmethod
+    def uuid_text(cls, value):
+        if not isinstance(value, str) or not value.strip():
+            raise ValueError('persisted UUID text is required')
+        return value
+
+
+class _RawReviewRequest(BaseModel):
+    alert_ref: UUID = Field(alias='alertRef')
+    action: Literal['apply', 'require_review']
+    request: ReviewCommand
+    collection_recording: CollectionRecording | None = Field(default=None, alias='collectionRecording')
+
+
+class _RawReviewEvent(_RawReviewIdentity):
+    operational_alert_id: int = Field(strict=True, gt=0)
+    actor_id: int = Field(strict=True, gt=0)
+    alert_ref: UUID = Field(alias='alertRef')
+    action: Literal['apply', 'require_review']
+    event_type: Literal['V2_SELECTIVE_REVIEW_DECIDED', 'V2_HUMAN_REVIEW_REQUIRED']
+    reason: str = Field(strict=True, min_length=1, max_length=4000)
+    created_at: AwareDatetime
+    request_payload: Json[_RawReviewRequest]
+    decision_snapshot: Json[ReviewSnapshot]
+
+    @field_validator('alert_ref', 'created_at', mode='before')
+    @classmethod
+    def persisted_text(cls, value):
+        if not isinstance(value, str) or not value.strip():
+            raise ValueError('persisted identity/timestamp text is required')
+        return value
+
+
+def _validated_review_event(event):
+    try:
+        raw = _RawReviewEvent.model_validate(event)
+    except ValueError as exc:
+        _integrity('invalid raw review event: '+str(exc))
+    payload, snapshot = raw.request_payload, raw.decision_snapshot
+    expected_type = 'V2_HUMAN_REVIEW_REQUIRED' if raw.action == 'require_review' else 'V2_SELECTIVE_REVIEW_DECIDED'
+    if (raw.request_id != payload.request.request_id or raw.action != payload.action
+            or raw.alert_ref != payload.alert_ref or raw.reason != payload.request.reason
+            or raw.event_type != expected_type):
+        _integrity('raw review event and originating request identities differ')
+    if (raw.operational_alert_id != snapshot.inputs.alert.id
+            or raw.alert_ref != snapshot.inputs.alert.operational_alert_ref
+            or snapshot.context_provenance is None
+            or raw.created_at != snapshot.context_provenance.evaluated_at):
+        _integrity('raw review identity/time differs from its original snapshot')
+    return raw
 
 
 class RecordedArchive(V2Contract):
@@ -68,6 +126,17 @@ def _time(value):
     return datetime.fromisoformat(value.replace('Z','+00:00')) if isinstance(value,str) else value
 
 
+def _run_identity(value):
+    if value is None:
+        return None
+    try:
+        if not isinstance(value,str):
+            raise ValueError('run reference must be UUID text')
+        return UUID(value)
+    except ValueError:
+        _integrity('invalid raw review run reference')
+
+
 def reconcile_decisions(archive):
     run=archive.run; records=archive.decisions; plan=run.protocol.registration
     if run.decision_count!=len(records): _integrity('run decisionCount differs from exported ledger count')
@@ -78,27 +147,33 @@ def reconcile_decisions(archive):
         if d.run_ref!=run.run_ref: _integrity('decision belongs to a different run')
         if not plan.holdout_start<=d.decision_at<plan.holdout_end:
             _integrity('recorded decision is outside its run decision window')
-    required=set(ids); bound={}; raw={}
+    required=set(ids); bound={}
+    seen={key:set() for key in ('id','event_ref','request_id')}
     for event in archive.review_events:
-        event_id=event.get('id')
+        # Source uniqueness is global, but future/unrelated snapshots are never reinterpreted.
         try:
-            payload=json.loads(event.get('request_payload','{}'))
-            request=payload.get('request',{})
-            selected=request.get('collection_run_ref')==str(run.run_ref)
-        except (ValueError,TypeError,AttributeError):
-            if event_id in required: _integrity('matching raw review event has invalid request provenance')
-            continue
-        if not selected and event_id not in required: continue
-        if not selected: _integrity('matching raw event is not bound to this run')
-        if event_id in raw: _integrity('duplicate run-bound raw review identity')
-        raw[event_id]=event
+            identity=_RawReviewIdentity.model_validate(event)
+            payload=json.loads(event['request_payload'])
+            request=payload['request']
+            if not isinstance(request,dict): raise ValueError('request must be an object')
+        except (ValueError,TypeError,KeyError):
+            _integrity('raw review event has invalid required identities or request provenance')
+        for key,values in seen.items():
+            value=getattr(identity,key)
+            if value in values: _integrity('duplicate raw review '+key)
+            values.add(value)
+        event_id=identity.id
+        selected=_run_identity(request.get('collection_run_ref'))==run.run_ref
         receipt=payload.get('collectionRecording')
+        receipt_selected=isinstance(receipt,dict) and _run_identity(receipt.get('runRef'))==run.run_ref
+        if not selected and not receipt_selected and event_id not in required: continue
+        if not selected: _integrity('matching raw event is not bound to this run')
+        validated=_validated_review_event(event)
+        receipt=validated.request_payload.collection_recording
         if receipt is not None:
-            try: receipt=CollectionRecording.model_validate(receipt)
-            except ValueError: _integrity('invalid collection recording receipt')
             if receipt.run_ref!=run.run_ref: _integrity('receipt run identity differs from its request')
             if receipt.status=='not_recorded':
-                if event.get('action')!='require_review' or event_id in required:
+                if validated.action!='require_review' or event_id in required:
                     _integrity('skipped collection receipt contradicts its ledger')
                 continue
         # Before receipts existed, a run-bound event and sidecar were always atomic.

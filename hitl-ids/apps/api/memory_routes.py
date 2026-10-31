@@ -4,6 +4,7 @@ from fastapi import APIRouter,Query
 from apps.api.contract.common import Page,PageInfo
 from apps.api.deps import ApiError
 from apps.api.routing_routes import Conn,Principal,MutationRole
+from apps.api.read_only import ReadConn, ReadPrincipal
 from packages.detection.triage_memory import (
     MemoryReviewRequest,MemoryDecisionRequest,MemoryMutation,MemoryView,MemoryAudit,MemoryMatch,
     MemoryConflict,record_review,decide_memory,read_memory,list_memory,memory_history,lookup_memory,
@@ -39,12 +40,12 @@ def review(alertRef:UUID,body:MemoryReviewRequest,conn:Conn,principal:Principal)
 
 
 @router.get('/triage-memory',response_model=Page[MemoryView],operation_id='listTriageMemory')
-def lessons(conn:Conn,principal:Principal,limit:int=Query(50,ge=1,le=200),offset:int=Query(0,ge=0)):
+def lessons(conn:ReadConn,principal:ReadPrincipal,limit:int=Query(50,ge=1,le=200),offset:int=Query(0,ge=0)):
     return _page(conn,list_memory,(),limit,offset)
 
 
 @router.get('/triage-memory/{lessonRef}',response_model=MemoryView,operation_id='getTriageMemory')
-def detail(lessonRef:UUID,conn:Conn,principal:Principal):
+def detail(lessonRef:UUID,conn:ReadConn,principal:ReadPrincipal):
     try:
         with conn:
             conn.execute('BEGIN')
@@ -54,7 +55,7 @@ def detail(lessonRef:UUID,conn:Conn,principal:Principal):
 
 
 @router.get('/triage-memory/{lessonRef}/events',response_model=Page[MemoryAudit],operation_id='listTriageMemoryEvents')
-def events(lessonRef:UUID,conn:Conn,principal:Principal,limit:int=Query(50,ge=1,le=200),offset:int=Query(0,ge=0)):
+def events(lessonRef:UUID,conn:ReadConn,principal:ReadPrincipal,limit:int=Query(50,ge=1,le=200),offset:int=Query(0,ge=0)):
     return _page(conn,memory_history,(lessonRef,),limit,offset)
 
 
@@ -76,5 +77,5 @@ def reject(lessonRef:UUID,body:MemoryDecisionRequest,conn:Conn,principal:Princip
 
 
 @router.get('/alerts/{alertRef}/triage-memory/matches',response_model=Page[MemoryMatch],operation_id='matchTriageMemory')
-def matches(alertRef:UUID,conn:Conn,principal:Principal,limit:int=Query(50,ge=1,le=200),offset:int=Query(0,ge=0)):
+def matches(alertRef:UUID,conn:ReadConn,principal:ReadPrincipal,limit:int=Query(50,ge=1,le=200),offset:int=Query(0,ge=0)):
     return _page(conn,lookup_memory,(alertRef,),limit,offset)

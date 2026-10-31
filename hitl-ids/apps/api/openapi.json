@@ -8566,6 +8566,16 @@
               }
             },
             "description": "Role not permitted"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Database unavailable or schema unsupported; read-only requests never migrate"
           }
         },
         "summary": "A read-only security report for one source IP",
@@ -8759,6 +8769,16 @@
               }
             },
             "description": "Role not permitted"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Database unavailable or schema unsupported; read-only requests never migrate"
           }
         },
         "summary": "Paginated security overview of recorded source IPs",
@@ -9303,6 +9323,16 @@
               }
             },
             "description": "Not signed in, or the token expired"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Database unavailable or schema unsupported; read-only requests never migrate"
           }
         },
         "summary": "The ranked analyst queue",
@@ -9791,6 +9821,16 @@
               }
             },
             "description": "Not signed in, or the token expired"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Database unavailable or schema unsupported; read-only requests never migrate"
           }
         },
         "summary": "The queue grouped by similar-alert family",
@@ -9855,6 +9895,16 @@
               }
             },
             "description": "Not found"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Database unavailable or schema unsupported; read-only requests never migrate"
           }
         },
         "summary": "One alert: flow, signature, model and combined evidence",
@@ -10119,6 +10169,16 @@
               }
             },
             "description": "Not found"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Database unavailable or schema unsupported; read-only requests never migrate"
           }
         },
         "summary": "Every verdict on one alert, oldest first",
@@ -10183,6 +10243,16 @@
               }
             },
             "description": "Not found"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Database unavailable or schema unsupported; read-only requests never migrate"
           }
         },
         "summary": "The alert's notes thread, oldest first",
@@ -10341,6 +10411,16 @@
               }
             },
             "description": "Not found"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Database unavailable or schema unsupported; read-only requests never migrate"
           }
         },
         "summary": "The current adjustment chain for one alert",
@@ -10645,6 +10725,16 @@
               }
             },
             "description": "Role not permitted"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Database unavailable or schema unsupported; read-only requests never migrate"
           }
         },
         "summary": "The append-only audit trail",
@@ -10784,6 +10874,16 @@
               }
             },
             "description": "Not signed in, or the token expired"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Database unavailable or schema unsupported; read-only requests never migrate"
           }
         },
         "summary": "Current guardrail settings",
@@ -10923,6 +11023,16 @@
               }
             },
             "description": "Not signed in, or the token expired"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Database unavailable or schema unsupported; read-only requests never migrate"
           }
         },
         "summary": "Top talkers, verdict and status mix, guardrail actions, capture-time histogram",
@@ -10966,6 +11076,16 @@
               }
             },
             "description": "Not signed in, or the token expired"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Database unavailable or schema unsupported; read-only requests never migrate"
           }
         },
         "summary": "Queue composition and feedback activity",
@@ -11135,6 +11255,16 @@
               }
             },
             "description": "Not found"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Database unavailable or schema unsupported; read-only requests never migrate"
           }
         },
         "summary": "Everything the recorded flows say about one IP address",
@@ -11505,6 +11635,16 @@
               }
             },
             "description": "Not signed in, or the token expired"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Database unavailable or schema unsupported; read-only requests never migrate"
           }
         },
         "summary": "List explicitly materialized V2 alerts",
@@ -12744,6 +12884,16 @@
               }
             },
             "description": "Not found"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Database unavailable or schema unsupported; read-only requests never migrate"
           }
         },
         "summary": "matchTriageMemory",
@@ -12817,6 +12967,16 @@
               }
             },
             "description": "Not found"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Database unavailable or schema unsupported; read-only requests never migrate"
           }
         },
         "summary": "Read V2 state and latest routing decision",
@@ -13895,6 +14055,16 @@
               }
             },
             "description": "Not signed in, or the token expired"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Database unavailable or schema unsupported; read-only requests never migrate"
           }
         },
         "summary": "Inspect staged external alerts and admission status",
@@ -13966,6 +14136,16 @@
               }
             },
             "description": "Not found"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Database unavailable or schema unsupported; read-only requests never migrate"
           }
         },
         "summary": "Read eligibility and operational admission",
@@ -14456,6 +14636,16 @@
               }
             },
             "description": "Not signed in, or the token expired"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Database unavailable or schema unsupported; read-only requests never migrate"
           }
         },
         "summary": "List formal Tier 2 cases",
@@ -14528,6 +14718,16 @@
               }
             },
             "description": "Not found"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Database unavailable or schema unsupported; read-only requests never migrate"
           }
         },
         "summary": "Read case and immutable handoff",
@@ -14761,6 +14961,16 @@
               }
             },
             "description": "Not found"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Database unavailable or schema unsupported; read-only requests never migrate"
           }
         },
         "summary": "Read immutable investigation timeline",
@@ -15064,6 +15274,16 @@
               }
             },
             "description": "Not found"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Database unavailable or schema unsupported; read-only requests never migrate"
           }
         },
         "summary": "Read proposals and immutable human decisions",
@@ -15709,6 +15929,16 @@
               }
             },
             "description": "Not found"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Database unavailable or schema unsupported; read-only requests never migrate"
           }
         },
         "summary": "listTriageMemory",
@@ -15781,6 +16011,16 @@
               }
             },
             "description": "Not found"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Database unavailable or schema unsupported; read-only requests never migrate"
           }
         },
         "summary": "getTriageMemory",
@@ -15993,6 +16233,16 @@
               }
             },
             "description": "Not found"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Database unavailable or schema unsupported; read-only requests never migrate"
           }
         },
         "summary": "listTriageMemoryEvents",

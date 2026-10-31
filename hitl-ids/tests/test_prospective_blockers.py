@@ -105,7 +105,7 @@ def test_unrelated_post_window_events_and_legacy_receipts(collection):
     with closing(db.connect(path)) as conn:
         apply(conn,items,run);finish(conn,admin,run,clock);archive=export_connection(conn,run.run_ref)
     before=c.canonical(evaluate_recorded(archive,now=clock[0]))
-    unrelated={**archive.review_events[0],'id':9999,'created_at':clock[0].isoformat(),
+    unrelated={**archive.review_events[0],'id':9999,'event_ref':str(uuid4()),'request_id':str(uuid4()),'created_at':clock[0].isoformat(),
         'request_payload':json.dumps({'request':{'collection_run_ref':str(uuid4())}})}
     changed=archive.model_copy(update={'review_events':[*archive.review_events,unrelated]})
     assert c.canonical(evaluate_recorded(changed,now=clock[0]))==before

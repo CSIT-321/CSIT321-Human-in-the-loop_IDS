@@ -5,6 +5,7 @@ from fastapi import APIRouter, Query
 from apps.api.contract.common import Page, PageInfo
 from apps.api.deps import ApiError
 from apps.api.routing_routes import Conn, Principal, MutationRole
+from apps.api.read_only import ReadConn, ReadPrincipal
 from packages.detection.tier2_cases import (
     CaseView, CaseEvent, CaseMutation, CreateCaseRequest, CaseCommand, LinkCaseRequest,
     FindingRequest, CaseConflict, create_case, mutate_case, read_case, read_events,
@@ -31,7 +32,7 @@ def create(alertRef: UUID, body: CreateCaseRequest, conn: Conn, principal: Princ
 
 
 @router.get('/tier2/cases',response_model=Page[CaseView],operation_id='listTier2Cases')
-def list_cases(conn: Conn, principal: Principal, limit: int=Query(50,ge=1,le=200),offset: int=Query(0,ge=0)):
+def list_cases(conn: ReadConn, principal: ReadPrincipal, limit: int=Query(50,ge=1,le=200),offset: int=Query(0,ge=0)):
     with conn:
         conn.execute('BEGIN')
         total = conn.execute('SELECT count(*) FROM tier2_cases').fetchone()[0]
@@ -41,7 +42,7 @@ def list_cases(conn: Conn, principal: Principal, limit: int=Query(50,ge=1,le=200
 
 
 @router.get('/tier2/cases/{caseRef}',response_model=CaseView,operation_id='getTier2Case')
-def get_case(caseRef: UUID,conn: Conn,principal: Principal):
+def get_case(caseRef: UUID,conn: ReadConn,principal: ReadPrincipal):
     try:
         with conn:
             conn.execute('BEGIN')
@@ -51,7 +52,7 @@ def get_case(caseRef: UUID,conn: Conn,principal: Principal):
 
 
 @router.get('/tier2/cases/{caseRef}/events',response_model=Page[CaseEvent],operation_id='listTier2CaseEvents')
-def events(caseRef: UUID,conn: Conn,principal: Principal,limit: int=Query(50,ge=1,le=200),offset: int=Query(0,ge=0),
+def events(caseRef: UUID,conn: ReadConn,principal: ReadPrincipal,limit: int=Query(50,ge=1,le=200),offset: int=Query(0,ge=0),
            action: Literal['create','link','note','finding','start'] | None=None):
     try:
         with conn:

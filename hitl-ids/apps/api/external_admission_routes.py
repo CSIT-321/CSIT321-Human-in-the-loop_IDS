@@ -4,6 +4,7 @@ from apps.api.contract.common import Page, PageInfo
 from apps.api.contract.external_admission import ExternalAdmissionView, ExternalAdmissionResponse
 from apps.api.deps import ApiError
 from apps.api.routing_routes import Conn, Principal, MutationRole
+from apps.api.read_only import ReadConn, ReadPrincipal
 from packages.detection.external_admission import (
     AdmissionRequest, EligibilityRequest, AdmissionConflict, latest_review, admission_record,
     review_eligibility, admit_external, validate_source,
@@ -55,7 +56,7 @@ def _view(conn, inbox_id, principal):
 
 
 @router.get('', response_model=Page[ExternalAdmissionView], operation_id='listExternalAdmissions')
-def list_external(conn: Conn, principal: Principal, limit: int = Query(50, ge=1, le=200), offset: int = Query(0, ge=0)):
+def list_external(conn: ReadConn, principal: ReadPrincipal, limit: int = Query(50, ge=1, le=200), offset: int = Query(0, ge=0)):
     with conn:
         conn.execute('BEGIN')
         total = conn.execute('SELECT count(*) FROM external_alert_inbox').fetchone()[0]
@@ -65,7 +66,7 @@ def list_external(conn: Conn, principal: Principal, limit: int = Query(50, ge=1,
 
 
 @router.get('/{inboxId}', response_model=ExternalAdmissionView, operation_id='getExternalAdmission')
-def get_external(inboxId: int, conn: Conn, principal: Principal):
+def get_external(inboxId: int, conn: ReadConn, principal: ReadPrincipal):
     with conn:
         conn.execute('BEGIN')
         return _view(conn, inboxId, principal)

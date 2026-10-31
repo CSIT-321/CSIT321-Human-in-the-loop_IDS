@@ -8,6 +8,7 @@ from apps.api import auth
 from apps.api.contract.common import Page, PageInfo
 from apps.api.contract.routing import RoutingView, RoutingResponse
 from apps.api.deps import ApiError, get_connection
+from apps.api.read_only import ReadConn, ReadPrincipal
 from packages.detection.adapters.operational_v2 import read_triage
 from packages.detection.routing import (
     RoutingRequest, RoutingAction, RoutingConflict, allowed_actions, decode_audit,
@@ -39,7 +40,7 @@ def _view(conn, alert_id, principal):
 
 
 @router.get('', response_model=Page[RoutingView], operation_id='listV2Routing')
-def list_routing(conn: Conn, principal: Principal, limit: int = Query(50, ge=1, le=200),
+def list_routing(conn: ReadConn, principal: ReadPrincipal, limit: int = Query(50, ge=1, le=200),
                  offset: int = Query(0, ge=0)):
     with conn:
         conn.execute('BEGIN')
@@ -50,7 +51,7 @@ def list_routing(conn: Conn, principal: Principal, limit: int = Query(50, ge=1, 
 
 
 @router.get('/{alertRef}/triage-state', response_model=RoutingView, operation_id='getV2Routing')
-def get_routing(alertRef: UUID, conn: Conn, principal: Principal):
+def get_routing(alertRef: UUID, conn: ReadConn, principal: ReadPrincipal):
     with conn:
         conn.execute('BEGIN')
         return _view(conn, _id(conn, alertRef), principal)
