@@ -49,7 +49,8 @@ async function signInAs(page: Page, username: string, password: string, home: st
 test("the demo narrative holds end to end in the browser", async ({ page }) => {
   // 1. Sign in as the analyst and land on the workstation.
   await page.goto("/login");
-  await signIn(page, "g.ang", "analyst-demo", "/analyst/workstation");
+  await signIn(page, "g.ang", "analyst-demo", "/analyst/dashboard");
+  await page.goto("/analyst/workstation");
   await expect(page.getByText("5,000 alerts")).toBeVisible();
 
   // 2. AL-00478: a confident model, no rule, and ground truth says benign.

@@ -7,7 +7,7 @@
  */
 
 import { useState } from "react";
-import { createBrowserRouter, RouterProvider, type RouteObject } from "react-router";
+import { createBrowserRouter, Navigate, useLocation, RouterProvider, type RouteObject } from "react-router";
 
 import { AppShell } from "./components/layout/AppShell";
 import { AuditPage } from "./pages/admin/AuditPage";
@@ -15,11 +15,13 @@ import { GuardrailsPage } from "./pages/admin/GuardrailsPage";
 import { IpSecurityReportPage } from "./pages/admin/IpSecurityReportPage";
 import { StatusPage } from "./pages/admin/StatusPage";
 import { AlertDetailPage } from "./pages/analyst/AlertDetailPage";
+import { LegacyAnalyticsPage } from "./pages/analyst/LegacyAnalyticsPage";
+import { OverviewPage } from "./pages/analyst/OverviewPage";
+import { AnalyticsPage } from "./pages/analyst/AnalyticsPage";
 import { DashboardPage } from "./pages/analyst/DashboardPage";
 import { FeedbackImpactPage } from "./pages/analyst/FeedbackImpactPage";
 import { InvestigationsPage } from "./pages/analyst/InvestigationsPage";
 import { IpEntityPage } from "./pages/analyst/IpEntityPage";
-import { OverviewPage } from "./pages/analyst/OverviewPage";
 import { QueuePage } from "./pages/analyst/QueuePage";
 import { WorkstationPage } from "./pages/analyst/WorkstationPage";
 import { MetricsPage } from "./pages/evaluator/MetricsPage";
@@ -33,6 +35,8 @@ import { ExternalAdmissionPage } from "./pages/analyst/ExternalAdmissionPage";
 import { Tier2CasesPage, Tier2CaseDetailPage } from "./pages/analyst/Tier2CasesPage";
 import { HomeRedirect, RequireRole } from "./session/guards";
 import { SessionProvider } from "./session/SessionContext";
+
+function AnalystAlias({to}: {to:string}) { const {search} = useLocation(); return <Navigate to={to+search} replace/>; }
 
 export const routes: RouteObject[] = [
   { path: "/login", element: <LoginPage /> },
@@ -50,9 +54,14 @@ export const routes: RouteObject[] = [
       { path: "triage-memory", element: <TriageMemoryPage /> },
       { path: "tier2-cases", element: <Tier2CasesPage /> },
       { path: "tier2-cases/:caseRef", element: <Tier2CaseDetailPage /> },
-      { path: "external-admission", element: <ExternalAdmissionPage /> },
-      { path: "v2-triage", element: <V2RoutingPage /> },
-      { path: "overview", element: <OverviewPage /> },
+      { path: "external-admission", element: <AnalystAlias to="/analyst/inbox" /> },
+      { path: "v2-triage", element: <AnalystAlias to="/analyst/workspace" /> },
+      { path: "overview", element: <Navigate to="/analyst/dashboard" replace /> },
+      { path: "inbox", element: <ExternalAdmissionPage /> },
+      { path: "workspace", element: <V2RoutingPage /> },
+      { path: "analytics", element: <AnalyticsPage /> },
+      { path: "legacy-overview", element: <OverviewPage /> },
+      { path: "legacy-analytics", element: <LegacyAnalyticsPage /> },
       { path: "entities/ip/:ip", element: <IpEntityPage /> },
       { path: "dashboard", element: <DashboardPage /> },
       { path: "queue", element: <QueuePage /> },

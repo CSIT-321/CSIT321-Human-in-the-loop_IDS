@@ -1,6 +1,7 @@
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import type { Schemas } from "../../api/client";
+import { DetectorEvidence } from "./DetectorEvidence";
 import { DetectorProvenance } from "./DetectorProvenance";
 
 const detector: Schemas["CanonicalAlert"] = {
@@ -26,7 +27,7 @@ describe("detector provenance", () => {
   it("shows provided model confidence independently of severity", () => {
     render(<DetectorProvenance detector={{ ...detector, detectorSource: "current_flow",
       detectorName: "Signature + XGBoost", detectorSeverity: "Medium", confidence: 0.992 }} />);
-    expect(screen.getByText("Current Flow Detector")).toBeVisible();
+    expect(screen.getByText("Legacy Flow Detector")).toBeVisible();
     expect(screen.getByText("Medium")).toBeVisible();
     expect(screen.getByText(/99.2/)).toBeVisible();
   });
@@ -34,4 +35,24 @@ describe("detector provenance", () => {
     render(<DetectorProvenance detector={undefined} />);
     expect(screen.queryByRole("region", { name: "Detector provenance" })).not.toBeInTheDocument();
   });
+});
+
+it("shows Suricata evidence without legacy Signature or ML panels", () => {
+  render(<DetectorEvidence detector={detector}/>);
+  expect(screen.getByText("Suricata")).toBeVisible();
+  expect(screen.queryByText("XGBoost / ML evidence")).not.toBeInTheDocument();
+  expect(screen.queryByText("Legacy signature evidence")).not.toBeInTheDocument();
+});
+it("shows XGBoost confidence, model and available TreeSHAP as secondary evidence", () => {
+  render(<DetectorEvidence detector={{...detector,detectorSource:"xgboost",detectorName:"XGBoost",detectorVersion:"xgb-8class-20260911",confidence:1,detectionCategory:"Infiltration",structuredEvidence:{mlPredictedClass:"Infiltration",treeShap:{status:"available"}}}}/>);
+  expect(screen.getByText(/Supported secondary/)).toBeVisible();
+  expect(screen.getByText("100.0%")).toBeVisible();
+  expect(screen.getByText("Explanation: TreeSHAP available")).toBeVisible();
+  expect(screen.queryByText("Legacy signature evidence")).not.toBeInTheDocument();
+});
+it("retains fused signature and ML evidence under an explicit legacy boundary", () => {
+  render(<DetectorEvidence detector={{...detector,detectorSource:"current_flow",detectorName:"Signature + XGBoost",structuredEvidence:{signatureRules:[{name:"Historical rule"}],mlPredictedClass:"Infiltration"}}}/>);
+  expect(screen.getByText("Legacy Flow Detector")).toBeVisible();
+  expect(screen.getByText("Legacy signature evidence")).toBeVisible();
+  expect(screen.getByText("XGBoost / ML evidence")).toBeVisible();
 });

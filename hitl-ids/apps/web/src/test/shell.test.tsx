@@ -85,7 +85,7 @@ async function signInAs(user: ReturnType<typeof userEvent.setup>, username: keyo
   await user.click(screen.getByRole("button", { name: "Sign in" }));
 }
 const SIGN_IN_CASES = [
-  { username: "g.ang", heading: "Workstation" },
+  { username: "g.ang", heading: "Dashboard" },
   { username: "admin", heading: "System Status" },
   { username: "evaluator", heading: "Evaluation scenarios" },
 ] as const;
@@ -166,9 +166,9 @@ describe("shell: route guards", () => {
     stubApi();
     const { router } = renderApp("/admin/status", { session: ANALYST });
 
-    await waitFor(() => expect(router.state.location.pathname).toBe("/analyst/workstation"));
+    await waitFor(() => expect(router.state.location.pathname).toBe("/analyst/dashboard"));
     expect(
-      await screen.findByRole("heading", { level: 1, name: "Workstation" }),
+      await screen.findByRole("heading", { level: 1, name: "Dashboard" }),
     ).toBeInTheDocument();
   });
 

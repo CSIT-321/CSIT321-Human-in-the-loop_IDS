@@ -2,7 +2,7 @@
  * The workstation's top bar: identity and data provenance on the left; the UTC clock, the signed-in
  * account and sign-out on the right.
  *
- * "Recorded flows" replaces the reference design's LIVE feed badge: this console scores recorded lab
+ * "HITL Platform" replaces the reference design's LIVE feed badge: this console scores recorded lab
  * traffic (CSE-CIC-IDS2018), and a live indicator would be a claim the system cannot make.
  *
  * There is no role switch. Since S18a the view belongs to the account signed in; to see another
@@ -36,6 +36,8 @@ function Clock() {
 export function TopBar() {
   const { session, signOut } = useSession();
   const navigate = useNavigate();
+  const [theme, setTheme] = useState(() => localStorage.getItem("hitl.theme") === "light" ? "light" : "dark");
+  useEffect(() => { document.documentElement.dataset.theme = theme; localStorage.setItem("hitl.theme", theme); }, [theme]);
 
   if (session === null) return null;
 
@@ -53,14 +55,15 @@ export function TopBar() {
         <span className="hidden truncate text-xs text-muted md:inline">Human-in-the-loop triage</span>
         <span
           className="hidden items-center gap-1.5 rounded-sm border border-border bg-surface px-2 py-0.5 font-mono text-[11px] uppercase tracking-wider text-muted lg:inline-flex"
-          title="Scores recorded CSE-CIC-IDS2018 flows; nothing here is a live feed"
+          title="Detector-agnostic operational workflow"
         >
           <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-dim" />
-          Recorded flows
+          HITL Platform
         </span>
       </div>
       <div className="flex items-center gap-3">
         <Clock />
+        <button className="theme-toggle" aria-label={`Switch to ${theme === "dark" ? "Light" : "Dark"} theme`} onClick={() => setTheme(theme === "dark" ? "light" : "dark")}>{theme === "dark" ? "☀ Light" : "◐ Dark"}</button>
         <span
           aria-hidden
           title={session.username}

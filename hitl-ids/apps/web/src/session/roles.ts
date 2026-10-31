@@ -14,6 +14,8 @@ export type Role = (typeof ROLES)[number];
 export interface NavItem {
   readonly to: string;
   readonly label: string;
+  readonly group?: string;
+  readonly icon?: string;
 }
 
 export interface RoleMeta {
@@ -31,19 +33,16 @@ export const ROLE_META: Readonly<Record<Role, RoleMeta>> = {
   security_analyst: {
     label: "Security Analyst",
     short: "Analyst",
-    home: "/analyst/workstation",
+    home: "/analyst/dashboard",
     nav: [
-      { to: "/analyst/workstation", label: "Workstation" },
-      { to: "/analyst/tier2-cases", label: "Tier 2 Cases" },
-      { to: "/analyst/triage-memory", label: "Triage Memory" },
-      { to: "/analyst/selective-review", label: "Selective Review" },
-      { to: "/analyst/external-admission", label: "Suricata Admission" },
-      { to: "/analyst/v2-triage", label: "V2 Triage Routing" },
-      { to: "/analyst/overview", label: "Overview" },
-      { to: "/analyst/dashboard", label: "Dashboard" },
-      { to: "/analyst/queue", label: "Alert Queue" },
-      { to: "/analyst/investigations", label: "Investigations" },
-      { to: "/analyst/feedback-impact", label: "Feedback Impact" },
+      { to: "/analyst/dashboard", label: "Dashboard", group: "Operations", icon: "◫" },
+      { to: "/analyst/inbox", label: "Incoming Alerts", group: "Operations", icon: "⇥" },
+      { to: "/analyst/workspace", label: "Analyst Workspace", group: "Operations", icon: "⌕" },
+      { to: "/analyst/tier2-cases", label: "Tier 2 Cases", group: "Operations", icon: "▣" },
+      { to: "/analyst/triage-memory", label: "Triage Memory", group: "Learning & Automation", icon: "◇" },
+      { to: "/analyst/selective-review", label: "Selective Review", group: "Learning & Automation", icon: "✓" },
+      { to: "/analyst/analytics", label: "Analytics", group: "Insights", icon: "▥" },
+      { to: "/analyst/workstation", label: "Legacy Workstation", group: "Legacy", icon: "▤" },
     ],
   },
   system_admin: {
@@ -55,8 +54,8 @@ export const ROLE_META: Readonly<Record<Role, RoleMeta>> = {
       { to: "/admin/tier2-cases", label: "Tier 2 Cases" },
       { to: "/admin/triage-memory", label: "Triage Memory" },
       { to: "/admin/selective-review", label: "Selective Review" },
-      { to: "/admin/external-admission", label: "Suricata Admission" },
-      { to: "/admin/v2-triage", label: "V2 Triage Routing" },
+      { to: "/admin/external-admission", label: "Incoming Alerts" },
+      { to: "/admin/v2-triage", label: "Analyst Workspace" },
       { to: "/admin/guardrails", label: "Guardrails" },
       { to: "/admin/audit", label: "Audit Trail" },
       { to: "/admin/reports/ip", label: "IP Security Report" },
@@ -71,8 +70,8 @@ export const ROLE_META: Readonly<Record<Role, RoleMeta>> = {
       { to: "/evaluator/tier2-cases", label: "Tier 2 Cases" },
       { to: "/evaluator/triage-memory", label: "Triage Memory" },
       { to: "/evaluator/selective-review", label: "Selective Review" },
-      { to: "/evaluator/external-admission", label: "Suricata Admission" },
-      { to: "/evaluator/v2-triage", label: "V2 Triage Routing" },
+      { to: "/evaluator/external-admission", label: "Incoming Alerts" },
+      { to: "/evaluator/v2-triage", label: "Analyst Workspace" },
       { to: "/evaluator/metrics", label: "Detection Metrics" },
     ],
   },

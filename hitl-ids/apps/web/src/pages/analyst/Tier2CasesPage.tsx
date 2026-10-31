@@ -43,9 +43,9 @@ export function CreateCasePanel({ alert }: { alert: Schemas["RoutingView"] }) {
     <label htmlFor="case-title" className="block text-sm">Case title</label>
     <input id="case-title" className={input} maxLength={200} value={title} disabled={busy} onChange={e => setTitle(e.target.value)} />
     <label htmlFor="case-handoff" className="block text-sm">Tier 1 handoff summary</label>
-    <textarea id="case-handoff" className={input} rows={3} maxLength={4000} value={handoff} disabled={busy} onChange={e => setHandoff(e.target.value)} />
+    <p id="handoff-help" className="text-xs text-muted">Summarise what Tier 2 should know before beginning investigation.</p><textarea aria-describedby="handoff-help" id="case-handoff" className={input} rows={3} maxLength={4000} value={handoff} disabled={busy} onChange={e => setHandoff(e.target.value)} />
     <label htmlFor="case-reason" className="block text-sm">Case creation reason</label>
-    <textarea id="case-reason" className={input} rows={2} maxLength={4000} value={reason} disabled={busy} onChange={e => setReason(e.target.value)} />
+    <p id="case-reason-help" className="text-xs text-muted">Explain why formal Tier 2 investigation is needed.</p><textarea aria-describedby="case-reason-help" id="case-reason" className={input} rows={2} maxLength={4000} value={reason} disabled={busy} onChange={e => setReason(e.target.value)} />
     <button className={button} disabled={busy || !title.trim() || !handoff.trim() || !reason.trim()} onClick={() => void create()}>Create Tier 2 Case</button>
     {error && <p role="alert" className="text-sm text-danger">{error}</p>}
   </section>;
@@ -69,7 +69,7 @@ export function Tier2CasesPage() {
             <td className="border-b border-border p-2">{item.snapshot.triage.priorityBand ?? "Unassigned"} / {item.snapshot.triage.operationalPriority ?? "Not assigned"}</td>
             <td className="border-b border-border p-2">{item.status}</td><td className="border-b border-border p-2">Actor #{item.ownerActorId}</td>
             <td className="border-b border-border p-2">{item.createdAt}</td>
-            <td className="border-b border-border p-2"><Link className="text-accent underline" to={prefixFor(session?.role) + "/v2-triage?alertRef=" + item.primaryOperationalAlertRef}>{item.primaryOperationalAlertRef.slice(0, 8)}</Link></td>
+            <td className="border-b border-border p-2"><Link className="text-accent underline" to={prefixFor(session?.role) + (session?.role === "security_analyst" ? "/workspace?alertRef=" : "/v2-triage?alertRef=") + item.primaryOperationalAlertRef}>{item.primaryOperationalAlertRef.slice(0, 8)}</Link></td>
           </tr>)}</tbody>
         </table>
       </div>}
@@ -129,10 +129,29 @@ export function CaseInvestigation({ initial, refresh }: { initial: Case; refresh
   }
   const snapshot = current.snapshot;
   const detector = snapshot.detector;
+  const historyPanel = <>
+      {events.status === "loading" && <p role="status">Loading case history...</p>}
+      {events.status === "error" && <div><p role="alert">{events.error.message}</p><button className={button} onClick={events.reload}>Retry</button></div>}
+      {events.status === "success" && <div role="tabpanel" className="space-y-3">
+        {events.data.items.length === 0 && <p className="text-sm">No records yet.</p>}
+        {events.data.items.map(event => <article key={event.id} className="space-y-1 border-b border-border py-3">
+          <p className="text-xs text-muted">{event.eventType} / actor #{event.actorId} / {event.createdAt}</p>
+          {event.finding && <Pill tone="warn">{event.finding.replaceAll("_"," ")}</Pill>}
+          <p className="whitespace-pre-wrap break-words text-sm">{event.reason}</p>
+          {event.linkedAlertRef && <Link className="break-all text-sm text-accent underline" to={prefixFor(session?.role) + (session?.role === "security_analyst" ? "/workspace?alertRef=" : "/v2-triage?alertRef=") + event.linkedAlertRef}>{event.linkedAlertRef}</Link>}
+          {tab === "timeline" && <details><summary className="cursor-pointer text-xs">State change</summary><pre className="max-h-64 overflow-auto whitespace-pre-wrap break-all text-xs">{JSON.stringify({ before: event.beforeState, after: event.afterState },null,2)}</pre></details>}
+        </article>)}
+        <div className="flex flex-wrap items-center gap-2 text-sm">
+          <button className={button} disabled={offset === 0} onClick={() => setOffset(Math.max(0,offset-50))}>Previous</button>
+          <span>{events.data.page.total} records</span>
+          <button className={button} disabled={offset+50 >= events.data.page.total} onClick={() => setOffset(offset+50)}>Next</button>
+        </div>
+      </div>}
+  </>;
   return <div className="min-w-0 space-y-5 break-words">
     <PageHeader title={current.title} />
     <section className="space-y-3" aria-label="Case summary">
-      <p className="break-all font-mono text-xs">{current.caseRef}</p>
+      <h2 className="text-lg font-semibold">Case Summary</h2>{canWrite && current.status === "open" && <a href="#case-investigation" className="primary-action" onClick={()=>{setTab("timeline");setReason("");}}>Begin Investigation</a>}<p className="break-all font-mono text-xs">{current.caseRef}</p>
       <Pill tone="accent">{current.status}</Pill>
       <dl className="grid grid-cols-1 gap-3 text-sm sm:grid-cols-2">
         <div><dt className="text-muted">Owner</dt><dd>Actor #{current.ownerActorId}</dd></div>
@@ -145,43 +164,27 @@ export function CaseInvestigation({ initial, refresh }: { initial: Case; refresh
       <h2 className="text-base font-semibold">Tier 1 Handoff</h2>
       <p className="whitespace-pre-wrap break-words text-sm">{snapshot.tier1HandoffSummary}</p>
       <p className="break-words text-sm">Escalation: {snapshot.escalationReason}</p>
-      <p className="text-xs text-muted">{snapshot.routingDecision.eventType} by actor #{snapshot.routingDecision.actorId}</p>
+      <details><summary className="text-xs text-muted">Handoff audit details</summary><p className="text-xs">{snapshot.routingDecision.eventType} by actor #{snapshot.routingDecision.actorId}</p></details>
       <ul className="space-y-1 text-sm">{snapshot.triage.tier2RecommendationReasons.map((text,i) => <li key={i}>{text}</li>)}</ul>
     </section>
     <section className="space-y-2 border-t border-border pt-4" aria-label="Detector evidence">
       <h2 className="text-base font-semibold">Detector Evidence</h2>
-      <p className="text-sm">Detector: {detector.detectorName} ({detector.detectorSource})</p>
+      <p className="text-sm">Detector: {detector.detectorSource === "current_flow" ? "Legacy Flow Detector" : detector.detectorName} ({detector.detectorSource})</p>
       <p className="text-sm">Native Severity: {detector.nativeSeverity ?? "Not provided"}</p>
-      <p className="text-sm">Confidence: {detector.detectorConfidence === null ? "Not provided" : detector.detectorConfidence}</p>
+      <p className="text-sm">Confidence: {detector.detectorConfidence == null ? "Not provided" : `${(detector.detectorConfidence*100).toFixed(1)}%`}</p>
       <p className="break-words text-sm">{detector.detectionTitle} / {detector.detectionCategory ?? "Not provided"}</p>
       <p className="break-all text-sm">Source: {detector.sourceIp} / Port: {detector.sourcePort ?? "Not provided"}</p>
       <p className="break-all text-sm">Destination: {detector.destinationIp} / Port: {detector.destinationPort ?? "Not provided"}</p>
-      <Link className="inline-block text-sm text-accent underline" to={prefixFor(session?.role) + "/v2-triage?alertRef=" + current.primaryOperationalAlertRef}>Primary alert</Link>
+      <Link className="inline-block text-sm text-accent underline" to={prefixFor(session?.role) + (session?.role === "security_analyst" ? "/workspace?alertRef=" : "/v2-triage?alertRef=") + current.primaryOperationalAlertRef}>Primary alert</Link>
       <details><summary className="cursor-pointer text-sm">Immutable detector snapshot</summary><pre className="max-h-80 overflow-auto whitespace-pre-wrap break-all p-2 text-xs">{JSON.stringify(detector.detectorEvidence,null,2)}</pre></details>
     </section>
-    <section className="space-y-4 border-t border-border pt-4">
-      <div className="flex flex-wrap gap-2" role="tablist" aria-label="Case investigation">
-        {([["note","Investigation Notes"],["finding","Findings"],["link","Linked Alerts"],["timeline","Audit Timeline"]] as const).map(([value,label]) =>
+    <section id="case-investigation" className="workspace-section space-y-4">
+      <h2 className="text-lg font-semibold">Investigation</h2><div className="flex flex-wrap gap-2" role="tablist" aria-label="Case investigation">
+        {([["note","Investigation Notes"],["finding","Findings"],["link","Linked Alerts"]] as const).map(([value,label]) =>
           <button role="tab" aria-selected={tab === value} disabled={busy} className={button} key={value}
             onClick={() => { setTab(value); setOffset(0); setReason(""); setError(""); setMessage(""); }}>{label}</button>)}
       </div>
-      {events.status === "loading" && <p role="status">Loading case history...</p>}
-      {events.status === "error" && <div><p role="alert">{events.error.message}</p><button className={button} onClick={events.reload}>Retry</button></div>}
-      {events.status === "success" && <div role="tabpanel" className="space-y-3">
-        {events.data.items.length === 0 && <p className="text-sm">No records yet.</p>}
-        {events.data.items.map(event => <article key={event.id} className="space-y-1 border-b border-border py-3">
-          <p className="text-xs text-muted">{event.eventType} / actor #{event.actorId} / {event.createdAt}</p>
-          {event.finding && <Pill tone="warn">{event.finding.replaceAll("_"," ")}</Pill>}
-          <p className="whitespace-pre-wrap break-words text-sm">{event.reason}</p>
-          {event.linkedAlertRef && <Link className="break-all text-sm text-accent underline" to={prefixFor(session?.role) + "/v2-triage?alertRef=" + event.linkedAlertRef}>{event.linkedAlertRef}</Link>}
-          {tab === "timeline" && <details><summary className="cursor-pointer text-xs">State change</summary><pre className="max-h-64 overflow-auto whitespace-pre-wrap break-all text-xs">{JSON.stringify({ before: event.beforeState, after: event.afterState },null,2)}</pre></details>}
-        </article>)}
-        <div className="flex flex-wrap items-center gap-2 text-sm">
-          <button className={button} disabled={offset === 0} onClick={() => setOffset(Math.max(0,offset-50))}>Previous</button>
-          <span>{events.data.page.total} records</span>
-          <button className={button} disabled={offset+50 >= events.data.page.total} onClick={() => setOffset(offset+50)}>Next</button>
-        </div>
-      </div>}
+      {tab !== "timeline" && historyPanel}
       {canWrite && (tab !== "timeline" || current.status === "open") && <div className="space-y-3">
         {tab === "link" && <><label htmlFor="linked-alert" className="block text-sm">Operational alert UUID</label><input id="linked-alert" value={linkedRef} disabled={busy} onChange={e => setLinkedRef(e.target.value)} className={input} /></>}
         {tab === "finding" && <><label htmlFor="case-finding" className="block text-sm">Finding</label><select id="case-finding" value={finding} disabled={busy} onChange={e => setFinding(e.target.value as typeof finding)} className={input}>
@@ -197,6 +200,8 @@ export function CaseInvestigation({ initial, refresh }: { initial: Case; refresh
       {message && <p role="status" className="text-sm text-ok">{message}</p>}
       <button className={button} disabled={busy} onClick={refresh}>Refresh case</button>
     </section>
+    <h2 className="text-lg font-semibold">Response</h2><p className="text-sm text-warn">Approved — Not Executed. Approval records a human decision; it does not execute a response.</p>
     <ResponseRecommendations key={current.caseRef} current={current} canWrite={canWrite} />
+    <section className="workspace-section space-y-4" aria-label="Timeline / Audit"><h2 className="text-lg font-semibold">Timeline / Audit</h2><div role="tablist" aria-label="Case audit"><button role="tab" aria-selected={tab === "timeline"} className={button} onClick={()=>{setTab("timeline");setOffset(0);setReason("");}}>Audit Timeline</button></div>{tab === "timeline" && historyPanel}</section>
   </div>;
 }

@@ -38,7 +38,7 @@ async function card(name: string): Promise<HTMLElement> {
 describe("Overview", () => {
   it("says which detection run the recorded flows came from", async () => {
     stubOverview(() => undefined);
-    renderApp("/analyst/overview", { session: ANALYST });
+    renderApp("/analyst/legacy-overview", { session: ANALYST });
 
     expect(await screen.findByRole("heading", { level: 1, name: "Overview" })).toBeInTheDocument();
     // The run id lives in the summary, which lands after the heading does.
@@ -47,7 +47,7 @@ describe("Overview", () => {
 
   it("links each top source address to its entity page and prints its flow count", async () => {
     stubOverview(() => undefined);
-    renderApp("/analyst/overview", { session: ANALYST });
+    renderApp("/analyst/legacy-overview", { session: ANALYST });
 
     const section = await card("Top source addresses");
     expect(within(section).getByRole("columnheader", { name: "Address" })).toBeInTheDocument();
@@ -63,7 +63,7 @@ describe("Overview", () => {
 
   it("prints destination ports as text, because a port has no page to open", async () => {
     stubOverview(() => undefined);
-    renderApp("/analyst/overview", { session: ANALYST });
+    renderApp("/analyst/legacy-overview", { session: ANALYST });
 
     const section = await card("Top destination ports");
     expect(within(section).getByRole("columnheader", { name: "Port" })).toBeInTheDocument();
@@ -73,7 +73,7 @@ describe("Overview", () => {
 
   it("names verdicts with their on-screen labels, never the raw API key", async () => {
     stubOverview(() => undefined);
-    renderApp("/analyst/overview", { session: ANALYST });
+    renderApp("/analyst/legacy-overview", { session: ANALYST });
 
     const section = await card("Verdicts in force");
     expect(
@@ -85,7 +85,7 @@ describe("Overview", () => {
 
   it("names guardrail interventions the same way", async () => {
     stubOverview(() => undefined);
-    renderApp("/analyst/overview", { session: ANALYST });
+    renderApp("/analyst/legacy-overview", { session: ANALYST });
 
     const section = await card("Guardrail interventions");
     expect(
@@ -96,7 +96,7 @@ describe("Overview", () => {
 
   it("repeats the capture-hour histogram as a table as well as a chart", async () => {
     stubOverview(() => undefined);
-    renderApp("/analyst/overview", { session: ANALYST });
+    renderApp("/analyst/legacy-overview", { session: ANALYST });
 
     const section = await card("Flow volume by capture hour");
     const table = within(section).getByRole("table");
@@ -115,7 +115,7 @@ describe("Overview", () => {
       guardrailInterventions: {},
     };
     stubOverview(() => jsonResponse(noVerdicts));
-    renderApp("/analyst/overview", { session: ANALYST });
+    renderApp("/analyst/legacy-overview", { session: ANALYST });
 
     const verdicts = await card("Verdicts in force");
     expect(await within(verdicts).findByText("No verdicts recorded yet")).toBeInTheDocument();
@@ -139,7 +139,7 @@ describe("Overview", () => {
       }
       return undefined;
     });
-    renderApp("/analyst/overview", { session: ANALYST });
+    renderApp("/analyst/legacy-overview", { session: ANALYST });
 
     const alert = await screen.findByRole("alert");
     expect(within(alert).getByText("The database is not ready yet.")).toBeInTheDocument();
@@ -166,7 +166,7 @@ describe("Overview", () => {
         topDestinationPorts: [],
       }),
     );
-    renderApp("/analyst/overview", { session: ANALYST });
+    renderApp("/analyst/legacy-overview", { session: ANALYST });
 
     expect(await screen.findByText("No alerts yet")).toBeInTheDocument();
     expect(screen.getByText(/python scripts\/run_detection\.py/)).toBeInTheDocument();

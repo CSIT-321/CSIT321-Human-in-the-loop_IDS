@@ -7,7 +7,7 @@ test("staged Suricata review and admission reaches Tier 1", async ({ page }) => 
   await page.getByLabel("Username").fill("g.ang");
   await page.getByLabel("Password", { exact: true }).fill("analyst-demo");
   await page.getByRole("button", { name: "Sign in" }).click();
-  await page.getByRole("link", { name: "Suricata Admission" }).click();
+  await page.getByRole("link", { name: "Incoming Alerts", exact: true }).click();
   const option = page.locator("#external-alert option").filter({ hasText: "(staged)" }).first();
   await expect(option).toHaveCount(1);
   await page.getByLabel("Staged alert").selectOption((await option.getAttribute("value"))!);
@@ -28,8 +28,8 @@ test("staged Suricata review and admission reaches Tier 1", async ({ page }) => 
   await page.getByRole("button", { name: "Admit to HITL Workflow" }).click();
   await expect(page.getByRole("status")).toContainText("Operational admission completed");
   await expect(page.locator("#external-alert option:checked")).toContainText("(admitted)");
-  await page.getByRole("link", { name: "Open V2 Routing" }).click();
-  await expect(page.getByRole("heading", { name: "V2 Triage Routing" })).toBeVisible();
+  await page.getByRole("link", { name: "Open in Analyst Workspace" }).click();
+  await expect(page.getByRole("heading", { name: "Analyst Workspace" })).toBeVisible();
   await expect(page.getByText("tier1 review", { exact: true })).toBeVisible();
   await expect(page.getByText("triage", { exact: true })).toBeVisible();
   await expect(page.getByText("P3", { exact: true })).toBeVisible();

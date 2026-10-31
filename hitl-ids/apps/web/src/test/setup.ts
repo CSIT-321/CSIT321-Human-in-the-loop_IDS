@@ -8,6 +8,8 @@ import { setApiToken } from "../api/client";
 afterEach(() => {
   cleanup();
   window.sessionStorage.clear();
+  window.localStorage.clear();
+  delete document.documentElement.dataset.theme;
   setApiToken(null);
   vi.restoreAllMocks();
   vi.unstubAllGlobals();

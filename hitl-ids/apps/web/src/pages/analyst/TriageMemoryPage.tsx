@@ -22,7 +22,7 @@ function Pagination({offset,total,onChange}:{offset:number;total:number;onChange
 
 export function MemorySummary({view}:{view:View}) {
   return <div className="min-w-0 space-y-3">
-    <h3 className="text-base font-semibold capitalize">{pretty(view.lesson.outcome)}</h3>
+    <p className="label-mono">Derived Memory Lesson</p><h3 className="text-base font-semibold capitalize">{pretty(view.lesson.outcome)}</h3>
     <Pill tone={view.status==="active"?"ok":view.status==="conflict_review"?"warn":"muted"}>{pretty(view.status)}</Pill>
     <p className="whitespace-pre-wrap break-words text-sm">{view.lesson.humanReason}</p>
     <dl className="grid grid-cols-2 gap-3 text-sm sm:grid-cols-3">
@@ -67,7 +67,7 @@ function MemoryDetail({view,canWrite,onChange}:{view:View;canWrite:boolean;onCha
   return <section className="min-w-0 space-y-5" aria-label="Triage lesson detail">
     <MemorySummary view={view}/>
     <div className="flex flex-wrap gap-4 text-sm">
-      <Link className="text-accent underline" to={prefix(session?.role)+"/v2-triage?alertRef="+view.lesson.sourceOperationalAlertRef}>Source alert</Link>
+      <Link className="text-accent underline" to={prefix(session?.role)+(session?.role === "security_analyst" ? "/workspace?alertRef=" : "/v2-triage?alertRef=")+view.lesson.sourceOperationalAlertRef}>Source alert</Link>
       {view.lesson.sourceCaseRef&&<Link className="text-accent underline" to={prefix(session?.role)+"/tier2-cases/"+view.lesson.sourceCaseRef}>Source case</Link>}
     </div>
     <p className="break-words text-sm">Scope fields: {view.lesson.scopeFields.join(", ")}</p>
@@ -95,7 +95,7 @@ function MemoryDetail({view,canWrite,onChange}:{view:View;canWrite:boolean;onCha
           <p className="break-all text-xs text-muted">{event.eventType} / Actor #{event.actorId} / {event.createdAt}</p>
           <p className="whitespace-pre-wrap break-words">{event.reason}</p>
           {event.evidence&&<><p>{pretty(event.evidence.outcome)} / {event.evidence.relation}</p>
-            <Link className="text-accent underline" to={prefix(session?.role)+"/v2-triage?alertRef="+event.evidence.sourceOperationalAlertRef}>Evidence alert</Link></>}
+            <Link className="text-accent underline" to={prefix(session?.role)+(session?.role === "security_analyst" ? "/workspace?alertRef=" : "/v2-triage?alertRef=")+event.evidence.sourceOperationalAlertRef}>Evidence alert</Link></>}
           <details><summary className="cursor-pointer">Immutable event snapshot</summary><pre className="max-h-80 overflow-auto whitespace-pre-wrap break-all text-xs">{JSON.stringify(event,null,2)}</pre></details>
         </article>)}
         <Pagination offset={offset} total={history.data.page.total} onChange={setOffset}/>
@@ -116,7 +116,7 @@ export function TriageMemoryPage() {
   },[ref,offset]);
   const canWrite=session?.role==="security_analyst"||session?.role==="system_admin";
   return <div className="min-w-0 space-y-5 p-4 sm:p-6">
-    <PageHeader title="Triage Memory"/>
+    <PageHeader title="Triage Memory"/><p className="text-sm text-muted">Human analyst outcomes support derived memory lessons. Memory guidance does not retrain XGBoost.</p>
     <p className="text-sm font-semibold text-warn">{warning}</p>
     {ref&&<button className={button} onClick={()=>setSearch({})}>All memory lessons</button>}
     {resource.status==="loading"&&<p role="status">Loading triage memory...</p>}
@@ -124,9 +124,9 @@ export function TriageMemoryPage() {
     {resource.status==="success"&&<>
       {resource.data.items.length===0&&<p>No triage lessons.</p>}
       {ref&&resource.data.items[0]?<MemoryDetail key={ref} view={resource.data.items[0]} canWrite={canWrite} onChange={resource.reload}/>:
-        <><div className="space-y-5">{resource.data.items.map(view=><article key={view.lesson.lessonRef} className="min-w-0 space-y-3 border-b border-border pb-5">
+        <><div className="space-y-5">{["active","eligible_for_activation","conflict_review","candidate","expired","rejected"].map(status=><section className="workspace-section space-y-4" key={status}><h2 className="font-semibold capitalize">{pretty(status)}</h2>{resource.data.items.filter(view=>view.status===status).length === 0 && <p className="text-sm text-muted">No records on this page.</p>}{resource.data.items.filter(view=>view.status===status).map(view=><article key={view.lesson.lessonRef} className="min-w-0 space-y-3 border-b border-border pb-5">
           <MemorySummary view={view}/><Link className="text-sm text-accent underline" to={"?lessonRef="+view.lesson.lessonRef}>Review lesson</Link>
-        </article>)}</div><Pagination offset={offset} total={resource.data.page.total} onChange={setOffset}/></>}
+        </article>)}</section>)}</div><Pagination offset={offset} total={resource.data.page.total} onChange={setOffset}/></>}
     </>}
     <button className={button} onClick={resource.reload}>Refresh memory</button>
   </div>;

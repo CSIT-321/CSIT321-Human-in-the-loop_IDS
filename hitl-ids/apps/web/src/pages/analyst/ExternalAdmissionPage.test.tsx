@@ -51,8 +51,8 @@ describe("Suricata admission", () => {
     expect(screen.getByRole("button", { name: "Admit to HITL Workflow" })).toBeDisabled();
     await userEvent.type(screen.getByLabelText("Decision reason"), "Admit reviewed event");
     await userEvent.click(screen.getByRole("button", { name: "Admit to HITL Workflow" }));
-    const link = await screen.findByRole("link", { name: "Open V2 Routing" });
-    expect(link).toHaveAttribute("href", "/analyst/v2-triage?alertRef=" + staged.canonicalAlertId);
+    const link = await screen.findByRole("link", { name: "Open in Analyst Workspace" });
+    expect(link).toHaveAttribute("href", "/analyst/workspace?alertRef=" + staged.canonicalAlertId);
     expect(bodies).toHaveLength(2);
     expect(bodies[1]).toMatchObject({ expectedReviewId: 1, reason: "Admit reviewed event" });
     expect(bodies[1]).not.toHaveProperty("trustedContext");

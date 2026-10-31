@@ -36,9 +36,9 @@ function stubDashboard(
 describe("Dashboard", () => {
   it("leads with the corpus's own counts, not numbers computed here", async () => {
     stubDashboard(() => undefined);
-    renderApp("/analyst/dashboard", { session: ANALYST });
+    renderApp("/analyst/legacy-analytics", { session: ANALYST });
 
-    expect(await screen.findByRole("heading", { level: 1, name: "Dashboard" })).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { level: 1, name: "Legacy Flow Detector Analytics" })).toBeInTheDocument();
     expect(screen.getByText("Detection run #3")).toBeInTheDocument();
 
     expect(screen.getByText("5,000")).toBeInTheDocument();
@@ -50,7 +50,7 @@ describe("Dashboard", () => {
 
   it("repeats each breakdown as a table as well as a chart", async () => {
     stubDashboard(() => undefined);
-    renderApp("/analyst/dashboard", { session: ANALYST });
+    renderApp("/analyst/legacy-analytics", { session: ANALYST });
 
     const byClass = await screen.findByRole("heading", { level: 2, name: "Alerts by attack class" });
     const section = byClass.closest("section");
@@ -63,7 +63,7 @@ describe("Dashboard", () => {
 
   it("names the highest-ranked alerts still flagged for review", async () => {
     stubDashboard(() => undefined);
-    renderApp("/analyst/dashboard", { session: ANALYST });
+    renderApp("/analyst/legacy-analytics", { session: ANALYST });
 
     const card = await screen.findByRole("heading", { level: 2, name: "Needs a human" });
     const section = card.closest("section");
@@ -83,7 +83,7 @@ describe("Dashboard", () => {
       if (pathname === "/api/alerts") return jsonResponse(alertsPage([], 0));
       return jsonResponse({ error: { code: "NOT_FOUND", message: pathname } }, 404);
     });
-    renderApp("/analyst/dashboard", { session: ANALYST });
+    renderApp("/analyst/legacy-analytics", { session: ANALYST });
 
     expect(screen.getByRole("status")).toBeInTheDocument();
     expect(screen.getAllByText("Loading…").length).toBeGreaterThanOrEqual(1);
@@ -102,7 +102,7 @@ describe("Dashboard", () => {
       }
       return undefined;
     });
-    renderApp("/analyst/dashboard", { session: ANALYST });
+    renderApp("/analyst/legacy-analytics", { session: ANALYST });
 
     const alert = await screen.findByRole("alert");
     expect(within(alert).getByText("The database is not ready yet.")).toBeInTheDocument();
@@ -129,7 +129,7 @@ describe("Dashboard", () => {
         bySeverity: {},
       }),
     );
-    renderApp("/analyst/dashboard", { session: ANALYST });
+    renderApp("/analyst/legacy-analytics", { session: ANALYST });
 
     expect(await screen.findByText("No alerts yet")).toBeInTheDocument();
     expect(screen.getByText(/python scripts\/run_detection\.py/)).toBeInTheDocument();

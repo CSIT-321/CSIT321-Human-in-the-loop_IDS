@@ -17,6 +17,7 @@ const webPort = process.env.HITL_E2E_WEB_PORT ?? "5174";
 
 export default defineConfig({
   testDir: "./e2e",
+  outputDir: "test-results/s16-browser-artifacts",
   testMatch: ["demo.spec.ts", "capture-guide.spec.ts"],
   timeout: 120_000,
   expect: { timeout: 15_000 },

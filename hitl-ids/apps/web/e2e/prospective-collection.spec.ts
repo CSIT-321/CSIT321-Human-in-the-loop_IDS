@@ -10,7 +10,7 @@ async function login(page:Page,user:string,password:string){
 test('authenticated UI collection uses actual decisions and survives post-window history',async({page,browser},testInfo)=>{
   const errors:string[]=[];page.on('pageerror',e=>errors.push(e.message));
   await login(page,'g.ang','analyst-demo');
-  await page.getByRole('link',{name:'Suricata Admission'}).click();
+  await page.getByRole('link',{name:'Incoming Alerts'}).click();
   const option=page.locator('#external-alert option').filter({hasText:'SYNTHETIC prospective collection'});
   await expect(option).toHaveCount(1);
   await page.getByLabel('Staged alert').selectOption((await option.getAttribute('value'))!);
@@ -21,7 +21,7 @@ test('authenticated UI collection uses actual decisions and survives post-window
   await page.getByLabel('Decision reason').fill('Human-authorized synthetic operational admission');
   await page.getByRole('button',{name:'Admit to HITL Workflow'}).click();
   await expect(page.getByRole('status')).toContainText('Operational admission completed');
-  await page.getByRole('link',{name:'Open V2 Routing'}).click();
+  await page.getByRole('link',{name:'Open in Analyst Workspace'}).click();
   await page.getByRole('button',{name:'Add Trusted Context',exact:true}).click();
   const form=page.getByRole('region',{name:'Collect structured safety context'});
   await form.getByLabel('Asset Criticality',{exact:true}).selectOption('low');
@@ -32,9 +32,11 @@ test('authenticated UI collection uses actual decisions and survives post-window
   await form.getByLabel('Structured assessment reason').fill('Explicit safe synthetic context, independently assessed after admission');
   await form.getByRole('button',{name:'Record Safety Assessment'}).click();
   await expect(page.getByRole('region',{name:'Trusted Context / Safety Evidence'}).getByText('Status: trusted',{exact:true})).toHaveCount(9);
+  await page.getByText('Advanced / Research & Evaluation',{exact:true}).click();
   await page.getByRole('button',{name:'Prospective Collection',exact:true}).click();
   const adminContext=await browser.newContext();const admin=await adminContext.newPage();
   await login(admin,'admin','admin-demo');await admin.getByRole('link',{name:'Selective Review',exact:true}).click();
+  await admin.getByText('Advanced / Research & Evaluation',{exact:true}).click();
   await admin.getByRole('button',{name:'Collection Runs',exact:true}).click();
   const start=Date.now()+12000,end=start+25000,cutoff=end+12000;
   await admin.getByLabel('Protocol version',{exact:true}).fill('synthetic-browser-prospective-v2');

@@ -5,8 +5,8 @@ async function login(page: Page, user: string, password: string) {
   await page.getByLabel("Username").fill(user);
   await page.getByLabel("Password", { exact: true }).fill(password);
   await page.getByRole("button", { name: "Sign in" }).click();
-  await page.getByRole("link", { name: "V2 Triage Routing" }).click();
-  await expect(page.getByRole("heading", { name: "V2 Triage Routing" })).toBeVisible();
+  await page.getByRole("link", { name: "Analyst Workspace" }).click();
+  await expect(page.getByRole("heading", { name: "Analyst Workspace" })).toBeVisible();
 }
 
 test("real authenticated routing, approval and rejection", async ({ page }) => {
@@ -15,7 +15,7 @@ test("real authenticated routing, approval and rejection", async ({ page }) => {
   await login(page, "g.ang", "analyst-demo");
   await page.getByLabel("Decision reason").fill("Admitted after evidence review");
   await page.getByRole("button", { name: "Admit to Tier 1" }).click();
-  await expect(page.getByRole("status")).toContainText("recorded");
+  await expect(page.getByRole("status").filter({hasText:"Admit to Tier 1 recorded"})).toContainText("recorded");
   await expect(page.getByText("NO", { exact: true })).toBeVisible();
   await page.getByLabel("Decision reason").fill("Manual escalation for deeper review");
   await page.getByRole("button", { name: "Manual Escalate" }).click();

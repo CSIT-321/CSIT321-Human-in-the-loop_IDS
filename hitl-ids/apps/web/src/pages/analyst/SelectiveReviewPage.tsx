@@ -4,6 +4,7 @@ import { api,unwrap,type Schemas } from "../../api/client";
 import { useApi } from "../../api/useApi";
 import { PageHeader,Pill } from "../../components/ui";
 import { useSession } from "../../session/SessionContext";
+import { reviewLanguage } from "./reviewLanguage";
 import { TrustedContextPanel } from "./TrustedContextPanel";
 import {CollectionRunsPanel,CollectionDecisionPanel,ContextCollectionForm} from "./CollectionPanel";
 
@@ -21,9 +22,9 @@ export function ReviewSummary({view}:{view:View}) {
   return <div className="min-w-0 space-y-3">
     <h3 className="text-sm font-semibold">Review Disposition</h3>
     <Pill tone={view.disposition==="no_immediate_review"?"ok":view.disposition==="recommended_review"?"warn":"accent"}>{labels[view.disposition]}</Pill>
-    <p className="break-words text-sm">{view.explanation}</p>
+    <p className="break-words text-sm">{reviewLanguage(view.explanation)}</p>
     {view.recalled&&<p className="text-sm text-warn">Prior deferral recalled</p>}
-    <ul className="space-y-1 break-words text-xs text-muted">{view.reasonCodes.map(code=><li key={code}>{code}</li>)}</ul>
+    <ul className="space-y-1 break-words text-xs text-muted">{view.reasonCodes.filter(code=>code === "UNKNOWN_REQUIRED_CONTEXT").map(code=><li key={code}>Required safety context is incomplete.</li>)}</ul>
     <p className="text-sm">Policy: {view.policyEvaluation.result.policyVersion}</p>
     <p className="text-sm">Operational priority: {view.priority??"Not assigned"}</p>
     {memory&&<section className="space-y-2 border-t border-border pt-3" aria-label="Decision memory snapshot">
@@ -34,11 +35,11 @@ export function ReviewSummary({view}:{view:View}) {
       <Link className="text-sm text-accent underline" to={prefix(session?.role)+"/triage-memory?lessonRef="+memory.memory.lesson.lessonRef}>Inspect memory lesson</Link>
     </section>}
     <TrustedContextPanel context={view.policyEvaluation.contextProvenance}/>
-    <details><summary className="cursor-pointer text-sm">Current safety evidence</summary><pre className="max-h-96 overflow-auto whitespace-pre-wrap break-all text-xs">{JSON.stringify(view.policyEvaluation,null,2)}</pre></details>
+    <details><summary className="cursor-pointer text-sm">Current safety evidence</summary><p className="text-xs">{view.explanation}</p><p className="text-xs">{view.reasonCodes.join(", ")}</p><pre className="max-h-96 overflow-auto whitespace-pre-wrap break-all text-xs">{JSON.stringify(view.policyEvaluation,null,2)}</pre></details>
   </div>;
 }
 
-export function SelectiveReviewPanel({alertRef}:{alertRef:string}) {
+export function SelectiveReviewPanel({alertRef,onChange}:{alertRef:string;onChange?:()=>void}) {
   const {session}=useSession();
   const [reason,setReason]=useState("");
   const [busy,setBusy]=useState(false);
@@ -67,15 +68,15 @@ export function SelectiveReviewPanel({alertRef}:{alertRef:string}) {
     try {
       if(action==="apply")await unwrap(api.POST("/api/v2/alerts/{alertRef}/selective-review/evaluate",{params,body}));
       else await unwrap(api.POST("/api/v2/alerts/{alertRef}/selective-review/require-human",{params,body}));
-      pending.current=null;setReason("");reload();
+      pending.current=null;setReason("");reload();onChange?.();
     }catch(cause){setError(cause instanceof Error?cause.message:"Review decision could not be confirmed.");}
     finally{setBusy(false);}
   }
   return <section aria-label="Selective Human Review" className="min-w-0 space-y-4 border-t border-border pt-5">
     <h2 className="text-base font-semibold">Selective Human Review</h2>
     <p className="text-sm font-semibold text-warn">{warning}</p>
-    <button className={button} aria-expanded={collectionOpen} onClick={()=>setCollectionOpen(!collectionOpen)}>Prospective Collection</button>
-    {collectionOpen&&<CollectionDecisionPanel alertRef={alertRef} runRef={runRef} onSelect={setRunRef} onRun={setRun} refreshKey={resource.status==="success"?resource.data.version:""}/>}
+    <details><summary className="cursor-pointer text-sm">Advanced / Research & Evaluation</summary><button className={button} aria-expanded={collectionOpen} onClick={()=>setCollectionOpen(!collectionOpen)}>Prospective Collection</button>
+    {collectionOpen&&<CollectionDecisionPanel alertRef={alertRef} runRef={runRef} onSelect={setRunRef} onRun={setRun} refreshKey={resource.status==="success"?resource.data.version:""}/>}</details>
     {canWrite&&<button className={button} aria-expanded={contextOpen} onClick={()=>setContextOpen(!contextOpen)}>Add Trusted Context</button>}
     {canWrite&&contextOpen&&<ContextCollectionForm key={alertRef} alertRef={alertRef} onSaved={()=>{setContextOpen(false);reload();}}/>}
     {resource.status==="loading"&&<p role="status">Checking current safety evidence...</p>}
@@ -124,7 +125,7 @@ export function SelectiveReviewPage() {
   useEffect(()=>{const timer=setInterval(()=>{reload();reloadMetrics();},15000);return()=>clearInterval(timer);},[reload,reloadMetrics]);
   return <div className="min-w-0 space-y-5 p-4 sm:p-6">
     <PageHeader title="Selective Human Review"/>
-    <CollectionRunsPanel/>
+    <details className="workspace-section"><summary className="cursor-pointer">Advanced / Research & Evaluation</summary><CollectionRunsPanel/></details>
     <p className="text-sm font-semibold text-warn">{warning}</p>
     {metrics.status==="success"&&<section className="space-y-3" aria-label="Review workload metrics">
       <dl className="grid grid-cols-2 gap-3 text-sm lg:grid-cols-4">
@@ -144,7 +145,7 @@ export function SelectiveReviewPage() {
       {resource.data.items.length===0?<p>No alerts in this review view.</p>:<div className="overflow-x-auto"><table className="w-full text-left text-sm">
         <thead><tr>{["Alert","Review disposition","Priority","Workflow route"].map(name=><th key={name} className="border-b border-border p-2">{name}</th>)}</tr></thead>
         <tbody>{resource.data.items.map(view=><tr key={view.operationalAlertRef}>
-          <td className="min-w-48 border-b border-border p-2"><Link className="text-accent underline" to={prefix(session?.role)+"/v2-triage?alertRef="+view.operationalAlertRef}>{view.title}</Link></td>
+          <td className="min-w-48 border-b border-border p-2"><Link className="text-accent underline" to={prefix(session?.role)+(session?.role === "security_analyst" ? "/workspace?alertRef=" : "/v2-triage?alertRef=")+view.operationalAlertRef}>{view.title}</Link></td>
           <td className="border-b border-border p-2">{labels[view.disposition]}</td><td className="border-b border-border p-2">{view.priority??"Not assigned"}</td><td className="border-b border-border p-2">{view.route.replaceAll("_"," ")}</td>
         </tr>)}</tbody>
       </table></div>}

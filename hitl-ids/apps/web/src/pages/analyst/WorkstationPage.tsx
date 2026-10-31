@@ -198,7 +198,7 @@ export function WorkstationPage() {
   return (
     <div className="-mx-6 -my-5 flex h-[calc(100%+2.5rem)] min-h-[36rem] flex-col">
       <div className="flex items-center justify-between gap-4 border-b border-border bg-bg px-4 py-2">
-        <h1 className="text-sm font-semibold tracking-tight text-text">Workstation</h1>
+        <h1 className="text-sm font-semibold tracking-tight text-text">Legacy Workstation</h1>
         <p className="hidden font-mono text-[11px] text-dim md:block">
           <kbd className="rounded-sm border border-border px-1">j</kbd> <kbd className="rounded-sm border border-border px-1">k</kbd> move ·{" "}
           <kbd className="rounded-sm border border-border px-1">/</kbd> search

@@ -26,10 +26,15 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--port', type=int, default=8002)
     parser.add_argument('--prospective',action='store_true',help='Add an unadmitted synthetic prospective journey fixture')
+    parser.add_argument('--pristine', action='store_true', help='Build a disposable synthetic fixture without reading demo.db')
     args = parser.parse_args()
     with tempfile.TemporaryDirectory(prefix='hitl-routing-e2e-') as folder:
         path = Path(folder) / 'routing.db'
-        shutil.copy2(HITL / 'data/demo.db', path)
+        if args.pristine:
+            from serve_s16_rehearsal import build_pristine_fixture
+            build_pristine_fixture(path)
+        else:
+            shutil.copy2(HITL / 'data/demo.db', path)
         with closing(db.connect(path)) as conn:
             db.migrate(conn)
             auth.ensure_demo_accounts(conn)
@@ -62,6 +67,9 @@ def main():
                 receipt,_=admit_external(conn,source_id,actor_id=actor,request=AdmissionRequest(
                     request_id=uuid4(),expected_review_id=review['id'],reason='SYNTHETIC safe context; not observed production evidence'),trusted_context=safe)
                 seed_synthetic_facts(conn,read_projection(conn,receipt['operational_alert_id']),safe,m.utc_now())
+            if args.pristine:
+                # Extra untouched admissions for the additional UI journey; preserve existing routing fixture order.
+                stage_file(conn, HITL / 'tests/fixtures/suricata-alerts.json', 'ui-admission')
         print(f'Serving disposable routing fixture: {path}', flush=True)
         uvicorn.run(create_app(path), host='127.0.0.1', port=args.port, log_level='warning')
 

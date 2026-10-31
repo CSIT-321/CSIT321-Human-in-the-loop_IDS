@@ -9,7 +9,7 @@ async function login(page:Page,user:string,password:string){
 test('human overrides survive expired and closed collection runs without changing their ledger',async({page,browser},testInfo)=>{
   const errors:string[]=[];page.on('pageerror',e=>errors.push(e.message));
   await login(page,'g.ang','analyst-demo');
-  await page.getByRole('link',{name:'V2 Triage Routing',exact:true}).click();
+  await page.getByRole('link',{name:'Analyst Workspace',exact:true}).click();
   const options=page.locator('#v2-alert option').filter({hasText:'DEMO selective SSH scan'});
   await expect(options).toHaveCount(6);
   const refs=await options.evaluateAll(nodes=>nodes.map(node=>(node as HTMLOptionElement).value));
@@ -36,6 +36,7 @@ test('human overrides survive expired and closed collection runs without changin
   const adminContext=await browser.newContext();const admin=await adminContext.newPage();
   await login(admin,'admin','admin-demo');
   await admin.getByRole('link',{name:'Selective Review',exact:true}).click();
+  await admin.getByText('Advanced / Research & Evaluation',{exact:true}).click();
   await admin.getByRole('button',{name:'Collection Runs',exact:true}).click();
   const start=Date.now()+10000,end=start+20000,cutoff=end+20000;
   await admin.getByLabel('Protocol version',{exact:true}).fill('synthetic-override-boundaries');
@@ -52,7 +53,8 @@ test('human overrides survive expired and closed collection runs without changin
   await expect.poll(()=>Date.now(),{timeout:15000}).toBeGreaterThan(start);
   async function select(ref:string){
     await page.goto('/analyst/v2-triage?alertRef='+ref);
-    await page.getByRole('button',{name:'Prospective Collection',exact:true}).click();
+    await page.getByText('Advanced / Research & Evaluation',{exact:true}).click();
+  await page.getByRole('button',{name:'Prospective Collection',exact:true}).click();
     await page.getByLabel('Collection run',{exact:true}).selectOption(created.runRef);
     await expect(page.getByText(/Protocol: synthetic-override-boundaries/)).toBeVisible();
   }

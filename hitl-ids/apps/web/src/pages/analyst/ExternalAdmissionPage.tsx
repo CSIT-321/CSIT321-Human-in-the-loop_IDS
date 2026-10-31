@@ -44,9 +44,9 @@ export function ExternalAdmissionDetail({ initial, refresh, prefix, onUpdate }: 
   }
   return <section className="min-w-0 space-y-5 border-t border-border pt-5" aria-label="External alert admission">
     <header className="space-y-2 break-words">
-      <h2 className="text-lg font-semibold">{view.signature}</h2>
+      <h2 className="text-lg font-semibold">{view.signature}</h2><p className="text-sm text-muted">Incoming Alert → Eligibility Review → Admit to HITL → Analyst Workspace</p><p className="text-sm font-semibold">Recommended Next Action: {view.canAdmit ? "Admit to HITL" : view.canReview ? "Review Eligibility" : view.status === "admitted" ? "Open in Analyst Workspace" : "Review hold reason"}</p>
       <Pill tone={view.status === "admitted" ? "ok" : view.status === "eligible" ? "accent" : "warn"}>{view.status}</Pill>
-      <p className="text-sm">{view.statusReason}</p>
+      <p className="text-sm">{view.statusReason.replace("V2 projection", "operational record")}</p>
     </header>
     <dl className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3 text-sm">
       <div><dt className="text-muted">Detector</dt><dd>{view.detector}</dd></div>
@@ -64,10 +64,10 @@ export function ExternalAdmissionDetail({ initial, refresh, prefix, onUpdate }: 
     </dl>
     {view.reviewReason && <p className="break-words text-sm">Review #{view.reviewId}, actor #{view.reviewActorId}: {view.reviewReason}</p>}
     {view.operationalAlertRef && <section className="space-y-2 border-t border-border pt-4">
-      <h3 className="text-sm font-semibold">Operational V2 Reference</h3>
+      <h3 className="text-sm font-semibold">Operational Alert</h3>
       <p className="break-all font-mono text-xs">{view.operationalAlertRef}</p>
       {view.admittedAt && <p className="text-sm">Admitted by actor #{view.admissionActorId} at {view.admittedAt}</p>}
-      <Link className="inline-block text-sm text-accent underline" to={prefix + "/v2-triage?alertRef=" + view.operationalAlertRef}>Open V2 Routing</Link>
+      <Link className="inline-block text-sm text-accent underline" to={prefix + (prefix === "/analyst" ? "/workspace?alertRef=" : "/v2-triage?alertRef=") + view.operationalAlertRef}>Open in Analyst Workspace</Link>
     </section>}
     {(view.canReview || view.canAdmit) && <section className="space-y-3 border-t border-border pt-4">
       {view.canReview && <div className="space-y-2">
@@ -82,8 +82,8 @@ export function ExternalAdmissionDetail({ initial, refresh, prefix, onUpdate }: 
       <textarea id="admission-reason" rows={3} maxLength={2000} value={reason} disabled={busy}
         onChange={event => setReason(event.target.value)} className="w-full rounded-sm border border-border bg-surface p-2 text-sm" />
       <div className="flex flex-wrap gap-2">
-        {view.canReview && <button className={button} disabled={busy || !reason.trim()} onClick={() => void submit("review")}>Record eligibility review</button>}
-        {view.canAdmit && <button className={button} disabled={busy || !reason.trim()} onClick={() => void submit("admit")}>Admit to HITL Workflow</button>}
+        {view.canReview && <button className={view.canAdmit ? button : "primary-action"} disabled={busy || !reason.trim()} onClick={() => void submit("review")}>Record eligibility review</button>}
+        {view.canAdmit && <button className="primary-action" disabled={busy || !reason.trim()} onClick={() => void submit("admit")}>Admit to HITL Workflow</button>}
       </div>
     </section>}
     {error && <p role="alert" className="text-sm text-danger">{error}</p>}
@@ -105,7 +105,7 @@ export function ExternalAdmissionPage() {
   const current = items.find(item => item.externalInboxId === selected) ?? items[0];
   const refresh = () => { setUpdated({}); resource.reload(); };
   return <div className="min-w-0 space-y-5 p-4 sm:p-6">
-    <PageHeader title="Suricata Admission" />
+    <PageHeader title="Incoming Alerts" />
     {resource.status === "loading" && <p role="status">Loading staged alerts...</p>}
     {resource.status === "error" && <div><p role="alert">{resource.error.message}</p><button className={button} onClick={resource.reload}>Retry</button></div>}
     {resource.status === "success" && <>

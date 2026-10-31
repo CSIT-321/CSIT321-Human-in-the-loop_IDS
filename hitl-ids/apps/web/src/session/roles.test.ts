@@ -22,7 +22,7 @@ describe("roles", () => {
 
   it("send each role to the landing view the plan names", () => {
     // Console rebuild R3: the analyst lands on the workstation (queue beside the alert).
-    expect(ROLE_META.security_analyst.home).toBe("/analyst/workstation");
+    expect(ROLE_META.security_analyst.home).toBe("/analyst/dashboard");
     expect(ROLE_META.system_admin.home).toBe("/admin/status");
     expect(ROLE_META.evaluator.home).toBe("/evaluator/scenarios");
   });

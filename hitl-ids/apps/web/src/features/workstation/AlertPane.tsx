@@ -15,11 +15,11 @@ import { ErrorState, LoadingState } from "../../components/states";
 import { BandBadge, Card, EvidenceBadge, Pill, SeverityBadge } from "../../components/ui";
 import { formatDateTime, formatPercent, formatScore, humanise } from "../../design/format";
 import { EvidencePanelCard } from "../alert/EvidencePanelCard";
-import { DetectorProvenance } from "../alert/DetectorProvenance";
+
 import { FeedbackHistoryCard } from "../alert/FeedbackHistoryCard";
 import { FlowPanelCard } from "../alert/FlowPanelCard";
-import { MlPanelCard } from "../alert/MlPanelCard";
-import { SignaturePanelCard } from "../alert/SignaturePanelCard";
+import { DetectorEvidence } from "../alert/DetectorEvidence";
+
 import { FeedbackPanel } from "../feedback/FeedbackPanel";
 import { ScoreAdjustmentChain } from "../feedback/ScoreAdjustmentChain";
 import { Meter } from "./Meter";
@@ -296,11 +296,9 @@ export function AlertPane({
       <div role="tabpanel" aria-label={tab} className="min-h-0 flex-1 space-y-4 overflow-y-auto p-5">
         {tab === "Overview" && (
           <>
-            <DetectorProvenance detector={detail.detector} />
             <EvidencePanelCard evidence={detail.evidence} />
             <div className="grid gap-4 2xl:grid-cols-2">
-              <SignaturePanelCard signature={detail.signature} />
-              <MlPanelCard ml={detail.ml} />
+              <DetectorEvidence detector={detail.detector} signature={detail.signature} ml={detail.ml} />
             </div>
           </>
         )}

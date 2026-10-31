@@ -8,7 +8,7 @@ test("human lessons earn deferral, conflict recalls it, and human override is st
   await page.getByLabel("Username").fill("g.ang");
   await page.getByLabel("Password",{exact:true}).fill("analyst-demo");
   await page.getByRole("button",{name:"Sign in"}).click();
-  await page.getByRole("link",{name:"V2 Triage Routing"}).click();
+  await page.getByRole("link",{name:"Analyst Workspace"}).click();
   const options=page.locator("#v2-alert option").filter({hasText:"DEMO selective SSH scan"});
   await expect(options).toHaveCount(6);
   const refs=await options.evaluateAll(nodes=>nodes.map(node=>(node as HTMLOptionElement).value));
@@ -41,6 +41,7 @@ test("human lessons earn deferral, conflict recalls it, and human override is st
   await section.evaluate(el=>el.scrollIntoView({block:"start"}));
   await page.screenshot({path:"test-results/selective-review-mobile.png",fullPage:true});
   expect(await page.locator("main").evaluate(el=>el.scrollWidth<=el.clientWidth)).toBe(true);
+  await page.getByRole("button",{name:"Navigation"}).click();
   await page.getByRole("link",{name:"Selective Review",exact:true}).click();
   await page.getByRole("tab",{name:"No Immediate Review",exact:true}).click();
   await expect(page.getByRole("link",{name:"DEMO selective SSH scan"})).toBeVisible();
@@ -53,12 +54,13 @@ test("human lessons earn deferral, conflict recalls it, and human override is st
   await page.getByLabel("Review policy or override reason").fill("Re-evaluate after contradictory human evidence");
   await page.getByRole("button",{name:"Evaluate Review Policy"}).click();
   await expect(section.getByText("Must Review",{exact:true})).toBeVisible();
-  await expect(section.getByText("MEMORY_CONFLICT",{exact:true})).toBeVisible();
+  await expect(section.getByText(/Related memory contains conflicting evidence/).first()).toBeVisible();
   await page.goto("/analyst/v2-triage?alertRef="+refs[3]);
   await expect(section.getByText("Prior deferral recalled")).toBeVisible();
   await page.getByLabel("Review policy or override reason").fill("Human requires continued Tier 1 investigation");
   await page.getByRole("button",{name:"Require Human Review",exact:true}).click();
-  await expect(section.getByText("HUMAN_REVIEW_OVERRIDE",{exact:true})).toBeVisible();
-  await expect(page.getByRole("region",{name:"V2 alert routing"}).getByText("tier1 review",{exact:true})).toBeVisible();
+  await expect(section.getByText("Human review required",{exact:true})).toBeVisible();
+  await expect(page.getByRole("region",{name:"Analyst alert workspace"}).getByText("tier1 review",{exact:true})).toBeVisible();
+  await expect(section.getByRole("button",{name:"Require Human Review",exact:true})).toBeDisabled();
   expect(errors).toEqual([]);
 });

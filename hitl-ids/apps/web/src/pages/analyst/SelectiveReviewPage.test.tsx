@@ -1,4 +1,4 @@
-import {screen,waitFor} from "@testing-library/react";
+import {screen,waitFor,within} from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import {describe,expect,it} from "vitest";
 import {renderApp,stubFetch,jsonResponse} from "../../test/renderApp";
@@ -19,8 +19,8 @@ function reads(req:Request){
 describe("Selective Human Review",()=>{
   it("separates automation from verdict and preserves displayed priority",async()=>{
     stubFetch(reads);renderApp("/analyst/v2-triage?alertRef="+ref,{session});
-    expect(await screen.findByText("No Immediate Review",{exact:true})).toBeInTheDocument();
-    expect(screen.getByText("No Immediate Review is an automation decision, not a human verdict.")).toBeInTheDocument();
+    expect(await within(await screen.findByRole("region",{name:"Selective Human Review"})).findByText("No Immediate Review",{exact:true})).toBeInTheDocument();
+    expect(within(screen.getByRole("region",{name:"Selective Human Review"})).getByText("No Immediate Review is an automation decision, not a human verdict.")).toBeInTheDocument();
     expect(screen.getByText("Operational priority: 85")).toBeInTheDocument();
     expect(screen.getByRole("button",{name:"Require Human Review"})).toBeDisabled();
   });
@@ -41,7 +41,7 @@ describe("Selective Human Review",()=>{
 
   it("evaluator reads policy but cannot mutate",async()=>{
     stubFetch(reads);renderApp("/evaluator/v2-triage?alertRef="+ref,{session:{...session,role:"evaluator"}});
-    await screen.findByText("No Immediate Review",{exact:true});
+    await within(await screen.findByRole("region",{name:"Selective Human Review"})).findByText("No Immediate Review",{exact:true});
     expect(screen.queryByLabelText("Review policy or override reason")).not.toBeInTheDocument();
     expect(screen.queryByRole("button",{name:"Require Human Review"})).not.toBeInTheDocument();
   });
@@ -59,7 +59,8 @@ describe("Selective Human Review",()=>{
       return reads(req);
     });
     renderApp("/analyst/v2-triage?alertRef="+ref,{session});
-    await screen.findByText("No Immediate Review",{exact:true});
+    await within(await screen.findByRole("region",{name:"Selective Human Review"})).findByText("No Immediate Review",{exact:true});
+    await userEvent.click(within(screen.getByRole("region",{name:"Selective Human Review"})).getByText("Advanced / Research & Evaluation"));
     await userEvent.click(screen.getByRole("button",{name:"Prospective Collection"}));
     await screen.findByRole("option",{name:/closed-demo/});
     await userEvent.selectOptions(screen.getByLabelText("Collection run"),runRef);

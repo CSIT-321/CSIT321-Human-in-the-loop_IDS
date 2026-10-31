@@ -14,16 +14,16 @@ import { TopBar } from "./TopBar";
 
 export function AppShell() {
   const { session } = useSession();
-  const routing = /\/(v2-triage|external-admission|tier2-cases|triage-memory|selective-review)(\/[^/]+)?$/.test(useLocation().pathname);
+  const routing = /\/(workspace|inbox|v2-triage|external-admission|tier2-cases|triage-memory|selective-review)(\/[^/]+)?$/.test(useLocation().pathname);
 
   if (session === null) return null;
 
   return (
     <div className="flex h-full flex-col bg-bg">
       <TopBar />
-      <div className={`flex min-h-0 flex-1 ${routing ? "max-sm:flex-col" : ""}`}>
-        <Sidebar compactOnMobile={routing} />
-        <main className={`flex-1 overflow-auto ${routing ? "min-w-0 p-0" : "px-6 py-5"}`}>
+      <div className={`flex min-h-0 flex-1 max-sm:flex-col`}>
+        <Sidebar />
+        <main className={`min-w-0 flex-1 overflow-auto ${routing ? "min-w-0 p-0" : "px-6 py-5"}`}>
           <Outlet />
         </main>
       </div>

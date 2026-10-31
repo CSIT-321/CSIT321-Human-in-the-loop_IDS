@@ -28,12 +28,12 @@ import {
 } from "../../components/ui";
 import { formatNumber, formatPercent, formatScore, humanise } from "../../design/format";
 import { EvidencePanelCard } from "../../features/alert/EvidencePanelCard";
-import { DetectorProvenance } from "../../features/alert/DetectorProvenance";
+
 import { FamilyPanelCard } from "../../features/alert/FamilyPanelCard";
 import { FeedbackHistoryCard } from "../../features/alert/FeedbackHistoryCard";
 import { FlowPanelCard } from "../../features/alert/FlowPanelCard";
-import { MlPanelCard } from "../../features/alert/MlPanelCard";
-import { SignaturePanelCard } from "../../features/alert/SignaturePanelCard";
+import { DetectorEvidence } from "../../features/alert/DetectorEvidence";
+
 import { useLastGood } from "../../features/alert/useLastGood";
 import { FeedbackPanel } from "../../features/feedback/FeedbackPanel";
 import { ScoreAdjustmentChain } from "../../features/feedback/ScoreAdjustmentChain";
@@ -133,11 +133,11 @@ export function AlertDetailPage() {
         />
       </Card>
 
-      <DetectorProvenance detector={detail.detector} />
+
       <div className="grid gap-4 lg:grid-cols-2">
         <FlowPanelCard flow={detail.flow} />
-        <SignaturePanelCard signature={detail.signature} />
-        <MlPanelCard ml={detail.ml} />
+        <DetectorEvidence detector={detail.detector} signature={detail.signature} ml={detail.ml} />
+
         <EvidencePanelCard evidence={detail.evidence} />
       </div>
 

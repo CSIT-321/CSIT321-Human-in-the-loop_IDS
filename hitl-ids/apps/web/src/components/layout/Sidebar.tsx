@@ -1,45 +1,28 @@
-/**
- * The role's own navigation, and only that: an analyst never sees an admin link, so a demo that
- * switches roles visibly changes what the console offers.
- */
-
+import { useState } from "react";
 import { NavLink } from "react-router";
-
 import { ROLE_META } from "../../session/roles";
 import { useSession } from "../../session/SessionContext";
-
-export function Sidebar({ compactOnMobile = false }: { compactOnMobile?: boolean }) {
+export function Sidebar() {
   const { session } = useSession();
-
-  if (session === null) return null;
-
-  return (
-    <nav
-      aria-label="Main"
-      data-print-hidden="true"
-      className={`w-52 shrink-0 border-r border-border bg-surface py-3 ${compactOnMobile ? "max-sm:w-full max-sm:border-b max-sm:py-1" : ""}`}
-    >
-      <p aria-hidden className={`label-mono px-4 pb-2 text-dim ${compactOnMobile ? "max-sm:hidden" : ""}`}>
-        {ROLE_META[session.role].label}
-      </p>
-      <ul className={compactOnMobile ? "max-sm:flex max-sm:overflow-x-auto max-sm:whitespace-nowrap" : ""}>
-        {ROLE_META[session.role].nav.map((item) => (
-          <li key={item.to}>
-            <NavLink
-              to={item.to}
-              className={({ isActive }) =>
-                `relative block border-l-2 py-2 pl-4 pr-3 text-[13px] transition-colors ${
-                  isActive
-                    ? "border-primary bg-raised font-medium text-text"
-                    : "border-transparent text-muted hover:bg-raised/60 hover:text-text"
-                }`
-              }
-            >
-              {item.label}
-            </NavLink>
-          </li>
-        ))}
-      </ul>
-    </nav>
-  );
+  const [collapsed, setCollapsed] = useState(() => localStorage.getItem("hitl.sidebar.collapsed") === "true");
+  const [mobileOpen, setMobileOpen] = useState(false);
+  if (!session) return null;
+  const items = ROLE_META[session.role].nav;
+  const groups = [...new Set(items.map(item => item.group ?? ROLE_META[session.role].label))];
+  return <nav aria-label="Main" data-print-hidden="true" className={`sidebar ${collapsed ? "is-collapsed" : ""}`}>
+    <button className="mobile-menu" aria-expanded={mobileOpen} aria-controls="main-navigation" onClick={() => setMobileOpen(!mobileOpen)}>☰ Navigation</button>
+    <button className="sidebar-toggle" aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"} title={collapsed ? "Expand sidebar" : "Collapse sidebar"} aria-expanded={!collapsed} onClick={() => {
+      localStorage.setItem("hitl.sidebar.collapsed", String(!collapsed)); setCollapsed(!collapsed);
+    }}>{collapsed ? "»" : "«"}<span className="nav-label"> Collapse sidebar</span></button>
+    <div id="main-navigation" className={mobileOpen ? "mobile-open" : ""}>
+      {groups.map(group => <section key={group} aria-label={group}>
+        <h2 className="nav-group">{group}</h2>
+        <ul>{items.filter(item => (item.group ?? ROLE_META[session.role].label) === group).map(item => <li key={item.to}>
+          <NavLink to={item.to} title={item.label} aria-label={item.label} onClick={() => setMobileOpen(false)} className={({isActive}) => `nav-item ${isActive ? "active" : ""}`}>
+            <span aria-hidden className="nav-icon">{item.icon ?? "◇"}</span><span className="nav-label">{item.label}</span>
+          </NavLink>
+        </li>)}</ul>
+      </section>)}
+    </div>
+  </nav>;
 }

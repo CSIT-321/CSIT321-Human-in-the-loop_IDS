@@ -8,7 +8,7 @@ test("three human reviews, activation, future guidance and contradiction without
   await page.getByLabel("Username").fill("g.ang");
   await page.getByLabel("Password",{exact:true}).fill("analyst-demo");
   await page.getByRole("button",{name:"Sign in"}).click();
-  await page.getByRole("link",{name:"V2 Triage Routing"}).click();
+  await page.getByRole("link",{name:"Analyst Workspace"}).click();
   const options=page.locator("#v2-alert option").filter({hasText:"DEMO SSH scan"});
   await expect(options).toHaveCount(5);
   const refs=await options.evaluateAll(elements=>elements.map(element=>(element as HTMLOptionElement).value));
@@ -33,10 +33,10 @@ test("three human reviews, activation, future guidance and contradiction without
   await expect(memory.getByText("Active guidance: Yes",{exact:true})).toBeVisible();
   await expect(memory.getByText("Authorised internal vulnerability scanner",{exact:true})).toBeVisible();
   await expect(memory.getByText("Memory guidance only — Human review still required.",{exact:true})).toBeVisible();
-  const routing=page.getByRole("region",{name:"V2 alert routing",exact:true});
+  const routing=page.getByRole("region",{name:"Analyst alert workspace",exact:true});
   await expect(routing.getByText("tier1 review",{exact:true})).toBeVisible();
   await expect(routing.getByText("85",{exact:true})).toBeVisible();
-  await expect(routing.getByText("Yes",{exact:true})).toBeVisible();
+  await expect(routing.getByText("Must Review",{exact:true}).first()).toBeVisible();
   await memory.evaluate(el=>el.scrollIntoView({block:"start"}));
   await page.screenshot({path:"test-results/triage-memory-desktop.png",fullPage:true});
   await page.setViewportSize({width:390,height:844});
