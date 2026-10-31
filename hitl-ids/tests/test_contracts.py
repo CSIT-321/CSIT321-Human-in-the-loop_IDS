@@ -66,6 +66,10 @@ DEVIATION_COLUMNS = {
     "flow_data": {"source_record_id"},
 }
 DEVIATION_TABLES = {
+    "prospective_runs": {"id","run_ref","actor_id","request_id","request_payload","snapshot","created_at"},
+    "prospective_run_events": {"id","run_id","actor_id","request_id","request_payload","action","snapshot","created_at"},
+    "prospective_decisions": {"id","run_id","review_event_id","snapshot"},
+    "prospective_observations": {"id","run_id","actor_id","request_id","request_payload","snapshot","created_at"},
     "trusted_context_facts": {"id","fact_ref","actor_id","request_id","request_payload","snapshot"},
     "triage_context_provenance": {"id","policy_audit_id","snapshot"},
     "selective_review_events": {"id","event_ref","operational_alert_id","actor_id","action","reason","request_id","request_payload","decision_snapshot","event_type","created_at"},
@@ -306,6 +310,7 @@ def test_columns_are_tdm_names_plus_logged_deviations(conn):
 def test_every_table_model_matches_its_columns(conn):
     # The inbox uses the canonical contract and staging writer, not a legacy operational model.
     assert set(db.TABLE_MODELS) == table_names(conn) - {
+        "prospective_runs", "prospective_run_events", "prospective_decisions", "prospective_observations",
         "external_alert_inbox", "operational_alerts_v2", "operational_triage_state_v2",
         "operational_triage_policy_audit", "operational_routing_audit",
         "external_eligibility_review", "external_operational_admission", "tier2_cases", "tier2_case_state", "tier2_case_events",
@@ -315,6 +320,13 @@ def test_every_table_model_matches_its_columns(conn):
 
 
 EXPECTED_FOREIGN_KEYS = {
+    ("prospective_runs","actor_id","users","id"),
+    ("prospective_run_events","actor_id","users","id"),
+    ("prospective_run_events","run_id","prospective_runs","id"),
+    ("prospective_decisions","run_id","prospective_runs","id"),
+    ("prospective_decisions","review_event_id","selective_review_events","id"),
+    ("prospective_observations","actor_id","users","id"),
+    ("prospective_observations","run_id","prospective_runs","id"),
     ("trusted_context_facts","actor_id","users","id"),
     ("triage_context_provenance","policy_audit_id","operational_triage_policy_audit","id"),
     ("selective_review_events","operational_alert_id","operational_alerts_v2","id"),

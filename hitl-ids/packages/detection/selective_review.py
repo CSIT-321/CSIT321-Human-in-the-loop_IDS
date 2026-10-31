@@ -2,7 +2,7 @@
 from hashlib import sha256
 import json
 from uuid import UUID,uuid4
-from pydantic import Field
+from pydantic import Field, model_validator
 from packages.contracts import db,models as m
 from packages.contracts.operational_v2 import V2Contract
 from packages.detection.adapters.operational_v2 import read_projection,read_triage
@@ -21,6 +21,14 @@ class ReviewConflict(ValueError):
 
 class ReviewCommand(MemoryCommand):
     expected_version: str = Field(pattern=r'^[a-f0-9]{64}$')
+    collection_run_ref: UUID | None = None
+    expected_run_revision: int | None = Field(default=None, strict=True, ge=1)
+
+    @model_validator(mode='after')
+    def collection_identity(self):
+        if (self.collection_run_ref is None)!=(self.expected_run_revision is None):
+            raise ValueError('collection run and revision must be supplied together')
+        return self
 
 
 class ReviewSnapshot(V2Contract):
@@ -154,7 +162,8 @@ def decide_review(conn,ref,*,actor_id,action,request:ReviewCommand):
     request=ReviewCommand.model_validate(request.model_dump())
     if action not in ('apply','require_review'):raise ValueError('unsupported review action')
     if conn.in_transaction or not conn.execute('PRAGMA foreign_keys').fetchone()[0]:raise ValueError('foreign keys and no transaction required')
-    payload=_json(dict(alertRef=str(ref),action=action,request=request.model_dump(mode='json')))
+    excluded={'collection_run_ref','expected_run_revision'} if request.collection_run_ref is None else set()
+    payload=_json(dict(alertRef=str(ref),action=action,request=request.model_dump(mode='json',exclude=excluded)))
     conn.execute('BEGIN IMMEDIATE')
     try:
         actor=db.get(conn,m.User,actor_id)
@@ -174,9 +183,13 @@ def decide_review(conn,ref,*,actor_id,action,request:ReviewCommand):
         old=conn.execute("SELECT decision_snapshot FROM selective_review_events WHERE json_extract(decision_snapshot,'$.policyConfigSnapshot.version')=? LIMIT 1",(snapshot.policy_config_snapshot.version,)).fetchone()
         if old and ReviewSnapshot.model_validate_json(old[0]).policy_config_snapshot!=snapshot.policy_config_snapshot:
             raise ReviewConflict('changed configuration requires a new policy version')
-        conn.execute('INSERT INTO selective_review_events (event_ref,operational_alert_id,actor_id,action,reason,request_id,request_payload,decision_snapshot,event_type,created_at) VALUES (?,?,?,?,?,?,?,?,?,?)',
+        decision_at=snapshot.context_provenance.evaluated_at
+        event=conn.execute('INSERT INTO selective_review_events (event_ref,operational_alert_id,actor_id,action,reason,request_id,request_payload,decision_snapshot,event_type,created_at) VALUES (?,?,?,?,?,?,?,?,?,?)',
             (str(uuid4()),snapshot.inputs.alert.id,actor_id,action,request.reason,str(request.request_id),payload,snapshot.model_dump_json(by_alias=True),
-             'V2_HUMAN_REVIEW_REQUIRED' if action=='require_review' else 'V2_SELECTIVE_REVIEW_DECIDED',db.format_timestamp(m.utc_now())))
+             'V2_HUMAN_REVIEW_REQUIRED' if action=='require_review' else 'V2_SELECTIVE_REVIEW_DECIDED',db.format_timestamp(decision_at)))
+        if request.collection_run_ref is not None:
+            from packages.detection.prospective_collection import record_decision
+            record_decision(conn,request.collection_run_ref,request.expected_run_revision,event.lastrowid,actor_id,action,snapshot,decision_at)
         result=ReviewMutation(view=read_review(conn,ref),replayed=False)
         conn.commit();return result
     except Exception:

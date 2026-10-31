@@ -29,6 +29,11 @@ class ProspectiveProtocol(V2Contract):
 
 
 def evaluate_prospective(archive,protocol,*,now=None):
+    raise ValueError('registered prospective evaluation rejects reconstructed-only data; use prospective_recorded with a closed run')
+
+
+def evaluate_reconstruction_protocol(archive,protocol,*,now=None):
+    """Legacy exploratory comparison only, never a registered prospective result."""
     protocol=ProspectiveProtocol.model_validate(protocol.model_dump())
     if (now or m.utc_now())<protocol.holdout_end:
         raise ValueError('prospective holdout has not closed; evaluation is prohibited')
@@ -36,15 +41,17 @@ def evaluate_prospective(archive,protocol,*,now=None):
         raise ValueError('archive window differs from frozen protocol')
     if archive.context_facts is None:
         raise ValueError('prospective evaluation requires fact history, not legacy context snapshots')
-    if any(p.configuration!=protocol.selective_policy for p in archive.policies):
-        raise ValueError('policy version differs from frozen protocol')
-    if any(f.freshness_policy!=protocol.context_policy for f in archive.context_facts):
-        raise ValueError('context policy version differs from frozen protocol')
     report=evaluate_temporal(archive)
+    policy=protocol.selective_policy.model_dump(mode='json',by_alias=True)
+    context=protocol.context_policy.model_dump(mode='json',by_alias=True)
+    if any(row['policySnapshot'] is not None and row['policySnapshot']!=policy for row in report['decisions']):
+        raise ValueError('policy version differs from frozen protocol')
+    if any(fact['freshnessPolicy']!=context for row in report['decisions'] for field in (row.get('contextProvenance') or {}).get('fields',[]) for fact in field['facts']):
+        raise ValueError('context policy version differs from frozen protocol')
     eligible=[r for r in report['decisions'] if r['eligible']]
     labelled=sum(r['laterOutcome'] not in (None,'inconclusive') for r in eligible)
     completeness=labelled/len(eligible) if eligible else 0
-    report['prospectiveProtocol']=protocol.model_dump(mode='json',by_alias=True)
+    report['exploratoryProtocol']=protocol.model_dump(mode='json',by_alias=True)
     report['outcomeCompleteness']=dict(eligibleAlerts=len(eligible),labelledAlerts=labelled,
         unlabelledOrInconclusiveAlerts=len(eligible)-labelled,rate=completeness,
         targetMet=len(eligible)>=protocol.minimum_eligible_alerts and completeness>=protocol.minimum_outcome_completeness,

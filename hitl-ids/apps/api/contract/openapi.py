@@ -35,6 +35,9 @@ from packages.detection.triage_memory import MemoryReviewRequest,MemoryDecisionR
 from packages.detection.selective_review import ReviewCommand,ReviewView,ReviewMutation,ReviewEvent,ReviewMetrics
 from packages.detection.context_store import FactRequest,FactPage,FactMutation
 from packages.detection.trusted_context import ResolvedTrustedContext
+from packages.detection.prospective_collection import RunCreate,RunView,RunPage,RunCommand,ObservationRequest
+from packages.evaluation.prospective_recorded import RecordedArchive
+from apps.api.collection_routes import CollectionDocument
 from packages.detection.response_approval import ResponseRequest,ManualResponseRequest,ResponseDecisionRequest,ResponseMutation
 from packages.detection.tier2_cases import (
     CaseView, CaseEvent, CaseMutation, CreateCaseRequest, CaseCommand, LinkCaseRequest, FindingRequest,
@@ -55,6 +58,7 @@ SCHEMA_REF = "#/components/schemas/{model}"
 #: Every model that appears on the wire. Listed explicitly rather than discovered, so adding a
 #: model to the API is a deliberate act.
 MODELS: tuple[type[BaseModel], ...] = (
+    RunCreate,RunView,RunPage,RunCommand,ObservationRequest,RecordedArchive,CollectionDocument,
     FactRequest,FactPage,FactMutation,ResolvedTrustedContext,
     ReviewCommand,ReviewView,ReviewMutation,ReviewEvent,ReviewMetrics,
     MemoryReviewRequest,MemoryDecisionRequest,MemoryMutation,MemoryView,MemoryAudit,MemoryMatch,
@@ -694,6 +698,20 @@ def _paths() -> dict[str, Any]:
     paths['/api/v2/alerts/{alertRef}/context']={'get':{'operationId':'getTrustedAlertContext','summary':'Resolve current scoped safety evidence',
         'tags':['Trusted context'],'parameters':[AUTH_PARAMETER,alert_ref],
         'responses':{'200':{'description':'Per-field provenance, freshness and conflict state',**_json(ResolvedTrustedContext)},**_errors(400,404)}}}
+    run_ref={'name':'runRef','in':'path','required':True,'schema':{'type':'string','format':'uuid'}}
+    paths['/api/v2/collection/runs']={
+        'get':{'operationId':'listCollectionRuns','summary':'Collection runs','tags':['Prospective collection'],
+            'parameters':[AUTH_PARAMETER],'responses':{'200':{'description':'Runs',**_json(RunPage)},**_errors(400)}},
+        'post':{'operationId':'createCollectionRun','summary':'Create immutable draft registration','tags':['Prospective collection'],
+            'parameters':[AUTH_PARAMETER],'x-required-roles':['system_admin'],'requestBody':{'required':True,**_json(RunCreate)},
+            'responses':{'200':{'description':'Draft run',**_json(RunView)},**_errors(400,403,409)}}}
+    for suffix,model,operation in (('',RunView,'getCollectionRun'),('/export',RecordedArchive,'exportRecordedCollection'),('/report',CollectionDocument,'evaluateRecordedCollection')):
+        paths['/api/v2/collection/runs/{runRef}'+suffix]={'get':{'operationId':operation,'summary':operation,'tags':['Prospective collection'],
+            'parameters':[AUTH_PARAMETER,run_ref],'responses':{'200':{'description':'Read-only collection view',**_json(model)},**_errors(400,404)}}}
+    for suffix,model,operation in (('open',RunCommand,'openCollectionRun'),('close',RunCommand,'closeCollectionRun'),('evaluated',RunCommand,'recordCollectionEvaluation'),('observations',ObservationRequest,'recordCollectionObservation')):
+        paths['/api/v2/collection/runs/{runRef}/'+suffix]={'post':{'operationId':operation,'summary':operation,'tags':['Prospective collection'],
+            'parameters':[AUTH_PARAMETER,run_ref],'x-required-roles':['security_analyst','system_admin'] if suffix=='observations' else ['system_admin'],
+            'requestBody':{'required':True,**_json(model)},'responses':{'200':{'description':'Updated collection view',**_json(RunView)},**_errors(400,403,404,409)}}}
     for path, operations in paths.items():
         if path == "/api/auth/login":
             continue
@@ -714,6 +732,7 @@ def openapi_document() -> dict[str, Any]:
         },
         "servers": [{"url": "http://localhost:8000", "description": "Local demo"}],
         "tags": [
+            {"name":"Prospective collection","description":"Opt-in recorded decisions; no automatic collection"},
             {"name":"Trusted context","description":"Prospective scoped facts; no external enrichment"},
             {"name":"Selective review","description":"Separate review disposition, never a human verdict or closure"},
             {"name":"Triage memory","description":"Human lessons and advisory contextual matching"},

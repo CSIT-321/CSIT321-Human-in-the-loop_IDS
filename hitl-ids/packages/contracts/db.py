@@ -152,6 +152,8 @@ MIGRATIONS += ((11, "separate append-only selective review decisions and human o
                 Path(__file__).with_name("selective_review.sql").read_text(encoding="utf-8")),)
 MIGRATIONS += ((12, "append-only trusted safety facts and triage context provenance",
                 Path(__file__).with_name("trusted_context.sql").read_text(encoding="utf-8")),)
+MIGRATIONS += ((13, "append-only prospective collection runs and recorded decisions",
+                Path(__file__).with_name("prospective_collection.sql").read_text(encoding="utf-8")),)
 SCHEMA_VERSION = MIGRATIONS[-1][0]
 
 

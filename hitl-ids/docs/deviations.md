@@ -1,5 +1,13 @@
 # Deviations register
 
+## Prospective collection readiness extension (2026-10-31)
+
+Migration 13 adds append-only prospective_runs, prospective_run_events, prospective_decisions and
+prospective_observations. These store opt-in run identity/lifecycle, actual decision-time snapshots and
+human-reported task measurements without rebuilding existing tables. Registered evaluation now requires
+prospective-recorded evidence; the previous occurrence-time reconstruction remains exploratory.
+See [Collection Readiness V2](prospective-collection-readiness-v2.md). V1 protocol is unchanged; V2 stays draft.
+
 ## Prospective context extension (2026-10-31)
 
 Migration 12 adds append-only `trusted_context_facts` and `triage_context_provenance`, not a core table

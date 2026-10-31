@@ -25,6 +25,7 @@ from packages.detection.external_admission import EligibilityRequest,AdmissionRe
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--port', type=int, default=8002)
+    parser.add_argument('--prospective',action='store_true',help='Add an unadmitted synthetic prospective journey fixture')
     args = parser.parse_args()
     with tempfile.TemporaryDirectory(prefix='hitl-routing-e2e-') as folder:
         path = Path(folder) / 'routing.db'
@@ -32,6 +33,8 @@ def main():
         with closing(db.connect(path)) as conn:
             db.migrate(conn)
             auth.ensure_demo_accounts(conn)
+            if args.prospective:
+                stage_file(conn,HITL/'tests/fixtures/prospective-collection-demo.json','prospective-demo')
             actor = conn.execute("SELECT id FROM users WHERE username='g.ang'").fetchone()[0]
             for sensor in ('routing-staged', 'routing-recommended', 'routing-reject'):
                 stage_file(conn, HITL / 'tests/fixtures/suricata-alerts.json', sensor)

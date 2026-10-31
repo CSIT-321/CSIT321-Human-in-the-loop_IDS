@@ -4,7 +4,8 @@
  * actually perform it through the interface.
  *
  * One test, in order, because the narrative is cumulative: each verdict changes what the next screen
- * shows. The API serves a disposable copy of the demo database (see playwright.config.ts).
+ * shows. A pristine synthetic fixture supplies the required learning baseline; legitimate demo
+ * history is never copied, cleared or changed (see scripts/serve_s16_rehearsal.py).
  */
 
 import { expect, test, type Page } from "@playwright/test";

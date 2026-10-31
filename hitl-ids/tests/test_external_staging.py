@@ -29,7 +29,8 @@ def table_rows(conn):
                                         "'operational_triage_policy_audit', 'operational_routing_audit', "
                                         "'external_eligibility_review', 'external_operational_admission',"
                                         "'tier2_cases','tier2_case_state','tier2_case_events','response_recommendations','response_decisions',"
-                                        "'triage_memory_lessons','triage_memory_support_events','triage_memory_decisions','triage_memory_audit','selective_review_events','trusted_context_facts','triage_context_provenance')")}
+                                        "'triage_memory_lessons','triage_memory_support_events','triage_memory_decisions','triage_memory_audit','selective_review_events','trusted_context_facts','triage_context_provenance',"
+                                        "'prospective_runs','prospective_run_events','prospective_decisions','prospective_observations')")}
 
 
 def test_populated_migration_does_not_rebuild_or_change_core(tmp_path, sample, predictions, monkeypatch):
@@ -51,7 +52,7 @@ def test_populated_migration_does_not_rebuild_or_change_core(tmp_path, sample, p
         assert conn.execute("PRAGMA user_version").fetchone()[0] == 2
         statements = []
         conn.set_trace_callback(statements.append)
-        assert db.migrate(conn) == [3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
+        assert db.migrate(conn) == [3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]
         assert table_rows(conn) == before
         for name, rootpage, sql in schema:
             assert tuple(conn.execute("SELECT name, rootpage, sql FROM sqlite_master WHERE name=?",

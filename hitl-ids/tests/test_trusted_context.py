@@ -215,7 +215,7 @@ def test_migration_twelve_is_additive_idempotent_and_preserves_rows(tmp_path,mon
     with closing(db.connect(tmp_path/'history.db')) as conn:
         monkeypatch.setattr(db,'MIGRATIONS',migrations[:11]); db.create_schema(conn)
         before={name:list(conn.execute(f'SELECT * FROM "{name}"')) for (name,) in conn.execute("SELECT name FROM sqlite_master WHERE type='table' AND name NOT IN ('sqlite_sequence','schema_migrations')").fetchall()}
-        monkeypatch.setattr(db,'MIGRATIONS',migrations)
+        monkeypatch.setattr(db,'MIGRATIONS',migrations[:12])
         trace=[]; conn.set_trace_callback(trace.append)
         assert db.migrate(conn)==[12] and db.migrate(conn)==[]
         assert all(list(conn.execute(f'SELECT * FROM "{name}"'))==rows for name,rows in before.items())
@@ -234,7 +234,7 @@ def test_late_risky_fact_cannot_rewrite_historical_decision():
 
 
 def test_protocol_refuses_open_holdout_and_reports_incomplete_targets():
-    from packages.evaluation.context_protocol import ProspectiveProtocol,evaluate_prospective
+    from packages.evaluation.context_protocol import ProspectiveProtocol,evaluate_reconstruction_protocol as evaluate_prospective
     archive=synthetic_archive('safe_learning',with_provenance=True)
     protocol=ProspectiveProtocol(version='test-protocol',registered_at=archive.holdout_start-timedelta(days=1),
         holdout_start=archive.holdout_start,holdout_end=archive.holdout_end,minimum_eligible_alerts=100,

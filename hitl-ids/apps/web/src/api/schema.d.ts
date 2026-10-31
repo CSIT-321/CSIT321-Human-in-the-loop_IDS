@@ -690,6 +690,143 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v2/collection/runs": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Collection runs */
+        get: operations["listCollectionRuns"];
+        put?: never;
+        /** Create immutable draft registration */
+        post: operations["createCollectionRun"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/collection/runs/{runRef}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** getCollectionRun */
+        get: operations["getCollectionRun"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/collection/runs/{runRef}/close": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** closeCollectionRun */
+        post: operations["closeCollectionRun"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/collection/runs/{runRef}/evaluated": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** recordCollectionEvaluation */
+        post: operations["recordCollectionEvaluation"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/collection/runs/{runRef}/export": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** exportRecordedCollection */
+        get: operations["exportRecordedCollection"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/collection/runs/{runRef}/observations": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** recordCollectionObservation */
+        post: operations["recordCollectionObservation"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/collection/runs/{runRef}/open": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** openCollectionRun */
+        post: operations["openCollectionRun"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/collection/runs/{runRef}/report": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** evaluateRecordedCollection */
+        get: operations["evaluateRecordedCollection"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v2/context/facts": {
         parameters: {
             query?: never;
@@ -1562,6 +1699,13 @@ export interface components {
             recall: number;
             /** Support */
             support: number;
+        };
+        /** CollectionDocument */
+        CollectionDocument: {
+            /** Payload */
+            payload: {
+                [key: string]: unknown;
+            };
         };
         /** ContextPolicy */
         ContextPolicy: {
@@ -2546,6 +2690,52 @@ export interface components {
             /** Srcport */
             srcPort: number;
         };
+        /** FrozenProtocol */
+        FrozenProtocol: {
+            /** Codecommitsha */
+            codeCommitSha: string;
+            contextPolicy: components["schemas"]["ContextPolicy"];
+            /** Contextpolicyhash */
+            contextPolicyHash: string;
+            /**
+             * Evaluationmode
+             * @default prospective_recorded
+             * @constant
+             */
+            evaluationMode: "prospective_recorded";
+            /**
+             * Registeredat
+             * Format: date-time
+             */
+            registeredAt: string;
+            registration: components["schemas"]["RunCreate"];
+            /**
+             * Safetymetrics
+             * @default [
+             *       "unsafeDeferrals",
+             *       "outcomeCompleteness",
+             *       "contextCoverage",
+             *       "recalls"
+             *     ]
+             */
+            safetyMetrics: string[];
+            selectivePolicy: components["schemas"]["SelectivePolicy"];
+            /** Selectivepolicyhash */
+            selectivePolicyHash: string;
+            /** Sourcetreeclean */
+            sourceTreeClean: boolean;
+            /**
+             * Workloadmetrics
+             * @default [
+             *       "reviewVolumeReduction",
+             *       "analystReviewSeconds",
+             *       "totalTaskSeconds",
+             *       "errors",
+             *       "rework"
+             *     ]
+             */
+            workloadMetrics: string[];
+        };
         /**
          * GuardrailConfig
          * @description ``GET /api/config/guardrails``.
@@ -3311,6 +3501,43 @@ export interface components {
             /** Body */
             body: string;
         };
+        /** ObservationRequest */
+        ObservationRequest: {
+            /**
+             * Analystreviewseconds
+             * @default null
+             */
+            analystReviewSeconds: number | null;
+            /**
+             * Errors
+             * @default 0
+             */
+            errors: number;
+            /** Expectedrevision */
+            expectedRevision: number;
+            /** Notes */
+            notes: string;
+            /**
+             * Operationalalertref
+             * Format: uuid
+             */
+            operationalAlertRef: string;
+            /**
+             * Requestid
+             * Format: uuid
+             */
+            requestId: string;
+            /**
+             * Rework
+             * @default 0
+             */
+            rework: number;
+            /**
+             * Totaltaskseconds
+             * @default null
+             */
+            totalTaskSeconds: number | null;
+        };
         /** OperationalAlertV2 */
         OperationalAlertV2: {
             /**
@@ -3444,6 +3671,26 @@ export interface components {
              */
             workflowStage: "staged" | "triage" | "assessment" | "investigation" | "incident" | "resolved";
         };
+        /** OutcomeEvent */
+        OutcomeEvent: {
+            /**
+             * Alertref
+             * Format: uuid
+             */
+            alertRef: string;
+            /**
+             * Availableat
+             * Format: date-time
+             */
+            availableAt: string;
+            /** Eventid */
+            eventId: string;
+            /**
+             * Outcome
+             * @enum {string}
+             */
+            outcome: "expected_activity" | "false_positive" | "confirmed_malicious" | "suspicious" | "inconclusive";
+        };
         /**
          * PageInfo
          * @description Where in the queue this page sits.
@@ -3489,6 +3736,117 @@ export interface components {
             queueClass: "tier2_candidate" | "corroborated" | "signature_override" | "ml_only" | "none";
             /** Requiresreview */
             requiresReview: number;
+        };
+        /** RecordedArchive */
+        RecordedArchive: {
+            /** Admissionroutingevents */
+            admissionRoutingEvents: {
+                [key: string]: unknown;
+            }[];
+            /** Decisions */
+            decisions: components["schemas"]["RecordedDecision"][];
+            /**
+             * Evaluationmode
+             * @default prospective_recorded
+             * @constant
+             */
+            evaluationMode: "prospective_recorded";
+            /** Observations */
+            observations: components["schemas"]["RecordedObservation"][];
+            /** Outcomes */
+            outcomes: components["schemas"]["OutcomeEvent"][];
+            /** Reviewevents */
+            reviewEvents: {
+                [key: string]: unknown;
+            }[];
+            run: components["schemas"]["RunView"];
+            /** Runevents */
+            runEvents: {
+                [key: string]: unknown;
+            }[];
+            /** Unrelatedhistory */
+            unrelatedHistory?: {
+                [key: string]: unknown;
+            };
+        };
+        /** RecordedDecision */
+        RecordedDecision: {
+            /**
+             * Action
+             * @enum {string}
+             */
+            action: "apply" | "require_review";
+            /** Actorid */
+            actorId: number;
+            /**
+             * Alertoccurredat
+             * Format: date-time
+             */
+            alertOccurredAt: string;
+            /** Availabilityboundary */
+            availabilityBoundary: {
+                [key: string]: string;
+            };
+            /**
+             * Decisionat
+             * Format: date-time
+             */
+            decisionAt: string;
+            /**
+             * Decisionref
+             * Format: uuid
+             */
+            decisionRef: string;
+            /** Inputfingerprint */
+            inputFingerprint: string;
+            /**
+             * Operationaladmittedat
+             * Format: date-time
+             */
+            operationalAdmittedAt: string;
+            /**
+             * Operationalalertref
+             * Format: uuid
+             */
+            operationalAlertRef: string;
+            /** Policyhash */
+            policyHash: string;
+            /**
+             * Revieweligibleat
+             * Format: date-time
+             */
+            reviewEligibleAt: string;
+            /** Revieweventid */
+            reviewEventId: number;
+            /** Runprotocolhash */
+            runProtocolHash: string;
+            /**
+             * Runref
+             * Format: uuid
+             */
+            runRef: string;
+            snapshot: components["schemas"]["ReviewSnapshot"];
+        };
+        /** RecordedObservation */
+        RecordedObservation: {
+            /** Actorid */
+            actorId: number;
+            /**
+             * Availableat
+             * Format: date-time
+             */
+            availableAt: string;
+            /**
+             * Measurementmethod
+             * @default human_reported_stopwatch
+             * @constant
+             */
+            measurementMethod: "human_reported_stopwatch";
+            /** Reasoncodes */
+            reasonCodes: string[];
+            /** Recalled */
+            recalled: boolean;
+            request: components["schemas"]["ObservationRequest"];
         };
         /** ResolvedField */
         ResolvedField: {
@@ -3694,6 +4052,16 @@ export interface components {
         };
         /** ReviewCommand */
         ReviewCommand: {
+            /**
+             * Collectionrunref
+             * @default null
+             */
+            collectionRunRef: string | null;
+            /**
+             * Expectedrunrevision
+             * @default null
+             */
+            expectedRunRevision: number | null;
             /** Expectedversion */
             expectedVersion: string;
             /** Reason */
@@ -3915,6 +4283,101 @@ export interface components {
              * @enum {string}
              */
             severity: "Critical" | "High" | "Medium" | "Low";
+        };
+        /** RunCommand */
+        RunCommand: {
+            /** Expectedrevision */
+            expectedRevision: number;
+            /**
+             * Requestid
+             * Format: uuid
+             */
+            requestId: string;
+        };
+        /** RunCreate */
+        RunCreate: {
+            /**
+             * Evidencebasis
+             * @enum {string}
+             */
+            evidenceBasis: "synthetic/demo" | "historical-inputs-unverified";
+            /**
+             * Holdoutend
+             * @default null
+             */
+            holdoutEnd: string | null;
+            /**
+             * Holdoutstart
+             * @default null
+             */
+            holdoutStart: string | null;
+            /**
+             * Minimumeligiblealerts
+             * @default 100
+             */
+            minimumEligibleAlerts: number;
+            /**
+             * Minimumoutcomecompleteness
+             * @default 0.95
+             */
+            minimumOutcomeCompleteness: number;
+            /**
+             * Outcomecutoff
+             * @default null
+             */
+            outcomeCutoff: string | null;
+            /**
+             * Participantclass
+             * @enum {string}
+             */
+            participantClass: "professional_analyst" | "proxy_student_analyst";
+            /** Protocolversion */
+            protocolVersion: string;
+            /**
+             * Readinessreviewreference
+             * @default null
+             */
+            readinessReviewReference: string | null;
+            /**
+             * Requestid
+             * Format: uuid
+             */
+            requestId: string;
+        };
+        /** RunPage */
+        RunPage: {
+            /** Items */
+            items: components["schemas"]["RunView"][];
+        };
+        /** RunView */
+        RunView: {
+            /** Closedat */
+            closedAt: string | null;
+            /** Closedbyactorid */
+            closedByActorId: number | null;
+            /** Createdbyactorid */
+            createdByActorId: number;
+            /** Decisioncount */
+            decisionCount: number;
+            /** Openedat */
+            openedAt: string | null;
+            /** Openedbyactorid */
+            openedByActorId: number | null;
+            protocol: components["schemas"]["FrozenProtocol"];
+            /** Protocolhash */
+            protocolHash: string;
+            /** Revision */
+            revision: number;
+            /**
+             * Runref
+             * Format: uuid
+             */
+            runRef: string;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "draft" | "open" | "closed" | "evaluated";
         };
         /**
          * SaturationMetrics
@@ -6595,6 +7058,562 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["RoutingView"];
+                };
+            };
+            /** @description Validation failed */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not signed in, or the token expired */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    listCollectionRuns: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description `Bearer <token>` from POST /api/auth/login */
+                Authorization?: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Runs */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RunPage"];
+                };
+            };
+            /** @description Validation failed */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not signed in, or the token expired */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    createCollectionRun: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description `Bearer <token>` from POST /api/auth/login */
+                Authorization?: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RunCreate"];
+            };
+        };
+        responses: {
+            /** @description Draft run */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RunView"];
+                };
+            };
+            /** @description Validation failed */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not signed in, or the token expired */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Role not permitted */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    getCollectionRun: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description `Bearer <token>` from POST /api/auth/login */
+                Authorization?: string;
+            };
+            path: {
+                runRef: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Read-only collection view */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RunView"];
+                };
+            };
+            /** @description Validation failed */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not signed in, or the token expired */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    closeCollectionRun: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description `Bearer <token>` from POST /api/auth/login */
+                Authorization?: string;
+            };
+            path: {
+                runRef: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RunCommand"];
+            };
+        };
+        responses: {
+            /** @description Updated collection view */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RunView"];
+                };
+            };
+            /** @description Validation failed */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not signed in, or the token expired */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Role not permitted */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    recordCollectionEvaluation: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description `Bearer <token>` from POST /api/auth/login */
+                Authorization?: string;
+            };
+            path: {
+                runRef: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RunCommand"];
+            };
+        };
+        responses: {
+            /** @description Updated collection view */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RunView"];
+                };
+            };
+            /** @description Validation failed */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not signed in, or the token expired */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Role not permitted */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    exportRecordedCollection: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description `Bearer <token>` from POST /api/auth/login */
+                Authorization?: string;
+            };
+            path: {
+                runRef: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Read-only collection view */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RecordedArchive"];
+                };
+            };
+            /** @description Validation failed */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not signed in, or the token expired */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    recordCollectionObservation: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description `Bearer <token>` from POST /api/auth/login */
+                Authorization?: string;
+            };
+            path: {
+                runRef: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ObservationRequest"];
+            };
+        };
+        responses: {
+            /** @description Updated collection view */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RunView"];
+                };
+            };
+            /** @description Validation failed */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not signed in, or the token expired */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Role not permitted */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    openCollectionRun: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description `Bearer <token>` from POST /api/auth/login */
+                Authorization?: string;
+            };
+            path: {
+                runRef: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RunCommand"];
+            };
+        };
+        responses: {
+            /** @description Updated collection view */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RunView"];
+                };
+            };
+            /** @description Validation failed */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not signed in, or the token expired */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Role not permitted */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    evaluateRecordedCollection: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description `Bearer <token>` from POST /api/auth/login */
+                Authorization?: string;
+            };
+            path: {
+                runRef: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Read-only collection view */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CollectionDocument"];
                 };
             };
             /** @description Validation failed */

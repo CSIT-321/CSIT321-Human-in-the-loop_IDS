@@ -315,7 +315,7 @@ def evaluate_temporal(archive: TemporalArchive):
         if isinstance(value, list):
             canonical[key] = sorted(value, key=lambda item: json.dumps(item, sort_keys=True))
     digest = sha256(json.dumps(canonical, sort_keys=True, separators=(',', ':')).encode()).hexdigest()
-    return dict(formatVersion='temporal-review-report-v1', evaluationMode='temporal holdout', dataBasis=archive.data_basis,
+    return dict(formatVersion='temporal-review-report-v1', evaluationMode='retrospective_reconstruction', dataBasis=archive.data_basis,
         evidenceWarning='Synthetic/demo evaluation; not real-world production evidence.' if archive.data_basis=='synthetic/demo' else
             'Historical inputs supplied; provenance and label completeness require independent validation. Not proof of production safety.',
         provenance=archive.provenance, inputSha256=digest, holdoutStart=archive.holdout_start.isoformat(), holdoutEnd=archive.holdout_end.isoformat(),
@@ -341,7 +341,7 @@ def context_coverage(rows):
 
 
 def render_markdown(report):
-    lines = ['# Selective Review Temporal Holdout', '', report['evidenceWarning'], '',
+    lines = ['# Selective Review Temporal Holdout', '', 'Mode: retrospective_reconstruction (not registered prospective evidence)', '', report['evidenceWarning'], '',
         f"Window: [{report['holdoutStart']}, {report['holdoutEnd']})", f"Input SHA-256: `{report['inputSha256']}`", '',
         '## Workload and Safety', '', '| Metric | Value |', '| --- | --- |']
     lines += [f'| {key} | {value if value is not None else "unavailable"} |' for key, value in report['metrics'].items()]

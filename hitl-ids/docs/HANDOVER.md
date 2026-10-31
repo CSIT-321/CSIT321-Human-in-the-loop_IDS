@@ -3,8 +3,8 @@
 **Purpose.** Carry the full state of this project into a fresh session with zero loss of context
 and minimal token cost. Everything a new session needs is here or one link away.
 
-**Current stacked workflow (2026-10-31):** `feat/prospective-context-provenance`, based on
-`81ba46cb2733a0fd7087d4c117dca4b0d5915d99` (`feat/selective-review-temporal-evaluation`).
+**Current stacked workflow (2026-10-31):** `feat/prospective-collection-readiness-v2`, based on
+`2c921a87edeca7a0dc4272e2bd19a1596ec7459f` (`feat/prospective-context-provenance`).
 The older September branch/phase narrative below is historical, not the current branch status.
 The external path now reaches an append-only human-authorized response plan:
 Suricata -> staging -> eligibility review -> operational admission -> V2 alert -> policy ->
@@ -29,6 +29,10 @@ Missing triage at occurrence is excluded explicitly, never filled from present-d
 server-stamped authenticated collection, freshness/conflict resolution and fact-backed review inputs.
 Unknown is never false. Migration 12 is additive; synthetic facts are seeded only in disposable tests.
 The pure selective policy is unchanged. The frozen prospective protocol gates evaluation on closure.
+[Collection Readiness V2](prospective-collection-readiness-v2.md) separates original occurrence from actual
+persisted review decision time, adds opt-in collection runs/UI and a read-only recorded evaluator. Migration 13
+is additive. Protocol V1 remains unchanged; V2 is an undated draft pending independent final readiness PASS.
+The [manual UAT checklist](prospective-collection-uat.md) has no fabricated participant results.
 
 **Last updated:** 2026-09-18 (rev 24 — similar-alert learning made visible: the moved members, the
 family group-by, and the similarity basis on screen; changelog v1.32. Rev 23 notes below still

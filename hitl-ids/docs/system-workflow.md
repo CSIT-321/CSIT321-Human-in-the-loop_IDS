@@ -299,6 +299,10 @@ about what is done.
 
 ## Related documents
 
+- [`prospective-collection-readiness-v2.md`](prospective-collection-readiness-v2.md) - actual decision-time
+  recording, frozen collection run, later outcome and read-only post-closure evaluation; V2 remains draft.
+- [`prospective-collection-uat.md`](prospective-collection-uat.md) - manual UAT and separate review-volume/time measurements.
+
 - [`prospective-context-provenance.md`](prospective-context-provenance.md) - scoped fact -> append-only
   temporal history -> deterministic resolution -> existing safety gates. Unknown/expired/conflicting
   context still requires review. No external enrichment or response execution.

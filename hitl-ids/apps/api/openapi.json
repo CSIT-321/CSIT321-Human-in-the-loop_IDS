@@ -1072,6 +1072,21 @@
         "title": "ClassMetrics",
         "type": "object"
       },
+      "CollectionDocument": {
+        "additionalProperties": false,
+        "properties": {
+          "payload": {
+            "additionalProperties": true,
+            "title": "Payload",
+            "type": "object"
+          }
+        },
+        "required": [
+          "payload"
+        ],
+        "title": "CollectionDocument",
+        "type": "object"
+      },
       "ContextPolicy": {
         "additionalProperties": false,
         "properties": {
@@ -3150,6 +3165,87 @@
         "title": "FlowPanel",
         "type": "object"
       },
+      "FrozenProtocol": {
+        "additionalProperties": false,
+        "properties": {
+          "codeCommitSha": {
+            "pattern": "^[a-f0-9]{40}$",
+            "title": "Codecommitsha",
+            "type": "string"
+          },
+          "contextPolicy": {
+            "$ref": "#/components/schemas/ContextPolicy"
+          },
+          "contextPolicyHash": {
+            "title": "Contextpolicyhash",
+            "type": "string"
+          },
+          "evaluationMode": {
+            "const": "prospective_recorded",
+            "default": "prospective_recorded",
+            "title": "Evaluationmode",
+            "type": "string"
+          },
+          "registeredAt": {
+            "format": "date-time",
+            "title": "Registeredat",
+            "type": "string"
+          },
+          "registration": {
+            "$ref": "#/components/schemas/RunCreate"
+          },
+          "safetyMetrics": {
+            "default": [
+              "unsafeDeferrals",
+              "outcomeCompleteness",
+              "contextCoverage",
+              "recalls"
+            ],
+            "items": {
+              "type": "string"
+            },
+            "title": "Safetymetrics",
+            "type": "array"
+          },
+          "selectivePolicy": {
+            "$ref": "#/components/schemas/SelectivePolicy"
+          },
+          "selectivePolicyHash": {
+            "title": "Selectivepolicyhash",
+            "type": "string"
+          },
+          "sourceTreeClean": {
+            "title": "Sourcetreeclean",
+            "type": "boolean"
+          },
+          "workloadMetrics": {
+            "default": [
+              "reviewVolumeReduction",
+              "analystReviewSeconds",
+              "totalTaskSeconds",
+              "errors",
+              "rework"
+            ],
+            "items": {
+              "type": "string"
+            },
+            "title": "Workloadmetrics",
+            "type": "array"
+          }
+        },
+        "required": [
+          "registration",
+          "registeredAt",
+          "codeCommitSha",
+          "sourceTreeClean",
+          "selectivePolicy",
+          "contextPolicy",
+          "selectivePolicyHash",
+          "contextPolicyHash"
+        ],
+        "title": "FrozenProtocol",
+        "type": "object"
+      },
       "GuardrailConfig": {
         "additionalProperties": false,
         "description": "``GET /api/config/guardrails``.",
@@ -5046,6 +5142,78 @@
         "title": "NoteRequest",
         "type": "object"
       },
+      "ObservationRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "analystReviewSeconds": {
+            "anyOf": [
+              {
+                "minimum": 0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Analystreviewseconds"
+          },
+          "errors": {
+            "default": 0,
+            "minimum": 0,
+            "title": "Errors",
+            "type": "integer"
+          },
+          "expectedRevision": {
+            "minimum": 1,
+            "title": "Expectedrevision",
+            "type": "integer"
+          },
+          "notes": {
+            "maxLength": 4000,
+            "minLength": 1,
+            "title": "Notes",
+            "type": "string"
+          },
+          "operationalAlertRef": {
+            "format": "uuid",
+            "title": "Operationalalertref",
+            "type": "string"
+          },
+          "requestId": {
+            "format": "uuid",
+            "title": "Requestid",
+            "type": "string"
+          },
+          "rework": {
+            "default": 0,
+            "minimum": 0,
+            "title": "Rework",
+            "type": "integer"
+          },
+          "totalTaskSeconds": {
+            "anyOf": [
+              {
+                "minimum": 0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Totaltaskseconds"
+          }
+        },
+        "required": [
+          "requestId",
+          "expectedRevision",
+          "operationalAlertRef",
+          "notes"
+        ],
+        "title": "ObservationRequest",
+        "type": "object"
+      },
       "OperationalAlertV2": {
         "additionalProperties": false,
         "properties": {
@@ -5403,6 +5571,44 @@
         "title": "OperationalTriageStateV2",
         "type": "object"
       },
+      "OutcomeEvent": {
+        "additionalProperties": false,
+        "properties": {
+          "alertRef": {
+            "format": "uuid",
+            "title": "Alertref",
+            "type": "string"
+          },
+          "availableAt": {
+            "format": "date-time",
+            "title": "Availableat",
+            "type": "string"
+          },
+          "eventId": {
+            "title": "Eventid",
+            "type": "string"
+          },
+          "outcome": {
+            "enum": [
+              "expected_activity",
+              "false_positive",
+              "confirmed_malicious",
+              "suspicious",
+              "inconclusive"
+            ],
+            "title": "Outcome",
+            "type": "string"
+          }
+        },
+        "required": [
+          "eventId",
+          "alertRef",
+          "availableAt",
+          "outcome"
+        ],
+        "title": "OutcomeEvent",
+        "type": "object"
+      },
       "PageInfo": {
         "additionalProperties": false,
         "description": "Where in the queue this page sits.\n\nOffset paging, deliberately: the queue is a ranked list an analyst works down, so a cursor\nwould buy nothing and cost the ability to jump to a position.",
@@ -5503,6 +5709,222 @@
           "requiresReview"
         ],
         "title": "QueueBandCount",
+        "type": "object"
+      },
+      "RecordedArchive": {
+        "additionalProperties": false,
+        "properties": {
+          "admissionRoutingEvents": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "title": "Admissionroutingevents",
+            "type": "array"
+          },
+          "decisions": {
+            "items": {
+              "$ref": "#/components/schemas/RecordedDecision"
+            },
+            "title": "Decisions",
+            "type": "array"
+          },
+          "evaluationMode": {
+            "const": "prospective_recorded",
+            "default": "prospective_recorded",
+            "title": "Evaluationmode",
+            "type": "string"
+          },
+          "observations": {
+            "items": {
+              "$ref": "#/components/schemas/RecordedObservation"
+            },
+            "title": "Observations",
+            "type": "array"
+          },
+          "outcomes": {
+            "items": {
+              "$ref": "#/components/schemas/OutcomeEvent"
+            },
+            "title": "Outcomes",
+            "type": "array"
+          },
+          "reviewEvents": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "title": "Reviewevents",
+            "type": "array"
+          },
+          "run": {
+            "$ref": "#/components/schemas/RunView"
+          },
+          "runEvents": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "title": "Runevents",
+            "type": "array"
+          },
+          "unrelatedHistory": {
+            "additionalProperties": true,
+            "title": "Unrelatedhistory",
+            "type": "object"
+          }
+        },
+        "required": [
+          "run",
+          "decisions",
+          "outcomes",
+          "observations",
+          "reviewEvents",
+          "admissionRoutingEvents",
+          "runEvents"
+        ],
+        "title": "RecordedArchive",
+        "type": "object"
+      },
+      "RecordedDecision": {
+        "additionalProperties": false,
+        "properties": {
+          "action": {
+            "enum": [
+              "apply",
+              "require_review"
+            ],
+            "title": "Action",
+            "type": "string"
+          },
+          "actorId": {
+            "title": "Actorid",
+            "type": "integer"
+          },
+          "alertOccurredAt": {
+            "format": "date-time",
+            "title": "Alertoccurredat",
+            "type": "string"
+          },
+          "availabilityBoundary": {
+            "additionalProperties": {
+              "format": "date-time",
+              "type": "string"
+            },
+            "title": "Availabilityboundary",
+            "type": "object"
+          },
+          "decisionAt": {
+            "format": "date-time",
+            "title": "Decisionat",
+            "type": "string"
+          },
+          "decisionRef": {
+            "format": "uuid",
+            "title": "Decisionref",
+            "type": "string"
+          },
+          "inputFingerprint": {
+            "title": "Inputfingerprint",
+            "type": "string"
+          },
+          "operationalAdmittedAt": {
+            "format": "date-time",
+            "title": "Operationaladmittedat",
+            "type": "string"
+          },
+          "operationalAlertRef": {
+            "format": "uuid",
+            "title": "Operationalalertref",
+            "type": "string"
+          },
+          "policyHash": {
+            "title": "Policyhash",
+            "type": "string"
+          },
+          "reviewEligibleAt": {
+            "format": "date-time",
+            "title": "Revieweligibleat",
+            "type": "string"
+          },
+          "reviewEventId": {
+            "title": "Revieweventid",
+            "type": "integer"
+          },
+          "runProtocolHash": {
+            "title": "Runprotocolhash",
+            "type": "string"
+          },
+          "runRef": {
+            "format": "uuid",
+            "title": "Runref",
+            "type": "string"
+          },
+          "snapshot": {
+            "$ref": "#/components/schemas/ReviewSnapshot"
+          }
+        },
+        "required": [
+          "decisionRef",
+          "reviewEventId",
+          "runRef",
+          "operationalAlertRef",
+          "alertOccurredAt",
+          "operationalAdmittedAt",
+          "reviewEligibleAt",
+          "decisionAt",
+          "availabilityBoundary",
+          "actorId",
+          "action",
+          "snapshot",
+          "policyHash",
+          "inputFingerprint",
+          "runProtocolHash"
+        ],
+        "title": "RecordedDecision",
+        "type": "object"
+      },
+      "RecordedObservation": {
+        "additionalProperties": false,
+        "properties": {
+          "actorId": {
+            "title": "Actorid",
+            "type": "integer"
+          },
+          "availableAt": {
+            "format": "date-time",
+            "title": "Availableat",
+            "type": "string"
+          },
+          "measurementMethod": {
+            "const": "human_reported_stopwatch",
+            "default": "human_reported_stopwatch",
+            "title": "Measurementmethod",
+            "type": "string"
+          },
+          "reasonCodes": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Reasoncodes",
+            "type": "array"
+          },
+          "recalled": {
+            "title": "Recalled",
+            "type": "boolean"
+          },
+          "request": {
+            "$ref": "#/components/schemas/ObservationRequest"
+          }
+        },
+        "required": [
+          "request",
+          "actorId",
+          "availableAt",
+          "recalled",
+          "reasonCodes"
+        ],
+        "title": "RecordedObservation",
         "type": "object"
       },
       "ResolvedField": {
@@ -6051,6 +6473,32 @@
       "ReviewCommand": {
         "additionalProperties": false,
         "properties": {
+          "collectionRunRef": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Collectionrunref"
+          },
+          "expectedRunRevision": {
+            "anyOf": [
+              {
+                "minimum": 1,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Expectedrunrevision"
+          },
           "expectedVersion": {
             "pattern": "^[a-f0-9]{64}$",
             "title": "Expectedversion",
@@ -6656,6 +7104,250 @@
           "severity"
         ],
         "title": "RuleMatchPanel",
+        "type": "object"
+      },
+      "RunCommand": {
+        "additionalProperties": false,
+        "properties": {
+          "expectedRevision": {
+            "minimum": 1,
+            "title": "Expectedrevision",
+            "type": "integer"
+          },
+          "requestId": {
+            "format": "uuid",
+            "title": "Requestid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "requestId",
+          "expectedRevision"
+        ],
+        "title": "RunCommand",
+        "type": "object"
+      },
+      "RunCreate": {
+        "additionalProperties": false,
+        "properties": {
+          "evidenceBasis": {
+            "enum": [
+              "synthetic/demo",
+              "historical-inputs-unverified"
+            ],
+            "title": "Evidencebasis",
+            "type": "string"
+          },
+          "holdoutEnd": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Holdoutend"
+          },
+          "holdoutStart": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Holdoutstart"
+          },
+          "minimumEligibleAlerts": {
+            "default": 100,
+            "minimum": 1,
+            "title": "Minimumeligiblealerts",
+            "type": "integer"
+          },
+          "minimumOutcomeCompleteness": {
+            "default": 0.95,
+            "exclusiveMinimum": 0,
+            "maximum": 1,
+            "title": "Minimumoutcomecompleteness",
+            "type": "number"
+          },
+          "outcomeCutoff": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Outcomecutoff"
+          },
+          "participantClass": {
+            "enum": [
+              "professional_analyst",
+              "proxy_student_analyst"
+            ],
+            "title": "Participantclass",
+            "type": "string"
+          },
+          "protocolVersion": {
+            "maxLength": 100,
+            "minLength": 1,
+            "title": "Protocolversion",
+            "type": "string"
+          },
+          "readinessReviewReference": {
+            "anyOf": [
+              {
+                "maxLength": 500,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Readinessreviewreference"
+          },
+          "requestId": {
+            "format": "uuid",
+            "title": "Requestid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "requestId",
+          "protocolVersion",
+          "evidenceBasis",
+          "participantClass"
+        ],
+        "title": "RunCreate",
+        "type": "object"
+      },
+      "RunPage": {
+        "additionalProperties": false,
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/RunView"
+            },
+            "title": "Items",
+            "type": "array"
+          }
+        },
+        "required": [
+          "items"
+        ],
+        "title": "RunPage",
+        "type": "object"
+      },
+      "RunView": {
+        "additionalProperties": false,
+        "properties": {
+          "closedAt": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Closedat"
+          },
+          "closedByActorId": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Closedbyactorid"
+          },
+          "createdByActorId": {
+            "title": "Createdbyactorid",
+            "type": "integer"
+          },
+          "decisionCount": {
+            "title": "Decisioncount",
+            "type": "integer"
+          },
+          "openedAt": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Openedat"
+          },
+          "openedByActorId": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Openedbyactorid"
+          },
+          "protocol": {
+            "$ref": "#/components/schemas/FrozenProtocol"
+          },
+          "protocolHash": {
+            "title": "Protocolhash",
+            "type": "string"
+          },
+          "revision": {
+            "title": "Revision",
+            "type": "integer"
+          },
+          "runRef": {
+            "format": "uuid",
+            "title": "Runref",
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "draft",
+              "open",
+              "closed",
+              "evaluated"
+            ],
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "runRef",
+          "protocol",
+          "protocolHash",
+          "status",
+          "revision",
+          "decisionCount",
+          "createdByActorId",
+          "openedAt",
+          "openedByActorId",
+          "closedAt",
+          "closedByActorId"
+        ],
+        "title": "RunView",
         "type": "object"
       },
       "SaturationMetrics": {
@@ -11993,6 +12685,780 @@
         ]
       }
     },
+    "/api/v2/collection/runs": {
+      "get": {
+        "operationId": "listCollectionRuns",
+        "parameters": [
+          {
+            "description": "`Bearer <token>` from POST /api/auth/login",
+            "in": "header",
+            "name": "Authorization",
+            "required": false,
+            "schema": {
+              "example": "Bearer eyJhbGciOiJIUzI1NiJ9...",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RunPage"
+                }
+              }
+            },
+            "description": "Runs"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Validation failed"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not signed in, or the token expired"
+          }
+        },
+        "summary": "Collection runs",
+        "tags": [
+          "Prospective collection"
+        ]
+      },
+      "post": {
+        "operationId": "createCollectionRun",
+        "parameters": [
+          {
+            "description": "`Bearer <token>` from POST /api/auth/login",
+            "in": "header",
+            "name": "Authorization",
+            "required": false,
+            "schema": {
+              "example": "Bearer eyJhbGciOiJIUzI1NiJ9...",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RunCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RunView"
+                }
+              }
+            },
+            "description": "Draft run"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Validation failed"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not signed in, or the token expired"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Role not permitted"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          }
+        },
+        "summary": "Create immutable draft registration",
+        "tags": [
+          "Prospective collection"
+        ],
+        "x-required-roles": [
+          "system_admin"
+        ]
+      }
+    },
+    "/api/v2/collection/runs/{runRef}": {
+      "get": {
+        "operationId": "getCollectionRun",
+        "parameters": [
+          {
+            "description": "`Bearer <token>` from POST /api/auth/login",
+            "in": "header",
+            "name": "Authorization",
+            "required": false,
+            "schema": {
+              "example": "Bearer eyJhbGciOiJIUzI1NiJ9...",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "runRef",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RunView"
+                }
+              }
+            },
+            "description": "Read-only collection view"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Validation failed"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not signed in, or the token expired"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not found"
+          }
+        },
+        "summary": "getCollectionRun",
+        "tags": [
+          "Prospective collection"
+        ]
+      }
+    },
+    "/api/v2/collection/runs/{runRef}/close": {
+      "post": {
+        "operationId": "closeCollectionRun",
+        "parameters": [
+          {
+            "description": "`Bearer <token>` from POST /api/auth/login",
+            "in": "header",
+            "name": "Authorization",
+            "required": false,
+            "schema": {
+              "example": "Bearer eyJhbGciOiJIUzI1NiJ9...",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "runRef",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RunCommand"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RunView"
+                }
+              }
+            },
+            "description": "Updated collection view"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Validation failed"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not signed in, or the token expired"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Role not permitted"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          }
+        },
+        "summary": "closeCollectionRun",
+        "tags": [
+          "Prospective collection"
+        ],
+        "x-required-roles": [
+          "system_admin"
+        ]
+      }
+    },
+    "/api/v2/collection/runs/{runRef}/evaluated": {
+      "post": {
+        "operationId": "recordCollectionEvaluation",
+        "parameters": [
+          {
+            "description": "`Bearer <token>` from POST /api/auth/login",
+            "in": "header",
+            "name": "Authorization",
+            "required": false,
+            "schema": {
+              "example": "Bearer eyJhbGciOiJIUzI1NiJ9...",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "runRef",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RunCommand"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RunView"
+                }
+              }
+            },
+            "description": "Updated collection view"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Validation failed"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not signed in, or the token expired"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Role not permitted"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          }
+        },
+        "summary": "recordCollectionEvaluation",
+        "tags": [
+          "Prospective collection"
+        ],
+        "x-required-roles": [
+          "system_admin"
+        ]
+      }
+    },
+    "/api/v2/collection/runs/{runRef}/export": {
+      "get": {
+        "operationId": "exportRecordedCollection",
+        "parameters": [
+          {
+            "description": "`Bearer <token>` from POST /api/auth/login",
+            "in": "header",
+            "name": "Authorization",
+            "required": false,
+            "schema": {
+              "example": "Bearer eyJhbGciOiJIUzI1NiJ9...",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "runRef",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RecordedArchive"
+                }
+              }
+            },
+            "description": "Read-only collection view"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Validation failed"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not signed in, or the token expired"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not found"
+          }
+        },
+        "summary": "exportRecordedCollection",
+        "tags": [
+          "Prospective collection"
+        ]
+      }
+    },
+    "/api/v2/collection/runs/{runRef}/observations": {
+      "post": {
+        "operationId": "recordCollectionObservation",
+        "parameters": [
+          {
+            "description": "`Bearer <token>` from POST /api/auth/login",
+            "in": "header",
+            "name": "Authorization",
+            "required": false,
+            "schema": {
+              "example": "Bearer eyJhbGciOiJIUzI1NiJ9...",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "runRef",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ObservationRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RunView"
+                }
+              }
+            },
+            "description": "Updated collection view"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Validation failed"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not signed in, or the token expired"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Role not permitted"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          }
+        },
+        "summary": "recordCollectionObservation",
+        "tags": [
+          "Prospective collection"
+        ],
+        "x-required-roles": [
+          "security_analyst",
+          "system_admin"
+        ]
+      }
+    },
+    "/api/v2/collection/runs/{runRef}/open": {
+      "post": {
+        "operationId": "openCollectionRun",
+        "parameters": [
+          {
+            "description": "`Bearer <token>` from POST /api/auth/login",
+            "in": "header",
+            "name": "Authorization",
+            "required": false,
+            "schema": {
+              "example": "Bearer eyJhbGciOiJIUzI1NiJ9...",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "runRef",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RunCommand"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RunView"
+                }
+              }
+            },
+            "description": "Updated collection view"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Validation failed"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not signed in, or the token expired"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Role not permitted"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          }
+        },
+        "summary": "openCollectionRun",
+        "tags": [
+          "Prospective collection"
+        ],
+        "x-required-roles": [
+          "system_admin"
+        ]
+      }
+    },
+    "/api/v2/collection/runs/{runRef}/report": {
+      "get": {
+        "operationId": "evaluateRecordedCollection",
+        "parameters": [
+          {
+            "description": "`Bearer <token>` from POST /api/auth/login",
+            "in": "header",
+            "name": "Authorization",
+            "required": false,
+            "schema": {
+              "example": "Bearer eyJhbGciOiJIUzI1NiJ9...",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "runRef",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CollectionDocument"
+                }
+              }
+            },
+            "description": "Read-only collection view"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Validation failed"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not signed in, or the token expired"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not found"
+          }
+        },
+        "summary": "evaluateRecordedCollection",
+        "tags": [
+          "Prospective collection"
+        ]
+      }
+    },
     "/api/v2/context/facts": {
       "get": {
         "operationId": "listTrustedContextFacts",
@@ -14439,6 +15905,10 @@
     }
   ],
   "tags": [
+    {
+      "description": "Opt-in recorded decisions; no automatic collection",
+      "name": "Prospective collection"
+    },
     {
       "description": "Prospective scoped facts; no external enrichment",
       "name": "Trusted context"

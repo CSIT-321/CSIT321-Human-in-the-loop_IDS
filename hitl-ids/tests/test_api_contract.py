@@ -39,6 +39,15 @@ from scripts.build_openapi import TARGET, rendered
 #: Every endpoint the plan's S10a task list names. `GET /api/evaluation/*` is expanded to the
 #: three concrete endpoints S14 needs.
 REQUIRED_OPERATIONS = {
+    ('/api/v2/collection/runs','get'),
+    ('/api/v2/collection/runs','post'),
+    ('/api/v2/collection/runs/{runRef}','get'),
+    ('/api/v2/collection/runs/{runRef}/open','post'),
+    ('/api/v2/collection/runs/{runRef}/close','post'),
+    ('/api/v2/collection/runs/{runRef}/evaluated','post'),
+    ('/api/v2/collection/runs/{runRef}/observations','post'),
+    ('/api/v2/collection/runs/{runRef}/export','get'),
+    ('/api/v2/collection/runs/{runRef}/report','get'),
     ('/api/v2/context/facts','get'),
     ('/api/v2/context/facts','post'),
     ('/api/v2/alerts/{alertRef}/context','get'),

@@ -1,0 +1,16 @@
+{
+  "version": "prospective-context-protocol-v2-draft",
+  "status": "draft",
+  "readinessStatus": "pending-final-review",
+  "evaluationMode": "prospective_recorded",
+  "codeCommitSha": null,
+  "registeredAt": null,
+  "holdoutStart": null,
+  "holdoutEnd": null,
+  "outcomeCutoff": null,
+  "minimumEligibleAlerts": 100,
+  "minimumOutcomeCompleteness": 0.95,
+  "participantClassification": null,
+  "policyHashes": null,
+  "collectionOpened": false
+}

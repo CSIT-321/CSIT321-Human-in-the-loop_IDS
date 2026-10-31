@@ -1,0 +1,13 @@
+[
+  {
+    "event_type": "alert",
+    "timestamp": "2026-01-01T00:00:00+00:00",
+    "src_ip": "192.0.2.41",
+    "dest_ip": "198.51.100.42",
+    "src_port": 44001,
+    "dest_port": 443,
+    "proto": "TCP",
+    "flow_id": 42001,
+    "alert": {"signature": "SYNTHETIC prospective collection", "signature_id": 990041, "category": "Synthetic offline fixture", "severity": 3}
+  }
+]

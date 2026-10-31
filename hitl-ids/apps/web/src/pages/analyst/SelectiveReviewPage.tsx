@@ -5,6 +5,7 @@ import { useApi } from "../../api/useApi";
 import { PageHeader,Pill } from "../../components/ui";
 import { useSession } from "../../session/SessionContext";
 import { TrustedContextPanel } from "./TrustedContextPanel";
+import {CollectionRunsPanel,CollectionDecisionPanel,ContextCollectionForm} from "./CollectionPanel";
 
 type View=Schemas["ReviewView"];
 type Disposition=View["disposition"];
@@ -44,6 +45,10 @@ export function SelectiveReviewPanel({alertRef}:{alertRef:string}) {
   const [error,setError]=useState("");
   const [offset,setOffset]=useState(0);
   const [historyOpen,setHistoryOpen]=useState(false);
+  const [contextOpen,setContextOpen]=useState(false);
+  const [collectionOpen,setCollectionOpen]=useState(false);
+  const [runRef,setRunRef]=useState("");
+  const [run,setRun]=useState<Schemas["RunView"]|null>(null);
   const pending=useRef<{key:string;id:string}|null>(null);
   const resource=useApi(signal=>unwrap(api.GET("/api/v2/alerts/{alertRef}/selective-review",{params:{path:{alertRef}},signal})),[alertRef]);
   const history=useApi(async signal=>historyOpen?unwrap(api.GET("/api/v2/alerts/{alertRef}/selective-review/events",{params:{path:{alertRef},query:{limit:50,offset}},signal})):null,[alertRef,historyOpen,offset,resource.status==="success"?resource.data.version:""]);
@@ -52,11 +57,13 @@ export function SelectiveReviewPanel({alertRef}:{alertRef:string}) {
   const canWrite=session?.role==="security_analyst"||session?.role==="system_admin";
   async function act(action:"apply"|"require_review") {
     if(busy||!reason.trim()||resource.status!=="success")return;
-    const key=JSON.stringify([action,reason.trim(),resource.data.version]);
+    if(runRef&&(!run||run.status!=="open"))return;
+    const key=JSON.stringify([action,reason.trim(),resource.data.version,runRef,run?.revision]);
     if(pending.current?.key!==key)pending.current={key,id:crypto.randomUUID()};
     setBusy(true);setError("");
     const params={path:{alertRef}};
-    const body={requestId:pending.current.id,expectedVersion:resource.data.version,reason:reason.trim()};
+    const body={requestId:pending.current.id,expectedVersion:resource.data.version,reason:reason.trim(),
+      collectionRunRef:runRef&&run?runRef:null,expectedRunRevision:runRef&&run?run.revision:null};
     try {
       if(action==="apply")await unwrap(api.POST("/api/v2/alerts/{alertRef}/selective-review/evaluate",{params,body}));
       else await unwrap(api.POST("/api/v2/alerts/{alertRef}/selective-review/require-human",{params,body}));
@@ -67,6 +74,10 @@ export function SelectiveReviewPanel({alertRef}:{alertRef:string}) {
   return <section aria-label="Selective Human Review" className="min-w-0 space-y-4 border-t border-border pt-5">
     <h2 className="text-base font-semibold">Selective Human Review</h2>
     <p className="text-sm font-semibold text-warn">{warning}</p>
+    <button className={button} aria-expanded={collectionOpen} onClick={()=>setCollectionOpen(!collectionOpen)}>Prospective Collection</button>
+    {collectionOpen&&<CollectionDecisionPanel alertRef={alertRef} runRef={runRef} onSelect={setRunRef} onRun={setRun} refreshKey={resource.status==="success"?resource.data.version:""}/>}
+    {canWrite&&<button className={button} aria-expanded={contextOpen} onClick={()=>setContextOpen(!contextOpen)}>Add Trusted Context</button>}
+    {canWrite&&contextOpen&&<ContextCollectionForm key={alertRef} alertRef={alertRef} onSaved={()=>{setContextOpen(false);reload();}}/>}
     {resource.status==="loading"&&<p role="status">Checking current safety evidence...</p>}
     {resource.status==="error"&&<p role="alert">{resource.error.message}</p>}
     {resource.status==="success"&&<>
@@ -75,7 +86,7 @@ export function SelectiveReviewPanel({alertRef}:{alertRef:string}) {
         <label htmlFor="selective-reason" className="block text-sm">Review policy or override reason</label>
         <textarea id="selective-reason" rows={3} maxLength={4000} disabled={busy} value={reason} onChange={e=>setReason(e.target.value)} className="w-full min-w-0 rounded-sm border border-border bg-surface p-2 text-sm"/>
         <div className="flex flex-wrap gap-2">
-          <button className={button} disabled={busy||!reason.trim()} onClick={()=>void act("apply")}>Evaluate Review Policy</button>
+          <button className={button} disabled={busy||!reason.trim()||Boolean(runRef&&(!run||run.status!=="open"))} onClick={()=>void act("apply")}>Evaluate Review Policy</button>
           <button className={button} disabled={busy||!reason.trim()||!resource.data.eligibleAlert||resource.data.humanOverride} onClick={()=>void act("require_review")}>Require Human Review</button>
         </div>
       </div>}
@@ -109,11 +120,12 @@ export function SelectiveReviewPage() {
   useEffect(()=>{const timer=setInterval(()=>{reload();reloadMetrics();},15000);return()=>clearInterval(timer);},[reload,reloadMetrics]);
   return <div className="min-w-0 space-y-5 p-4 sm:p-6">
     <PageHeader title="Selective Human Review"/>
+    <CollectionRunsPanel/>
     <p className="text-sm font-semibold text-warn">{warning}</p>
     {metrics.status==="success"&&<section className="space-y-3" aria-label="Review workload metrics">
       <dl className="grid grid-cols-2 gap-3 text-sm lg:grid-cols-4">
         {[["Total alerts",metrics.data.totalAlerts],["Eligible Tier 1 alerts",metrics.data.eligibleAlerts],["Must Review",metrics.data.mustReviewCount],["Recommended Review",metrics.data.recommendedReviewCount],
-          ["No Immediate Review",metrics.data.noImmediateReviewCount],["Immediate review reduction",(metrics.data.immediateReviewReductionRate*100).toFixed(1)+"%"],
+          ["No Immediate Review",metrics.data.noImmediateReviewCount],["Review-volume reduction",(metrics.data.immediateReviewReductionRate*100).toFixed(1)+"%"],
           ["Later contradictory outcomes",metrics.data.unsafeSuppressionCount],["Conflict-triggered recalls",metrics.data.conflictTriggeredRecallCount],["Audit samples",metrics.data.sampledOverrideCount]].map(([name,value])=><div key={name}><dt className="text-muted">{name}</dt><dd>{value}</dd></div>)}
       </dl><p className="text-xs text-muted">{metrics.data.dataBasis}</p>
     </section>}
