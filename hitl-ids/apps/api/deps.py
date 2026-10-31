@@ -77,3 +77,24 @@ def get_connection(request: Request) -> Iterator[sqlite3.Connection]:
         yield connection
     finally:
         connection.close()
+
+
+def get_readonly_connection(request: Request) -> Iterator[sqlite3.Connection]:
+    """Read from connection open; schema upgrades belong to an explicit writable path."""
+    path = Path(getattr(request.app.state, "database_path", None) or database_path()).resolve()
+    try:
+        connection = sqlite3.connect(path.as_uri() + "?mode=ro", uri=True, check_same_thread=False)
+    except sqlite3.OperationalError as exc:
+        code = "DATABASE_MISSING" if not path.exists() else "DATABASE_UNAVAILABLE"
+        raise ApiError(503, code, "Read-only database is unavailable; no database was created.") from exc
+    try:
+        connection.execute("PRAGMA query_only=ON")
+        connection.row_factory = sqlite3.Row
+        version = int(connection.execute("PRAGMA user_version").fetchone()[0])
+        if version != db.SCHEMA_VERSION:
+            raise ApiError(503, "DATABASE_SCHEMA_UNSUPPORTED",
+                           "Read-only access requires the current schema; this request never migrates.",
+                           {"actualVersion": version, "requiredVersion": db.SCHEMA_VERSION})
+        yield connection
+    finally:
+        connection.close()

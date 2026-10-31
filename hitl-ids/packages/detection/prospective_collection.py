@@ -238,12 +238,13 @@ def change_run(conn, ref, actor_id, action, request):
         conn.rollback(); raise
 
 
-def record_decision(conn, run_ref, expected_revision, event_id, actor_id, action, snapshot, at):
-    """Joins the existing decision transaction; failure rolls back both immutable records."""
+def prepare_decision(conn, run_ref, expected_revision, actor_id, action, snapshot, at):
+    """Validate optional collection eligibility without writing either ledger."""
     row=_row(conn,run_ref); run=read_run(conn,run_ref); plan=run.protocol.registration
+    if run.status!='open': raise CollectionConflict('the run is '+run.status)
+    if at<plan.holdout_start: raise CollectionConflict('the holdout window has not started')
+    if at>=plan.holdout_end: raise CollectionConflict('the holdout window has ended')
     if run.revision!=expected_revision: raise CollectionConflict('collection changed; refresh revision')
-    if run.status!='open' or not plan.holdout_start <= at < plan.holdout_end:
-        raise CollectionConflict('collection decisions require an open run inside its decision window')
     if code_commit()!=run.protocol.code_commit_sha or snapshot.policy_config_snapshot!=run.protocol.selective_policy:
         raise CollectionConflict('decision code/policy differs from frozen collection')
     if plan.evidence_basis!='synthetic/demo' and not clean_code_tree(): raise CollectionConflict('registered code tree must remain clean')
@@ -270,14 +271,19 @@ def record_decision(conn, run_ref, expected_revision, event_id, actor_id, action
     # Absence/unknown is first observed by this evaluation, never assigned an invented earlier time.
     if not provenance.complete or not snapshot.inputs.matches: boundary['unknownInputsObserved']=at
     if any(t>at for t in boundary.values()): raise CollectionConflict('future input cannot enter a recorded decision')
-    decision=RecordedDecision(decision_ref=uuid4(),review_event_id=event_id,run_ref=run_ref,
+    return RecordedDecision(decision_ref=uuid4(),review_event_id=0,run_ref=run_ref,
         operational_alert_ref=snapshot.inputs.alert.operational_alert_ref,alert_occurred_at=snapshot.inputs.alert.occurred_at,
         operational_admitted_at=admission[0],review_eligible_at=max(boundary.values()),decision_at=at,
         availability_boundary=boundary,actor_id=actor_id,action=action,snapshot=snapshot,
         policy_hash=digest(snapshot.policy_config_snapshot.model_dump(mode='json',by_alias=True)),
         input_fingerprint=digest(snapshot.model_dump(mode='json',by_alias=True)),run_protocol_hash=run.protocol_hash)
+
+
+def persist_decision(conn, decision, event_id):
+    """Called in the same serialized transaction after the operational event exists."""
+    decision=decision.model_copy(update={'review_event_id':event_id})
     conn.execute('INSERT INTO prospective_decisions (run_id,review_event_id,snapshot) VALUES (?,?,?)',
-        (row['id'],event_id,decision.model_dump_json(by_alias=True)))
+        (_row(conn,decision.run_ref)['id'],event_id,decision.model_dump_json(by_alias=True)))
 
 
 def observe(conn,ref,actor_id,request):

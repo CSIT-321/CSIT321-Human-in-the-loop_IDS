@@ -3,6 +3,7 @@ from uuid import UUID
 from fastapi import APIRouter, Query
 from apps.api.deps import ApiError
 from apps.api.routing_routes import Conn, Principal, MutationRole
+from apps.api.read_only import ReadConn, ReadPrincipal
 from packages.detection.context_store import FactRequest, FactPage, FactMutation, FactConflict, collect_fact, fact_page, resolved_for
 from packages.detection.trusted_context import ResolvedTrustedContext
 
@@ -10,7 +11,7 @@ router=APIRouter(prefix='/api/v2',tags=['Trusted context'])
 
 
 @router.get('/context/facts',response_model=FactPage,operation_id='listTrustedContextFacts')
-def facts(conn:Conn,principal:Principal,limit:int=Query(50,ge=1,le=200),offset:int=Query(0,ge=0)):
+def facts(conn:ReadConn,principal:ReadPrincipal,limit:int=Query(50,ge=1,le=200),offset:int=Query(0,ge=0)):
     with conn:
         conn.execute('BEGIN')
         return fact_page(conn,limit,offset)
@@ -26,7 +27,7 @@ def collect(body:FactRequest,conn:Conn,principal:Principal):
 
 
 @router.get('/alerts/{alertRef}/context',response_model=ResolvedTrustedContext,operation_id='getTrustedAlertContext')
-def context(alertRef:UUID,conn:Conn,principal:Principal):
+def context(alertRef:UUID,conn:ReadConn,principal:ReadPrincipal):
     try:
         with conn:
             conn.execute('BEGIN')

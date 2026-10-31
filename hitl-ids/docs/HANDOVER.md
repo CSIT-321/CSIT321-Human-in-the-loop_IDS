@@ -3,8 +3,8 @@
 **Purpose.** Carry the full state of this project into a fresh session with zero loss of context
 and minimal token cost. Everything a new session needs is here or one link away.
 
-**Current stacked workflow (2026-10-31):** `feat/prospective-collection-readiness-v2`, based on
-`2c921a87edeca7a0dc4272e2bd19a1596ec7459f` (`feat/prospective-context-provenance`).
+**Current stacked workflow (2026-11-01):** `feat/prospective-readiness-blocker-fixes`, based on
+`dd49cf4cfe979430912fa1a90c61cc594c81e75c` (`feat/prospective-collection-readiness-v2`).
 The older September branch/phase narrative below is historical, not the current branch status.
 The external path now reaches an append-only human-authorized response plan:
 Suricata -> staging -> eligibility review -> operational admission -> V2 alert -> policy ->
@@ -33,6 +33,10 @@ The pure selective policy is unchanged. The frozen prospective protocol gates ev
 persisted review decision time, adds opt-in collection runs/UI and a read-only recorded evaluator. Migration 13
 is additive. Protocol V1 remains unchanged; V2 is an undated draft pending independent final readiness PASS.
 The [manual UAT checklist](prospective-collection-uat.md) has no fabricated participant results.
+[Readiness blocker fixes](prospective-readiness-blocker-fixes.md) make human override independent of
+collection eligibility, open inspection/authentication connections read-only without migration, and
+reject incomplete recorded archives. Ledger decision counts and unique eligible-alert counts remain distinct.
+The previous readiness review failed; these fixes require a NEW independent review. Do not start collection.
 
 **Last updated:** 2026-09-18 (rev 24 — similar-alert learning made visible: the moved members, the
 family group-by, and the similarity basis on screen; changelog v1.32. Rev 23 notes below still

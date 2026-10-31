@@ -185,6 +185,7 @@ def _errors(*codes: int) -> dict[str, Any]:
         400: "Validation failed", 401: "Not signed in, or the token expired",
         403: "Role not permitted", 404: "Not found",
         409: "Conflict", 422: "Guardrail rejected the request",
+        503: "Database unavailable or schema unsupported; read-only requests never migrate",
     }
     return {str(code): {"description": text[code], **_json(ErrorResponse)} for code in codes}
 
@@ -713,6 +714,10 @@ def _paths() -> dict[str, Any]:
             'parameters':[AUTH_PARAMETER,run_ref],'x-required-roles':['security_analyst','system_admin'] if suffix=='observations' else ['system_admin'],
             'requestBody':{'required':True,**_json(model)},'responses':{'200':{'description':'Updated collection view',**_json(RunView)},**_errors(400,403,404,409)}}}
     for path, operations in paths.items():
+        if ('get' in operations and (path.startswith('/api/v2/collection/') or path.startswith('/api/evaluation/')
+                or path in ('/api/auth/me','/api/v2/context/facts','/api/v2/selective-review','/api/v2/selective-review/metrics')
+                or path.endswith(('/context','/selective-review','/selective-review/events')))):
+            operations['get']['responses'].update(_errors(503))
         if path == "/api/auth/login":
             continue
         for operation in operations.values():

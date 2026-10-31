@@ -29,7 +29,7 @@ import jwt
 from fastapi import Depends
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
-from apps.api.deps import ApiError, get_connection
+from apps.api.deps import ApiError, get_connection, get_readonly_connection
 from packages.contracts import db
 from packages.contracts import models as m
 
@@ -154,6 +154,18 @@ def current_user(
     """The signed-in account. Every protected handler depends on this, directly or through
     ``require_role``: no token, a forged token, an expired token or a disabled account all leave
     through the same 401 envelope."""
+    return _authenticated_user(credentials, conn)
+
+
+def current_readonly_user(
+    credentials: HTTPAuthorizationCredentials | None = Depends(_bearer),
+    conn: sqlite3.Connection = Depends(get_readonly_connection),
+) -> Principal:
+    """The same JWT/account checks without opening a writable authentication connection."""
+    return _authenticated_user(credentials, conn)
+
+
+def _authenticated_user(credentials, conn) -> Principal:
     if credentials is None or credentials.scheme.lower() != "bearer":
         raise _unauthorized("Sign in first: POST /api/auth/login", {"scheme": "Bearer"})
     try:

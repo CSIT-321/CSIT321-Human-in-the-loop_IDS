@@ -46,6 +46,32 @@ describe("Selective Human Review",()=>{
     expect(screen.queryByRole("button",{name:"Require Human Review"})).not.toBeInTheDocument();
   });
 
+  it("allows human override with a closed collection and explains skipped recording",async()=>{
+    const runRef="00000000-0000-4000-8000-000000000002";
+    const run={runRef,status:"closed",revision:3,protocol:{registration:{protocolVersion:"closed-demo",evidenceBasis:"synthetic/demo"}}};
+    let overridden=false;const bodies:unknown[]=[];
+    stubFetch(async req=>{
+      if(req.method==="POST"){bodies.push(await req.json());overridden=true;return jsonResponse({});}
+      if(req.url.includes("/collection/runs")&&req.url.endsWith("/export"))return jsonResponse({run,decisions:[],outcomes:[]});
+      if(req.url.endsWith("/collection/runs"))return jsonResponse({items:[run]});
+      if(req.url.endsWith("/selective-review")&&overridden)return jsonResponse({...view,disposition:"must_review",humanOverride:true,
+        lastDecision:{action:"require_review",snapshot:view.policyEvaluation,collectionRecording:{runRef,status:"not_recorded",reason:"the run is closed"}}});
+      return reads(req);
+    });
+    renderApp("/analyst/v2-triage?alertRef="+ref,{session});
+    await screen.findByText("No Immediate Review",{exact:true});
+    await userEvent.click(screen.getByRole("button",{name:"Prospective Collection"}));
+    await screen.findByRole("option",{name:/closed-demo/});
+    await userEvent.selectOptions(screen.getByLabelText("Collection run"),runRef);
+    await screen.findByText(/Protocol: closed-demo/);
+    await userEvent.type(screen.getByLabelText("Review policy or override reason"),"Safety review after collection closure");
+    expect(screen.getByRole("button",{name:"Evaluate Review Policy"})).toBeDisabled();
+    await userEvent.click(screen.getByRole("button",{name:"Require Human Review"}));
+    expect(await screen.findByText("Human review required",{exact:true})).toBeVisible();
+    expect(screen.getByText("Not recorded in selected collection run because the run is closed.")).toBeVisible();
+    expect(bodies[0]).toMatchObject({collectionRunRef:runRef,expectedRunRevision:3});
+  });
+
   it("shows recall and does not offer repeat override",async()=>{
     stubFetch(req=>req.url.endsWith("/selective-review")?jsonResponse({...view,disposition:"must_review",recalled:true,humanOverride:true,reasonCodes:["HUMAN_REVIEW_OVERRIDE"]}):reads(req));
     renderApp("/analyst/v2-triage?alertRef="+ref,{session});

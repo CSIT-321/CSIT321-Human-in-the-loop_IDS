@@ -5,7 +5,7 @@ export default {
   ...base,
   timeout:180000,
   testDir:path.resolve("e2e"),
-  testMatch:["prospective-collection.spec.ts"],
+  testMatch:["prospective-collection.spec.ts","prospective-override.spec.ts"],
   outputDir:process.env.HITL_E2E_OUTPUT??path.resolve("test-results/prospective-browser-artifacts"),
   use:{...base.use,baseURL:"http://127.0.0.1:5190"},
   webServer:[

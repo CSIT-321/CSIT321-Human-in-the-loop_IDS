@@ -38,6 +38,7 @@ from apps.api.contract.common import (
     PageInfo,
 )
 from apps.api.deps import ApiError, get_connection, not_found
+from apps.api.read_only import ReadConn, ReadPrincipal
 from apps.api.mappers import (
     alert_summary,
     audit_entry,
@@ -93,7 +94,7 @@ def login(body: au.LoginRequest, conn: Conn) -> au.LoginResponse:
 
 @router.get("/api/auth/me", response_model=au.MeResponse, tags=["auth"],
             operation_id="getCurrentUser")
-def me(principal: Principal) -> au.MeResponse:
+def me(principal: ReadPrincipal) -> au.MeResponse:
     """Who the token says is calling — the session check a client runs when it wants to be sure."""
     return au.MeResponse(username=principal.username, display_name=principal.display_name,
                          role=principal.role)
@@ -631,7 +632,7 @@ def update_guardrail_config(body: co.GuardrailConfigUpdate, conn: Conn,
 
 @router.get("/api/evaluation/scenarios", response_model=Page[co.EvaluationScenarioOut],
             tags=["evaluation"], operation_id="listEvaluationScenarios")
-def list_scenarios(conn: Conn, principal: Principal, limit: int = Query(50, ge=1, le=MAX_PAGE_SIZE),
+def list_scenarios(conn: ReadConn, principal: ReadPrincipal, limit: int = Query(50, ge=1, le=MAX_PAGE_SIZE),
                    offset: int = Query(0, ge=0)) -> dict[str, Any]:
     total = int(conn.execute("SELECT COUNT(*) AS n FROM evaluation_scenarios").fetchone()["n"])
     rows = conn.execute("SELECT * FROM evaluation_scenarios ORDER BY id LIMIT ? OFFSET ?",
@@ -668,7 +669,7 @@ def _results(run_id: str) -> dict[str, Any]:
 
 @router.get("/api/evaluation/runs", response_model=Page[co.EvaluationRunOut],
             tags=["evaluation"], operation_id="listEvaluationRuns")
-def list_evaluation_runs(principal: Principal) -> dict[str, Any]:
+def list_evaluation_runs(principal: ReadPrincipal) -> dict[str, Any]:
     """Every committed run with a results record, newest first (run ids are UTC timestamps).
 
     No paging parameters: the contract declares none, and runs are a handful of committed records.
@@ -692,7 +693,7 @@ def list_evaluation_runs(principal: Principal) -> dict[str, Any]:
 
 @router.get("/api/evaluation/runs/{runId}", response_model=co.EvaluationComparison,
             tags=["evaluation"], operation_id="getEvaluationRun")
-def get_evaluation_run(runId: str, principal: Principal) -> co.EvaluationComparison:  # noqa: N803
+def get_evaluation_run(runId: str, principal: ReadPrincipal) -> co.EvaluationComparison:  # noqa: N803
     """The three arms and their deltas. Deltas may be negative; render them as measured."""
     results = _results(runId)
     return co.EvaluationComparison(
@@ -714,7 +715,7 @@ def get_evaluation_run(runId: str, principal: Principal) -> co.EvaluationCompari
 @router.get("/api/evaluation/runs/{runId}/detection",
             response_model=co.EvaluationDetectionMetrics, tags=["evaluation"],
             operation_id="getEvaluationDetectionMetrics")
-def get_evaluation_detection(runId: str, principal: Principal) -> co.EvaluationDetectionMetrics:  # noqa: N803
+def get_evaluation_detection(runId: str, principal: ReadPrincipal) -> co.EvaluationDetectionMetrics:  # noqa: N803
     """Per-class metrics. Identical across all three arms by construction."""
     results = _results(runId)
     arms = results.get("full_metrics", {})

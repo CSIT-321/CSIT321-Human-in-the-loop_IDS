@@ -60,9 +60,11 @@ Record every task separately. The observed-result/time columns are deliberately 
 | Future guidance / Analyst | Open a separate matching alert after activation; inspect memory match and reasons | Guidance references historical lesson; no retroactive application to prior decisions | | | | | | |
 | No Immediate Review / Analyst | Collect all explicit safe context on an eligible future alert; select run; Evaluate | Deferral only if unchanged V1 gates pass; audit samples/conflicts still require review | | | | | | |
 | Human override / Analyst | On deferred alert, enter reason; Require Human Review; record task observation after recall | Must Review; original deferral retained; override/observed recall exported separately | | | | | | |
+| Expired/closed-run override / Analyst | Keep an expired or closed synthetic run selected on a deferred alert; enter reason; Require Human Review; reload; inspect Review decision history | Human review required; explicit not-recorded reason; Must Review and audit survive reload; collection ledger unchanged | | | | | | |
 | Workload record / Analyst | Prospective Collection; enter stopwatch Analyst review seconds, Total task seconds, errors, rework and notes; Record Task Observation | Append-only human-reported measurement; no invented zero duration or inferred time savings | | | | | | |
 | Closure/export / Admin | Wait until outcome cutoff; Refresh Runs; Close Run; Inspect Export; Download JSON | Early closure rejected; export contains actual decisions, timestamps, inputs, outcomes, routing and overrides | | | | | | |
 | Registered evaluation / Evaluator | Selective Review; Collection Runs; inspect closed run; Evaluate Recorded Collection | Read-only recorded mode; reconstruction-only and open-run evaluation rejected | | | | | | |
+| Archive integrity / Evaluator | In a disposable exported JSON copy remove one decision or matching raw event, then evaluate that copy offline | Explicit archive-integrity failure, not a report with a smaller cohort; original export/database unchanged | | | | | | |
 | Permissions / Evaluator | Inspect context/run/decision; attempt same tasks through available controls | No collection, context, routing, case, feedback or approval mutations offered | | | | | | |
 
 ## Per-alert workload worksheet
@@ -73,6 +75,8 @@ Record every task separately. The observed-result/time columns are deliberately 
 
 Baseline review volume is one immediate review per eligible alert. Count the first eligible applied decision
 per alert, not repeated Evaluate clicks. Later overrides/recalls remain visible separately.
+run.decisionCount counts every immutable collection ledger event, including repeats and in-window overrides.
+Do not equate it with eligibleAlerts; completeness reconciliation validates all ledger events.
 Later malicious/suspicious truth makes an earlier deferral unsafe; it never rewrites that historical deferral.
 Only outcomes strictly after decisionAt and before outcomeCutoff enter the closed report.
 

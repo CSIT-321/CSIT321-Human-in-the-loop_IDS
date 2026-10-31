@@ -4,6 +4,7 @@ from fastapi import APIRouter,Query
 from apps.api.contract.common import Page,PageInfo
 from apps.api.deps import ApiError
 from apps.api.routing_routes import Conn,Principal,MutationRole
+from apps.api.read_only import ReadConn, ReadPrincipal
 from packages.detection.selective_review import (
     Disposition,ReviewCommand,ReviewView,ReviewMutation,ReviewEvent,ReviewMetrics,ReviewConflict,
     read_review,decide_review,list_reviews,review_history,review_metrics,
@@ -19,14 +20,14 @@ def _error(exc):
 
 
 @router.get('/selective-review/metrics',response_model=ReviewMetrics,operation_id='selectiveReviewMetrics')
-def metrics(conn:Conn,principal:Principal):
+def metrics(conn:ReadConn,principal:ReadPrincipal):
     with conn:
         conn.execute('BEGIN')
         return review_metrics(conn)
 
 
 @router.get('/selective-review',response_model=Page[ReviewView],operation_id='listSelectiveReviews')
-def queue(conn:Conn,principal:Principal,disposition:Disposition|None=None,limit:int=Query(50,ge=1,le=200),offset:int=Query(0,ge=0)):
+def queue(conn:ReadConn,principal:ReadPrincipal,disposition:Disposition|None=None,limit:int=Query(50,ge=1,le=200),offset:int=Query(0,ge=0)):
     with conn:
         conn.execute('BEGIN')
         items,total=list_reviews(conn,disposition,limit,offset)
@@ -34,7 +35,7 @@ def queue(conn:Conn,principal:Principal,disposition:Disposition|None=None,limit:
 
 
 @router.get('/alerts/{alertRef}/selective-review',response_model=ReviewView,operation_id='getSelectiveReview')
-def detail(alertRef:UUID,conn:Conn,principal:Principal):
+def detail(alertRef:UUID,conn:ReadConn,principal:ReadPrincipal):
     try:
         with conn:
             conn.execute('BEGIN')
@@ -43,7 +44,7 @@ def detail(alertRef:UUID,conn:Conn,principal:Principal):
 
 
 @router.get('/alerts/{alertRef}/selective-review/events',response_model=Page[ReviewEvent],operation_id='selectiveReviewHistory')
-def history(alertRef:UUID,conn:Conn,principal:Principal,limit:int=Query(50,ge=1,le=200),offset:int=Query(0,ge=0)):
+def history(alertRef:UUID,conn:ReadConn,principal:ReadPrincipal,limit:int=Query(50,ge=1,le=200),offset:int=Query(0,ge=0)):
     try:
         with conn:
             conn.execute('BEGIN')

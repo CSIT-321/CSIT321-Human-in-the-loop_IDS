@@ -5,9 +5,10 @@ from fastapi import APIRouter, Depends
 from apps.api import auth
 from apps.api.deps import ApiError
 from apps.api.routing_routes import Conn, Principal, MutationRole
+from apps.api.read_only import ReadConn, ReadPrincipal
 from packages.contracts.operational_v2 import V2Contract
 from packages.detection import prospective_collection as service
-from packages.evaluation.prospective_recorded import RecordedArchive, export_connection, evaluate_recorded
+from packages.evaluation.prospective_recorded import RecordedArchive, ArchiveIntegrityError, export_connection, evaluate_recorded
 
 router=APIRouter(prefix='/api/v2/collection',tags=['Prospective collection'])
 AdminRole=Depends(auth.require_role('system_admin'))
@@ -22,11 +23,12 @@ def invoke(callback):
     except LookupError as exc: raise ApiError(404,'NOT_FOUND',str(exc)) from exc
     except PermissionError as exc: raise ApiError(403,'FORBIDDEN_ROLE',str(exc)) from exc
     except service.CollectionConflict as exc: raise ApiError(409,'COLLECTION_CONFLICT',str(exc)) from exc
+    except ArchiveIntegrityError as exc: raise ApiError(400,'ARCHIVE_INTEGRITY',str(exc)) from exc
     except ValueError as exc: raise ApiError(400,'INVALID_COLLECTION',str(exc)) from exc
 
 
 @router.get('/runs',response_model=service.RunPage,operation_id='listCollectionRuns')
-def runs(conn:Conn,principal:Principal):
+def runs(conn:ReadConn,principal:ReadPrincipal):
     with conn:
         conn.execute('PRAGMA query_only=ON')
         conn.execute('BEGIN')
@@ -39,7 +41,7 @@ def create(body:service.RunCreate,conn:Conn,principal:Principal):
 
 
 @router.get('/runs/{runRef}',response_model=service.RunView,operation_id='getCollectionRun')
-def run(runRef:UUID,conn:Conn,principal:Principal):
+def run(runRef:UUID,conn:ReadConn,principal:ReadPrincipal):
     with conn:
         conn.execute('PRAGMA query_only=ON')
         conn.execute('BEGIN')
@@ -67,7 +69,7 @@ def observe(runRef:UUID,body:service.ObservationRequest,conn:Conn,principal:Prin
 
 
 @router.get('/runs/{runRef}/export',response_model=RecordedArchive,operation_id='exportRecordedCollection')
-def export(runRef:UUID,conn:Conn,principal:Principal):
+def export(runRef:UUID,conn:ReadConn,principal:ReadPrincipal):
     with conn:
         conn.execute('PRAGMA query_only=ON')
         conn.execute('BEGIN')
@@ -75,7 +77,7 @@ def export(runRef:UUID,conn:Conn,principal:Principal):
 
 
 @router.get('/runs/{runRef}/report',response_model=CollectionDocument,operation_id='evaluateRecordedCollection')
-def report(runRef:UUID,conn:Conn,principal:Principal):
+def report(runRef:UUID,conn:ReadConn,principal:ReadPrincipal):
     with conn:
         conn.execute('PRAGMA query_only=ON')
         conn.execute('BEGIN')

@@ -1087,6 +1087,55 @@
         "title": "CollectionDocument",
         "type": "object"
       },
+      "CollectionRecording": {
+        "additionalProperties": false,
+        "properties": {
+          "decisionRef": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Decisionref"
+          },
+          "reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Reason"
+          },
+          "runRef": {
+            "format": "uuid",
+            "title": "Runref",
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "recorded",
+              "not_recorded"
+            ],
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "runRef",
+          "status"
+        ],
+        "title": "CollectionRecording",
+        "type": "object"
+      },
       "ContextPolicy": {
         "additionalProperties": false,
         "properties": {
@@ -6535,6 +6584,17 @@
             "title": "Actorid",
             "type": "integer"
           },
+          "collectionRecording": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/CollectionRecording"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
           "createdAt": {
             "title": "Createdat",
             "type": "string"
@@ -10671,6 +10731,16 @@
               }
             },
             "description": "Not signed in, or the token expired"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Database unavailable or schema unsupported; read-only requests never migrate"
           }
         },
         "summary": "The signed-in account",
@@ -11124,6 +11194,16 @@
               }
             },
             "description": "Not signed in, or the token expired"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Database unavailable or schema unsupported; read-only requests never migrate"
           }
         },
         "summary": "Committed three-arm evaluation runs, newest first",
@@ -11187,6 +11267,16 @@
               }
             },
             "description": "Not found"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Database unavailable or schema unsupported; read-only requests never migrate"
           }
         },
         "summary": "Three-arm comparison for one evaluation run",
@@ -11250,6 +11340,16 @@
               }
             },
             "description": "Not found"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Database unavailable or schema unsupported; read-only requests never migrate"
           }
         },
         "summary": "Per-class detection metrics for one evaluation run",
@@ -11308,6 +11408,16 @@
               }
             },
             "description": "Not signed in, or the token expired"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Database unavailable or schema unsupported; read-only requests never migrate"
           }
         },
         "summary": "Pre-registered evaluation scenarios",
@@ -11574,6 +11684,16 @@
               }
             },
             "description": "Not found"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Database unavailable or schema unsupported; read-only requests never migrate"
           }
         },
         "summary": "Resolve current scoped safety evidence",
@@ -11646,6 +11766,16 @@
               }
             },
             "description": "Not found"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Database unavailable or schema unsupported; read-only requests never migrate"
           }
         },
         "summary": "getSelectiveReview",
@@ -11858,6 +11988,16 @@
               }
             },
             "description": "Not found"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Database unavailable or schema unsupported; read-only requests never migrate"
           }
         },
         "summary": "selectiveReviewHistory",
@@ -12730,6 +12870,16 @@
               }
             },
             "description": "Not signed in, or the token expired"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Database unavailable or schema unsupported; read-only requests never migrate"
           }
         },
         "summary": "Collection runs",
@@ -12886,6 +13036,16 @@
               }
             },
             "description": "Not found"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Database unavailable or schema unsupported; read-only requests never migrate"
           }
         },
         "summary": "getCollectionRun",
@@ -13168,6 +13328,16 @@
               }
             },
             "description": "Not found"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Database unavailable or schema unsupported; read-only requests never migrate"
           }
         },
         "summary": "exportRecordedCollection",
@@ -13451,6 +13621,16 @@
               }
             },
             "description": "Not found"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Database unavailable or schema unsupported; read-only requests never migrate"
           }
         },
         "summary": "evaluateRecordedCollection",
@@ -13523,6 +13703,16 @@
               }
             },
             "description": "Not signed in, or the token expired"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Database unavailable or schema unsupported; read-only requests never migrate"
           }
         },
         "summary": "Append-only safety fact history",
@@ -14096,6 +14286,16 @@
               }
             },
             "description": "Not found"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Database unavailable or schema unsupported; read-only requests never migrate"
           }
         },
         "summary": "listSelectiveReviews",
@@ -14159,6 +14359,16 @@
               }
             },
             "description": "Not found"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Database unavailable or schema unsupported; read-only requests never migrate"
           }
         },
         "summary": "selectiveReviewMetrics",

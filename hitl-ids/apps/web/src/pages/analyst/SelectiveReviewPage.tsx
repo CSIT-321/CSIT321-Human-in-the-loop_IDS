@@ -57,13 +57,13 @@ export function SelectiveReviewPanel({alertRef}:{alertRef:string}) {
   const canWrite=session?.role==="security_analyst"||session?.role==="system_admin";
   async function act(action:"apply"|"require_review") {
     if(busy||!reason.trim()||resource.status!=="success")return;
-    if(runRef&&(!run||run.status!=="open"))return;
+    if(action==="apply"&&runRef&&(!run||run.status!=="open"))return;
     const key=JSON.stringify([action,reason.trim(),resource.data.version,runRef,run?.revision]);
     if(pending.current?.key!==key)pending.current={key,id:crypto.randomUUID()};
     setBusy(true);setError("");
     const params={path:{alertRef}};
     const body={requestId:pending.current.id,expectedVersion:resource.data.version,reason:reason.trim(),
-      collectionRunRef:runRef&&run?runRef:null,expectedRunRevision:runRef&&run?run.revision:null};
+      collectionRunRef:runRef||null,expectedRunRevision:runRef?(run?.revision??1):null};
     try {
       if(action==="apply")await unwrap(api.POST("/api/v2/alerts/{alertRef}/selective-review/evaluate",{params,body}));
       else await unwrap(api.POST("/api/v2/alerts/{alertRef}/selective-review/require-human",{params,body}));
@@ -82,6 +82,10 @@ export function SelectiveReviewPanel({alertRef}:{alertRef:string}) {
     {resource.status==="error"&&<p role="alert">{resource.error.message}</p>}
     {resource.status==="success"&&<>
       <ReviewSummary view={resource.data}/>
+      {resource.data.humanOverride&&<p role="status" className="text-sm">Human review required</p>}
+      {resource.data.lastDecision?.collectionRecording?.status==="not_recorded"&&<p role="status" className="text-sm">
+        Not recorded in selected collection run because {resource.data.lastDecision.collectionRecording.reason}.
+      </p>}
       {canWrite&&<div className="space-y-2">
         <label htmlFor="selective-reason" className="block text-sm">Review policy or override reason</label>
         <textarea id="selective-reason" rows={3} maxLength={4000} disabled={busy} value={reason} onChange={e=>setReason(e.target.value)} className="w-full min-w-0 rounded-sm border border-border bg-surface p-2 text-sm"/>

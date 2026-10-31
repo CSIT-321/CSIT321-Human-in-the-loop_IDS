@@ -14,6 +14,15 @@ from packages.detection.prospective_collection import (
     RunView, RecordedDecision, RecordedObservation, read_run, decisions, digest,
 )
 from packages.evaluation.temporal_review import OutcomeEvent
+from packages.detection.selective_review import CollectionRecording
+
+
+class ArchiveIntegrityError(ValueError):
+    """A recorded archive must preserve the complete run ledger, not a selected subset."""
+
+
+def _integrity(message):
+    raise ArchiveIntegrityError('archive-integrity: '+message)
 
 
 class RecordedArchive(V2Contract):
@@ -59,6 +68,49 @@ def _time(value):
     return datetime.fromisoformat(value.replace('Z','+00:00')) if isinstance(value,str) else value
 
 
+def reconcile_decisions(archive):
+    run=archive.run; records=archive.decisions; plan=run.protocol.registration
+    if run.decision_count!=len(records): _integrity('run decisionCount differs from exported ledger count')
+    ids=[d.review_event_id for d in records]
+    if len(set(ids))!=len(ids) or len({d.decision_ref for d in records})!=len(records):
+        _integrity('duplicate prospective decision identity')
+    for d in records:
+        if d.run_ref!=run.run_ref: _integrity('decision belongs to a different run')
+        if not plan.holdout_start<=d.decision_at<plan.holdout_end:
+            _integrity('recorded decision is outside its run decision window')
+    required=set(ids); bound={}; raw={}
+    for event in archive.review_events:
+        event_id=event.get('id')
+        try:
+            payload=json.loads(event.get('request_payload','{}'))
+            request=payload.get('request',{})
+            selected=request.get('collection_run_ref')==str(run.run_ref)
+        except (ValueError,TypeError,AttributeError):
+            if event_id in required: _integrity('matching raw review event has invalid request provenance')
+            continue
+        if not selected and event_id not in required: continue
+        if not selected: _integrity('matching raw event is not bound to this run')
+        if event_id in raw: _integrity('duplicate run-bound raw review identity')
+        raw[event_id]=event
+        receipt=payload.get('collectionRecording')
+        if receipt is not None:
+            try: receipt=CollectionRecording.model_validate(receipt)
+            except ValueError: _integrity('invalid collection recording receipt')
+            if receipt.run_ref!=run.run_ref: _integrity('receipt run identity differs from its request')
+            if receipt.status=='not_recorded':
+                if event.get('action')!='require_review' or event_id in required:
+                    _integrity('skipped collection receipt contradicts its ledger')
+                continue
+        # Before receipts existed, a run-bound event and sidecar were always atomic.
+        bound[event_id]=(event,receipt)
+    if set(bound)!=required: _integrity('run-bound review events and prospective decisions are incomplete')
+    for d in records:
+        event,receipt=bound[d.review_event_id]
+        if receipt is not None and receipt.decision_ref!=d.decision_ref:
+            _integrity('receipt decision identity differs from its sidecar')
+    return {key:value[0] for key,value in bound.items()}
+
+
 def evaluate_recorded(archive: RecordedArchive, *, now=None):
     if not isinstance(archive,RecordedArchive): raise ValueError('registered evaluation rejects reconstructed-only data')
     archive=RecordedArchive.model_validate(archive.model_dump())
@@ -80,10 +132,8 @@ def evaluate_recorded(archive: RecordedArchive, *, now=None):
         raise ValueError('frozen protocol hash mismatch')
     if protocol.selective_policy_hash!=digest(protocol.selective_policy.model_dump(mode='json',by_alias=True)) or protocol.context_policy_hash!=digest(protocol.context_policy.model_dump(mode='json',by_alias=True)):
         raise ValueError('frozen configuration hash mismatch')
-    selected=sorted((d for d in archive.decisions if plan.holdout_start<=d.decision_at<plan.holdout_end),key=lambda d:(d.decision_at,d.review_event_id))
-    if len({d.decision_ref for d in selected})!=len(selected) or len({d.review_event_id for d in selected})!=len(selected):
-        raise ValueError('duplicate recorded decision')
-    review_events={e['id']:e for e in archive.review_events}
+    review_events=reconcile_decisions(archive)
+    selected=sorted(archive.decisions,key=lambda d:(d.decision_at,d.review_event_id))
     admission_evidence=[]
     for decision in selected:
         s=decision.snapshot; provenance=s.context_provenance
@@ -108,8 +158,12 @@ def evaluate_recorded(archive: RecordedArchive, *, now=None):
                 if max(fact.available_at,fact.recorded_at,fact.valid_from)>decision.decision_at:
                     raise ValueError('future fact referenced by an earlier recorded decision')
         event=review_events.get(decision.review_event_id)
-        if event is None or event['alertRef']!=str(decision.operational_alert_ref) or event['operational_alert_id']!=s.inputs.alert.id or _time(event['created_at'])!=decision.decision_at or event['actor_id']!=decision.actor_id or event['action']!=decision.action or json.loads(event['decision_snapshot'])!=s.model_dump(mode='json',by_alias=True):
-            raise ValueError('actual persisted review event does not match collection snapshot')
+        try:
+            matches=(event['alertRef']==str(decision.operational_alert_ref) and event['operational_alert_id']==s.inputs.alert.id
+                and _time(event['created_at'])==decision.decision_at and event['actor_id']==decision.actor_id and event['action']==decision.action
+                and json.loads(event['decision_snapshot'])==s.model_dump(mode='json',by_alias=True))
+        except (KeyError,ValueError,TypeError): matches=False
+        if not matches: _integrity('actual persisted review event does not match collection snapshot')
     # Freeze only the relevant window, not the entire mutable-length export archive.
     by_alert={}
     for decision in selected:
