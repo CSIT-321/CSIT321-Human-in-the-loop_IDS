@@ -66,6 +66,15 @@ DEVIATION_COLUMNS = {
     "flow_data": {"source_record_id"},
 }
 DEVIATION_TABLES = {
+    "external_eligibility_review": {
+        "id", "external_inbox_id", "actor_id", "request_id", "expected_review_id", "decision",
+        "reason", "evidence_digest", "created_at",
+    },
+    "external_operational_admission": {
+        "id", "external_inbox_id", "operational_alert_id", "canonical_alert_id", "actor_id",
+        "review_id", "request_id", "reason", "event_type", "policy_audit_id", "routing_audit_id",
+        "context_snapshot", "resulting_state", "created_at",
+    },
     "operational_routing_audit": {
         "id", "operational_alert_id", "actor_id", "request_id", "action", "event_type",
         "expected_state_version", "reason", "before_state", "after_state", "created_at",
@@ -282,7 +291,8 @@ def test_every_table_model_matches_its_columns(conn):
     # The inbox uses the canonical contract and staging writer, not a legacy operational model.
     assert set(db.TABLE_MODELS) == table_names(conn) - {
         "external_alert_inbox", "operational_alerts_v2", "operational_triage_state_v2",
-        "operational_triage_policy_audit", "operational_routing_audit"}
+        "operational_triage_policy_audit", "operational_routing_audit",
+        "external_eligibility_review", "external_operational_admission"}
     for table, model in db.TABLE_MODELS.items():
         assert set(model.model_fields) == set(columns(conn, table)), table
 
@@ -291,6 +301,15 @@ EXPECTED_FOREIGN_KEYS = {
     ("operational_triage_policy_audit", "operational_alert_id", "operational_alerts_v2", "id"),
     ("operational_triage_policy_audit", "actor_id", "users", "id"),
     ("operational_routing_audit", "actor_id", "users", "id"),
+    ("external_eligibility_review", "external_inbox_id", "external_alert_inbox", "id"),
+    ("external_eligibility_review", "actor_id", "users", "id"),
+    ("external_eligibility_review", "expected_review_id", "external_eligibility_review", "id"),
+    ("external_operational_admission", "external_inbox_id", "external_alert_inbox", "id"),
+    ("external_operational_admission", "operational_alert_id", "operational_alerts_v2", "id"),
+    ("external_operational_admission", "actor_id", "users", "id"),
+    ("external_operational_admission", "review_id", "external_eligibility_review", "id"),
+    ("external_operational_admission", "policy_audit_id", "operational_triage_policy_audit", "id"),
+    ("external_operational_admission", "routing_audit_id", "operational_routing_audit", "id"),
     ("operational_routing_audit", "operational_alert_id", "operational_alerts_v2", "id"),
     ("operational_alerts_v2", "legacy_alert_id", "alerts", "id"),
     ("operational_alerts_v2", "external_inbox_id", "external_alert_inbox", "id"),

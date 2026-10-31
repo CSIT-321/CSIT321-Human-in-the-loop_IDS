@@ -140,6 +140,8 @@ MIGRATIONS += ((5, "explicit priority band scheme and append-only V2 policy audi
                 Path(__file__).with_name("triage_policy_v1.sql").read_text(encoding="utf-8")),)
 MIGRATIONS += ((6, "append-only authenticated V2 routing audit",
                 Path(__file__).with_name("routing_workflow.sql").read_text(encoding="utf-8")),)
+MIGRATIONS += ((7, "immutable external eligibility and atomic operational admission",
+                Path(__file__).with_name("external_operational_admission.sql").read_text(encoding="utf-8")),)
 SCHEMA_VERSION = MIGRATIONS[-1][0]
 
 

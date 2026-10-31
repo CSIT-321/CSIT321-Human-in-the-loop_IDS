@@ -1,0 +1,38 @@
+import { expect, test } from "@playwright/test";
+
+test("staged Suricata review and admission reaches Tier 1", async ({ page }) => {
+  const errors: string[] = [];
+  page.on("pageerror", error => errors.push(error.message));
+  await page.goto("/login");
+  await page.getByLabel("Username").fill("g.ang");
+  await page.getByLabel("Password", { exact: true }).fill("analyst-demo");
+  await page.getByRole("button", { name: "Sign in" }).click();
+  await page.getByRole("link", { name: "Suricata Admission" }).click();
+  const option = page.locator("#external-alert option").filter({ hasText: "(staged)" }).first();
+  await expect(option).toHaveCount(1);
+  await page.getByLabel("Staged alert").selectOption((await option.getAttribute("value"))!);
+  await expect(page.getByText("Not provided", { exact: true })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Admit to HITL Workflow" })).toHaveCount(0);
+  await page.getByLabel("Eligibility decision").selectOption("accepted");
+  await page.getByLabel("Decision reason").fill("Validated staged evidence and source identity");
+  await page.getByRole("button", { name: "Record eligibility review" }).click();
+  await expect(page.getByRole("status")).toContainText("Eligibility decision recorded");
+  await expect(page.locator("#external-alert option:checked")).toContainText("(eligible)");
+  await page.getByLabel("Decision reason").fill("Admit to Tier 1 operational review");
+  await page.locator("main").evaluate(element => { element.scrollTop = 0; });
+  await page.screenshot({ path: "test-results/admission-desktop.png", fullPage: true });
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.getByRole("button", { name: "Admit to HITL Workflow" }).scrollIntoViewIfNeeded();
+  await page.screenshot({ path: "test-results/admission-mobile.png", fullPage: true });
+  expect(await page.locator("main").evaluate(element => element.scrollWidth <= element.clientWidth)).toBe(true);
+  await page.getByRole("button", { name: "Admit to HITL Workflow" }).click();
+  await expect(page.getByRole("status")).toContainText("Operational admission completed");
+  await expect(page.locator("#external-alert option:checked")).toContainText("(admitted)");
+  await page.getByRole("link", { name: "Open V2 Routing" }).click();
+  await expect(page.getByRole("heading", { name: "V2 Triage Routing" })).toBeVisible();
+  await expect(page.getByText("tier1 review", { exact: true })).toBeVisible();
+  await expect(page.getByText("triage", { exact: true })).toBeVisible();
+  await expect(page.getByText("P3", { exact: true })).toBeVisible();
+  await expect(page.getByText("NO", { exact: true })).toBeVisible();
+  expect(errors).toEqual([]);
+});

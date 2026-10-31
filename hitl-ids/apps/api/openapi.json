@@ -51,6 +51,41 @@
         "title": "Actor",
         "type": "object"
       },
+      "AdmissionRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "expectedReviewId": {
+            "anyOf": [
+              {
+                "minimum": 1,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Expectedreviewid"
+          },
+          "reason": {
+            "maxLength": 2000,
+            "minLength": 1,
+            "title": "Reason",
+            "type": "string"
+          },
+          "requestId": {
+            "format": "uuid",
+            "title": "Requestid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "requestId",
+          "expectedReviewId",
+          "reason"
+        ],
+        "title": "AdmissionRequest",
+        "type": "object"
+      },
       "AlertDetail": {
         "additionalProperties": false,
         "description": "``GET /api/alerts/{alertRef}`` — the summary plus the four panels and the family.",
@@ -1100,6 +1135,50 @@
         "title": "DetectionRunSummary",
         "type": "object"
       },
+      "EligibilityRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "decision": {
+            "enum": [
+              "accepted",
+              "held"
+            ],
+            "title": "Decision",
+            "type": "string"
+          },
+          "expectedReviewId": {
+            "anyOf": [
+              {
+                "minimum": 1,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Expectedreviewid"
+          },
+          "reason": {
+            "maxLength": 2000,
+            "minLength": 1,
+            "title": "Reason",
+            "type": "string"
+          },
+          "requestId": {
+            "format": "uuid",
+            "title": "Requestid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "requestId",
+          "expectedReviewId",
+          "reason",
+          "decision"
+        ],
+        "title": "EligibilityRequest",
+        "type": "object"
+      },
       "EntityIp": {
         "additionalProperties": false,
         "description": "``GET /api/entities/ip/{ip}`` — what the recorded flows say about one address (B5).",
@@ -1581,6 +1660,268 @@
           "tier2Candidate"
         ],
         "title": "EvidencePanel",
+        "type": "object"
+      },
+      "ExternalAdmissionResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "replayed": {
+            "title": "Replayed",
+            "type": "boolean"
+          },
+          "view": {
+            "$ref": "#/components/schemas/ExternalAdmissionView"
+          }
+        },
+        "required": [
+          "view",
+          "replayed"
+        ],
+        "title": "ExternalAdmissionResponse",
+        "type": "object"
+      },
+      "ExternalAdmissionView": {
+        "additionalProperties": false,
+        "properties": {
+          "admissionActorId": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Admissionactorid"
+          },
+          "admittedAt": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Admittedat"
+          },
+          "canAdmit": {
+            "title": "Canadmit",
+            "type": "boolean"
+          },
+          "canReview": {
+            "title": "Canreview",
+            "type": "boolean"
+          },
+          "canonicalAlertId": {
+            "format": "uuid",
+            "title": "Canonicalalertid",
+            "type": "string"
+          },
+          "category": {
+            "title": "Category",
+            "type": "string"
+          },
+          "confidence": {
+            "title": "Confidence",
+            "type": "null"
+          },
+          "destinationIp": {
+            "title": "Destinationip",
+            "type": "string"
+          },
+          "destinationPort": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Destinationport"
+          },
+          "detector": {
+            "title": "Detector",
+            "type": "string"
+          },
+          "externalInboxId": {
+            "title": "Externalinboxid",
+            "type": "integer"
+          },
+          "nativeSeverity": {
+            "title": "Nativeseverity",
+            "type": "integer"
+          },
+          "occurredAt": {
+            "title": "Occurredat",
+            "type": "string"
+          },
+          "occurredAtTimezoneOffset": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Occurredattimezoneoffset"
+          },
+          "operationalAlertId": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Operationalalertid"
+          },
+          "operationalAlertRef": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Operationalalertref"
+          },
+          "proposalPolicyVersion": {
+            "title": "Proposalpolicyversion",
+            "type": "string"
+          },
+          "proposedPriority": {
+            "title": "Proposedpriority",
+            "type": "number"
+          },
+          "protocol": {
+            "title": "Protocol",
+            "type": "string"
+          },
+          "reviewActorId": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reviewactorid"
+          },
+          "reviewDecision": {
+            "anyOf": [
+              {
+                "enum": [
+                  "accepted",
+                  "held"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reviewdecision"
+          },
+          "reviewId": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reviewid"
+          },
+          "reviewReason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reviewreason"
+          },
+          "signature": {
+            "title": "Signature",
+            "type": "string"
+          },
+          "sourceIp": {
+            "title": "Sourceip",
+            "type": "string"
+          },
+          "sourcePort": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sourceport"
+          },
+          "stagingDecision": {
+            "title": "Stagingdecision",
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "staged",
+              "eligible",
+              "admitted",
+              "held",
+              "failed"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "statusReason": {
+            "title": "Statusreason",
+            "type": "string"
+          }
+        },
+        "required": [
+          "externalInboxId",
+          "canonicalAlertId",
+          "detector",
+          "signature",
+          "category",
+          "nativeSeverity",
+          "confidence",
+          "sourceIp",
+          "destinationIp",
+          "sourcePort",
+          "destinationPort",
+          "protocol",
+          "occurredAt",
+          "occurredAtTimezoneOffset",
+          "status",
+          "statusReason",
+          "stagingDecision",
+          "proposedPriority",
+          "proposalPolicyVersion",
+          "reviewId",
+          "reviewDecision",
+          "reviewReason",
+          "reviewActorId",
+          "operationalAlertRef",
+          "operationalAlertId",
+          "admittedAt",
+          "admissionActorId",
+          "canReview",
+          "canAdmit"
+        ],
+        "title": "ExternalAdmissionView",
         "type": "object"
       },
       "FamilyEffect": {
@@ -7904,6 +8245,374 @@
           "V2 routing"
         ]
       }
+    },
+    "/api/v2/external-alerts": {
+      "get": {
+        "operationId": "listExternalAdmissions",
+        "parameters": [
+          {
+            "description": "`Bearer <token>` from POST /api/auth/login",
+            "in": "header",
+            "name": "Authorization",
+            "required": false,
+            "schema": {
+              "example": "Bearer eyJhbGciOiJIUzI1NiJ9...",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "schema": {
+              "default": 50,
+              "maximum": 200,
+              "minimum": 1,
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "offset",
+            "schema": {
+              "default": 0,
+              "minimum": 0,
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "items": {
+                      "items": {
+                        "$ref": "#/components/schemas/ExternalAdmissionView"
+                      },
+                      "type": "array"
+                    },
+                    "page": {
+                      "$ref": "#/components/schemas/PageInfo"
+                    }
+                  },
+                  "required": [
+                    "items",
+                    "page"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "External inbox page"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Validation failed"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not signed in, or the token expired"
+          }
+        },
+        "summary": "Inspect staged external alerts and admission status",
+        "tags": [
+          "External admission"
+        ]
+      }
+    },
+    "/api/v2/external-alerts/{inboxId}": {
+      "get": {
+        "operationId": "getExternalAdmission",
+        "parameters": [
+          {
+            "description": "`Bearer <token>` from POST /api/auth/login",
+            "in": "header",
+            "name": "Authorization",
+            "required": false,
+            "schema": {
+              "example": "Bearer eyJhbGciOiJIUzI1NiJ9...",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "inboxId",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExternalAdmissionView"
+                }
+              }
+            },
+            "description": "External status"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Validation failed"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not signed in, or the token expired"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not found"
+          }
+        },
+        "summary": "Read eligibility and operational admission",
+        "tags": [
+          "External admission"
+        ]
+      }
+    },
+    "/api/v2/external-alerts/{inboxId}/admit": {
+      "post": {
+        "operationId": "admitExternalAlert",
+        "parameters": [
+          {
+            "description": "`Bearer <token>` from POST /api/auth/login",
+            "in": "header",
+            "name": "Authorization",
+            "required": false,
+            "schema": {
+              "example": "Bearer eyJhbGciOiJIUzI1NiJ9...",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "inboxId",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AdmissionRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExternalAdmissionResponse"
+                }
+              }
+            },
+            "description": "Audited external admission decision"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Validation failed"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not signed in, or the token expired"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Role not permitted"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          }
+        },
+        "summary": "admitExternalAlert",
+        "tags": [
+          "External admission"
+        ],
+        "x-required-roles": [
+          "security_analyst",
+          "system_admin"
+        ]
+      }
+    },
+    "/api/v2/external-alerts/{inboxId}/eligibility": {
+      "post": {
+        "operationId": "reviewExternalEligibility",
+        "parameters": [
+          {
+            "description": "`Bearer <token>` from POST /api/auth/login",
+            "in": "header",
+            "name": "Authorization",
+            "required": false,
+            "schema": {
+              "example": "Bearer eyJhbGciOiJIUzI1NiJ9...",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "inboxId",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EligibilityRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExternalAdmissionView"
+                }
+              }
+            },
+            "description": "Audited external admission decision"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Validation failed"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not signed in, or the token expired"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Role not permitted"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          }
+        },
+        "summary": "reviewExternalEligibility",
+        "tags": [
+          "External admission"
+        ],
+        "x-required-roles": [
+          "security_analyst",
+          "system_admin"
+        ]
+      }
     }
   },
   "servers": [
@@ -7913,6 +8622,10 @@
     }
   ],
   "tags": [
+    {
+      "description": "Eligibility review and atomic operational admission",
+      "name": "External admission"
+    },
     {
       "description": "Explicit authenticated operational routing",
       "name": "V2 routing"

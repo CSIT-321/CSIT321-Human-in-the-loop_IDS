@@ -554,6 +554,74 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v2/external-alerts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Inspect staged external alerts and admission status */
+        get: operations["listExternalAdmissions"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/external-alerts/{inboxId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Read eligibility and operational admission */
+        get: operations["getExternalAdmission"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/external-alerts/{inboxId}/admit": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** admitExternalAlert */
+        post: operations["admitExternalAlert"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/external-alerts/{inboxId}/eligibility": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** reviewExternalEligibility */
+        post: operations["reviewExternalEligibility"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -579,6 +647,18 @@ export interface components {
              * @default null
              */
             userId: number | null;
+        };
+        /** AdmissionRequest */
+        AdmissionRequest: {
+            /** Expectedreviewid */
+            expectedReviewId: number | null;
+            /** Reason */
+            reason: string;
+            /**
+             * Requestid
+             * Format: uuid
+             */
+            requestId: string;
         };
         /**
          * AlertDetail
@@ -1072,6 +1152,23 @@ export interface components {
              */
             status: "pending" | "running" | "completed" | "aborted";
         };
+        /** EligibilityRequest */
+        EligibilityRequest: {
+            /**
+             * Decision
+             * @enum {string}
+             */
+            decision: "accepted" | "held";
+            /** Expectedreviewid */
+            expectedReviewId: number | null;
+            /** Reason */
+            reason: string;
+            /**
+             * Requestid
+             * Format: uuid
+             */
+            requestId: string;
+        };
         /**
          * EntityIp
          * @description ``GET /api/entities/ip/{ip}`` — what the recorded flows say about one address (B5).
@@ -1317,6 +1414,79 @@ export interface components {
              * @description Would be escalated to Tier 2 (Q25 — the demo shows the marker; automatic escalation is post-demo)
              */
             tier2Candidate: boolean;
+        };
+        /** ExternalAdmissionResponse */
+        ExternalAdmissionResponse: {
+            /** Replayed */
+            replayed: boolean;
+            view: components["schemas"]["ExternalAdmissionView"];
+        };
+        /** ExternalAdmissionView */
+        ExternalAdmissionView: {
+            /** Admissionactorid */
+            admissionActorId: number | null;
+            /** Admittedat */
+            admittedAt: string | null;
+            /** Canadmit */
+            canAdmit: boolean;
+            /** Canreview */
+            canReview: boolean;
+            /**
+             * Canonicalalertid
+             * Format: uuid
+             */
+            canonicalAlertId: string;
+            /** Category */
+            category: string;
+            /** Confidence */
+            confidence: null;
+            /** Destinationip */
+            destinationIp: string;
+            /** Destinationport */
+            destinationPort: number | null;
+            /** Detector */
+            detector: string;
+            /** Externalinboxid */
+            externalInboxId: number;
+            /** Nativeseverity */
+            nativeSeverity: number;
+            /** Occurredat */
+            occurredAt: string;
+            /** Occurredattimezoneoffset */
+            occurredAtTimezoneOffset: string | null;
+            /** Operationalalertid */
+            operationalAlertId: number | null;
+            /** Operationalalertref */
+            operationalAlertRef: string | null;
+            /** Proposalpolicyversion */
+            proposalPolicyVersion: string;
+            /** Proposedpriority */
+            proposedPriority: number;
+            /** Protocol */
+            protocol: string;
+            /** Reviewactorid */
+            reviewActorId: number | null;
+            /** Reviewdecision */
+            reviewDecision: ("accepted" | "held") | null;
+            /** Reviewid */
+            reviewId: number | null;
+            /** Reviewreason */
+            reviewReason: string | null;
+            /** Signature */
+            signature: string;
+            /** Sourceip */
+            sourceIp: string;
+            /** Sourceport */
+            sourcePort: number | null;
+            /** Stagingdecision */
+            stagingDecision: string;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "staged" | "eligible" | "admitted" | "held" | "failed";
+            /** Statusreason */
+            statusReason: string;
         };
         /**
          * FamilyEffect
@@ -4333,6 +4503,253 @@ export interface operations {
             };
             /** @description Not found */
             404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    listExternalAdmissions: {
+        parameters: {
+            query?: {
+                limit?: number;
+                offset?: number;
+            };
+            header?: {
+                /** @description `Bearer <token>` from POST /api/auth/login */
+                Authorization?: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description External inbox page */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        items: components["schemas"]["ExternalAdmissionView"][];
+                        page: components["schemas"]["PageInfo"];
+                    };
+                };
+            };
+            /** @description Validation failed */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not signed in, or the token expired */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    getExternalAdmission: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description `Bearer <token>` from POST /api/auth/login */
+                Authorization?: string;
+            };
+            path: {
+                inboxId: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description External status */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ExternalAdmissionView"];
+                };
+            };
+            /** @description Validation failed */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not signed in, or the token expired */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    admitExternalAlert: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description `Bearer <token>` from POST /api/auth/login */
+                Authorization?: string;
+            };
+            path: {
+                inboxId: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AdmissionRequest"];
+            };
+        };
+        responses: {
+            /** @description Audited external admission decision */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ExternalAdmissionResponse"];
+                };
+            };
+            /** @description Validation failed */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not signed in, or the token expired */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Role not permitted */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    reviewExternalEligibility: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description `Bearer <token>` from POST /api/auth/login */
+                Authorization?: string;
+            };
+            path: {
+                inboxId: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["EligibilityRequest"];
+            };
+        };
+        responses: {
+            /** @description Audited external admission decision */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ExternalAdmissionView"];
+                };
+            };
+            /** @description Validation failed */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not signed in, or the token expired */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Role not permitted */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
                 headers: {
                     [name: string]: unknown;
                 };

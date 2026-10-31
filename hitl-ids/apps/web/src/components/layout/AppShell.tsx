@@ -14,7 +14,7 @@ import { TopBar } from "./TopBar";
 
 export function AppShell() {
   const { session } = useSession();
-  const routing = useLocation().pathname.endsWith("/v2-triage");
+  const routing = /\/(v2-triage|external-admission)$/.test(useLocation().pathname);
 
   if (session === null) return null;
 

@@ -1,4 +1,5 @@
 import { useRef, useState } from "react";
+import { useSearchParams } from "react-router";
 import { api, unwrap, type Schemas } from "../../api/client";
 import { useApi } from "../../api/useApi";
 import { PageHeader, Pill } from "../../components/ui";
@@ -87,15 +88,24 @@ export function RoutingDetail({ initial, refresh }: { initial: View; refresh: ()
 }
 
 export function V2RoutingPage() {
+  const [search, setSearch] = useSearchParams();
+  const requestedRef = search.get("alertRef");
   const [offset, setOffset] = useState(0);
   const [selected, setSelected] = useState("");
-  const resource = useApi(signal => unwrap(api.GET("/api/v2/alerts", {
-    params: { query: { limit: 50, offset } }, signal,
-  })), [offset]);
+  const resource = useApi(async signal => {
+    if (requestedRef) {
+      const item = await unwrap(api.GET("/api/v2/alerts/{alertRef}/triage-state", {
+        params: { path: { alertRef: requestedRef } }, signal,
+      }));
+      return { items: [item], page: { total: 1, returned: 1, limit: 50, offset: 0 } };
+    }
+    return unwrap(api.GET("/api/v2/alerts", { params: { query: { limit: 50, offset } }, signal }));
+  }, [offset, requestedRef]);
   const current = resource.status === "success"
     ? resource.data.items.find(item => item.operationalAlertRef === selected) ?? resource.data.items[0] : undefined;
   return <div className="min-w-0 space-y-5 p-4 sm:p-6">
     <PageHeader title="V2 Triage Routing" />
+    {requestedRef && <button className={button} onClick={() => { setOffset(0); setSearch({}); }}>All V2 alerts</button>}
     {resource.status === "loading" && <p role="status">Loading V2 alerts...</p>}
     {resource.status === "error" && <div><p role="alert">{resource.error.message}</p><button className={button} onClick={resource.reload}>Retry</button></div>}
     {resource.status === "success" && <>

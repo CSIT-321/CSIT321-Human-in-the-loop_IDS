@@ -1,9 +1,30 @@
 # Detector-agnostic HITL alert foundation
 
 Original foundation base: feat/demo-build at 305c4d390ce9cd08bbc17f737053182a4ab61b7d.
-Current stacked increment: `feat/operational-triage-policy`, based on V2 commit
-`3925f60f4592cb58fe3dc392070d2608487eae3a`. Historical increment sections below retain their
-original scope; the final policy section states the current implementation status.
+Current stacked increment: `feat/suricata-operational-admission`, based on routing commit
+`01ad4c9c4a145fa066f7c42c596b5e25e6869031`. Historical increment sections below retain their
+original scope; this current-status section and suricata-operational-admission.md describe the latest boundary.
+
+## Current external operational path
+
+Suricata EVE -> immutable external staging -> explicit authenticated eligibility review
+-> Operational Admission -> OperationalAlertV2 -> Triage Policy V1 -> Tier 1
+-> existing human approval/manual escalation -> Tier 2 Candidate.
+
+Implemented: Suricata adapter, external staging, OperationalAlertV2, Operational Triage Policy V1,
+Authenticated Tier Routing Workflow, and Suricata Operational Admission.
+Not implemented: live ingestion, Tier 2 Case management, Triage Memory, selective/no-immediate
+review, automatic dismissal or SOAR/blocking.
+
+All historical staging holds remain immutable. An additional append-only eligibility decision,
+explicitly approved as part of this increment, distinguishes accepted from held source rows.
+Only a current accepted decision can enter the atomic operational admission transaction.
+Materialization, policy scoring, the existing Tier 1 routing action, and an admission event
+commit together. Policy defers route mutation only in this private orchestration path;
+standalone policy and routing callers retain their prior behavior.
+
+See [Suricata Operational Admission](suricata-operational-admission.md) for authorization,
+failure behavior, audit linkage, tests and the exact change manifest.
 This document separates implemented behavior from future work. The older system-workflow.md
 contains historical status statements; current code and HANDOVER.md take precedence.
 

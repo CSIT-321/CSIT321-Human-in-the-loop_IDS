@@ -28,6 +28,8 @@ from apps.api.contract import auth as au
 from apps.api.contract import operations as o
 from apps.api.contract.routing import RoutingView, RoutingResponse
 from packages.detection.routing import RoutingRequest
+from apps.api.contract.external_admission import ExternalAdmissionView, ExternalAdmissionResponse
+from packages.detection.external_admission import AdmissionRequest, EligibilityRequest
 from apps.api.contract.common import (
     FAMILY_QUERY_OMITS,
     MAX_PAGE_SIZE,
@@ -44,6 +46,7 @@ SCHEMA_REF = "#/components/schemas/{model}"
 #: Every model that appears on the wire. Listed explicitly rather than discovered, so adding a
 #: model to the API is a deliberate act.
 MODELS: tuple[type[BaseModel], ...] = (
+    ExternalAdmissionView, ExternalAdmissionResponse, AdmissionRequest, EligibilityRequest,
     RoutingView, RoutingResponse, RoutingRequest,
     ErrorResponse,
     PageInfo,
@@ -574,6 +577,27 @@ def _paths() -> dict[str, Any]:
             'requestBody': {'required': True, **_json(RoutingRequest)},
             'responses': {'200': {'description': 'Audited decision or idempotent replay', **_json(RoutingResponse)},
                           **_errors(400, 403, 404, 409)}}}
+    inbox_parameter = {'name': 'inboxId', 'in': 'path', 'required': True, 'schema': {'type': 'integer'}}
+    paths['/api/v2/external-alerts'] = {'get': {
+        'operationId': 'listExternalAdmissions', 'summary': 'Inspect staged external alerts and admission status',
+        'tags': ['External admission'], 'parameters': [AUTH_PARAMETER,
+            {'name': 'limit', 'in': 'query', 'schema': {'type': 'integer', 'minimum': 1, 'maximum': 200, 'default': 50}},
+            {'name': 'offset', 'in': 'query', 'schema': {'type': 'integer', 'minimum': 0, 'default': 0}}],
+        'responses': {'200': {'description': 'External inbox page', **_page_of(ExternalAdmissionView)}, **_errors(400)}}}
+    paths['/api/v2/external-alerts/{inboxId}'] = {'get': {
+        'operationId': 'getExternalAdmission', 'summary': 'Read eligibility and operational admission',
+        'tags': ['External admission'], 'parameters': [AUTH_PARAMETER, inbox_parameter],
+        'responses': {'200': {'description': 'External status', **_json(ExternalAdmissionView)}, **_errors(400, 404)}}}
+    for suffix, operation, request_model, response_model in [
+        ('eligibility', 'reviewExternalEligibility', EligibilityRequest, ExternalAdmissionView),
+        ('admit', 'admitExternalAlert', AdmissionRequest, ExternalAdmissionResponse)]:
+        paths['/api/v2/external-alerts/{inboxId}/' + suffix] = {'post': {
+            'operationId': operation, 'summary': operation, 'tags': ['External admission'],
+            'parameters': [AUTH_PARAMETER, inbox_parameter],
+            'x-required-roles': ['security_analyst', 'system_admin'],
+            'requestBody': {'required': True, **_json(request_model)},
+            'responses': {'200': {'description': 'Audited external admission decision', **_json(response_model)},
+                          **_errors(400, 403, 404, 409)}}}
     for path, operations in paths.items():
         if path == "/api/auth/login":
             continue
@@ -594,6 +618,7 @@ def openapi_document() -> dict[str, Any]:
         },
         "servers": [{"url": "http://localhost:8000", "description": "Local demo"}],
         "tags": [
+            {"name": "External admission", "description": "Eligibility review and atomic operational admission"},
             {"name": "V2 routing", "description": "Explicit authenticated operational routing"},
             {"name": "auth", "description": "Sign-in and the current session"},
             {"name": "alerts", "description": "The analyst queue and one alert's evidence"},

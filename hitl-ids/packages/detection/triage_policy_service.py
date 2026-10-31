@@ -30,15 +30,18 @@ def _json(model) -> str:
 
 def apply_triage_policy(conn: sqlite3.Connection, operational_id: int, *, actor_id: int,
                         expected_state: OperationalTriageStateV2, context: TriageContext | None = None,
-                        policy: TriagePolicy | None = None, now: datetime | None = None) -> PolicyApplication:
+                        policy: TriagePolicy | None = None, now: datetime | None = None,
+                        _admission_transaction: bool = False) -> PolicyApplication:
     """Apply under a write lock, auditing the exact source context/config/result and before/after.
 
     A trusted local caller supplies the actor; active analyst/admin authorization is checked here.
     Any future HTTP caller must bind actor_id to its authenticated principal. No HTTP mutation
     endpoint is provided. Changed context requires fresh expected state. Exact retry of the last
     application is a no-op only while its entire resulting state is still current.
+    The private admission transaction path scores a fresh external projection but defers
+    routing to route_alert; both audits then commit with the enclosing admission record.
     """
-    if conn.in_transaction:
+    if conn.in_transaction != _admission_transaction:
         raise ValueError("policy application requires a connection outside a transaction")
     if conn.execute("PRAGMA foreign_keys").fetchone()[0] != 1:
         raise ValueError("foreign keys must be enabled")
@@ -49,12 +52,17 @@ def apply_triage_policy(conn: sqlite3.Connection, operational_id: int, *, actor_
         raise ValueError("expected state belongs to another V2 alert")
     policy_json, context_json = _json(policy), _json(context)
     try:
-        conn.execute("BEGIN IMMEDIATE")
+        if not _admission_transaction:
+            conn.execute("BEGIN IMMEDIATE")
         actor = db.get(conn, m.User, actor_id)
         if actor is None or actor.status != "active" or actor.role not in ("security_analyst", "system_admin"):
             raise PermissionError("policy application requires an active analyst or administrator")
         alert = read_projection(conn, operational_id)
         before = read_triage(conn, operational_id)
+        if _admission_transaction and (
+                alert.source_kind != "external_nids_alert" or before.triage_policy_version is not None
+                or (before.handling_route, before.workflow_stage) != ("unassigned", "staged")):
+            raise ValueError("admission policy requires a fresh dormant external projection")
         result = evaluate_triage(alert, context, policy)
         result_json, before_json = _json(result), _json(before)
         prior_config = conn.execute("SELECT policy_snapshot FROM operational_triage_policy_audit "
@@ -67,7 +75,8 @@ def apply_triage_policy(conn: sqlite3.Connection, operational_id: int, *, actor_
             latest["policy_snapshot"] == policy_json, latest["context_snapshot"] == context_json,
             latest["result_snapshot"] == result_json, latest["after_state"] == before_json,
         )):
-            conn.commit()
+            if not _admission_transaction:
+                conn.commit()
             return PolicyApplication(before, result, latest["id"], False)
         if before != expected_state:
             raise StaleTriageState("V2 triage state changed; reread before applying policy")
@@ -84,7 +93,8 @@ def apply_triage_policy(conn: sqlite3.Connection, operational_id: int, *, actor_
         after = OperationalTriageStateV2(
             operational_alert_id=operational_id, operational_priority=result.final_operational_priority,
             priority_band=result.priority_band, priority_band_scheme="p1_p4",
-            handling_route=result.handling_route, workflow_stage=result.workflow_stage,
+            handling_route=before.handling_route if _admission_transaction else result.handling_route,
+            workflow_stage=before.workflow_stage if _admission_transaction else result.workflow_stage,
             review_required=result.review_required, review_reason=" ".join(result.review_reasons),
             tier2_recommended=result.tier2_recommended,
             tier2_recommendation_reasons=result.tier2_recommendation_reasons,
@@ -106,7 +116,8 @@ def apply_triage_policy(conn: sqlite3.Connection, operational_id: int, *, actor_
         persisted = read_triage(conn, operational_id)
         if persisted != after:
             raise ValueError("triage storage round-trip mismatch")
-        conn.commit()
+        if not _admission_transaction:
+            conn.commit()
         return PolicyApplication(persisted, result, audit.lastrowid, True)
     except Exception:
         conn.rollback()

@@ -1,6 +1,7 @@
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
+import { MemoryRouter } from "react-router";
 import type { Schemas } from "../../api/client";
 import { jsonResponse, stubFetch } from "../../test/renderApp";
 import { RoutingDetail, V2RoutingPage } from "./V2RoutingPage";
@@ -59,16 +60,25 @@ describe("V2 routing", () => {
 
   it("renders empty and API failure states", async () => {
     stubFetch(() => jsonResponse({ items: [], page: { total: 0, limit: 50, offset: 0, returned: 0 } }));
-    const result = render(<V2RoutingPage />);
+    const result = render(<MemoryRouter><V2RoutingPage /></MemoryRouter>);
     expect(await screen.findByText("No materialized V2 alerts.")).toBeInTheDocument();
     result.unmount();
     stubFetch(() => jsonResponse({ error: { code: "OFFLINE", message: "Database unavailable" } }, 503));
-    render(<V2RoutingPage />);
+    render(<MemoryRouter><V2RoutingPage /></MemoryRouter>);
     expect(await screen.findByRole("alert")).toHaveTextContent("Database unavailable");
   });
 
   it("does not invent priority before policy application", () => {
     render(<RoutingDetail initial={{ ...view, state: { ...view.state, operationalPriority: null, priorityBand: null } }} refresh={vi.fn()} />);
     expect(screen.getAllByText("Not assigned")).toHaveLength(2);
+  });
+
+  it("loads a linked alert directly even outside the first queue page", async () => {
+    const seen = stubFetch(() => jsonResponse(view));
+    render(<MemoryRouter initialEntries={["/analyst/v2-triage?alertRef=" + view.operationalAlertRef]}>
+      <V2RoutingPage />
+    </MemoryRouter>);
+    expect(await screen.findByText("External NIDS alert")).toBeInTheDocument();
+    expect(seen[0]?.url).toContain("/" + view.operationalAlertRef + "/triage-state");
   });
 });

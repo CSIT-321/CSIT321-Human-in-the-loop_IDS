@@ -117,16 +117,19 @@ def read_triage(conn: sqlite3.Connection, operational_id: int) -> OperationalTri
     return OperationalTriageStateV2.model_validate(values)
 
 
-def materialize_source(conn: sqlite3.Connection, source_kind: SourceKind, source_id: int) -> OperationalAlertV2:
+def materialize_source(conn: sqlite3.Connection, source_kind: SourceKind, source_id: int, *,
+                       _admission_transaction: bool = False) -> OperationalAlertV2:
     """Explicit service call only. Atomically persist evidence and dormant triage; no auto-backfill.
 
     Repeated calls return the immutable existing record, never resetting triage. A conflicting
     projection fails clearly. Source reads and duplicate checks share the transaction lock.
+    The private admission transaction path joins the orchestrator's existing write lock.
     """
-    if conn.in_transaction:
+    if conn.in_transaction != _admission_transaction:
         raise ValueError("V2 materialization requires a connection outside a transaction")
     try:
-        conn.execute("BEGIN IMMEDIATE")
+        if not _admission_transaction:
+            conn.execute("BEGIN IMMEDIATE")
         projected = preview_source(conn, source_kind, source_id)
         column = "legacy_alert_id" if source_kind == "legacy_flow_alert" else "external_inbox_id"
         existing = conn.execute(f"SELECT id FROM operational_alerts_v2 WHERE {column}=?", (source_id,)).fetchone()
@@ -135,7 +138,8 @@ def materialize_source(conn: sqlite3.Connection, source_kind: SourceKind, source
             if saved.model_dump(exclude={"id"}) != projected.model_dump(exclude={"id"}):
                 raise ValueError("source projection conflicts with immutable V2 evidence")
             read_triage(conn, existing["id"])
-            conn.commit()
+            if not _admission_transaction:
+                conn.commit()
             return saved
         row = projected.model_dump(mode="json", exclude={"id"})
         for name in ("native_severity", "detector_evidence", "source_provenance"):
@@ -152,7 +156,8 @@ def materialize_source(conn: sqlite3.Connection, source_kind: SourceKind, source
         conn.execute(f"INSERT INTO operational_triage_state_v2 ({', '.join(state)}) "
                      f"VALUES ({', '.join('?' for _ in state)})", list(state.values()))
         saved = read_projection(conn, operational_id)
-        conn.commit()
+        if not _admission_transaction:
+            conn.commit()
         return saved
     except Exception:
         conn.rollback()

@@ -27,6 +27,7 @@ import { RunPage } from "./pages/evaluator/RunPage";
 import { ScenariosPage } from "./pages/evaluator/ScenariosPage";
 import { LoginPage } from "./pages/LoginPage";
 import { V2RoutingPage } from "./pages/analyst/V2RoutingPage";
+import { ExternalAdmissionPage } from "./pages/analyst/ExternalAdmissionPage";
 import { HomeRedirect, RequireRole } from "./session/guards";
 import { SessionProvider } from "./session/SessionContext";
 
@@ -42,6 +43,7 @@ export const routes: RouteObject[] = [
     children: [
       { index: true, element: <HomeRedirect /> },
       { path: "workstation", element: <WorkstationPage /> },
+      { path: "external-admission", element: <ExternalAdmissionPage /> },
       { path: "v2-triage", element: <V2RoutingPage /> },
       { path: "overview", element: <OverviewPage /> },
       { path: "entities/ip/:ip", element: <IpEntityPage /> },
@@ -62,6 +64,7 @@ export const routes: RouteObject[] = [
     children: [
       { index: true, element: <HomeRedirect /> },
       { path: "status", element: <StatusPage /> },
+      { path: "external-admission", element: <ExternalAdmissionPage /> },
       { path: "v2-triage", element: <V2RoutingPage /> },
       { path: "guardrails", element: <GuardrailsPage /> },
       { path: "audit", element: <AuditPage /> },
@@ -78,6 +81,7 @@ export const routes: RouteObject[] = [
     children: [
       { index: true, element: <HomeRedirect /> },
       { path: "scenarios", element: <ScenariosPage /> },
+      { path: "external-admission", element: <ExternalAdmissionPage /> },
       { path: "v2-triage", element: <V2RoutingPage /> },
       { path: "runs/:runId", element: <RunPage /> },
       { path: "metrics", element: <MetricsPage /> },

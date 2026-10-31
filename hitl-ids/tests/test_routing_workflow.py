@@ -213,13 +213,13 @@ def test_migration_six_is_additive_idempotent_and_preserves_rows(tmp_path, monke
     migrations = db.MIGRATIONS
     path = tmp_path / 'old.db'
     with closing(db.connect(path)) as conn:
-        monkeypatch.setattr(db, 'MIGRATIONS', migrations[:-1])
+        monkeypatch.setattr(db, 'MIGRATIONS', migrations[:5])
         db.create_schema(conn)
         stage_file(conn, FIXTURE, 'old-schema')
         alert = materialize_source(conn, 'external_nids_alert', 1)
         before = all_other_tables(conn)
         state = read_triage(conn, alert.id)
-        monkeypatch.setattr(db, 'MIGRATIONS', migrations)
+        monkeypatch.setattr(db, 'MIGRATIONS', migrations[:6])
         trace = []
         conn.set_trace_callback(trace.append)
         assert db.migrate(conn) == [6]
