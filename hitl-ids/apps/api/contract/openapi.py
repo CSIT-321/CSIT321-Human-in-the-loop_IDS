@@ -26,6 +26,8 @@ from pydantic import BaseModel
 from apps.api.contract import alerts as a
 from apps.api.contract import auth as au
 from apps.api.contract import operations as o
+from apps.api.contract.routing import RoutingView, RoutingResponse
+from packages.detection.routing import RoutingRequest
 from apps.api.contract.common import (
     FAMILY_QUERY_OMITS,
     MAX_PAGE_SIZE,
@@ -42,6 +44,7 @@ SCHEMA_REF = "#/components/schemas/{model}"
 #: Every model that appears on the wire. Listed explicitly rather than discovered, so adding a
 #: model to the API is a deliberate act.
 MODELS: tuple[type[BaseModel], ...] = (
+    RoutingView, RoutingResponse, RoutingRequest,
     ErrorResponse,
     PageInfo,
     au.LoginRequest,
@@ -120,7 +123,8 @@ an action, so `PUT /api/config/guardrails` refuses anything but `system_admin`.
 *bands*, never across evidence classes, so a client that re-sorts by `evidenceClass` will hide the
 re-ranking the system exists to perform.
 
-**Alerts are identified by `alertRef` (UUID).** Row ids are never exposed.
+**Alerts are addressed by UUID.** V2 routing uses the separate operational alert UUID;
+V2 state/audit bodies include internal correlation ids, never legacy alert identifiers.
 
 **Every flow becomes an alert**, including flows no detector flagged. They are the queue's bottom
 band and the evaluation's denominator.
@@ -551,6 +555,25 @@ def _paths() -> dict[str, Any]:
     # Every operation except login can answer 401 — a missing or expired sign-in is a fact of every
     # protected path, not a per-path decision, so it is stamped once here rather than repeated in
     # the literal above.
+    paths['/api/v2/alerts'] = {'get': {
+        'operationId': 'listV2Routing', 'summary': 'List explicitly materialized V2 alerts',
+        'tags': ['V2 routing'], 'parameters': [AUTH_PARAMETER,
+            {'name': 'limit', 'in': 'query', 'schema': {'type': 'integer', 'minimum': 1, 'maximum': 200, 'default': 50}},
+            {'name': 'offset', 'in': 'query', 'schema': {'type': 'integer', 'minimum': 0, 'default': 0}}],
+        'responses': {'200': {'description': 'V2 routing page', **_page_of(RoutingView)}, **_errors(400)}}}
+    paths['/api/v2/alerts/{alertRef}/triage-state'] = {'get': {
+        'operationId': 'getV2Routing', 'summary': 'Read V2 state and latest routing decision',
+        'tags': ['V2 routing'], 'parameters': [AUTH_PARAMETER, ALERT_REF],
+        'responses': {'200': {'description': 'V2 state', **_json(RoutingView)}, **_errors(400, 404)}}}
+    for suffix, operation in [('admit-tier1', 'admitV2Tier1'), ('tier2/approve', 'approveV2Tier2'),
+                              ('tier2/reject', 'rejectV2Tier2'), ('tier2/escalate', 'escalateV2Tier2')]:
+        paths['/api/v2/alerts/{alertRef}/' + suffix] = {'post': {
+            'operationId': operation, 'summary': operation, 'tags': ['V2 routing'],
+            'parameters': [AUTH_PARAMETER, ALERT_REF],
+            'x-required-roles': ['security_analyst', 'system_admin'],
+            'requestBody': {'required': True, **_json(RoutingRequest)},
+            'responses': {'200': {'description': 'Audited decision or idempotent replay', **_json(RoutingResponse)},
+                          **_errors(400, 403, 404, 409)}}}
     for path, operations in paths.items():
         if path == "/api/auth/login":
             continue
@@ -571,6 +594,7 @@ def openapi_document() -> dict[str, Any]:
         },
         "servers": [{"url": "http://localhost:8000", "description": "Local demo"}],
         "tags": [
+            {"name": "V2 routing", "description": "Explicit authenticated operational routing"},
             {"name": "auth", "description": "Sign-in and the current session"},
             {"name": "alerts", "description": "The analyst queue and one alert's evidence"},
             {"name": "feedback", "description": "Verdicts, guardrails and family learning"},

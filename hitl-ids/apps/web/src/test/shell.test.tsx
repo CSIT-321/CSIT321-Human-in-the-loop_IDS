@@ -216,7 +216,7 @@ describe("shell: navigation", () => {
     }
     for (const other of ROLES.filter((role) => role !== "security_analyst")) {
       for (const item of ROLE_META[other].nav) {
-        expect(within(nav).queryByText(item.label)).toBeNull();
+        expect(nav.querySelector(`a[href="${item.to}"]`)).toBeNull();
       }
     }
   });

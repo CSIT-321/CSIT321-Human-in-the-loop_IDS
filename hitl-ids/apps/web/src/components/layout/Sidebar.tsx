@@ -8,7 +8,7 @@ import { NavLink } from "react-router";
 import { ROLE_META } from "../../session/roles";
 import { useSession } from "../../session/SessionContext";
 
-export function Sidebar() {
+export function Sidebar({ compactOnMobile = false }: { compactOnMobile?: boolean }) {
   const { session } = useSession();
 
   if (session === null) return null;
@@ -17,12 +17,12 @@ export function Sidebar() {
     <nav
       aria-label="Main"
       data-print-hidden="true"
-      className="w-52 shrink-0 border-r border-border bg-surface py-3"
+      className={`w-52 shrink-0 border-r border-border bg-surface py-3 ${compactOnMobile ? "max-sm:w-full max-sm:border-b max-sm:py-1" : ""}`}
     >
-      <p aria-hidden className="label-mono px-4 pb-2 text-dim">
+      <p aria-hidden className={`label-mono px-4 pb-2 text-dim ${compactOnMobile ? "max-sm:hidden" : ""}`}>
         {ROLE_META[session.role].label}
       </p>
-      <ul>
+      <ul className={compactOnMobile ? "max-sm:flex max-sm:overflow-x-auto max-sm:whitespace-nowrap" : ""}>
         {ROLE_META[session.role].nav.map((item) => (
           <li key={item.to}>
             <NavLink

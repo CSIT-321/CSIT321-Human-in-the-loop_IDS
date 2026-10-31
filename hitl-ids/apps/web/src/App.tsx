@@ -26,6 +26,7 @@ import { MetricsPage } from "./pages/evaluator/MetricsPage";
 import { RunPage } from "./pages/evaluator/RunPage";
 import { ScenariosPage } from "./pages/evaluator/ScenariosPage";
 import { LoginPage } from "./pages/LoginPage";
+import { V2RoutingPage } from "./pages/analyst/V2RoutingPage";
 import { HomeRedirect, RequireRole } from "./session/guards";
 import { SessionProvider } from "./session/SessionContext";
 
@@ -41,6 +42,7 @@ export const routes: RouteObject[] = [
     children: [
       { index: true, element: <HomeRedirect /> },
       { path: "workstation", element: <WorkstationPage /> },
+      { path: "v2-triage", element: <V2RoutingPage /> },
       { path: "overview", element: <OverviewPage /> },
       { path: "entities/ip/:ip", element: <IpEntityPage /> },
       { path: "dashboard", element: <DashboardPage /> },
@@ -60,6 +62,7 @@ export const routes: RouteObject[] = [
     children: [
       { index: true, element: <HomeRedirect /> },
       { path: "status", element: <StatusPage /> },
+      { path: "v2-triage", element: <V2RoutingPage /> },
       { path: "guardrails", element: <GuardrailsPage /> },
       { path: "audit", element: <AuditPage /> },
       { path: "reports/ip", element: <IpSecurityReportPage /> },
@@ -75,6 +78,7 @@ export const routes: RouteObject[] = [
     children: [
       { index: true, element: <HomeRedirect /> },
       { path: "scenarios", element: <ScenariosPage /> },
+      { path: "v2-triage", element: <V2RoutingPage /> },
       { path: "runs/:runId", element: <RunPage /> },
       { path: "metrics", element: <MetricsPage /> },
     ],

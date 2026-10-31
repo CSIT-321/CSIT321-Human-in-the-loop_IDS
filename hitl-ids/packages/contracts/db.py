@@ -138,6 +138,8 @@ MIGRATIONS += ((4, "isolated operational alert V2 and separate triage state",
                 Path(__file__).with_name("operational_v2.sql").read_text(encoding="utf-8")),)
 MIGRATIONS += ((5, "explicit priority band scheme and append-only V2 policy audit",
                 Path(__file__).with_name("triage_policy_v1.sql").read_text(encoding="utf-8")),)
+MIGRATIONS += ((6, "append-only authenticated V2 routing audit",
+                Path(__file__).with_name("routing_workflow.sql").read_text(encoding="utf-8")),)
 SCHEMA_VERSION = MIGRATIONS[-1][0]
 
 

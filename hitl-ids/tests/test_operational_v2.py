@@ -30,7 +30,7 @@ SCRIPT = Path(__file__).resolve().parents[1] / "scripts/inspect_alert_v2.py"
 def snapshot(conn):
     names = [r[0] for r in conn.execute("SELECT name FROM sqlite_master WHERE type='table' "
                                       "AND name NOT IN ('sqlite_sequence', 'operational_alerts_v2', "
-                                      "'operational_triage_state_v2', 'operational_triage_policy_audit')")]
+                                      "'operational_triage_state_v2', 'operational_triage_policy_audit', 'operational_routing_audit')")]
     return {name: [tuple(r) for r in conn.execute(f'SELECT * FROM "{name}" ORDER BY 1')]
             for name in names}
 
@@ -204,7 +204,7 @@ def test_migration_four_preserves_populated_v3_rows_schema_and_foreign_keys(tmp_
                                              "WHERE name NOT LIKE 'sqlite_%' ORDER BY name")))
         trace = []
         conn.set_trace_callback(trace.append)
-        assert db.migrate(conn) == [4, 5]
+        assert db.migrate(conn) == [4, 5, 6]
         assert db.migrate(conn) == []
         assert snapshot(conn) == before
         for name, rootpage, sql in schema:

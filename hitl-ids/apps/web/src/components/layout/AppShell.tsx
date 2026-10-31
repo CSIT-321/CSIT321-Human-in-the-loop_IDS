@@ -6,7 +6,7 @@
  * console with no user in it.
  */
 
-import { Outlet } from "react-router";
+import { Outlet, useLocation } from "react-router";
 
 import { useSession } from "../../session/SessionContext";
 import { Sidebar } from "./Sidebar";
@@ -14,15 +14,16 @@ import { TopBar } from "./TopBar";
 
 export function AppShell() {
   const { session } = useSession();
+  const routing = useLocation().pathname.endsWith("/v2-triage");
 
   if (session === null) return null;
 
   return (
     <div className="flex h-full flex-col bg-bg">
       <TopBar />
-      <div className="flex min-h-0 flex-1">
-        <Sidebar />
-        <main className="flex-1 overflow-auto px-6 py-5">
+      <div className={`flex min-h-0 flex-1 ${routing ? "max-sm:flex-col" : ""}`}>
+        <Sidebar compactOnMobile={routing} />
+        <main className={`flex-1 overflow-auto ${routing ? "min-w-0 p-0" : "px-6 py-5"}`}>
           <Outlet />
         </main>
       </div>

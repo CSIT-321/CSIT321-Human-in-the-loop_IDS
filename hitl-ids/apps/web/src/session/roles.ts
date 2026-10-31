@@ -34,6 +34,7 @@ export const ROLE_META: Readonly<Record<Role, RoleMeta>> = {
     home: "/analyst/workstation",
     nav: [
       { to: "/analyst/workstation", label: "Workstation" },
+      { to: "/analyst/v2-triage", label: "V2 Triage Routing" },
       { to: "/analyst/overview", label: "Overview" },
       { to: "/analyst/dashboard", label: "Dashboard" },
       { to: "/analyst/queue", label: "Alert Queue" },
@@ -47,6 +48,7 @@ export const ROLE_META: Readonly<Record<Role, RoleMeta>> = {
     home: "/admin/status",
     nav: [
       { to: "/admin/status", label: "System Status" },
+      { to: "/admin/v2-triage", label: "V2 Triage Routing" },
       { to: "/admin/guardrails", label: "Guardrails" },
       { to: "/admin/audit", label: "Audit Trail" },
       { to: "/admin/reports/ip", label: "IP Security Report" },
@@ -58,6 +60,7 @@ export const ROLE_META: Readonly<Record<Role, RoleMeta>> = {
     home: "/evaluator/scenarios",
     nav: [
       { to: "/evaluator/scenarios", label: "Scenarios" },
+      { to: "/evaluator/v2-triage", label: "V2 Triage Routing" },
       { to: "/evaluator/metrics", label: "Detection Metrics" },
     ],
   },

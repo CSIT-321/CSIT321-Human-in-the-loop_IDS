@@ -3274,6 +3274,143 @@
         "title": "NoteRequest",
         "type": "object"
       },
+      "OperationalTriageStateV2": {
+        "additionalProperties": false,
+        "properties": {
+          "decisionSource": {
+            "default": "system_policy",
+            "enum": [
+              "system_policy",
+              "analyst",
+              "historical_memory",
+              "legacy_projection"
+            ],
+            "title": "Decisionsource",
+            "type": "string"
+          },
+          "handlingRoute": {
+            "default": "unassigned",
+            "enum": [
+              "unassigned",
+              "tier1_review",
+              "tier2_candidate",
+              "tier2_case",
+              "no_immediate_review"
+            ],
+            "title": "Handlingroute",
+            "type": "string"
+          },
+          "operationalAlertId": {
+            "exclusiveMinimum": 0,
+            "title": "Operationalalertid",
+            "type": "integer"
+          },
+          "operationalPriority": {
+            "anyOf": [
+              {
+                "maximum": 100,
+                "minimum": 0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Operationalpriority"
+          },
+          "priorityBand": {
+            "anyOf": [
+              {
+                "enum": [
+                  "critical",
+                  "high",
+                  "medium",
+                  "low",
+                  "informational",
+                  "P1",
+                  "P2",
+                  "P3",
+                  "P4"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Priorityband"
+          },
+          "priorityBandScheme": {
+            "default": "legacy_labels",
+            "enum": [
+              "legacy_labels",
+              "p1_p4"
+            ],
+            "title": "Prioritybandscheme",
+            "type": "string"
+          },
+          "reviewReason": {
+            "default": "Operational admission pending; V2 triage policy is not active.",
+            "title": "Reviewreason",
+            "type": "string"
+          },
+          "reviewRequired": {
+            "default": true,
+            "title": "Reviewrequired",
+            "type": "boolean"
+          },
+          "tier2RecommendationReasons": {
+            "default": [],
+            "items": {
+              "type": "string"
+            },
+            "title": "Tier2Recommendationreasons",
+            "type": "array"
+          },
+          "tier2Recommended": {
+            "default": false,
+            "title": "Tier2Recommended",
+            "type": "boolean"
+          },
+          "triagePolicyVersion": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Triagepolicyversion"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "title": "Updatedat",
+            "type": "string"
+          },
+          "workflowStage": {
+            "default": "staged",
+            "enum": [
+              "staged",
+              "triage",
+              "assessment",
+              "investigation",
+              "incident",
+              "resolved"
+            ],
+            "title": "Workflowstage",
+            "type": "string"
+          }
+        },
+        "required": [
+          "operationalAlertId"
+        ],
+        "title": "OperationalTriageStateV2",
+        "type": "object"
+      },
       "PageInfo": {
         "additionalProperties": false,
         "description": "Where in the queue this page sits.\n\nOffset paging, deliberately: the queue is a ranked list an analyst works down, so a cursor\nwould buy nothing and cost the ability to jump to a position.",
@@ -3374,6 +3511,192 @@
           "requiresReview"
         ],
         "title": "QueueBandCount",
+        "type": "object"
+      },
+      "RoutingAudit": {
+        "additionalProperties": false,
+        "properties": {
+          "action": {
+            "enum": [
+              "admit_tier1",
+              "approve_tier2",
+              "reject_tier2",
+              "manual_escalate"
+            ],
+            "title": "Action",
+            "type": "string"
+          },
+          "actorId": {
+            "title": "Actorid",
+            "type": "integer"
+          },
+          "afterState": {
+            "$ref": "#/components/schemas/OperationalTriageStateV2"
+          },
+          "beforeState": {
+            "$ref": "#/components/schemas/OperationalTriageStateV2"
+          },
+          "createdAt": {
+            "title": "Createdat",
+            "type": "string"
+          },
+          "eventType": {
+            "title": "Eventtype",
+            "type": "string"
+          },
+          "expectedStateVersion": {
+            "title": "Expectedstateversion",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "operationalAlertId": {
+            "title": "Operationalalertid",
+            "type": "integer"
+          },
+          "reason": {
+            "title": "Reason",
+            "type": "string"
+          },
+          "requestId": {
+            "format": "uuid",
+            "title": "Requestid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "operationalAlertId",
+          "actorId",
+          "requestId",
+          "action",
+          "eventType",
+          "expectedStateVersion",
+          "reason",
+          "beforeState",
+          "afterState",
+          "createdAt"
+        ],
+        "title": "RoutingAudit",
+        "type": "object"
+      },
+      "RoutingRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "expectedStateVersion": {
+            "pattern": "^[0-9a-f]{64}$",
+            "title": "Expectedstateversion",
+            "type": "string"
+          },
+          "reason": {
+            "maxLength": 2000,
+            "minLength": 1,
+            "title": "Reason",
+            "type": "string"
+          },
+          "requestId": {
+            "format": "uuid",
+            "title": "Requestid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "requestId",
+          "expectedStateVersion",
+          "reason"
+        ],
+        "title": "RoutingRequest",
+        "type": "object"
+      },
+      "RoutingResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "audit": {
+            "$ref": "#/components/schemas/RoutingAudit"
+          },
+          "replayed": {
+            "title": "Replayed",
+            "type": "boolean"
+          },
+          "view": {
+            "$ref": "#/components/schemas/RoutingView"
+          }
+        },
+        "required": [
+          "view",
+          "audit",
+          "replayed"
+        ],
+        "title": "RoutingResponse",
+        "type": "object"
+      },
+      "RoutingView": {
+        "additionalProperties": false,
+        "properties": {
+          "allowedActions": {
+            "items": {
+              "enum": [
+                "admit_tier1",
+                "approve_tier2",
+                "reject_tier2",
+                "manual_escalate"
+              ],
+              "type": "string"
+            },
+            "title": "Allowedactions",
+            "type": "array"
+          },
+          "detectorName": {
+            "title": "Detectorname",
+            "type": "string"
+          },
+          "latestDecision": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/RoutingAudit"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "operationalAlertRef": {
+            "format": "uuid",
+            "title": "Operationalalertref",
+            "type": "string"
+          },
+          "reviewReasons": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Reviewreasons",
+            "type": "array"
+          },
+          "state": {
+            "$ref": "#/components/schemas/OperationalTriageStateV2"
+          },
+          "stateVersion": {
+            "title": "Stateversion",
+            "type": "string"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "operationalAlertRef",
+          "title",
+          "detectorName",
+          "state",
+          "stateVersion",
+          "reviewReasons",
+          "latestDecision",
+          "allowedActions"
+        ],
+        "title": "RoutingView",
         "type": "object"
       },
       "RuleMatchPanel": {
@@ -4093,7 +4416,7 @@
     }
   },
   "info": {
-    "description": "The demo API for the Human-in-the-Loop IDS dashboard (FYP-26-S3-13).\n\n**Deliberately narrow.** Only the endpoints the demo path exercises; the remaining TDM surface is\nS18. Adding endpoints \"while we're here\" is on the plan's anti-pattern list.\n\n**Authentication is real (S18a).** `POST /api/auth/login` with one of the three seeded accounts\nreturns a JWT bearer token; send it as `Authorization: Bearer <token>` on every other request. No\ntoken, a forged token or an expired one is a 401. The role gates only where a role genuinely gates\nan action, so `PUT /api/config/guardrails` refuses anything but `system_admin`.\n\n**Queue ordering is fixed by contract**: `CASE severity WHEN 'Critical' THEN 4 WHEN 'High' THEN 3 WHEN 'Medium' THEN 2 WHEN 'Low' THEN 1 ELSE 0 END DESC, combined_score DESC, id ASC`. Feedback moves an alert between queue\n*bands*, never across evidence classes, so a client that re-sorts by `evidenceClass` will hide the\nre-ranking the system exists to perform.\n\n**Alerts are identified by `alertRef` (UUID).** Row ids are never exposed.\n\n**Every flow becomes an alert**, including flows no detector flagged. They are the queue's bottom\nband and the evaluation's denominator.",
+    "description": "The demo API for the Human-in-the-Loop IDS dashboard (FYP-26-S3-13).\n\n**Deliberately narrow.** Only the endpoints the demo path exercises; the remaining TDM surface is\nS18. Adding endpoints \"while we're here\" is on the plan's anti-pattern list.\n\n**Authentication is real (S18a).** `POST /api/auth/login` with one of the three seeded accounts\nreturns a JWT bearer token; send it as `Authorization: Bearer <token>` on every other request. No\ntoken, a forged token or an expired one is a 401. The role gates only where a role genuinely gates\nan action, so `PUT /api/config/guardrails` refuses anything but `system_admin`.\n\n**Queue ordering is fixed by contract**: `CASE severity WHEN 'Critical' THEN 4 WHEN 'High' THEN 3 WHEN 'Medium' THEN 2 WHEN 'Low' THEN 1 ELSE 0 END DESC, combined_score DESC, id ASC`. Feedback moves an alert between queue\n*bands*, never across evidence classes, so a client that re-sorts by `evidenceClass` will hide the\nre-ranking the system exists to perform.\n\n**Alerts are addressed by UUID.** V2 routing uses the separate operational alert UUID;\nV2 state/audit bodies include internal correlation ids, never legacy alert identifiers.\n\n**Every flow becomes an alert**, including flows no detector flagged. They are the queue's bottom\nband and the evaluation's denominator.",
     "title": "HITL IDS demo API",
     "version": "0.1.0"
   },
@@ -6993,6 +7316,594 @@
           "evaluation"
         ]
       }
+    },
+    "/api/v2/alerts": {
+      "get": {
+        "operationId": "listV2Routing",
+        "parameters": [
+          {
+            "description": "`Bearer <token>` from POST /api/auth/login",
+            "in": "header",
+            "name": "Authorization",
+            "required": false,
+            "schema": {
+              "example": "Bearer eyJhbGciOiJIUzI1NiJ9...",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "schema": {
+              "default": 50,
+              "maximum": 200,
+              "minimum": 1,
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "offset",
+            "schema": {
+              "default": 0,
+              "minimum": 0,
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "items": {
+                      "items": {
+                        "$ref": "#/components/schemas/RoutingView"
+                      },
+                      "type": "array"
+                    },
+                    "page": {
+                      "$ref": "#/components/schemas/PageInfo"
+                    }
+                  },
+                  "required": [
+                    "items",
+                    "page"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "V2 routing page"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Validation failed"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not signed in, or the token expired"
+          }
+        },
+        "summary": "List explicitly materialized V2 alerts",
+        "tags": [
+          "V2 routing"
+        ]
+      }
+    },
+    "/api/v2/alerts/{alertRef}/admit-tier1": {
+      "post": {
+        "operationId": "admitV2Tier1",
+        "parameters": [
+          {
+            "description": "`Bearer <token>` from POST /api/auth/login",
+            "in": "header",
+            "name": "Authorization",
+            "required": false,
+            "schema": {
+              "example": "Bearer eyJhbGciOiJIUzI1NiJ9...",
+              "type": "string"
+            }
+          },
+          {
+            "description": "The alert's public UUID",
+            "in": "path",
+            "name": "alertRef",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RoutingRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RoutingResponse"
+                }
+              }
+            },
+            "description": "Audited decision or idempotent replay"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Validation failed"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not signed in, or the token expired"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Role not permitted"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          }
+        },
+        "summary": "admitV2Tier1",
+        "tags": [
+          "V2 routing"
+        ],
+        "x-required-roles": [
+          "security_analyst",
+          "system_admin"
+        ]
+      }
+    },
+    "/api/v2/alerts/{alertRef}/tier2/approve": {
+      "post": {
+        "operationId": "approveV2Tier2",
+        "parameters": [
+          {
+            "description": "`Bearer <token>` from POST /api/auth/login",
+            "in": "header",
+            "name": "Authorization",
+            "required": false,
+            "schema": {
+              "example": "Bearer eyJhbGciOiJIUzI1NiJ9...",
+              "type": "string"
+            }
+          },
+          {
+            "description": "The alert's public UUID",
+            "in": "path",
+            "name": "alertRef",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RoutingRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RoutingResponse"
+                }
+              }
+            },
+            "description": "Audited decision or idempotent replay"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Validation failed"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not signed in, or the token expired"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Role not permitted"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          }
+        },
+        "summary": "approveV2Tier2",
+        "tags": [
+          "V2 routing"
+        ],
+        "x-required-roles": [
+          "security_analyst",
+          "system_admin"
+        ]
+      }
+    },
+    "/api/v2/alerts/{alertRef}/tier2/escalate": {
+      "post": {
+        "operationId": "escalateV2Tier2",
+        "parameters": [
+          {
+            "description": "`Bearer <token>` from POST /api/auth/login",
+            "in": "header",
+            "name": "Authorization",
+            "required": false,
+            "schema": {
+              "example": "Bearer eyJhbGciOiJIUzI1NiJ9...",
+              "type": "string"
+            }
+          },
+          {
+            "description": "The alert's public UUID",
+            "in": "path",
+            "name": "alertRef",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RoutingRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RoutingResponse"
+                }
+              }
+            },
+            "description": "Audited decision or idempotent replay"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Validation failed"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not signed in, or the token expired"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Role not permitted"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          }
+        },
+        "summary": "escalateV2Tier2",
+        "tags": [
+          "V2 routing"
+        ],
+        "x-required-roles": [
+          "security_analyst",
+          "system_admin"
+        ]
+      }
+    },
+    "/api/v2/alerts/{alertRef}/tier2/reject": {
+      "post": {
+        "operationId": "rejectV2Tier2",
+        "parameters": [
+          {
+            "description": "`Bearer <token>` from POST /api/auth/login",
+            "in": "header",
+            "name": "Authorization",
+            "required": false,
+            "schema": {
+              "example": "Bearer eyJhbGciOiJIUzI1NiJ9...",
+              "type": "string"
+            }
+          },
+          {
+            "description": "The alert's public UUID",
+            "in": "path",
+            "name": "alertRef",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RoutingRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RoutingResponse"
+                }
+              }
+            },
+            "description": "Audited decision or idempotent replay"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Validation failed"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not signed in, or the token expired"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Role not permitted"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          }
+        },
+        "summary": "rejectV2Tier2",
+        "tags": [
+          "V2 routing"
+        ],
+        "x-required-roles": [
+          "security_analyst",
+          "system_admin"
+        ]
+      }
+    },
+    "/api/v2/alerts/{alertRef}/triage-state": {
+      "get": {
+        "operationId": "getV2Routing",
+        "parameters": [
+          {
+            "description": "`Bearer <token>` from POST /api/auth/login",
+            "in": "header",
+            "name": "Authorization",
+            "required": false,
+            "schema": {
+              "example": "Bearer eyJhbGciOiJIUzI1NiJ9...",
+              "type": "string"
+            }
+          },
+          {
+            "description": "The alert's public UUID",
+            "in": "path",
+            "name": "alertRef",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RoutingView"
+                }
+              }
+            },
+            "description": "V2 state"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Validation failed"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not signed in, or the token expired"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not found"
+          }
+        },
+        "summary": "Read V2 state and latest routing decision",
+        "tags": [
+          "V2 routing"
+        ]
+      }
     }
   },
   "servers": [
@@ -7002,6 +7913,10 @@
     }
   ],
   "tags": [
+    {
+      "description": "Explicit authenticated operational routing",
+      "name": "V2 routing"
+    },
     {
       "description": "Sign-in and the current session",
       "name": "auth"

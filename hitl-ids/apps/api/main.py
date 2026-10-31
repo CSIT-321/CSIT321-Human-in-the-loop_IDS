@@ -21,7 +21,7 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
-from apps.api import routes
+from apps.api import routes, routing_routes
 from apps.api.contract.common import ErrorBody, ErrorResponse
 from apps.api.contract.openapi import API_VERSION, DESCRIPTION, openapi_document
 from apps.api.deps import ApiError, database_path
@@ -71,6 +71,7 @@ def create_app(database: str | Path | None = None) -> FastAPI:
             )).model_dump(by_alias=True, exclude_none=True))
 
     app.include_router(routes.router)
+    app.include_router(routing_routes.router)
 
     @app.get("/api/health", tags=["dashboard"], include_in_schema=False)
     def health() -> dict[str, object]:

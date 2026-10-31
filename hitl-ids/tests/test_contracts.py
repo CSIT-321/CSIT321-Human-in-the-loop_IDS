@@ -66,6 +66,10 @@ DEVIATION_COLUMNS = {
     "flow_data": {"source_record_id"},
 }
 DEVIATION_TABLES = {
+    "operational_routing_audit": {
+        "id", "operational_alert_id", "actor_id", "request_id", "action", "event_type",
+        "expected_state_version", "reason", "before_state", "after_state", "created_at",
+    },
     "operational_triage_policy_audit": {
         "id", "operational_alert_id", "actor_id", "policy_version", "policy_snapshot",
         "context_snapshot", "result_snapshot", "before_state", "after_state", "created_at",
@@ -278,7 +282,7 @@ def test_every_table_model_matches_its_columns(conn):
     # The inbox uses the canonical contract and staging writer, not a legacy operational model.
     assert set(db.TABLE_MODELS) == table_names(conn) - {
         "external_alert_inbox", "operational_alerts_v2", "operational_triage_state_v2",
-        "operational_triage_policy_audit"}
+        "operational_triage_policy_audit", "operational_routing_audit"}
     for table, model in db.TABLE_MODELS.items():
         assert set(model.model_fields) == set(columns(conn, table)), table
 
@@ -286,6 +290,8 @@ def test_every_table_model_matches_its_columns(conn):
 EXPECTED_FOREIGN_KEYS = {
     ("operational_triage_policy_audit", "operational_alert_id", "operational_alerts_v2", "id"),
     ("operational_triage_policy_audit", "actor_id", "users", "id"),
+    ("operational_routing_audit", "actor_id", "users", "id"),
+    ("operational_routing_audit", "operational_alert_id", "operational_alerts_v2", "id"),
     ("operational_alerts_v2", "legacy_alert_id", "alerts", "id"),
     ("operational_alerts_v2", "external_inbox_id", "external_alert_inbox", "id"),
     ("operational_triage_state_v2", "operational_alert_id", "operational_alerts_v2", "id"),

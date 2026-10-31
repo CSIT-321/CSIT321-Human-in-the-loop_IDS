@@ -39,6 +39,12 @@ from scripts.build_openapi import TARGET, rendered
 #: Every endpoint the plan's S10a task list names. `GET /api/evaluation/*` is expanded to the
 #: three concrete endpoints S14 needs.
 REQUIRED_OPERATIONS = {
+    ('/api/v2/alerts', 'get'),
+    ('/api/v2/alerts/{alertRef}/triage-state', 'get'),
+    ('/api/v2/alerts/{alertRef}/admit-tier1', 'post'),
+    ('/api/v2/alerts/{alertRef}/tier2/approve', 'post'),
+    ('/api/v2/alerts/{alertRef}/tier2/reject', 'post'),
+    ('/api/v2/alerts/{alertRef}/tier2/escalate', 'post'),
     # S18a: sign-in. The one operation without an Authorization parameter, plus the session check.
     ("/api/auth/login", "post"),
     ("/api/auth/me", "get"),

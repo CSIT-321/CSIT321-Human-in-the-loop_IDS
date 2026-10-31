@@ -452,6 +452,108 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v2/alerts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List explicitly materialized V2 alerts */
+        get: operations["listV2Routing"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/alerts/{alertRef}/admit-tier1": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** admitV2Tier1 */
+        post: operations["admitV2Tier1"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/alerts/{alertRef}/tier2/approve": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** approveV2Tier2 */
+        post: operations["approveV2Tier2"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/alerts/{alertRef}/tier2/escalate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** escalateV2Tier2 */
+        post: operations["escalateV2Tier2"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/alerts/{alertRef}/tier2/reject": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** rejectV2Tier2 */
+        post: operations["rejectV2Tier2"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/alerts/{alertRef}/triage-state": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Read V2 state and latest routing decision */
+        get: operations["getV2Routing"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -1995,6 +2097,75 @@ export interface components {
             /** Body */
             body: string;
         };
+        /** OperationalTriageStateV2 */
+        OperationalTriageStateV2: {
+            /**
+             * Decisionsource
+             * @default system_policy
+             * @enum {string}
+             */
+            decisionSource: "system_policy" | "analyst" | "historical_memory" | "legacy_projection";
+            /**
+             * Handlingroute
+             * @default unassigned
+             * @enum {string}
+             */
+            handlingRoute: "unassigned" | "tier1_review" | "tier2_candidate" | "tier2_case" | "no_immediate_review";
+            /** Operationalalertid */
+            operationalAlertId: number;
+            /**
+             * Operationalpriority
+             * @default null
+             */
+            operationalPriority: number | null;
+            /**
+             * Priorityband
+             * @default null
+             */
+            priorityBand: ("critical" | "high" | "medium" | "low" | "informational" | "P1" | "P2" | "P3" | "P4") | null;
+            /**
+             * Prioritybandscheme
+             * @default legacy_labels
+             * @enum {string}
+             */
+            priorityBandScheme: "legacy_labels" | "p1_p4";
+            /**
+             * Reviewreason
+             * @default Operational admission pending; V2 triage policy is not active.
+             */
+            reviewReason: string;
+            /**
+             * Reviewrequired
+             * @default true
+             */
+            reviewRequired: boolean;
+            /**
+             * Tier2Recommendationreasons
+             * @default []
+             */
+            tier2RecommendationReasons: string[];
+            /**
+             * Tier2Recommended
+             * @default false
+             */
+            tier2Recommended: boolean;
+            /**
+             * Triagepolicyversion
+             * @default null
+             */
+            triagePolicyVersion: string | null;
+            /**
+             * Updatedat
+             * Format: date-time
+             */
+            updatedAt?: string;
+            /**
+             * Workflowstage
+             * @default staged
+             * @enum {string}
+             */
+            workflowStage: "staged" | "triage" | "assessment" | "investigation" | "incident" | "resolved";
+        };
         /**
          * PageInfo
          * @description Where in the queue this page sits.
@@ -2040,6 +2211,74 @@ export interface components {
             queueClass: "tier2_candidate" | "corroborated" | "signature_override" | "ml_only" | "none";
             /** Requiresreview */
             requiresReview: number;
+        };
+        /** RoutingAudit */
+        RoutingAudit: {
+            /**
+             * Action
+             * @enum {string}
+             */
+            action: "admit_tier1" | "approve_tier2" | "reject_tier2" | "manual_escalate";
+            /** Actorid */
+            actorId: number;
+            afterState: components["schemas"]["OperationalTriageStateV2"];
+            beforeState: components["schemas"]["OperationalTriageStateV2"];
+            /** Createdat */
+            createdAt: string;
+            /** Eventtype */
+            eventType: string;
+            /** Expectedstateversion */
+            expectedStateVersion: string;
+            /** Id */
+            id: number;
+            /** Operationalalertid */
+            operationalAlertId: number;
+            /** Reason */
+            reason: string;
+            /**
+             * Requestid
+             * Format: uuid
+             */
+            requestId: string;
+        };
+        /** RoutingRequest */
+        RoutingRequest: {
+            /** Expectedstateversion */
+            expectedStateVersion: string;
+            /** Reason */
+            reason: string;
+            /**
+             * Requestid
+             * Format: uuid
+             */
+            requestId: string;
+        };
+        /** RoutingResponse */
+        RoutingResponse: {
+            audit: components["schemas"]["RoutingAudit"];
+            /** Replayed */
+            replayed: boolean;
+            view: components["schemas"]["RoutingView"];
+        };
+        /** RoutingView */
+        RoutingView: {
+            /** Allowedactions */
+            allowedActions: ("admit_tier1" | "approve_tier2" | "reject_tier2" | "manual_escalate")[];
+            /** Detectorname */
+            detectorName: string;
+            latestDecision: components["schemas"]["RoutingAudit"] | null;
+            /**
+             * Operationalalertref
+             * Format: uuid
+             */
+            operationalAlertRef: string;
+            /** Reviewreasons */
+            reviewReasons: string[];
+            state: components["schemas"]["OperationalTriageStateV2"];
+            /** Stateversion */
+            stateVersion: string;
+            /** Title */
+            title: string;
         };
         /**
          * RuleMatchPanel
@@ -3694,6 +3933,406 @@ export interface operations {
             };
             /** @description Not signed in, or the token expired */
             401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    listV2Routing: {
+        parameters: {
+            query?: {
+                limit?: number;
+                offset?: number;
+            };
+            header?: {
+                /** @description `Bearer <token>` from POST /api/auth/login */
+                Authorization?: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description V2 routing page */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        items: components["schemas"]["RoutingView"][];
+                        page: components["schemas"]["PageInfo"];
+                    };
+                };
+            };
+            /** @description Validation failed */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not signed in, or the token expired */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    admitV2Tier1: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description `Bearer <token>` from POST /api/auth/login */
+                Authorization?: string;
+            };
+            path: {
+                /** @description The alert's public UUID */
+                alertRef: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RoutingRequest"];
+            };
+        };
+        responses: {
+            /** @description Audited decision or idempotent replay */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RoutingResponse"];
+                };
+            };
+            /** @description Validation failed */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not signed in, or the token expired */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Role not permitted */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    approveV2Tier2: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description `Bearer <token>` from POST /api/auth/login */
+                Authorization?: string;
+            };
+            path: {
+                /** @description The alert's public UUID */
+                alertRef: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RoutingRequest"];
+            };
+        };
+        responses: {
+            /** @description Audited decision or idempotent replay */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RoutingResponse"];
+                };
+            };
+            /** @description Validation failed */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not signed in, or the token expired */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Role not permitted */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    escalateV2Tier2: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description `Bearer <token>` from POST /api/auth/login */
+                Authorization?: string;
+            };
+            path: {
+                /** @description The alert's public UUID */
+                alertRef: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RoutingRequest"];
+            };
+        };
+        responses: {
+            /** @description Audited decision or idempotent replay */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RoutingResponse"];
+                };
+            };
+            /** @description Validation failed */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not signed in, or the token expired */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Role not permitted */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    rejectV2Tier2: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description `Bearer <token>` from POST /api/auth/login */
+                Authorization?: string;
+            };
+            path: {
+                /** @description The alert's public UUID */
+                alertRef: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RoutingRequest"];
+            };
+        };
+        responses: {
+            /** @description Audited decision or idempotent replay */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RoutingResponse"];
+                };
+            };
+            /** @description Validation failed */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not signed in, or the token expired */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Role not permitted */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    getV2Routing: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description `Bearer <token>` from POST /api/auth/login */
+                Authorization?: string;
+            };
+            path: {
+                /** @description The alert's public UUID */
+                alertRef: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description V2 state */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RoutingView"];
+                };
+            };
+            /** @description Validation failed */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not signed in, or the token expired */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found */
+            404: {
                 headers: {
                     [name: string]: unknown;
                 };
