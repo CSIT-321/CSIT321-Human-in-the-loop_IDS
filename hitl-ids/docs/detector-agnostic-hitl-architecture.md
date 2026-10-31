@@ -1,6 +1,9 @@
 # Detector-agnostic HITL alert foundation
 
-Base: feat/demo-build at 305c4d390ce9cd08bbc17f737053182a4ab61b7d.
+Original foundation base: feat/demo-build at 305c4d390ce9cd08bbc17f737053182a4ab61b7d.
+Current stacked increment: `feat/alert-contract-v2`, based on staging commit
+`9e89a6414c523d0784bfed7dc7186ab030f731be`. Historical increment sections below retain their
+original scope; the final V2 section states the current foundation status.
 This document separates implemented behavior from future work. The older system-workflow.md
 contains historical status statements; current code and HANDOVER.md take precedence.
 
@@ -369,4 +372,163 @@ Exact staging increment file manifest (relative to `hitl-ids/`):
 - tests/test_contracts.py
 - tests/test_external_admission_policy.py
 - tests/test_external_staging.py
+- tests/test_triage.py
+
+## Operational Alert Contract V2 foundation
+
+### Architecture status
+
+| Status | Capability |
+|---|---|
+| IMPLEMENTED before this increment | Canonical detector foundation; offline Suricata staging |
+| THIS INCREMENT | Source-neutral OperationalAlertV2; separate OperationalTriageStateV2; additive persistence; pure projection and read-only inspection |
+| NEXT, not active | Operational triage policy; Tier 1 routing; Tier 2 candidate recommendations; Tier 2 Case workflow |
+| FUTURE, not implemented | Triage memory; selective human review; evidence-gated automation; notifications/SOAR; live ingestion |
+
+The legacy path remains authoritative and unchanged:
+`Signature + XGBoost -> alerts -> Workstation -> feedback -> guardrails`.
+
+V2 is a separate, opt-in foundation:
+`legacy alert + canonical snapshot OR staged external alert -> immutable operational_alerts_v2`
+with `operational_triage_state_v2` holding only independent workflow state. No importer, detection
+runner, API request or migration automatically materializes V2 records. No V2 record enters the
+existing queue, feedback foreign keys, family learning, evaluation denominator or Admin IP reports.
+
+The old learning architecture remains the running implementation:
+`human verdict -> numeric adjustment -> similar family -> queue re-ranking`.
+The target, not yet implemented, is:
+`human verdict + reason/context -> triage lesson -> evidence gate -> future review/routing decision`.
+
+### Contracts and source mappings
+
+OperationalAlertV2 exposes camelCase aliases with strict extra-field rejection and frozen models:
+
+- Identity: `id`, `operationalAlertRef`, `canonicalAlertId`. The operational reference preserves
+  the canonical UUID, including the original legacy alert reference; its database ID is separate.
+- Source: `sourceKind`, `detectorSource`, `detectorName`, `detectorVersion`, nullable
+  `legacyAlertId` / `externalInboxId`. Exactly one reference must match the source kind.
+- Detection: `detectionTitle`, `detectionCategory`, `nativeSeverity`, nullable `detectorConfidence`,
+  `detectorEvidence`, `occurredAt`, nullable `occurredAtTimezoneOffset`.
+- Network: `sourceIp`, `destinationIp`, nullable ports, `protocol`.
+- `sourceProvenance`: a typed legacy or external record; it is immutable and carries no mutable
+  routing decision. The full canonical envelope is nested unchanged in `detectorEvidence`.
+
+The legacy projection preserves the canonical detector confidence without inferring it from
+the fused confidence. Both remain available: `detectorConfidence` is canonical confidence and
+`sourceProvenance.legacyFusionConfidence` preserves `alerts.confidence`. This distinction matters
+for corroborated/override legacy snapshots where pure ML confidence cannot be recovered.
+Signature rules, XGBoost probability/prediction and TreeSHAP remain in canonical structured
+evidence and original fields. Immutable detection score, dataset/run IDs and original reference
+are recorded in legacy source provenance. Current operational score/queue class are not reinterpreted
+as V2 state. For an old null canonical snapshot, the existing read-only adapter projects original
+detector severity from the alert's own detection run; nothing is backfilled to `alerts`.
+
+The external projection verifies inbox columns against the stored canonical snapshot. It preserves
+source, canonical UUID, signature title/category, native severity, null confidence, nullable ports,
+exact timestamp/offset and all canonical evidence. Source provenance records sensor/reference,
+admission policy version/decision/reason, proposed score/evidence and review/eligibility flags.
+The referenced immutable inbox retains the complete original policy snapshot.
+
+### Triage and priority boundary
+
+OperationalTriageStateV2 contains `operationalAlertId`, nullable `operationalPriority` and
+`priorityBand`, `handlingRoute`, `workflowStage`, `reviewRequired`, `reviewReason`,
+`tier2Recommended`, `tier2RecommendationReasons`, `decisionSource`, nullable `triagePolicyVersion`
+and `updatedAt`. Priority and band must be assigned together; recommendations must have reasons.
+
+| Concept | Meaning | Initial V2 behavior |
+|---|---|---|
+| Native severity | How bad could it be, on this detector's scale? | Preserved without conversion |
+| Detector confidence | How certain is the detector? | Preserved; null when absent |
+| Operational priority | How urgently should the SOC handle it? | Null, with null band |
+| Handling route/tier | Who should handle it? | `unassigned` |
+| Workflow stage | Where is it in the response lifecycle? | `staged` |
+
+All new V2 triage rows require review with a pending-policy reason, have no Tier 2 recommendation,
+and have null triage policy version. Legacy projections identify `decisionSource=legacy_projection`;
+external projections use `system_policy` for the dormant initialization only. This does not copy
+or override the legacy review flag. Enum support includes future routes/stages/decision sources,
+but no policy automatically selects any tier. Explicit test-only triage updates demonstrate that
+changing priority does not change route or detector evidence.
+
+Suricata's 85/65/40/20 values remain **proposed priority provenance only**, never effective priority.
+Neither severity nor priority triggers Tier 2. New Python DTOs remain frozen values; the separate
+triage database row can be updated independently. There is no triage mutation API in this increment.
+
+### Persistence and migration safety
+
+Migration 4 creates only `operational_alerts_v2`, `operational_triage_state_v2` and their triggers.
+It uses the existing BEGIN IMMEDIATE/version-check runner. Foreign keys remain enabled; no ALTER,
+DROP, rebuild, constraint loosening or automatic backfill occurs. Original row values and schema
+root pages/SQL are tested for equality across a populated v3-to-v4 migration.
+
+The evidence table has UNIQUE operational/canonical references and UNIQUE nullable source IDs.
+CHECK constraints enforce the exclusive source-kind/reference relationship and null Suricata
+confidence. Foreign keys reference legacy alerts or inbox rows; triage references only V2.
+Native severity uses JSON scalar text in SQLite to preserve integer vs string representation.
+Canonical evidence/source provenance are valid JSON; identity/source/confidence/severity are
+checked against that evidence. Contract validation additionally checks all duplicated display
+fields against the canonical envelope. Primary/unique indexes cover current lookups; no speculative
+secondary indexes are added.
+
+All evidence-table UPDATE/DELETE/replacement INSERT operations fail. Triage updates do not touch
+that table, and its identity cannot be reassigned. `materialize_source` reads the source and checks
+duplicates under one write lock, then inserts evidence and dormant triage atomically. Repetition
+returns the existing record without resetting triage; conflicting projections fail clearly.
+An infrastructure failure rolls back both inserts. The caller must migrate first. This service
+is not invoked by existing application flows and does not create any feedback/audit/family rows.
+
+### Read-only inspection
+
+From `hitl-ids`, using an existing database:
+
+```powershell
+python scripts/inspect_alert_v2.py --database <database> --legacy-alert-id 1
+python scripts/inspect_alert_v2.py --database <database> --external-inbox-id 1
+python scripts/inspect_alert_v2.py --database <database> --operational-alert-id 1
+```
+
+The first two preview a source without persistence (`id` and `triage` are null); the third reads
+an explicitly materialized V2 record and its triage state. The CLI opens SQLite read-only, does
+not migrate and states `operationalAdmission=pending`, `routingPolicy=inactive`. No Workstation
+API or UI is replaced. Local SQLite access is required; an admin endpoint is intentionally absent.
+
+### Limitations and next increment
+
+This is a schema/projection foundation, not an active SOC workflow. Source snapshots are not
+continuously synchronized, and legacy operational feedback is not mirrored into V2. Source IDs
+are database-local; projection across unrelated databases needs a separately reviewed identity
+strategy. There is no V2 triage update/audit service, permission layer, policy activation or case UI.
+The next increment should review an explicit operational triage policy and authenticated/audited
+transition service, including evidence requirements for route recommendations and compatibility
+tests, before connecting V2 to any analyst workflow.
+
+### V2 verification
+
+The stacked base was verified before branching: Python 551 passed / 5 existing fixture skips,
+frontend 160 passed, TypeScript, both schema checks, Vite and 3 browser smoke tests passed.
+V2 targeted verification: 127 passed / 1 existing fixture skip. Final full verification on Python
+3.11.9: 577 passed / the same 5 fixture skips; frontend 160 passed across 21 files; TypeScript,
+Python OpenAPI check, generated TypeScript schema check and Vite build passed. Analyst, Admin IP
+Report and Evaluator browser smoke: 3 passed using a disposable database on separate ports.
+Existing jsdom navigation and Vite chunk-size warnings remain non-failing.
+
+The 26 new V2 test cases cover legacy/external projections, canonical confidence vs fused
+confidence, timestamp/null preservation, invalid references and mismatched evidence, dormant
+defaults, immutable evidence, mutable independent triage, atomic rollback, concurrent idempotent
+projection, populated v3 migration preservation, unchanged queue/evaluation/staging behavior,
+and byte-preserving read-only CLI inspection. Existing concurrent migration tests now cover v4.
+
+Exact V2 increment manifest (relative to `hitl-ids/`; staging-base files are not reintroduced):
+
+- docs/detector-agnostic-hitl-architecture.md
+- packages/contracts/db.py
+- packages/contracts/operational_v2.py
+- packages/contracts/operational_v2.sql
+- packages/detection/adapters/operational_v2.py
+- scripts/inspect_alert_v2.py
+- tests/test_canonical_api.py
+- tests/test_contracts.py
+- tests/test_external_staging.py
+- tests/test_operational_v2.py
 - tests/test_triage.py
