@@ -66,6 +66,10 @@ DEVIATION_COLUMNS = {
     "flow_data": {"source_record_id"},
 }
 DEVIATION_TABLES = {
+    "operational_triage_policy_audit": {
+        "id", "operational_alert_id", "actor_id", "policy_version", "policy_snapshot",
+        "context_snapshot", "result_snapshot", "before_state", "after_state", "created_at",
+    },
     "operational_alerts_v2": {
         "id", "operational_alert_ref", "canonical_alert_id", "source_kind", "detector_source",
         "detector_name", "detector_version", "legacy_alert_id", "external_inbox_id",
@@ -77,6 +81,7 @@ DEVIATION_TABLES = {
         "operational_alert_id", "operational_priority", "priority_band", "handling_route", "workflow_stage",
         "review_required", "review_reason", "tier2_recommended", "tier2_recommendation_reasons",
         "decision_source", "triage_policy_version", "updated_at",
+        "priority_band_scheme",
     },
     "alert_families": {"id", "family_key", "attack_category", "scheme", "severity_version",
                        "weight", "feedback_counts", "dominant_category", "agreement_ratio",
@@ -272,12 +277,15 @@ def test_columns_are_tdm_names_plus_logged_deviations(conn):
 def test_every_table_model_matches_its_columns(conn):
     # The inbox uses the canonical contract and staging writer, not a legacy operational model.
     assert set(db.TABLE_MODELS) == table_names(conn) - {
-        "external_alert_inbox", "operational_alerts_v2", "operational_triage_state_v2"}
+        "external_alert_inbox", "operational_alerts_v2", "operational_triage_state_v2",
+        "operational_triage_policy_audit"}
     for table, model in db.TABLE_MODELS.items():
         assert set(model.model_fields) == set(columns(conn, table)), table
 
 
 EXPECTED_FOREIGN_KEYS = {
+    ("operational_triage_policy_audit", "operational_alert_id", "operational_alerts_v2", "id"),
+    ("operational_triage_policy_audit", "actor_id", "users", "id"),
     ("operational_alerts_v2", "legacy_alert_id", "alerts", "id"),
     ("operational_alerts_v2", "external_inbox_id", "external_alert_inbox", "id"),
     ("operational_triage_state_v2", "operational_alert_id", "operational_alerts_v2", "id"),

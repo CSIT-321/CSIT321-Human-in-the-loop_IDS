@@ -31,7 +31,8 @@ def main() -> int:
                 alert = preview_source(conn, "legacy_flow_alert" if legacy else "external_nids_alert",
                                        args.legacy_alert_id if legacy else args.external_inbox_id)
                 triage = None
-            print(json.dumps({"operationalAdmission": "pending", "routingPolicy": "inactive",
+            print(json.dumps({"operationalAdmission": "pending",
+                              "routingPolicy": "applied" if triage and triage["triagePolicyVersion"] else "inactive",
                               "alert": alert.model_dump(mode="json", by_alias=True), "triage": triage}, indent=2))
         return 0
     except (OSError, ValueError, LookupError, sqlite3.Error) as exc:

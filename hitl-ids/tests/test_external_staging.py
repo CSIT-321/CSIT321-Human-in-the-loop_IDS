@@ -25,7 +25,8 @@ def table_rows(conn):
     return {table: [tuple(row) for row in conn.execute(f'SELECT * FROM "{table}" ORDER BY id')]
             for (table,) in conn.execute("SELECT name FROM sqlite_master WHERE type='table' "
                                         "AND name NOT IN ('sqlite_sequence','external_alert_inbox', "
-                                        "'operational_alerts_v2','operational_triage_state_v2')")}
+                                        "'operational_alerts_v2','operational_triage_state_v2', "
+                                        "'operational_triage_policy_audit')")}
 
 
 def test_populated_migration_does_not_rebuild_or_change_core(tmp_path, sample, predictions, monkeypatch):
@@ -47,14 +48,15 @@ def test_populated_migration_does_not_rebuild_or_change_core(tmp_path, sample, p
         assert conn.execute("PRAGMA user_version").fetchone()[0] == 2
         statements = []
         conn.set_trace_callback(statements.append)
-        assert db.migrate(conn) == [3, 4]
+        assert db.migrate(conn) == [3, 4, 5]
         assert table_rows(conn) == before
         for name, rootpage, sql in schema:
             assert tuple(conn.execute("SELECT name, rootpage, sql FROM sqlite_master WHERE name=?",
                                       (name,)).fetchone()) == (name, rootpage, sql)
         assert conn.execute("PRAGMA foreign_keys").fetchone()[0] == 1
         assert not conn.execute("PRAGMA foreign_key_check").fetchall()
-        assert not any("DROP " in s.upper() or "ALTER " in s.upper()
+        assert not any("DROP " in s.upper() or ("ALTER " in s.upper() and not s.strip().startswith(
+            "ALTER TABLE operational_triage_state_v2 ADD COLUMN priority_band_scheme TEXT NOT NULL"))
                        or "FOREIGN_KEYS=OFF" in s.upper().replace(" ", "") for s in statements)
         assert not conn.execute("PRAGMA foreign_key_list(external_alert_inbox)").fetchall()
         assert db.migrate(conn) == []

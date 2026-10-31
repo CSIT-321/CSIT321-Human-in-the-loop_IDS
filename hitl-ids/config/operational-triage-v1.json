@@ -1,0 +1,15 @@
+{
+  "version": "operational-triage-v1",
+  "suricata_severity_priority": {"1": 85, "2": 65, "3": 40, "4": 20},
+  "priority_bands": [
+    {"band": "P1", "minimum": 80},
+    {"band": "P2", "minimum": 60},
+    {"band": "P3", "minimum": 30},
+    {"band": "P4", "minimum": 0}
+  ],
+  "critical_asset_adjustment": 10,
+  "known_malicious_indicator_adjustment": 10,
+  "evidence_conflict_adjustment": 5,
+  "high_priority_threshold": 80,
+  "campaign_alert_threshold": 3
+}

@@ -100,13 +100,15 @@ class OperationalAlertV2(V2Contract):
 HandlingRouteV2 = Literal["unassigned", "tier1_review", "tier2_candidate", "tier2_case", "no_immediate_review"]
 WorkflowStageV2 = Literal["staged", "triage", "assessment", "investigation", "incident", "resolved"]
 DecisionSourceV2 = Literal["system_policy", "analyst", "historical_memory", "legacy_projection"]
-PriorityBandV2 = Literal["critical", "high", "medium", "low", "informational"]
+PriorityBandV2 = Literal["critical", "high", "medium", "low", "informational", "P1", "P2", "P3", "P4"]
+POLICY_BAND_STORAGE = {"P1": "critical", "P2": "high", "P3": "medium", "P4": "low"}
 
 
 class OperationalTriageStateV2(V2Contract):
     operational_alert_id: int = Field(gt=0)
     operational_priority: Score | None = None
     priority_band: PriorityBandV2 | None = None
+    priority_band_scheme: Literal["legacy_labels", "p1_p4"] = "legacy_labels"
     handling_route: HandlingRouteV2 = "unassigned"
     workflow_stage: WorkflowStageV2 = "staged"
     review_required: bool = True
@@ -119,6 +121,10 @@ class OperationalTriageStateV2(V2Contract):
 
     @model_validator(mode="after")
     def explicit_priority_and_recommendation(self):
+        if self.priority_band is not None:
+            is_policy_band = self.priority_band in POLICY_BAND_STORAGE
+            if is_policy_band != (self.priority_band_scheme == "p1_p4"):
+                raise ValueError("priority band must match its explicit band scheme")
         if (self.operational_priority is None) != (self.priority_band is None):
             raise ValueError("operational priority and priority band must be assigned together")
         if self.tier2_recommended != bool(self.tier2_recommendation_reasons):

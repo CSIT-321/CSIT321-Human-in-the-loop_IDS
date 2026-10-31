@@ -10,6 +10,7 @@ from packages.contracts.canonical import CanonicalAlert
 from packages.contracts.operational_v2 import (
     ExternalSourceProvenanceV2, LegacySourceProvenanceV2,
     OperationalAlertV2, OperationalTriageStateV2,
+    POLICY_BAND_STORAGE,
 )
 from packages.detection.pipeline import store
 
@@ -108,6 +109,11 @@ def read_triage(conn: sqlite3.Connection, operational_id: int) -> OperationalTri
         raise LookupError(f"operational V2 alert {operational_id} has no triage state")
     values = dict(row)
     values["tier2_recommendation_reasons"] = json.loads(values["tier2_recommendation_reasons"])
+    if values.get("priority_band_scheme") == "p1_p4" and values["priority_band"] is not None:
+        labels = {storage: band for band, storage in POLICY_BAND_STORAGE.items()}
+        if values["priority_band"] not in labels:
+            raise ValueError("invalid P1-P4 storage label")
+        values["priority_band"] = labels[values["priority_band"]]
     return OperationalTriageStateV2.model_validate(values)
 
 

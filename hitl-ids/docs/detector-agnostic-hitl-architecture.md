@@ -1,9 +1,9 @@
 # Detector-agnostic HITL alert foundation
 
 Original foundation base: feat/demo-build at 305c4d390ce9cd08bbc17f737053182a4ab61b7d.
-Current stacked increment: `feat/alert-contract-v2`, based on staging commit
-`9e89a6414c523d0784bfed7dc7186ab030f731be`. Historical increment sections below retain their
-original scope; the final V2 section states the current foundation status.
+Current stacked increment: `feat/operational-triage-policy`, based on V2 commit
+`3925f60f4592cb58fe3dc392070d2608487eae3a`. Historical increment sections below retain their
+original scope; the final policy section states the current implementation status.
 This document separates implemented behavior from future work. The older system-workflow.md
 contains historical status statements; current code and HANDOVER.md take precedence.
 
@@ -532,3 +532,161 @@ Exact V2 increment manifest (relative to `hitl-ids/`; staging-base files are not
 - tests/test_external_staging.py
 - tests/test_operational_v2.py
 - tests/test_triage.py
+
+## Operational Triage Policy V1
+
+This increment implements pure V2 triage calculation and explicitly invoked, audited application
+to V2 triage state. It does not connect Suricata/V2 records to the legacy Workstation queue.
+The existing detector, staging importer, feedback categories, guardrails, family learning,
+operational scores, queue ordering, evaluation and Admin IP reports remain unchanged.
+
+### Versioned priority and context rules
+
+Policy version: `operational-triage-v1`, stored in `config/operational-triage-v1.json`.
+
+| Suricata native severity | Base urgency | Band with no additional context |
+|---|---:|---|
+| 1 | 85 | P1 |
+| 2 | 65 | P2 |
+| 3 | 40 | P3 |
+| 4 | 20 | P4 |
+
+Configured band minima are P1=80, P2=60, P3=30, P4=0. Decimal scores use half-open ranges:
+P4 [0,30), P3 [30,60), P2 [60,80), P1 [80,100]. Priority is bounded at 100.
+Native severity is not confidence; operational priority is not attack probability; priority is not
+Tier. Detector confidence is never used in this calculation and null confidence remains valid.
+For explicit legacy V2 projection experiments, the immutable detection score supplies the base;
+the current legacy combined score is neither read as a baseline nor changed by the policy.
+
+Optional `TriageContext` fields are `assetCriticality` (low/medium/high/critical),
+`repeatedCampaign`, `correlatedAlertCount`, `responseRequired`, `knownMaliciousIndicator`,
+`analystEscalated`, `unresolvedByTier1`, and `evidenceConflict`. `confirmedMalicious` is an additional
+explicit nullable boolean: a known indicator must not silently become confirmation of this alert.
+Every field defaults to null, meaning unknown/not available, and remains null in audit snapshots.
+Booleans are strict, counts are nonnegative integers, and invalid/extra fields are rejected.
+Context is a complete supplied snapshot, not a patch or a learned memory. No context is fabricated
+from detector confidence, severity, prior feedback or absent values.
+
+Configured adjustments, applied in this deterministic order, are +10 for explicitly critical
+assets, +10 for an explicitly known malicious indicator and +5 for explicitly conflicting evidence.
+Each records requested/applied delta and reason, including clipping at 100. Missing/false context
+does not trigger an adjustment. These are initial configurable operational rules, not statistically
+calibrated risk estimates or organisationally validated thresholds. Configuration changes after
+an applied version require a new version identifier; full config snapshots are preserved.
+
+### Recommendation versus transition
+
+V1 always outputs `reviewRequired=true`, `handlingRoute=tier1_review`, `workflowStage=triage`,
+and `decisionSource=system_policy`. High priority alone never recommends or routes to Tier 2.
+Tier 2 is recommended only for explicit conditions:
+
+- `analystEscalated=true`.
+- `confirmedMalicious=true` AND `responseRequired=true`.
+- Final priority at least the configured high threshold (80) AND `assetCriticality=critical`.
+- `repeatedCampaign=true` AND correlated alert count at least the configured threshold (3).
+- `unresolvedByTier1=true`.
+
+Each satisfied condition contributes its own reason. Recommendation never changes the output route
+to `tier2_candidate` or `tier2_case`. Conflicting evidence always gets review and an explained
+adjustment, but is not by itself a Tier 2 condition. Unknown-context fields are explicitly named
+in review reasons. A future approved transition service must separately accept recommendations.
+
+`TriagePolicyResult` returns `basePriority`, `basePriorityReason`, `contextAdjustments`,
+`finalOperationalPriority`, `priorityBand`, `reviewRequired`, `reviewReasons`, `handlingRoute`,
+`workflowStage`, `tier2Recommended`, `tier2RecommendationReasons`, `decisionSource` and `policyVersion`.
+Base mapping, final band selection, all adjustments and all recommendations are explained.
+
+### Additive storage compatibility
+
+The V2 table from the preceding increment constrains `priority_band` to named labels. Migration 5
+does not rebuild that table or loosen the constraint. It adds `priority_band_scheme`, defaulting
+to `legacy_labels`, and creates `operational_triage_policy_audit` plus append-only triggers.
+Existing rows retain their old values and interpretation. No legacy table is altered.
+
+Policy-applied states use scheme `p1_p4`. The storage codec reversibly encodes P1/P2/P3/P4 as
+critical/high/medium/low in the existing constrained column, and `read_triage` decodes them back
+to P1/P2/P3/P4. This is an explicit storage encoding, not a detector-severity conversion.
+Contract validation rejects a band inconsistent with its scheme. Earlier `legacy_labels` states
+still read as critical/high/medium/low/informational. All before/after policy audit states use the
+public band plus explicit scheme. No current operational alert score or band is touched.
+
+The existing migration runner retains its write lock/version recheck, idempotence, rollback and
+enabled foreign keys. Populated v4 migration tests prove original triage values and root page are
+preserved, original core rows remain equal and foreign-key checks pass. Earlier migration tests
+allow only this specific additive V2 column alteration, while continuing to reject DROP/rebuild,
+legacy alterations and foreign-key disabling.
+
+### Mutation and audit boundary
+
+`apply_triage_policy` is an explicit trusted-local service, not a network endpoint or automatic
+import hook. It verifies that the supplied actor is an active analyst or administrator. Any future
+API must bind actor identity to its authenticated principal; an actor ID alone is not remote
+authentication. No unauthenticated mutation endpoint is added.
+
+Under BEGIN IMMEDIATE, the service reads immutable V2 evidence, calculates the result, compares
+the supplied expected state and atomically updates only V2 triage plus a new audit entry.
+Each entry stores actor/V2 identity, policy version/full configuration, complete nullable context,
+full explained result, before state, after state and UTC time. UPDATE, DELETE and replacement
+INSERT of audit entries are rejected. Audit-write failure rolls back the triage update.
+
+An identical retry returns the previous audit ID without changing time or adding an entry, only
+when the full current state still equals that audited result. A changed context/configuration
+requires fresh expected state. Concurrent conflicting requests therefore leave one applied and
+one stale. Versions cannot be reused with different configuration snapshots in that database.
+UTC normalization and monotonically increasing application timestamps avoid timezone-induced
+retry mismatches. Policy application refuses to overwrite analyst decisions or advanced routes/
+workflow stages. Context changes can recompute recommendations, but always retain human review;
+there is no automatic dismissal, case creation or candidate transition.
+
+### Inspection and current limitations
+
+From `hitl-ids`:
+
+```powershell
+python scripts/preview_triage_policy.py --database <database> --operational-alert-id 1
+python scripts/preview_triage_policy.py --database <database> --operational-alert-id 1 --context <context.json>
+python scripts/inspect_alert_v2.py --database <database> --operational-alert-id 1
+```
+
+Preview opens the database read-only and reports `preview_only`; optional `--policy` chooses a
+validated versioned configuration. Existing V2 inspection reports the stored route/band/reasons
+and whether policy has been applied. Neither CLI mutates state or admits records to Workstation.
+Tests use disposable databases, and no committed demo database is modified.
+
+Context currently comes from a trusted caller; asset inventory, indicator verification and campaign
+correlation integrations are absent. The local role check is not a substitute for a future API
+authentication boundary. There is no mutation UI/API, Tier 2 Case, triage memory, Suricata feedback
+learning, no-review automation, live ingestion, notifications, SOAR, blocking or anomaly detection.
+The recommended next increment is an authenticated, audited, explicitly approved V2 transition
+service that distinguishes accepting a recommendation from creating a Tier 2 case, before any
+separately reviewed operational queue integration.
+
+Exact policy increment manifest (relative to `hitl-ids/`):
+
+- config/operational-triage-v1.json
+- docs/detector-agnostic-hitl-architecture.md
+- packages/contracts/db.py
+- packages/contracts/operational_v2.py
+- packages/contracts/triage_policy_v1.sql
+- packages/detection/adapters/operational_v2.py
+- packages/detection/triage_policy.py
+- packages/detection/triage_policy_service.py
+- scripts/inspect_alert_v2.py
+- scripts/preview_triage_policy.py
+- tests/test_canonical_api.py
+- tests/test_contracts.py
+- tests/test_external_staging.py
+- tests/test_operational_v2.py
+- tests/test_triage.py
+- tests/test_triage_policy.py
+
+Verification on Python 3.11.9: targeted policy/V2/migration/regression suite 168 passed with one
+existing fixture skip; full Python 618 passed with the same five fixture skips; frontend 160
+passed across 21 files; TypeScript, Python OpenAPI check, generated schema check and Vite build
+passed. Analyst/Admin IP Report/Evaluator browser smoke: 3 passed against a disposable database.
+The 41 new policy tests cover baseline mappings and band boundaries, explicit/unknown context,
+confidence independence, adjustments/clipping/reasons, recommendation without transition,
+role/stale-state protection, identical retries, version reuse refusal, atomic rollback,
+append-only audit, concurrent writers, read-only preview, migration compatibility and legacy
+queue/feedback/evaluation/staging isolation. Existing jsdom navigation and Vite chunk-size
+warnings remain non-failing. No committed demo database or legacy application code was changed.
