@@ -30,7 +30,11 @@ def test_outcomes_no_operational_side_effects(conn,outcome):
     assert result.verdict.outcome==outcome and result.verdict.actor_id==1
     assert result.verdict.evidence_snapshot['classification']['attackCategory']=='brute_force'
     assert result.verdict.source_state_version and result.verdict.created_at
-    assert unchanged(conn)==before and (read_review(conn,a.operational_alert_ref).version,read_review(conn,a.operational_alert_ref).disposition)==(review.version,review.disposition)
+    assert unchanged(conn)==before
+    current=read_review(conn,a.operational_alert_ref)
+    assert current.version!=review.version and current.disposition=="must_review"
+    assert current.policy_evaluation.inputs.human_verdict_present
+    assert current.policy_evaluation.inputs.canonical_verdict.verdict_ref==result.verdict.verdict_ref
 
 def test_correction_retry_stale_conflicts_and_append_only(conn):
     a=alert(conn);ref=a.operational_alert_ref;first=command(conn,a)
@@ -60,11 +64,13 @@ def test_informational_no_review_and_auto_tier2(conn):
     assert not read_verdict(conn,unknown.operational_alert_ref,1).can_record
     with pytest.raises(VerdictConflict):record_verdict(conn,unknown.operational_alert_ref,actor_id=1,request=command(conn,unknown))
 
-def test_deferred_alert_can_receive_verdict_without_changing_attention(conn):
+def test_deferred_alert_verdict_recalls_attention_without_memory(conn):
     alerts=review_scenario(conn);a=alerts[3];before=read_review(conn,a.operational_alert_ref)
     assert before.disposition=='no_immediate_review'
     record_verdict(conn,a.operational_alert_ref,actor_id=1,request=command(conn,a,'expected_activity'))
-    assert (read_review(conn,a.operational_alert_ref).version,read_review(conn,a.operational_alert_ref).disposition)==(before.version,before.disposition)
+    current=read_review(conn,a.operational_alert_ref)
+    assert current.version!=before.version and current.disposition=="must_review" and current.recalled
+    assert current.policy_evaluation.inputs.human_verdict_present
 
 def test_http_roles_payload_identity_readonly_and_manual_escalation(conn,api):
     a=alert(conn);ref=str(a.operational_alert_ref);url=f'/api/v2/alerts/{ref}/verdict'

@@ -9,6 +9,8 @@ from packages.contracts.operational_v2 import V2Contract,OperationalAlertV2,Oper
 from packages.detection.triage_memory import MemoryMatch
 from packages.detection.triage_policy import TriageContext
 
+from packages.detection.analyst_verdict import VerdictOutcome
+
 Disposition=Literal['must_review','recommended_review','no_immediate_review']
 
 
@@ -26,6 +28,12 @@ def load_policy():
     return SelectivePolicy.model_validate_json((Path(__file__).resolve().parents[2]/'config/selective-review-v1.json').read_text(encoding='utf-8'))
 
 
+class ReviewVerdict(V2Contract):
+    verdict_ref: UUID
+    revision: int
+    outcome: VerdictOutcome
+
+
 class ReviewInputs(V2Contract):
     alert: OperationalAlertV2
     triage: OperationalTriageStateV2
@@ -35,6 +43,7 @@ class ReviewInputs(V2Contract):
     matches: list[MemoryMatch]
     human_override: bool
     human_verdict_present: bool
+    canonical_verdict: ReviewVerdict | None = None
 
 
 class SelectiveResult(V2Contract):

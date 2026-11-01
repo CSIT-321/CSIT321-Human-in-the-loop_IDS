@@ -1,4 +1,5 @@
 """Separate immutable attention decisions; live validation can revoke but never grant deferral."""
+from datetime import datetime
 from hashlib import sha256
 import json
 from uuid import UUID,uuid4
@@ -10,9 +11,11 @@ from packages.detection.adapters.operational_v2 import read_projection,read_tria
 from packages.detection.triage_memory import MemoryCommand,lookup_memory
 from packages.detection.triage_policy import TriageContext
 from packages.detection.context_store import resolved_for
+from packages.detection.analyst_verdict import latest_verdict
+from packages.detection.tier2_cases import latest_conclusion
 from packages.detection.trusted_context import ResolvedTrustedContext
 from packages.detection.selective_review_policy import (
-    Disposition,SelectivePolicy,SelectiveResult,ReviewInputs,load_policy,evaluate_review,
+    Disposition,SelectivePolicy,SelectiveResult,ReviewInputs,ReviewVerdict,load_policy,evaluate_review,
 )
 
 
@@ -159,11 +162,13 @@ def current_snapshot(conn,ref):
     if conn.execute("SELECT 1 FROM sqlite_master WHERE name='verdict_memory_contributions'").fetchone():
         reviewed=reviewed or conn.execute('SELECT 1 FROM verdict_memory_contributions WHERE source_alert_id=? LIMIT 1',(aid,)).fetchone() is not None
     reviewed=reviewed or conn.execute("SELECT 1 FROM tier2_cases c JOIN tier2_case_events e ON e.case_id=c.id WHERE c.primary_operational_alert_id=? AND e.action='finding' LIMIT 1",(aid,)).fetchone() is not None
+    verdict=latest_verdict(conn,aid)
+    identity=ReviewVerdict(verdict_ref=verdict.verdict_ref,revision=verdict.revision,outcome=verdict.outcome) if verdict else None
     inputs=ReviewInputs(alert=alert,triage=triage,context=context,context_audit_id=max(context_ids,default=None),
-        context_recorded_at=min((field.available_at for field in trusted),default=None),matches=matches,human_override=override,human_verdict_present=reviewed)
+        context_recorded_at=min((field.available_at for field in trusted),default=None),matches=matches,human_override=override,human_verdict_present=reviewed or verdict is not None,canonical_verdict=identity)
     policy=load_policy()
     result=evaluate_review(inputs,policy,now)
-    version=_hash(dict(inputs=inputs.model_dump(mode='json'),policy=policy.model_dump(mode='json'),result=result.model_dump(mode='json'),
+    version=_hash(dict(inputs=inputs.model_dump(mode='json',exclude={'canonical_verdict'} if identity is None else set()),policy=policy.model_dump(mode='json'),result=result.model_dump(mode='json'),
         provenance=provenance.model_dump(mode='json',exclude={'evaluated_at'})))
     return ReviewSnapshot(inputs=inputs,policy_config_snapshot=policy,result=result,input_version=version,context_provenance=provenance)
 
@@ -266,12 +271,36 @@ def review_metrics(conn):
     views=all_reviews(conn)
     counts={kind:sum(v.disposition==kind for v in views) for kind in ('must_review','recommended_review','no_immediate_review')}
     eligible=sum(v.eligible_alert for v in views)
-    unsafe=conn.execute("SELECT count(DISTINCT s.operational_alert_id) FROM selective_review_events s WHERE "
-        "json_extract(s.decision_snapshot,'$.result.disposition')='no_immediate_review' AND ("
-        "EXISTS(SELECT 1 FROM triage_memory_support_events e WHERE e.source_alert_id=s.operational_alert_id AND e.is_primary=1 AND e.outcome IN ('confirmed_malicious','suspicious') AND e.created_at>s.created_at) OR "
-        "EXISTS(SELECT 1 FROM tier2_cases c JOIN tier2_case_events e ON e.case_id=c.id WHERE c.primary_operational_alert_id=s.operational_alert_id AND e.finding IN ('confirmed_malicious','suspicious') AND e.created_at>s.created_at))").fetchone()[0]
+    unsafe=unsafe_suppression_count(conn)
     return ReviewMetrics(total_alerts=len(views),eligible_alerts=eligible,must_review_count=counts['must_review'],
         recommended_review_count=counts['recommended_review'],no_immediate_review_count=counts['no_immediate_review'],
         immediate_review_reduction_rate=counts['no_immediate_review']/eligible if eligible else 0,unsafe_suppression_count=unsafe,
         conflict_triggered_recall_count=sum(v.recalled and 'MEMORY_CONFLICT' in v.reason_codes for v in views),
         sampled_override_count=sum(v.disposition=='recommended_review' and 'DETERMINISTIC_AUDIT_SAMPLE' in v.reason_codes for v in views))
+
+
+def authoritative_outcome(conn,alert_id):
+    """Current expert > canonical Tier 1 > compatibility outcome; never mutate history."""
+    case=conn.execute('SELECT id,case_ref FROM tier2_cases WHERE primary_operational_alert_id=?',(alert_id,)).fetchone()
+    if case:
+        conclusion=latest_conclusion(conn,case['case_ref'],case['id'])
+        if conclusion: return conclusion.finding,conclusion.created_at
+    verdict=latest_verdict(conn,alert_id)
+    if verdict: return verdict.outcome,verdict.created_at
+    legacy=conn.execute('SELECT outcome,created_at FROM triage_memory_support_events WHERE source_alert_id=? AND is_primary=1 ORDER BY id DESC LIMIT 1',(alert_id,)).fetchone()
+    return tuple(legacy) if legacy else None
+
+
+def unsafe_suppression_count(conn):
+    """Distinct alerts whose current authoritative unsafe outcome follows a recorded deferral."""
+    first={}
+    for row in conn.execute("SELECT operational_alert_id,created_at FROM selective_review_events WHERE json_extract(decision_snapshot,'$.result.disposition')='no_immediate_review'"):
+        stamp=datetime.fromisoformat(row['created_at'].replace('Z','+00:00'))
+        aid=row['operational_alert_id']
+        first[aid]=min(first.get(aid,stamp),stamp)
+    count=0
+    for aid,stamp in first.items():
+        outcome=authoritative_outcome(conn,aid)
+        if outcome and outcome[0] in ('confirmed_malicious','suspicious') and datetime.fromisoformat(outcome[1].replace('Z','+00:00'))>stamp:
+            count+=1
+    return count

@@ -4828,6 +4828,8 @@ export interface components {
         /** ReviewInputs */
         ReviewInputs: {
             alert: components["schemas"]["OperationalAlertV2"];
+            /** @default null */
+            canonicalVerdict: components["schemas"]["ReviewVerdict"] | null;
             context: components["schemas"]["TriageContext"];
             /** Contextauditid */
             contextAuditId: number | null;
@@ -4882,6 +4884,21 @@ export interface components {
             inputs: components["schemas"]["ReviewInputs"];
             policyConfigSnapshot: components["schemas"]["SelectivePolicy"];
             result: components["schemas"]["SelectiveResult"];
+        };
+        /** ReviewVerdict */
+        ReviewVerdict: {
+            /**
+             * Outcome
+             * @enum {string}
+             */
+            outcome: "confirmed_malicious" | "suspicious" | "expected_activity" | "false_positive";
+            /** Revision */
+            revision: number;
+            /**
+             * Verdictref
+             * Format: uuid
+             */
+            verdictRef: string;
         };
         /** ReviewView */
         ReviewView: {

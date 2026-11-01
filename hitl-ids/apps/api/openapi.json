@@ -8015,6 +8015,17 @@
           "alert": {
             "$ref": "#/components/schemas/OperationalAlertV2"
           },
+          "canonicalVerdict": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ReviewVerdict"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
           "context": {
             "$ref": "#/components/schemas/TriageContext"
           },
@@ -8185,6 +8196,37 @@
           "inputVersion"
         ],
         "title": "ReviewSnapshot",
+        "type": "object"
+      },
+      "ReviewVerdict": {
+        "additionalProperties": false,
+        "properties": {
+          "outcome": {
+            "enum": [
+              "confirmed_malicious",
+              "suspicious",
+              "expected_activity",
+              "false_positive"
+            ],
+            "title": "Outcome",
+            "type": "string"
+          },
+          "revision": {
+            "title": "Revision",
+            "type": "integer"
+          },
+          "verdictRef": {
+            "format": "uuid",
+            "title": "Verdictref",
+            "type": "string"
+          }
+        },
+        "required": [
+          "verdictRef",
+          "revision",
+          "outcome"
+        ],
+        "title": "ReviewVerdict",
         "type": "object"
       },
       "ReviewView": {

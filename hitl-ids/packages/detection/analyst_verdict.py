@@ -69,9 +69,14 @@ def _eligible(conn,alert):
 def _decode(row):
     return AnalystVerdict.model_validate_json(row['snapshot']) if row else None
 
+def latest_verdict(conn,alert_id):
+    """Read the authoritative append-only Verdict revision without changing state."""
+    return _decode(conn.execute('SELECT snapshot FROM analyst_verdict_events WHERE operational_alert_id=? ORDER BY revision DESC LIMIT 1',(alert_id,)).fetchone())
+
+
 def read_verdict(conn,ref,actor_id):
     alert=_alert(conn,ref);actor=db.get(conn,m.User,actor_id)
-    latest=_decode(conn.execute('SELECT snapshot FROM analyst_verdict_events WHERE operational_alert_id=? ORDER BY revision DESC LIMIT 1',(alert.id,)).fetchone())
+    latest=latest_verdict(conn,alert.id)
     return VerdictView(operational_alert_ref=ref,revision=latest.revision if latest else 0,
         source_state_version=state_version(read_triage(conn,alert.id)),latest=latest,
         can_record=bool(actor and actor.status=='active' and actor.role in ('security_analyst','system_admin') and _eligible(conn,alert)))
