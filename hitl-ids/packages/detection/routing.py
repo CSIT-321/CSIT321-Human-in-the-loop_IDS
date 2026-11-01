@@ -74,19 +74,23 @@ def allowed_actions(state: OperationalTriageStateV2) -> tuple[RoutingAction, ...
 
 def route_alert(conn: sqlite3.Connection, alert_id: int, *, actor_id: int,
                 action: RoutingAction, request: RoutingRequest,
-                _admission_transaction: bool = False) -> tuple[RoutingAudit, bool]:
+                _admission_transaction: bool = False,
+                _case_transaction: bool = False) -> tuple[RoutingAudit, bool]:
     """The HTTP boundary binds actor_id to the verified principal, never request data.
 
     Retry identity is global and actor/payload-bound. Replays return the original audit without
     replaying its state, even if a later decision has since advanced the alert.
     """
     request = RoutingRequest.model_validate(request.model_dump())
-    if conn.in_transaction != _admission_transaction or not conn.execute('PRAGMA foreign_keys').fetchone()[0]:
+    nested = _admission_transaction or _case_transaction
+    if (_admission_transaction and _case_transaction) or conn.in_transaction != nested or not conn.execute('PRAGMA foreign_keys').fetchone()[0]:
         raise ValueError('routing requires foreign keys and no open transaction')
     try:
         if _admission_transaction and action != 'admit_tier1':
             raise ValueError('admission orchestration only permits Tier 1 admission')
-        if not _admission_transaction:
+        if _case_transaction and action not in ('manual_escalate', 'approve_tier2'):
+            raise ValueError('case orchestration only permits Tier 2 escalation')
+        if not nested:
             conn.execute('BEGIN IMMEDIATE')
         actor = db.get(conn, m.User, actor_id)
         if actor is None or actor.status != 'active' or actor.role not in ('security_analyst', 'system_admin'):
@@ -99,7 +103,7 @@ def route_alert(conn: sqlite3.Connection, alert_id: int, *, actor_id: int,
                 'expected_state_version': request.expected_state_version, 'reason': request.reason,
             }.items()):
                 raise RoutingConflict('requestId already belongs to a different decision')
-            if not _admission_transaction:
+            if not nested:
                 conn.commit()
             return decode_audit(prior), True
         before = read_triage(conn, alert_id)
@@ -128,7 +132,7 @@ def route_alert(conn: sqlite3.Connection, alert_id: int, *, actor_id: int,
             raise ValueError('routing storage round-trip mismatch')
         audit = decode_audit(conn.execute('SELECT * FROM operational_routing_audit WHERE id=?',
                                          (result.lastrowid,)).fetchone())
-        if not _admission_transaction:
+        if not nested:
             conn.commit()
         return audit, False
     except Exception:

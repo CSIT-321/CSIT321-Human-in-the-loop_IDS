@@ -26,7 +26,8 @@ from pydantic import BaseModel
 from apps.api.contract import alerts as a
 from apps.api.contract import auth as au
 from apps.api.contract import operations as o
-from apps.api.contract.routing import RoutingView, RoutingResponse
+from apps.api.contract.routing import RoutingView, RoutingResponse, EscalateCaseResponse
+from packages.detection.tier2_escalation import EscalateCaseRequest
 from packages.detection.routing import RoutingRequest
 from apps.api.contract.external_admission import ExternalAdmissionView, ExternalAdmissionResponse
 from packages.detection.external_admission import AdmissionRequest, EligibilityRequest
@@ -65,7 +66,7 @@ MODELS: tuple[type[BaseModel], ...] = (
     ResponsePage,ResponseRequest,ManualResponseRequest,ResponseDecisionRequest,ResponseMutation,
     CaseView, CaseEvent, CaseMutation, CreateCaseRequest, CaseCommand, LinkCaseRequest, FindingRequest,
     ExternalAdmissionView, ExternalAdmissionResponse, AdmissionRequest, EligibilityRequest,
-    RoutingView, RoutingResponse, RoutingRequest,
+    RoutingView, RoutingResponse, RoutingRequest, EscalateCaseRequest, EscalateCaseResponse,
     ErrorResponse,
     PageInfo,
     au.LoginRequest,
@@ -596,6 +597,13 @@ def _paths() -> dict[str, Any]:
             'requestBody': {'required': True, **_json(RoutingRequest)},
             'responses': {'200': {'description': 'Audited decision or idempotent replay', **_json(RoutingResponse)},
                           **_errors(400, 403, 404, 409)}}}
+    paths['/api/v2/alerts/{alertRef}/tier2/escalate-case'] = {'post': {
+        'operationId': 'escalateV2Tier2Case', 'summary': 'Atomically escalate and create a Tier 2 case',
+        'tags': ['V2 routing'], 'parameters': [AUTH_PARAMETER, ALERT_REF],
+        'x-required-roles': ['security_analyst', 'system_admin'],
+        'requestBody': {'required': True, **_json(EscalateCaseRequest)},
+        'responses': {'200': {'description': 'Created case or idempotent replay', **_json(EscalateCaseResponse)},
+                      **_errors(400, 403, 404, 409)}}}
     inbox_parameter = {'name': 'inboxId', 'in': 'path', 'required': True, 'schema': {'type': 'integer'}}
     paths['/api/v2/external-alerts'] = {'get': {
         'operationId': 'listExternalAdmissions', 'summary': 'Inspect staged external alerts and admission status',

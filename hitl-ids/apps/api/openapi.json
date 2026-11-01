@@ -1705,6 +1705,75 @@
         "title": "ErrorResponse",
         "type": "object"
       },
+      "EscalateCaseRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "action": {
+            "default": "manual_escalate",
+            "enum": [
+              "manual_escalate",
+              "approve_tier2",
+              "recover_case"
+            ],
+            "title": "Action",
+            "type": "string"
+          },
+          "expectedStateVersion": {
+            "pattern": "^[0-9a-f]{64}$",
+            "title": "Expectedstateversion",
+            "type": "string"
+          },
+          "reason": {
+            "maxLength": 2000,
+            "minLength": 1,
+            "title": "Reason",
+            "type": "string"
+          },
+          "requestId": {
+            "format": "uuid",
+            "title": "Requestid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "requestId",
+          "expectedStateVersion",
+          "reason"
+        ],
+        "title": "EscalateCaseRequest",
+        "type": "object"
+      },
+      "EscalateCaseResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "audit": {
+            "$ref": "#/components/schemas/RoutingAudit"
+          },
+          "case": {
+            "$ref": "#/components/schemas/CaseView"
+          },
+          "eventId": {
+            "title": "Eventid",
+            "type": "integer"
+          },
+          "replayed": {
+            "title": "Replayed",
+            "type": "boolean"
+          },
+          "view": {
+            "$ref": "#/components/schemas/RoutingView"
+          }
+        },
+        "required": [
+          "view",
+          "audit",
+          "replayed",
+          "case",
+          "eventId"
+        ],
+        "title": "EscalateCaseResponse",
+        "type": "object"
+      },
       "EvaluationComparison": {
         "additionalProperties": false,
         "description": "``GET /api/evaluation/runs/{runId}`` — the three arms and their deltas.\n\n**Deltas may be negative, and the screen must render them as measured.** S15's first run showed\nprecision@50 falling 1.000 → 0.980 and a benign alert reaching rank 1. Reporting only the\nfavourable direction would rebuild the exit criterion plan v0.3 struck out.",
@@ -7040,6 +7109,19 @@
             },
             "title": "Allowedactions",
             "type": "array"
+          },
+          "caseRef": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Caseref"
           },
           "detectorName": {
             "title": "Detectorname",
@@ -12564,6 +12646,113 @@
           }
         },
         "summary": "escalateV2Tier2",
+        "tags": [
+          "V2 routing"
+        ],
+        "x-required-roles": [
+          "security_analyst",
+          "system_admin"
+        ]
+      }
+    },
+    "/api/v2/alerts/{alertRef}/tier2/escalate-case": {
+      "post": {
+        "operationId": "escalateV2Tier2Case",
+        "parameters": [
+          {
+            "description": "`Bearer <token>` from POST /api/auth/login",
+            "in": "header",
+            "name": "Authorization",
+            "required": false,
+            "schema": {
+              "example": "Bearer eyJhbGciOiJIUzI1NiJ9...",
+              "type": "string"
+            }
+          },
+          {
+            "description": "The alert's public UUID",
+            "in": "path",
+            "name": "alertRef",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EscalateCaseRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EscalateCaseResponse"
+                }
+              }
+            },
+            "description": "Created case or idempotent replay"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Validation failed"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not signed in, or the token expired"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Role not permitted"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          }
+        },
+        "summary": "Atomically escalate and create a Tier 2 case",
         "tags": [
           "V2 routing"
         ],

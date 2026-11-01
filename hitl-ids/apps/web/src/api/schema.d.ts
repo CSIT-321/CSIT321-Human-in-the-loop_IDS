@@ -622,6 +622,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v2/alerts/{alertRef}/tier2/escalate-case": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Atomically escalate and create a Tier 2 case */
+        post: operations["escalateV2Tier2Case"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v2/alerts/{alertRef}/tier2/reject": {
         parameters: {
             query?: never;
@@ -2007,6 +2024,34 @@ export interface components {
         /** ErrorResponse */
         ErrorResponse: {
             error: components["schemas"]["ErrorBody"];
+        };
+        /** EscalateCaseRequest */
+        EscalateCaseRequest: {
+            /**
+             * Action
+             * @default manual_escalate
+             * @enum {string}
+             */
+            action: "manual_escalate" | "approve_tier2" | "recover_case";
+            /** Expectedstateversion */
+            expectedStateVersion: string;
+            /** Reason */
+            reason: string;
+            /**
+             * Requestid
+             * Format: uuid
+             */
+            requestId: string;
+        };
+        /** EscalateCaseResponse */
+        EscalateCaseResponse: {
+            audit: components["schemas"]["RoutingAudit"];
+            case: components["schemas"]["CaseView"];
+            /** Eventid */
+            eventId: number;
+            /** Replayed */
+            replayed: boolean;
+            view: components["schemas"]["RoutingView"];
         };
         /**
          * EvaluationComparison
@@ -4261,6 +4306,11 @@ export interface components {
         RoutingView: {
             /** Allowedactions */
             allowedActions: ("admit_tier1" | "approve_tier2" | "reject_tier2" | "manual_escalate")[];
+            /**
+             * Caseref
+             * @default null
+             */
+            caseRef: string | null;
             /** Detectorname */
             detectorName: string;
             latestDecision: components["schemas"]["RoutingAudit"] | null;
@@ -7003,6 +7053,81 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["RoutingResponse"];
+                };
+            };
+            /** @description Validation failed */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not signed in, or the token expired */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Role not permitted */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    escalateV2Tier2Case: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description `Bearer <token>` from POST /api/auth/login */
+                Authorization?: string;
+            };
+            path: {
+                /** @description The alert's public UUID */
+                alertRef: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["EscalateCaseRequest"];
+            };
+        };
+        responses: {
+            /** @description Created case or idempotent replay */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EscalateCaseResponse"];
                 };
             };
             /** @description Validation failed */

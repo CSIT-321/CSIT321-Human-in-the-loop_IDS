@@ -87,6 +87,7 @@ REQUIRED_OPERATIONS = {
     ('/api/v2/alerts/{alertRef}/tier2/approve', 'post'),
     ('/api/v2/alerts/{alertRef}/tier2/reject', 'post'),
     ('/api/v2/alerts/{alertRef}/tier2/escalate', 'post'),
+    ('/api/v2/alerts/{alertRef}/tier2/escalate-case', 'post'),
     # S18a: sign-in. The one operation without an Authorization parameter, plus the session check.
     ("/api/auth/login", "post"),
     ("/api/auth/me", "get"),
