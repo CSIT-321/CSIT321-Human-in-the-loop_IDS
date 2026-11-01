@@ -55,7 +55,7 @@ def classified(*pairs):
     ([('Informational notice: software version','Misc activity')], None,'informational_policy_signal'),
     ([('Informational notification: software version','Not Suspicious Traffic')], None,'informational_policy_signal'),
     ([('Policy event: application usage','Potential Corporate Privacy Violation')], None,'informational_policy_signal'),
-    ([('ET POLICY Application usage','Potential Corporate Privacy Violation')], None,'informational_policy_signal'),
+    ([('ET POLICY Application usage','Potential Corporate Privacy Violation')], 'unknown_needs_expert','unmapped'),
     ([('ET POLICY Suspicious application behavior','Potential Corporate Privacy Violation')], 'unknown_needs_expert','unmapped'),
     ([('Protocol notice: negotiation','Generic Protocol Command Decode')], None,'informational_policy_signal'),
     ([('Informational notice: suspicious unknown attack','Misc activity')], 'unknown_needs_expert','unmapped'),
@@ -65,7 +65,7 @@ def classified(*pairs):
 def test_classification_rules(pairs, expected, status):
     result = classified(*pairs)
     assert (result.attack_category,result.status)==(expected,status)
-    assert result.policy_version=='suricata-classification-v2'
+    assert result.policy_version=='suricata-classification-v3'
     reverse = classified(*reversed(pairs))
     assert (result.attack_category, result.status) == (reverse.attack_category, reverse.status)
     if expected not in ('unknown_needs_expert', None): assert result.matches
@@ -82,7 +82,7 @@ def test_specificity_is_configured_acyclic_and_preserves_matches():
 
 
 def test_bulk_informationals_and_mandatory_unknown_cases(conn):
-    signals=[event(i+1, f'Informational notice: synthetic service {i}', 'Misc activity', (i%4)+1) for i in range(53)]
+    signals=[event(i+1, 'Informational notice: software version', 'Misc activity', (i%4)+1) for i in range(53)]
     signals += [event(100+i, 'Unresolved suspicious attack-like activity', 'Misc activity', 4) for i in range(4)]
     signals += [event(200,'DDoS detected','Web Application Attack',4)]
     stage(conn,signals);alerts=admit_all(conn)

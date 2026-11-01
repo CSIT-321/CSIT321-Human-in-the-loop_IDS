@@ -28,7 +28,7 @@ def build_fixture(path):
             observed_at=now-timedelta(seconds=1),valid_from=now-timedelta(minutes=1),expires_at=now+timedelta(hours=12),
             reason='SYNTHETIC critical asset',source_reference='synthetic:critical-asset'))
         events=[event(9001,'SYNTHETIC Known routine brute force',severity=1)]
-        events += [event(9100+i,f'Informational notice: synthetic service {i:02d}','Misc activity',4) for i in range(53)]
+        events += [event(9100+i,'Informational notice: software version','Misc activity',4) for i in range(53)]
         events += [event(9200+i,f'SYNTHETIC Unresolved suspicious network activity {i}','Misc activity',4) for i in range(3)]
         events += [event(9300,'SYNTHETIC DDoS detected','Attempted Denial of Service',1),event(9301,'SYNTHETIC DDoS conflicting evidence','Web Application Attack',2)]
         critical=event(9400,'SYNTHETIC critical SQL injection',severity=1);critical['dest_ip']='198.51.100.99';events.append(critical)

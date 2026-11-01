@@ -6,7 +6,7 @@ from pydantic import Field, model_validator
 from packages.contracts.operational_v2 import V2Contract
 from packages.contracts.suricata_bundle import AttackCategory, AttackClassification, ClassificationMatch, SuricataEvidenceBundle
 
-DEFAULT_POLICY = Path(__file__).resolve().parents[2] / 'config/suricata-classification-v2.json'
+DEFAULT_POLICY = Path(__file__).resolve().parents[2] / 'config/suricata-classification-v3.json'
 
 
 class ClassificationRule(V2Contract):
