@@ -152,6 +152,24 @@
   }
 }
 
+/* Operational Workstation: the original queue/detail/context interaction, on canonical data. */
+.ops-grid { grid-template-columns: 16rem minmax(0, 1fr) 15rem; }
+.ops-grid > * { min-width: 0; }
+.ops-queue footer button { padding: 6px 4px; font-size: 11px; }
+.ops-detail [role="tabpanel"] { overflow-wrap: anywhere; }
+@media (max-width: 1279px) {
+  .operational-workstation { height: auto; min-height: 100%; }
+  .ops-grid { grid-template-columns: 15rem minmax(0, 1fr); }
+  .ops-queue, .ops-detail { height: 42rem; }
+  .ops-context { grid-column: 1 / -1; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); border-top: 1px solid var(--color-border); }
+}
+@media (max-width: 639px) {
+  .ops-grid { display: flex; flex-direction: column; }
+  .ops-queue { height: 23rem; flex-shrink: 0; }
+  .ops-detail { height: 44rem; flex-shrink: 0; }
+  .ops-context { display: block; overflow: visible; }
+}
+
 @media print {
   @page {
     size: landscape;

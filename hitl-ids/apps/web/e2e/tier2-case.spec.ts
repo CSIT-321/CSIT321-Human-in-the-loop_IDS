@@ -18,15 +18,15 @@ test("Suricata admission to explicit Tier 2 case, investigation note and finding
   await page.getByLabel("Decision reason").fill("Admit for operational review");
   await page.getByRole("button", { name: "Admit to HITL Workflow" }).click();
   await expect(page.getByRole("status")).toContainText("Operational admission completed");
-  await page.getByRole("link", { name: "Open Alert Triage" }).click();
-  await expect(page.getByText("tier1 review", { exact: true })).toBeVisible();
+  await page.getByRole("link", { name: "Open Analyst Workstation" }).click();
+  await expect(page.getByRole("region", { name: "Operational alert workspace" }).getByText("tier1 review", { exact: true })).toBeVisible();
   await expect(page.getByRole("button", { name: "Create Tier 2 Case", exact: true })).toHaveCount(0);
   await page.getByLabel("Decision reason").fill("Unresolved source-host investigation");
   const createdResponse = page.waitForResponse(response => response.url().endsWith("/tier2/escalate-case") && response.request().method() === "POST");
   await page.getByRole("button", { name: "Escalate to Tier 2" }).click();
   const created = await (await createdResponse).json();
   await expect(page.getByText("Tier 2 Case created successfully.", { exact: true })).toBeVisible();
-  await expect(page).toHaveURL(/v2-triage/);
+  await expect(page).toHaveURL(/operations/);
   await expect(page.getByText(/tier.?2 candidate|assessment/i)).toHaveCount(0);
   await expect(page.getByLabel("Case title")).toHaveCount(0);
   await page.screenshot({ path: "test-results/direct-tier2-result.png" });
@@ -56,7 +56,7 @@ test("Suricata admission to explicit Tier 2 case, investigation note and finding
   await page.getByRole("button", { name: "Record finding" }).scrollIntoViewIfNeeded();
   await page.screenshot({ path: "test-results/tier2-case-mobile-investigation.png", fullPage: true });
   await page.getByRole("link", { name: "Primary alert", exact: true }).click();
-  await expect(page.getByText("tier2 case", { exact: true })).toBeVisible();
-  await expect(page.getByText("investigation", { exact: true })).toBeVisible();
+  await expect(page.getByRole("region", { name: "Operational alert workspace" }).getByText("tier2 case", { exact: true })).toBeVisible();
+  await expect(page.getByRole("link", { name: "Open Tier 2 Case", exact: true })).toBeVisible();
   expect(errors).toEqual([]);
 });

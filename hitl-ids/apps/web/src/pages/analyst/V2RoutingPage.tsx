@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link, useSearchParams } from "react-router";
 import { api, unwrap, type Schemas } from "../../api/client";
 import { useApi } from "../../api/useApi";
@@ -21,8 +21,11 @@ const button = "rounded-sm border border-border px-3 py-2 text-sm hover:bg-raise
 const pretty = (value: string) => value === "tier2_candidate" ? "Tier 2" : value === "assessment" ? "Awaiting case recovery" : value.replaceAll("_", " ");
 type CommandAction = Action | "recover_case";
 
-export function RoutingDetail({ initial, refresh, casePrefix = "/analyst", canRecover = false }: { initial: View; refresh: () => void; casePrefix?: string; canRecover?: boolean }) {
+export function RoutingDetail({ initial, refresh, casePrefix = "/analyst", canRecover = false, compact = false, onChanged }: {
+  initial: View; refresh: () => void; casePrefix?: string; canRecover?: boolean; compact?: boolean; onChanged?: (view: View) => void;
+}) {
   const [view, setView] = useState(initial);
+  useEffect(() => { setView(initial); }, [initial]);
   const [reason, setReason] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
@@ -44,10 +47,12 @@ export function RoutingDetail({ initial, refresh, casePrefix = "/analyst", canRe
           params, body: { ...pending.current!.body, action },
         }));
         setView({ ...result.view, caseRef: result.case.caseRef });
+        onChanged?.({ ...result.view, caseRef: result.case.caseRef });
         setCaseCreated(true);
       } else {
         const result = await unwrap(api.POST(paths[action], { params, body: pending.current!.body }));
         setView(result.view);
+        onChanged?.(result.view);
         setDone(`${labels[action]} recorded. Audit #${result.audit.id}`);
       }
       setReason(""); pending.current = null;
@@ -58,6 +63,7 @@ export function RoutingDetail({ initial, refresh, casePrefix = "/analyst", canRe
   const state = view.state;
   const recovery = canRecover && state.handlingRoute === "tier2_candidate" && state.workflowStage === "assessment";
   return <section className="min-w-0 space-y-5 border-t border-border pt-5" aria-label="V2 alert routing">
+    {!compact && <>
     <header className="space-y-1 break-words">
       <h2 className="text-lg font-semibold">{view.title}</h2>
       <p className="text-sm text-muted">{view.detectorName}</p>
@@ -85,6 +91,7 @@ export function RoutingDetail({ initial, refresh, casePrefix = "/analyst", canRe
       <p className="text-xs text-muted">{pretty(view.latestDecision.beforeState.handlingRoute)} → {pretty(view.latestDecision.afterState.handlingRoute)}</p>
       <p className="text-xs text-dim">{view.latestDecision.createdAt}</p>
     </section>}
+    </>}
     {(view.allowedActions.length > 0 || recovery) && <div className="space-y-3 border-t border-border pt-4">
       <label className="block text-sm" htmlFor="routing-reason">Decision reason</label>
       <textarea id="routing-reason" rows={3} maxLength={2000} value={reason} disabled={busy}

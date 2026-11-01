@@ -11,6 +11,8 @@ const routing={operationalAlertRef:ref,title:"Selective demo",detectorName:"Suri
 const view={operationalAlertRef:ref,title:"Selective demo",version:"b".repeat(64),disposition:"no_immediate_review",reasonCodes:["VALIDATED_MEMORY_AND_CONTEXT"],explanation:"All safety gates passed",priority:85,route:"tier1_review",humanOverride:false,eligibleAlert:true,recalled:false,lastDecision:null,
   policyEvaluation:{inputs:{matches:[]},result:{policyVersion:"selective-review-v1",matchedLessonRef:null}}};
 function reads(req:Request){
+  if(new URL(req.url).pathname === "/api/v2/alerts") return jsonResponse(empty);
+  if(req.url.endsWith("/evidence")) return jsonResponse({error:{code:"NOT_FOUND",message:"Evidence fixture omitted"}},404);
   if(req.url.includes("/triage-state"))return jsonResponse(routing);
   if(req.url.includes("/matches")||req.url.includes("/events"))return jsonResponse(empty);
   return jsonResponse(view);
@@ -19,8 +21,9 @@ function reads(req:Request){
 describe("Selective Human Review",()=>{
   it("separates automation from verdict and preserves displayed priority",async()=>{
     stubFetch(reads);renderApp("/analyst/v2-triage?alertRef="+ref,{session});
+    await userEvent.click(await screen.findByRole("tab",{name:"Context & Review"}));
     expect(await screen.findByText("No Immediate Review",{exact:true})).toBeInTheDocument();
-    expect(screen.getByText("No Immediate Review is an automation decision, not a human verdict.")).toBeInTheDocument();
+    expect(screen.getAllByText("No Immediate Review is an automation decision, not a human verdict.")[0]).toBeInTheDocument();
     expect(screen.getByText("Operational priority: 85")).toBeInTheDocument();
     expect(screen.getByRole("button",{name:"Require Human Review"})).toBeDisabled();
   });
@@ -29,9 +32,10 @@ describe("Selective Human Review",()=>{
     const bodies:unknown[]=[];
     stubFetch(async req=>{if(req.method==="POST"){bodies.push(await req.json());return jsonResponse({error:{code:"REVIEW_CONFLICT",message:"Evidence changed; refresh"}},409);}return reads(req);});
     renderApp("/analyst/v2-triage?alertRef="+ref,{session});
+    await userEvent.click(await screen.findByRole("tab",{name:"Context & Review"}));
     await userEvent.type(await screen.findByLabelText("Review policy or override reason"),"Analyst requires investigation");
     await userEvent.click(screen.getByRole("button",{name:"Require Human Review"}));
-    expect(await screen.findByRole("alert")).toHaveTextContent("Evidence changed");
+    expect((await screen.findAllByRole("alert")).some(node=>node.textContent?.includes("Evidence changed"))).toBe(true);
     await userEvent.click(screen.getByRole("button",{name:"Require Human Review"}));
     await waitFor(()=>expect(bodies).toHaveLength(2));
     expect(bodies[0]).toEqual(bodies[1]);
@@ -59,6 +63,7 @@ describe("Selective Human Review",()=>{
       return reads(req);
     });
     renderApp("/analyst/v2-triage?alertRef="+ref,{session});
+    await userEvent.click(await screen.findByRole("tab",{name:"Context & Review"}));
     await screen.findByText("No Immediate Review",{exact:true});
     await userEvent.click(screen.getByText("Advanced / Research & Evaluation"));
     await userEvent.click(screen.getByRole("button",{name:"Prospective Collection"}));
@@ -76,6 +81,7 @@ describe("Selective Human Review",()=>{
   it("shows recall and does not offer repeat override",async()=>{
     stubFetch(req=>req.url.endsWith("/selective-review")?jsonResponse({...view,disposition:"must_review",recalled:true,humanOverride:true,reasonCodes:["HUMAN_REVIEW_OVERRIDE"]}):reads(req));
     renderApp("/analyst/v2-triage?alertRef="+ref,{session});
+    await userEvent.click(await screen.findByRole("tab",{name:"Context & Review"}));
     expect(await screen.findByText("Prior deferral recalled")).toBeInTheDocument();
     await userEvent.type(screen.getByLabelText("Review policy or override reason"),"Repeat");
     expect(screen.getByRole("button",{name:"Require Human Review"})).toBeDisabled();
@@ -94,7 +100,8 @@ describe("Selective Human Review",()=>{
   it("reports unavailable policy instead of a safe disposition",async()=>{
     stubFetch(req=>req.url.endsWith("/selective-review")?jsonResponse({error:{code:"OFFLINE",message:"Review policy unavailable"}},503):reads(req));
     renderApp("/analyst/v2-triage?alertRef="+ref,{session});
-    expect(await screen.findByRole("alert")).toHaveTextContent("Review policy unavailable");
+    await userEvent.click(await screen.findByRole("tab",{name:"Context & Review"}));
+    await waitFor(()=>expect(screen.getAllByRole("alert").some(node=>node.textContent?.includes("Review policy unavailable"))).toBe(true));
     expect(screen.queryByText("No Immediate Review",{exact:true})).not.toBeInTheDocument();
   });
 });

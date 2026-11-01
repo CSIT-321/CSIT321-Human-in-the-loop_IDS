@@ -18,8 +18,8 @@ test("Suricata to human-approved response plan without execution",async({page})=
   await page.getByLabel("Decision reason").fill("Explicit operational admission");
   await page.getByRole("button",{name:"Admit to HITL Workflow"}).click();
   await expect(page.getByRole("status")).toContainText("Operational admission completed");
-  await page.getByRole("link",{name:"Open Alert Triage"}).click();
-  await expect(page.getByText("tier1 review",{exact:true})).toBeVisible();
+  await page.getByRole("link",{name:"Open Analyst Workstation"}).click();
+  await expect(page.getByRole("region",{name:"Operational alert workspace"})).toContainText("tier1 review");
   await page.getByLabel("Decision reason").fill("Unresolved attack evidence requires Tier 2");
   await page.getByRole("button",{name:"Escalate to Tier 2"}).click();
   await expect(page.getByText("Tier 2 Case created successfully.",{exact:true})).toBeVisible();

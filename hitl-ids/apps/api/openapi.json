@@ -7127,6 +7127,18 @@
             "title": "Detectorname",
             "type": "string"
           },
+          "detectorSource": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Detectorsource"
+          },
           "latestDecision": {
             "anyOf": [
               {
@@ -11921,6 +11933,89 @@
         "summary": "Resolve current scoped safety evidence",
         "tags": [
           "Trusted context"
+        ]
+      }
+    },
+    "/api/v2/alerts/{alertRef}/evidence": {
+      "get": {
+        "operationId": "getV2AlertEvidence",
+        "parameters": [
+          {
+            "description": "`Bearer <token>` from POST /api/auth/login",
+            "in": "header",
+            "name": "Authorization",
+            "required": false,
+            "schema": {
+              "example": "Bearer eyJhbGciOiJIUzI1NiJ9...",
+              "type": "string"
+            }
+          },
+          {
+            "description": "The alert's public UUID",
+            "in": "path",
+            "name": "alertRef",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OperationalAlertV2"
+                }
+              }
+            },
+            "description": "Source-neutral operational alert evidence"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Validation failed"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not signed in, or the token expired"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not found"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Database unavailable or schema unsupported; read-only requests never migrate"
+          }
+        },
+        "summary": "Read immutable canonical detector evidence",
+        "tags": [
+          "V2 routing"
         ]
       }
     },

@@ -205,8 +205,8 @@ export function WorkstationPage() {
         </p>
       </div>
       <p className="shrink-0 border-b border-border bg-bg px-4 py-2 text-xs text-muted">
-        Historical recorded-flow analysis using the legacy Signature/XGBoost pipeline. For current Tier 1/Tier 2 operational routing, use Alert Triage.{" "}
-        <Link to="/analyst/v2-triage" className="text-accent underline">Open Alert Triage</Link>
+        Historical recorded-flow analysis using the legacy Signature/XGBoost pipeline. For current Tier 1/Tier 2 operational routing, use Analyst Workstation.{" "}
+        <Link to="/analyst/operations" className="text-accent underline">Open Analyst Workstation</Link>
       </p>
       <KpiStrip summary={summary} breakdowns={breakdowns} />
       <div className="workstation-panes grid min-h-0 flex-1 grid-cols-[minmax(18rem,20rem)_minmax(0,1fr)] xl:grid-cols-[21rem_minmax(0,1fr)_20rem]">

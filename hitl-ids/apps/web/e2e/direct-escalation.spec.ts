@@ -11,8 +11,8 @@ async function admitNext(page: Page) {
   await page.getByLabel("Decision reason").fill("SYNTHETIC direct escalation: admit for Tier 1 triage");
   await page.getByRole("button", { name: "Admit to HITL Workflow" }).click();
   await expect(page.getByRole("status")).toContainText("Operational admission completed");
-  await page.getByRole("link", { name: "Open Alert Triage" }).click();
-  await expect(page.getByText("tier1 review", { exact: true })).toBeVisible();
+  await page.getByRole("link", { name: "Open Analyst Workstation" }).click();
+  await expect(page.getByRole("region", { name: "Operational alert workspace" }).getByText("tier1 review", { exact: true })).toBeVisible();
 }
 
 test("one escalation creates a case, stays on the alert, and supports both result actions", async ({ page }) => {
@@ -22,13 +22,13 @@ test("one escalation creates a case, stays on the alert, and supports both resul
   await page.getByLabel("Username").fill("g.ang");
   await page.getByLabel("Password", { exact: true }).fill("analyst-demo");
   await page.getByRole("button", { name: "Sign in" }).click();
-  await expect(page).toHaveURL(/\/analyst\/v2-triage$/);
-  await expect(page.getByRole("heading", { name: "Alert Triage", exact: true })).toBeVisible();
+  await expect(page).toHaveURL(/\/analyst\/operations$/);
+  await expect(page.getByRole("heading", { name: "Analyst Workstation", exact: true })).toBeVisible();
   const navigation = page.getByRole("navigation", { name: "Main" }).getByRole("link");
-  await expect(navigation.nth(0)).toHaveText("Incoming Alerts");
-  await expect(navigation.nth(1)).toHaveText("Alert Triage");
-  await expect(navigation.nth(2)).toHaveText("Tier 2 Cases");
-  await expect(navigation.last()).toHaveText("Legacy Flow Workstation");
+  await expect(navigation.nth(0)).toHaveText("Analyst Workstation");
+  await expect(navigation.nth(1)).toHaveText("Tier 2 Cases");
+  await expect(navigation.nth(2)).toHaveText("Triage Memory");
+  await expect(navigation.last()).toHaveText("Incoming Alerts");
   const cases: string[] = [];
   for (let index = 0; index < 2; index++) {
     await admitNext(page);

@@ -29,6 +29,7 @@ from apps.api.contract import operations as o
 from apps.api.contract.routing import RoutingView, RoutingResponse, EscalateCaseResponse
 from packages.detection.tier2_escalation import EscalateCaseRequest
 from packages.detection.routing import RoutingRequest
+from packages.contracts.operational_v2 import OperationalAlertV2
 from apps.api.contract.external_admission import ExternalAdmissionView, ExternalAdmissionResponse
 from packages.detection.external_admission import AdmissionRequest, EligibilityRequest
 from apps.api.contract.responses import ResponsePage
@@ -588,6 +589,10 @@ def _paths() -> dict[str, Any]:
         'operationId': 'getV2Routing', 'summary': 'Read V2 state and latest routing decision',
         'tags': ['V2 routing'], 'parameters': [AUTH_PARAMETER, ALERT_REF],
         'responses': {'200': {'description': 'V2 state', **_json(RoutingView)}, **_errors(400, 404)}}}
+    paths['/api/v2/alerts/{alertRef}/evidence'] = {'get': {
+        'operationId': 'getV2AlertEvidence', 'summary': 'Read immutable canonical detector evidence',
+        'tags': ['V2 routing'], 'parameters': [AUTH_PARAMETER, ALERT_REF],
+        'responses': {'200': {'description': 'Source-neutral operational alert evidence', **_json(OperationalAlertV2)}, **_errors(400, 404)}}}
     for suffix, operation in [('admit-tier1', 'admitV2Tier1'), ('tier2/approve', 'approveV2Tier2'),
                               ('tier2/reject', 'rejectV2Tier2'), ('tier2/escalate', 'escalateV2Tier2')]:
         paths['/api/v2/alerts/{alertRef}/' + suffix] = {'post': {

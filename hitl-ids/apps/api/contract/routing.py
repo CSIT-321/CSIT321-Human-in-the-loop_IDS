@@ -10,6 +10,7 @@ class RoutingView(ApiModel):
     operational_alert_ref: UUID
     title: str
     detector_name: str
+    detector_source: str | None = None
     state: OperationalTriageStateV2
     state_version: str
     review_reasons: list[str]

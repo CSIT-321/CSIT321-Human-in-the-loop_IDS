@@ -31,19 +31,14 @@ export const ROLE_META: Readonly<Record<Role, RoleMeta>> = {
   security_analyst: {
     label: "Security Analyst",
     short: "Analyst",
-    home: "/analyst/v2-triage",
+    home: "/analyst/operations",
     nav: [
-      { to: "/analyst/external-admission", label: "Incoming Alerts" },
-      { to: "/analyst/v2-triage", label: "Alert Triage" },
+      { to: "/analyst/operations", label: "Analyst Workstation" },
       { to: "/analyst/tier2-cases", label: "Tier 2 Cases" },
       { to: "/analyst/triage-memory", label: "Triage Memory" },
       { to: "/analyst/selective-review", label: "Selective Review" },
-      { to: "/analyst/overview", label: "Overview" },
       { to: "/analyst/dashboard", label: "Dashboard" },
-      { to: "/analyst/queue", label: "Alert Queue" },
-      { to: "/analyst/investigations", label: "Investigations" },
-      { to: "/analyst/feedback-impact", label: "Feedback Impact" },
-      { to: "/analyst/workstation", label: "Legacy Flow Workstation" },
+      { to: "/analyst/external-admission", label: "Incoming Alerts" },
     ],
   },
   system_admin: {

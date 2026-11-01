@@ -86,7 +86,7 @@ async function signInAs(user: ReturnType<typeof userEvent.setup>, username: keyo
   await user.click(screen.getByRole("button", { name: "Sign in" }));
 }
 const SIGN_IN_CASES = [
-  { username: "g.ang", heading: "Alert Triage" },
+  { username: "g.ang", heading: "Analyst Workstation" },
   { username: "admin", heading: "System Status" },
   { username: "evaluator", heading: "Evaluation scenarios" },
 ] as const;
@@ -155,11 +155,11 @@ describe("shell: signing in as each account", () => {
 });
 
 describe("shell: route guards", () => {
-  it("redirects the analyst index to operational Alert Triage", async () => {
+  it("redirects the analyst index to operational Analyst Workstation", async () => {
     stubApi();
     const { router } = renderApp("/analyst", { session: ANALYST });
-    await waitFor(() => expect(router.state.location.pathname).toBe("/analyst/v2-triage"));
-    expect(await screen.findByRole("heading", { name: "Alert Triage" })).toBeVisible();
+    await waitFor(() => expect(router.state.location.pathname).toBe("/analyst/operations"));
+    expect(await screen.findByRole("heading", { name: "Analyst Workstation" })).toBeVisible();
   });
   it("sends a signed-out visitor from a role route to /login", async () => {
     stubApi();
@@ -173,9 +173,9 @@ describe("shell: route guards", () => {
     stubApi();
     const { router } = renderApp("/admin/status", { session: ANALYST });
 
-    await waitFor(() => expect(router.state.location.pathname).toBe("/analyst/v2-triage"));
+    await waitFor(() => expect(router.state.location.pathname).toBe("/analyst/operations"));
     expect(
-      await screen.findByRole("heading", { level: 1, name: "Alert Triage" }),
+      await screen.findByRole("heading", { level: 1, name: "Analyst Workstation" }),
     ).toBeInTheDocument();
   });
 
@@ -223,7 +223,7 @@ describe("shell: navigation", () => {
     await user.keyboard("{Enter}");
     expect(screen.getByRole("button", { name: "Expand sidebar" })).toHaveAttribute("aria-expanded", "false");
     expect(screen.getByRole("link", { name: "Incoming Alerts" })).toHaveAttribute("href", "/analyst/external-admission");
-    expect(screen.getByRole("link", { name: "Alert Triage" })).toHaveAttribute("href", "/analyst/v2-triage");
+    expect(screen.getByRole("link", { name: "Analyst Workstation" })).toHaveAttribute("href", "/analyst/operations");
     screen.getByRole("button", { name: "Light theme" }).focus();
     await user.keyboard(" ");
     expect(document.documentElement).toHaveAttribute("data-theme", "light");
@@ -264,10 +264,12 @@ describe("shell: navigation", () => {
     await waitFor(() => expect(router.state.location.pathname).toBe("/admin/status"));
     await screen.findByRole("heading", { level: 1, name: "System Status" });
 
-    const summaryRequest = seen.filter((request) =>
-      new URL(request.url).pathname.endsWith("/api/dashboard/summary"),
-    ).at(-1);
-    expect(summaryRequest?.headers.get("Authorization")).toBe("Bearer admin-token");
+    await waitFor(() => {
+      const summaryRequest = seen.filter((request) =>
+        new URL(request.url).pathname.endsWith("/api/dashboard/summary"),
+      ).at(-1);
+      expect(summaryRequest?.headers.get("Authorization")).toBe("Bearer admin-token");
+    });
   });
 
   it("signs out to /login and clears the stored session", async () => {

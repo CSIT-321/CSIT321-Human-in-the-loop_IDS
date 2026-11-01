@@ -43,7 +43,7 @@ export const FEEDBACK_CATEGORIES: readonly CategoryMeta[] = [
     requestedDelta: 15,
     forcesReview: true,
     teachesFamily: true,
-    description: "Raises the legacy review priority. This does not create a Tier 2 Candidate or Tier 2 Case. Use Alert Triage for operational escalation.",
+    description: "Raises the legacy review priority. This does not create a Tier 2 Candidate or Tier 2 Case. Use Analyst Workstation for operational escalation.",
   },
   {
     value: "needs_investigation",

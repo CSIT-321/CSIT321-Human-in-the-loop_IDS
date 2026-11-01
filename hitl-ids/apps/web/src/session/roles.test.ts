@@ -22,18 +22,18 @@ describe("roles", () => {
 
   it("send analysts to operational triage and preserve the other role homes", () => {
     // Historical flow analysis remains a deep link, separate from the operational home.
-    expect(ROLE_META.security_analyst.home).toBe("/analyst/v2-triage");
+    expect(ROLE_META.security_analyst.home).toBe("/analyst/operations");
     expect(ROLE_META.system_admin.home).toBe("/admin/status");
     expect(ROLE_META.evaluator.home).toBe("/evaluator/scenarios");
   });
 
-  it("puts the analyst operational journey first and historical flow analysis last", () => {
+  it("shows one primary analyst workspace and secondary intake", () => {
     expect(ROLE_META.security_analyst.nav.map(item => item.label)).toEqual([
-      "Incoming Alerts", "Alert Triage", "Tier 2 Cases", "Triage Memory", "Selective Review",
-      "Overview", "Dashboard", "Alert Queue", "Investigations", "Feedback Impact", "Legacy Flow Workstation",
+      "Analyst Workstation", "Tier 2 Cases", "Triage Memory", "Selective Review", "Dashboard", "Incoming Alerts",
     ]);
-    expect(ROLE_META.security_analyst.nav.at(-1)?.to).toBe("/analyst/workstation");
-    for (const role of ROLES) {
+    expect(ROLE_META.security_analyst.nav.at(-1)?.to).toBe("/analyst/external-admission");
+    expect(ROLE_META.security_analyst.nav.some(item => item.to.endsWith("/workstation") || item.to.endsWith("/v2-triage"))).toBe(false);
+    for (const role of ["system_admin", "evaluator"] as const) {
       expect(ROLE_META[role].nav.find(item => item.to.endsWith("/v2-triage"))?.label).toBe("Alert Triage");
       expect(ROLE_META[role].nav.some(item => item.label === "Analyst Workspace")).toBe(false);
     }

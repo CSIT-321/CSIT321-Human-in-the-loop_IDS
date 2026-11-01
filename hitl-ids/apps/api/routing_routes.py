@@ -11,7 +11,8 @@ from packages.detection.tier2_escalation import EscalateCaseRequest, escalate_ca
 from packages.detection.tier2_cases import CaseConflict
 from apps.api.deps import ApiError, get_connection
 from apps.api.read_only import ReadConn, ReadPrincipal
-from packages.detection.adapters.operational_v2 import read_triage
+from packages.detection.adapters.operational_v2 import read_triage, read_projection
+from packages.contracts.operational_v2 import OperationalAlertV2
 from packages.detection.routing import (
     RoutingRequest, RoutingAction, RoutingConflict, allowed_actions, decode_audit,
     route_alert, state_version,
@@ -37,7 +38,7 @@ def _view(conn, alert_id, principal):
                          'ORDER BY id DESC LIMIT 1', (alert_id,)).fetchone()
     case = conn.execute('SELECT case_ref FROM tier2_cases WHERE primary_operational_alert_id=?', (alert_id,)).fetchone()
     return RoutingView(operational_alert_ref=row['operational_alert_ref'], title=row['detection_title'],
-        detector_name=row['detector_name'], state=state, state_version=state_version(state),
+        detector_name=row['detector_name'], detector_source=row['detector_source'], state=state, state_version=state_version(state),
         review_reasons=[state.review_reason], latest_decision=decode_audit(audit) if audit else None,
         allowed_actions=list(allowed_actions(state)) if principal.role in ('security_analyst', 'system_admin') else [],
         case_ref=case['case_ref'] if case else None)
@@ -59,6 +60,14 @@ def get_routing(alertRef: UUID, conn: ReadConn, principal: ReadPrincipal):
     with conn:
         conn.execute('BEGIN')
         return _view(conn, _id(conn, alertRef), principal)
+
+
+@router.get('/{alertRef}/evidence', response_model=OperationalAlertV2, operation_id='getV2AlertEvidence')
+def get_evidence(alertRef: UUID, conn: ReadConn, principal: ReadPrincipal):
+    """Immutable source-neutral evidence; the read-only dependency never migrates or writes."""
+    with conn:
+        conn.execute('BEGIN')
+        return read_projection(conn, _id(conn, alertRef))
 
 
 def _decide(ref, request, conn, principal, action: RoutingAction):

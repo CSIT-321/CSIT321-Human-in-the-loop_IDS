@@ -8,12 +8,17 @@ test("human lessons earn deferral, conflict recalls it, and human override is st
   await page.getByLabel("Username").fill("g.ang");
   await page.getByLabel("Password",{exact:true}).fill("analyst-demo");
   await page.getByRole("button",{name:"Sign in"}).click();
-  await page.getByRole("link",{name:"Alert Triage"}).click();
-  const options=page.locator("#v2-alert option").filter({hasText:"DEMO selective SSH scan"});
+  await page.getByRole("link",{name:"Analyst Workstation"}).click();
+  const options=page.getByRole("list",{name:"Operational alerts"}).getByRole("button").filter({hasText:"DEMO selective SSH scan"});
   await expect(options).toHaveCount(6);
-  const refs=await options.evaluateAll(nodes=>nodes.map(node=>(node as HTMLOptionElement).value));
+  const refs:string[]=[];
+  for(let index=0;index<await options.count();index++){
+    await options.nth(index).click();
+    refs.push(new URL(page.url()).searchParams.get("alertRef")!);
+  }
   for(const ref of refs.slice(0,3)){
-    await page.getByLabel("Operational alert",{exact:true}).selectOption(ref);
+    await page.goto("/analyst/operations?alertRef="+ref);
+    await page.getByRole("tab",{name:"Triage Memory",exact:true}).click();
     await page.getByLabel("Human memory outcome").selectOption("expected_activity");
     await page.getByLabel("Human memory reason").fill("Authorised internal vulnerability scanner; synthetic scenario");
     await page.getByRole("button",{name:"Record Human Memory Review"}).click();
@@ -24,6 +29,7 @@ test("human lessons earn deferral, conflict recalls it, and human override is st
   await page.getByRole("button",{name:"Activate Lesson"}).click();
   await expect(page.getByRole("region",{name:"Triage lesson detail"}).getByText("active",{exact:true})).toBeVisible();
   await page.goto("/analyst/v2-triage?alertRef="+refs[3]);
+  await page.getByRole("tab",{name:"Context & Review",exact:true}).click();
   const section=page.getByRole("region",{name:"Selective Human Review",exact:true});
   await expect(section.getByText("Must Review",{exact:true})).toBeVisible();
   await page.getByLabel("Review policy or override reason").fill("Evaluate trusted synthetic context against activated memory");
@@ -45,20 +51,23 @@ test("human lessons earn deferral, conflict recalls it, and human override is st
   await page.getByRole("tab",{name:"No Immediate Review",exact:true}).click();
   await expect(page.getByRole("link",{name:"DEMO selective SSH scan"})).toBeVisible();
   await page.goto("/analyst/v2-triage?alertRef="+refs[4]);
+  await page.getByRole("tab",{name:"Triage Memory",exact:true}).click();
   await page.getByLabel("Human memory outcome").selectOption("confirmed_malicious");
   await page.getByLabel("Human memory reason").fill("Contradictory fixture investigation evidence");
   await page.getByRole("button",{name:"Record Human Memory Review"}).click();
   await expect(page.getByText("conflict review",{exact:true})).toBeVisible();
   await page.goto("/analyst/v2-triage?alertRef="+refs[5]);
+  await page.getByRole("tab",{name:"Context & Review",exact:true}).click();
   await page.getByLabel("Review policy or override reason").fill("Re-evaluate after contradictory human evidence");
   await page.getByRole("button",{name:"Evaluate Review Policy"}).click();
   await expect(section.getByText("Must Review",{exact:true})).toBeVisible();
   await expect(section.getByText("MEMORY_CONFLICT",{exact:true})).toBeVisible();
   await page.goto("/analyst/v2-triage?alertRef="+refs[3]);
+  await page.getByRole("tab",{name:"Context & Review",exact:true}).click();
   await expect(section.getByText("Prior deferral recalled")).toBeVisible();
   await page.getByLabel("Review policy or override reason").fill("Human requires continued Tier 1 investigation");
   await page.getByRole("button",{name:"Require Human Review",exact:true}).click();
   await expect(section.getByText("HUMAN_REVIEW_OVERRIDE",{exact:true})).toBeVisible();
-  await expect(page.getByRole("region",{name:"V2 alert routing"}).getByText("tier1 review",{exact:true})).toBeVisible();
+  await expect(page.getByRole("region",{name:"Operational alert workspace"}).getByText("tier1 review",{exact:true})).toBeVisible();
   expect(errors).toEqual([]);
 });

@@ -66,13 +66,13 @@ describe("Analyst Workstation tabs", () => {
     const { router } = renderApp("/analyst/workstation", { session: ANALYST });
     expect(screen.getByRole("heading", { name: "Legacy Flow Workstation" })).toBeVisible();
     expect(screen.queryByRole("heading", { name: "Workstation" })).toBeNull();
-    expect(screen.getByText(/Historical recorded-flow analysis using the legacy Signature\/XGBoost pipeline\. For current Tier 1\/Tier 2 operational routing, use Alert Triage\./)).toBeVisible();
+    expect(screen.getByText(/Historical recorded-flow analysis using the legacy Signature\/XGBoost pipeline\. For current Tier 1\/Tier 2 operational routing, use Analyst Workstation\./)).toBeVisible();
     expect(screen.getByRole("region", { name: "Alert queue" })).toBeVisible();
-    const triage = screen.getByRole("link", { name: "Open Alert Triage" });
-    expect(triage).toHaveAttribute("href", "/analyst/v2-triage");
+    const triage = screen.getByRole("link", { name: "Open Analyst Workstation" });
+    expect(triage).toHaveAttribute("href", "/analyst/operations");
     await userEvent.click(triage);
-    await waitFor(() => expect(router.state.location.pathname).toBe("/analyst/v2-triage"));
-    expect(screen.getByRole("heading", { name: "Alert Triage" })).toBeVisible();
+    await waitFor(() => expect(router.state.location.pathname).toBe("/analyst/operations"));
+    expect(screen.getByRole("heading", { name: "Analyst Workstation" })).toBeVisible();
   });
   it("renders queue counts and evidence counts from their separate summary fields", async () => {
     stubWorkstation();

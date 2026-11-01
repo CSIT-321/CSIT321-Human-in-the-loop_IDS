@@ -12,9 +12,9 @@ test("original console, persisted preferences and responsive deep links", async 
   await page.getByLabel("Username").fill("g.ang");
   await page.getByLabel("Password", { exact: true }).fill("analyst-demo");
   await page.getByRole("button", { name: "Sign in" }).click();
-  await expect(page).toHaveURL(/\/analyst\/v2-triage$/);
-  await expect(page.getByRole("heading", { name: "Alert Triage", exact: true })).toBeVisible();
-  await page.getByRole("link", { name: "Legacy Flow Workstation", exact: true }).click();
+  await expect(page).toHaveURL(/\/analyst\/operations$/);
+  await expect(page.getByRole("heading", { name: "Analyst Workstation", exact: true })).toBeVisible();
+  await page.goto("/analyst/workstation");
   await expect(page.getByRole("heading", { name: "Legacy Flow Workstation", exact: true })).toBeVisible();
   await expect(page.getByRole("region", { name: "Alert queue", exact: true })).toBeVisible();
   await expect(page.getByText("Legacy Flow Detector", { exact: true })).toBeVisible();
@@ -35,7 +35,7 @@ test("original console, persisted preferences and responsive deep links", async 
       await expect(page.getByRole("button", { name: "Expand sidebar" })).toHaveAttribute("aria-expanded", "false");
       await expect(toggle).toHaveAttribute("aria-pressed", String(theme === "light"));
       await page.screenshot({ path: `test-results/refinement-collapsed-${width}-${theme}.png` });
-      for (const [label, route] of [["Incoming Alerts", "/analyst/external-admission"], ["Alert Triage", "/analyst/v2-triage"]]) {
+      for (const [label, route] of [["Incoming Alerts", "/analyst/external-admission"], ["Analyst Workstation", "/analyst/operations"]]) {
         const link = page.getByRole("link", { name: label, exact: true });
         await link.scrollIntoViewIfNeeded(); await link.click();
         await expect(page).toHaveURL(new RegExp(route + "$"));
@@ -66,7 +66,7 @@ test("canonical detector fixtures do not inherit historical flow evidence", asyn
   await page.getByLabel("Username").fill("g.ang");
   await page.getByLabel("Password", { exact: true }).fill("analyst-demo");
   await page.getByRole("button", { name: "Sign in" }).click();
-  await expect(page).toHaveURL(/\/analyst\/v2-triage$/);
+  await expect(page).toHaveURL(/\/analyst\/operations$/);
   await page.goto("/analyst/workstation");
   const fullPage = page.getByRole("link", { name: "Open full page" });
   await expect(fullPage).toBeVisible();

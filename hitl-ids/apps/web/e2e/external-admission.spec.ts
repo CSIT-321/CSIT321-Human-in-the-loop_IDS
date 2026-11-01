@@ -28,11 +28,10 @@ test("staged Suricata review and admission reaches Tier 1", async ({ page }) => 
   await page.getByRole("button", { name: "Admit to HITL Workflow" }).click();
   await expect(page.getByRole("status")).toContainText("Operational admission completed");
   await expect(page.locator("#external-alert option:checked")).toContainText("(admitted)");
-  await page.getByRole("link", { name: "Open Alert Triage" }).click();
-  await expect(page.getByRole("heading", { name: "Alert Triage" })).toBeVisible();
-  await expect(page.getByText("tier1 review", { exact: true })).toBeVisible();
-  await expect(page.getByText("triage", { exact: true })).toBeVisible();
-  await expect(page.getByText("P3", { exact: true })).toBeVisible();
-  await expect(page.getByText("NO", { exact: true })).toBeVisible();
+  await page.getByRole("link", { name: "Open Analyst Workstation" }).click();
+  await expect(page.getByRole("heading", { name: "Analyst Workstation" })).toBeVisible();
+  await expect(page.getByRole("region", { name: "Operational alert workspace" }).getByText("tier1 review", { exact: true })).toBeVisible();
+  await expect(page.getByRole("region", { name: "Operational alert workspace" }).getByText(/^P3 \/ /)).toBeVisible();
+  await expect(page.getByText("Tier 2 Recommended: NO", { exact: true })).toBeVisible();
   expect(errors).toEqual([]);
 });
