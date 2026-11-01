@@ -72,7 +72,7 @@ export function ResponseRecommendationCard({ view,caseRevision,canWrite,onChange
   </article>;
 }
 
-export function ResponseRecommendations({ current,canWrite }: { current:Schemas["CaseView"];canWrite:boolean }) {
+export function ResponseRecommendations({ current,canWrite,onChange }: { current:Schemas["CaseView"];canWrite:boolean;onChange?:()=>void }) {
   const [offset,setOffset]=useState(0);
   const [mode,setMode]=useState<"system_policy"|"analyst">("system_policy");
   const [kind,setKind]=useState<Kind>("further_investigation");
@@ -104,7 +104,7 @@ export function ResponseRecommendations({ current,canWrite }: { current:Schemas[
         params,body:{...body,recommendationType:kind,targetType,targetValue:target.trim()},
       }));
       else await unwrap(api.POST("/api/v2/tier2/cases/{caseRef}/responses/recommend",{params,body}));
-      pending.current=null;setReason("");setOffset(0);responses.reload();setMessage("Recommendation recorded; pending human approval.");
+      pending.current=null;setReason("");setOffset(0);responses.reload();onChange?.();setMessage("Recommendation recorded; pending human approval.");
     } catch(cause) { setError(cause instanceof Error ? cause.message : "Proposal could not be confirmed."); }
     finally {setBusy(false);}
   }
@@ -117,7 +117,7 @@ export function ResponseRecommendations({ current,canWrite }: { current:Schemas[
       {responses.data.items.length===0 && <p className="text-sm">No response recommendations.</p>}
       {responses.data.items.map(view=><ResponseRecommendationCard key={view.proposal.recommendationRef+":"+view.revision}
         view={view} caseRevision={responses.data.caseRevision} canWrite={canWrite}
-        onChange={()=>{responses.reload();setMessage("Human decision recorded. No action executed.");}} />)}
+        onChange={()=>{responses.reload();onChange?.();setMessage("Human decision recorded. No action executed.");}} />)}
       <div className="flex flex-wrap items-center gap-2 text-sm">
         <button className={button} disabled={offset===0} onClick={()=>setOffset(Math.max(0,offset-50))}>Previous responses</button>
         <span>{responses.data.page.total} recommendations</span>

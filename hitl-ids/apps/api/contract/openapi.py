@@ -671,11 +671,12 @@ def _paths() -> dict[str, Any]:
     paths['/api/v2/tier2/cases/{caseRef}/events'] = {'get': {
         'operationId':'listTier2CaseEvents','summary':'Read immutable investigation timeline','tags':['Tier 2 cases'],
         'parameters':[AUTH_PARAMETER,case_ref,*paging,
-            {'name':'action','in':'query','schema':{'anyOf':[{'type':'string','enum':['create','link','note','finding','start']},{'type':'null'}]}}],
+            {'name':'action','in':'query','schema':{'anyOf':[{'type':'string','enum':['create','link','note','finding','start','resolve']},{'type':'null'}]}}],
         'responses':{'200':{'description':'Case history page',**_page_of(CaseEvent)},**_errors(400,404)}}}
     case_operations = [
         ('/api/v2/alerts/{alertRef}/tier2/case','createTier2Case',CreateCaseRequest,ALERT_REF),
         ('/api/v2/tier2/cases/{caseRef}/alerts','linkTier2CaseAlert',LinkCaseRequest,case_ref),
+        ('/api/v2/tier2/cases/{caseRef}/resolve','resolveTier2Case',CaseCommand,case_ref),
         ('/api/v2/tier2/cases/{caseRef}/notes','addTier2CaseNote',CaseCommand,case_ref),
         ('/api/v2/tier2/cases/{caseRef}/conclusions','recordTier2InvestigationConclusion',InvestigationConclusionRequest,case_ref),
         ('/api/v2/tier2/cases/{caseRef}/findings','recordTier2CaseFinding',FindingRequest,case_ref),

@@ -1209,6 +1209,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v2/tier2/cases/{caseRef}/resolve": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** resolveTier2Case */
+        post: operations["resolveTier2Case"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v2/tier2/cases/{caseRef}/responses": {
         parameters: {
             query?: never;
@@ -1869,7 +1886,7 @@ export interface components {
              * Action
              * @enum {string}
              */
-            action: "create" | "link" | "note" | "finding" | "start";
+            action: "create" | "link" | "note" | "finding" | "start" | "resolve";
             /** Actorid */
             actorId: number | null;
             /** Afterstate */
@@ -1905,6 +1922,8 @@ export interface components {
             linkedAlertRef: string | null;
             /** Reason */
             reason: string;
+            /** @default null */
+            resolution: components["schemas"]["CaseResolution"] | null;
         };
         /** CaseMutation */
         CaseMutation: {
@@ -1913,6 +1932,45 @@ export interface components {
             eventId: number;
             /** Replayed */
             replayed: boolean;
+        };
+        /** CaseResolution */
+        CaseResolution: {
+            /** Actorid */
+            actorId: number;
+            /** Actorname */
+            actorName: string;
+            /**
+             * Caseref
+             * Format: uuid
+             */
+            caseRef: string;
+            /** Caserevision */
+            caseRevision: number;
+            conclusion: components["schemas"]["InvestigationConclusion"];
+            /** Createdat */
+            createdAt: string;
+            /** Eventid */
+            eventId: number;
+            /**
+             * Newstatus
+             * @default resolved
+             * @constant
+             */
+            newStatus: "resolved";
+            /**
+             * Previousstatus
+             * @enum {string}
+             */
+            previousStatus: "open" | "investigating";
+            /** Reason */
+            reason: string;
+            /**
+             * Requestid
+             * Format: uuid
+             */
+            requestId: string;
+            /** Responses */
+            responses: components["schemas"]["ResolutionResponse"][];
         };
         /** CaseSnapshot */
         CaseSnapshot: {
@@ -1952,6 +2010,8 @@ export interface components {
              * Format: uuid
              */
             primaryOperationalAlertRef: string;
+            /** @default null */
+            resolution: components["schemas"]["CaseResolution"] | null;
             /** Revision */
             revision: number;
             snapshot: components["schemas"]["CaseSnapshot"];
@@ -1959,7 +2019,7 @@ export interface components {
              * Status
              * @enum {string}
              */
-            status: "open" | "investigating";
+            status: "open" | "investigating" | "resolved";
             /** @default null */
             systemAttackClassification: components["schemas"]["AttackClassification"] | null;
             /** Title */
@@ -4490,6 +4550,33 @@ export interface components {
             sourceRecordRef: string;
             /** Timestamp */
             timestamp: string;
+        };
+        /** ResolutionResponse */
+        ResolutionResponse: {
+            /**
+             * Approvalstatus
+             * @enum {string}
+             */
+            approvalStatus: "approved" | "rejected";
+            /** Decisionactorid */
+            decisionActorId: number;
+            /** Decisionat */
+            decisionAt: string;
+            /**
+             * Executionstatus
+             * @default not_executed
+             * @constant
+             */
+            executionStatus: "not_executed";
+            /** Proposalcaserevision */
+            proposalCaseRevision: number;
+            /**
+             * Recommendationref
+             * Format: uuid
+             */
+            recommendationRef: string;
+            /** Recommendationtype */
+            recommendationType: string;
         };
         /** ResolvedField */
         ResolvedField: {
@@ -10038,7 +10125,7 @@ export interface operations {
             query?: {
                 limit?: number;
                 offset?: number;
-                action?: ("create" | "link" | "note" | "finding" | "start") | null;
+                action?: ("create" | "link" | "note" | "finding" | "start" | "resolve") | null;
             };
             header?: {
                 /** @description `Bearer <token>` from POST /api/auth/login */
@@ -10176,6 +10263,80 @@ export interface operations {
         };
     };
     addTier2CaseNote: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description `Bearer <token>` from POST /api/auth/login */
+                Authorization?: string;
+            };
+            path: {
+                caseRef: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CaseCommand"];
+            };
+        };
+        responses: {
+            /** @description Audited case decision */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CaseMutation"];
+                };
+            };
+            /** @description Validation failed */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not signed in, or the token expired */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Role not permitted */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    resolveTier2Case: {
         parameters: {
             query?: never;
             header?: {

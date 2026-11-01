@@ -197,6 +197,8 @@ def propose_response(conn,case_ref: UUID,*,actor_id:int,request:ResponseRequest,
             conn.commit()
             return result
         case = read_case(conn,case_ref)
+        if case.status=='resolved':
+            raise ResponseConflict('Case is resolved; new response proposals are closed')
         if case.revision != request.expected_case_revision:
             raise ResponseConflict('case changed; refresh before proposing a response')
         finding = _finding(conn,case_id)
@@ -250,6 +252,8 @@ def decide_response(conn,case_ref:UUID,recommendation_ref:UUID,*,actor_id:int,
             return result
         current = _view(conn,row,case_ref)
         case = read_case(conn,case_ref)
+        if case.status=='resolved':
+            raise ResponseConflict('Case is resolved; new response decisions are closed')
         if case.revision != request.expected_case_revision or current.revision != request.expected_revision:
             raise ResponseConflict('case or recommendation changed; refresh before deciding')
         if current.status != 'pending':

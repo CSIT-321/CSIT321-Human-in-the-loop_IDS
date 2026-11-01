@@ -145,7 +145,7 @@ def test_migration_seventeen_preserves_verdicts_and_rolls_back(tmp_path,monkeypa
         with pytest.raises(sqlite3.OperationalError):db.migrate(c)
         assert '\n'.join(c.iterdump())==dump
         monkeypatch.setattr(db,'MIGRATIONS',migrations)
-        assert db.migrate(c)==[17,18] and db.migrate(c)==[]
+        assert db.migrate(c)==[17,18,19] and db.migrate(c)==[]
         assert {t:[tuple(r) for r in c.execute('SELECT * FROM '+t)] for t in tables}==before
         assert not c.execute('PRAGMA foreign_key_check').fetchall()
     finally:c.close()

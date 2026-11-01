@@ -8,6 +8,7 @@ import { ResponseRecommendations } from "./ResponseRecommendations";
 import { InvestigationAssistance } from "./InvestigationAssistance";
 import { ConclusionDetails, finalCategories, systemCategoryLabel, type FinalCategory } from "./InvestigationConclusion";
 import { ConclusionLearning } from "./ConclusionLearning";
+import { CaseResolution, ResolutionDetails } from "./CaseResolution";
 
 const button = "rounded-sm border border-border px-3 py-2 text-sm hover:bg-raised disabled:opacity-50";
 const input = "w-full min-w-0 rounded-sm border border-border bg-surface p-2 text-sm";
@@ -70,7 +71,7 @@ export function Tier2CasesPage() {
             <td className="border-b border-border p-2"><Link className="text-accent underline" title={item.caseRef} to={prefixFor(session?.role) + "/tier2-cases/" + item.caseRef}>{item.caseRef.slice(0, 8)}</Link></td>
             <td className="min-w-48 border-b border-border p-2">{item.title}</td>
             <td className="border-b border-border p-2">{item.snapshot.triage.priorityBand ?? "Unassigned"} / {item.snapshot.triage.operationalPriority ?? "Not assigned"}</td>
-            <td className="border-b border-border p-2">{item.status}</td><td className="border-b border-border p-2">{item.ownerActorId == null ? "Unassigned" : `Actor #${item.ownerActorId}`}</td>
+            <td className="border-b border-border p-2">{item.status === "resolved" ? "Resolved" : item.status}</td><td className="border-b border-border p-2">{item.ownerActorId == null ? "Unassigned" : `Actor #${item.ownerActorId}`}</td>
             <td className="border-b border-border p-2">{item.createdAt}</td>
             <td className="border-b border-border p-2"><Link className="text-accent underline" to={prefixFor(session?.role) + "/v2-triage?alertRef=" + item.primaryOperationalAlertRef}>{item.primaryOperationalAlertRef.slice(0, 8)}</Link></td>
           </tr>)}</tbody>
@@ -100,6 +101,7 @@ export function Tier2CaseDetailPage() {
 export function CaseInvestigation({ initial, refresh }: { initial: Case; refresh: () => void }) {
   const { session } = useSession();
   const [current, setCurrent] = useState(initial);
+  const [responseVersion,setResponseVersion] = useState(0);
   const [tab, setTab] = useState<Tab>("note");
   const [offset, setOffset] = useState(0);
   const [reason, setReason] = useState("");
@@ -110,7 +112,7 @@ export function CaseInvestigation({ initial, refresh }: { initial: Case; refresh
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
   const pending = useRef<{ key: string; id: string } | null>(null);
-  const canWrite = session?.role === "security_analyst" || session?.role === "system_admin";
+  const canWrite = current.status !== "resolved" && (session?.role === "security_analyst" || session?.role === "system_admin");
   const events = useApi(signal => unwrap(api.GET("/api/v2/tier2/cases/{caseRef}/events", {
     params: { path: { caseRef: current.caseRef }, query: { limit: 50, offset, ...(tab === "timeline" ? {} : { action: tab }) } }, signal,
   })), [current.caseRef, current.revision, tab, offset]);
@@ -137,7 +139,8 @@ export function CaseInvestigation({ initial, refresh }: { initial: Case; refresh
     <PageHeader title={current.title} />
     <section className="space-y-3" aria-label="Case summary">
       <p className="break-all font-mono text-xs">{current.caseRef}</p>
-      <Pill tone="accent">{current.status}</Pill>
+      <Pill tone="accent">{current.status === "resolved" ? "Resolved" : current.status}</Pill>
+      {current.status === "resolved" && <p className="text-sm">Investigation closed. Evidence, history and human learning provenance remain available.</p>}
       <dl className="grid grid-cols-1 gap-3 text-sm sm:grid-cols-2">
         <div><dt className="text-muted">Owner</dt><dd>{current.ownerActorId == null ? "Unassigned" : `Actor #${current.ownerActorId}`}</dd></div>
         <div><dt className="text-muted">Creation Source</dt><dd>{current.decisionSource === "system_policy" ? "System Policy" : `Analyst #${current.createdByActorId}`}</dd></div>
@@ -186,6 +189,7 @@ export function CaseInvestigation({ initial, refresh }: { initial: Case; refresh
         {events.data.items.length === 0 && <p className="text-sm">No records yet.</p>}
         {events.data.items.map(event => <article key={event.id} className="space-y-1 border-b border-border py-3">
           <p className="text-xs text-muted">{event.eventType} / {event.decisionSource === "system_policy" ? "System Policy" : `actor #${event.actorId}`} / {event.createdAt}</p>
+          {event.resolution && <ResolutionDetails resolution={event.resolution} />}
           {event.conclusion ? <><h3 className="font-semibold">{event.conclusion.recordKind === "legacy_finding" ? "Historical Finding" : "Investigation Conclusion"}</h3>
             <ConclusionDetails conclusion={event.conclusion} />
             <p className="text-xs text-muted">System classification recorded with conclusion: {systemCategoryLabel(event.conclusion.systemClassification)}</p></> : <>
@@ -226,6 +230,7 @@ export function CaseInvestigation({ initial, refresh }: { initial: Case; refresh
       <button className={button} disabled={busy} onClick={refresh}>Refresh case</button>
     </section>
     <ConclusionLearning current={current} canWrite={canWrite} prefix={prefixFor(session?.role)} />
-    <ResponseRecommendations key={current.caseRef} current={current} canWrite={canWrite} />
+    <ResponseRecommendations key={current.caseRef} current={current} canWrite={canWrite} onChange={()=>setResponseVersion(value=>value+1)} />
+    <CaseResolution current={current} canWrite={canWrite} responseVersion={responseVersion} onResolved={setCurrent} />
   </div>;
 }

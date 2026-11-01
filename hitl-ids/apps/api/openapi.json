@@ -996,7 +996,8 @@
               "link",
               "note",
               "finding",
-              "start"
+              "start",
+              "resolve"
             ],
             "title": "Action",
             "type": "string"
@@ -1091,6 +1092,17 @@
           "reason": {
             "title": "Reason",
             "type": "string"
+          },
+          "resolution": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/CaseResolution"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
           }
         },
         "required": [
@@ -1130,6 +1142,84 @@
           "replayed"
         ],
         "title": "CaseMutation",
+        "type": "object"
+      },
+      "CaseResolution": {
+        "additionalProperties": false,
+        "properties": {
+          "actorId": {
+            "title": "Actorid",
+            "type": "integer"
+          },
+          "actorName": {
+            "title": "Actorname",
+            "type": "string"
+          },
+          "caseRef": {
+            "format": "uuid",
+            "title": "Caseref",
+            "type": "string"
+          },
+          "caseRevision": {
+            "title": "Caserevision",
+            "type": "integer"
+          },
+          "conclusion": {
+            "$ref": "#/components/schemas/InvestigationConclusion"
+          },
+          "createdAt": {
+            "title": "Createdat",
+            "type": "string"
+          },
+          "eventId": {
+            "title": "Eventid",
+            "type": "integer"
+          },
+          "newStatus": {
+            "const": "resolved",
+            "default": "resolved",
+            "title": "Newstatus",
+            "type": "string"
+          },
+          "previousStatus": {
+            "enum": [
+              "open",
+              "investigating"
+            ],
+            "title": "Previousstatus",
+            "type": "string"
+          },
+          "reason": {
+            "title": "Reason",
+            "type": "string"
+          },
+          "requestId": {
+            "format": "uuid",
+            "title": "Requestid",
+            "type": "string"
+          },
+          "responses": {
+            "items": {
+              "$ref": "#/components/schemas/ResolutionResponse"
+            },
+            "title": "Responses",
+            "type": "array"
+          }
+        },
+        "required": [
+          "eventId",
+          "caseRef",
+          "actorId",
+          "actorName",
+          "reason",
+          "createdAt",
+          "previousStatus",
+          "caseRevision",
+          "requestId",
+          "conclusion",
+          "responses"
+        ],
+        "title": "CaseResolution",
         "type": "object"
       },
       "CaseSnapshot": {
@@ -1227,6 +1317,17 @@
             "title": "Primaryoperationalalertref",
             "type": "string"
           },
+          "resolution": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/CaseResolution"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
           "revision": {
             "title": "Revision",
             "type": "integer"
@@ -1237,7 +1338,8 @@
           "status": {
             "enum": [
               "open",
-              "investigating"
+              "investigating",
+              "resolved"
             ],
             "title": "Status",
             "type": "string"
@@ -7198,6 +7300,56 @@
           "metadata"
         ],
         "title": "RelatedSignature",
+        "type": "object"
+      },
+      "ResolutionResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "approvalStatus": {
+            "enum": [
+              "approved",
+              "rejected"
+            ],
+            "title": "Approvalstatus",
+            "type": "string"
+          },
+          "decisionActorId": {
+            "title": "Decisionactorid",
+            "type": "integer"
+          },
+          "decisionAt": {
+            "title": "Decisionat",
+            "type": "string"
+          },
+          "executionStatus": {
+            "const": "not_executed",
+            "default": "not_executed",
+            "title": "Executionstatus",
+            "type": "string"
+          },
+          "proposalCaseRevision": {
+            "title": "Proposalcaserevision",
+            "type": "integer"
+          },
+          "recommendationRef": {
+            "format": "uuid",
+            "title": "Recommendationref",
+            "type": "string"
+          },
+          "recommendationType": {
+            "title": "Recommendationtype",
+            "type": "string"
+          }
+        },
+        "required": [
+          "recommendationRef",
+          "recommendationType",
+          "proposalCaseRevision",
+          "approvalStatus",
+          "decisionActorId",
+          "decisionAt"
+        ],
+        "title": "ResolutionResponse",
         "type": "object"
       },
       "ResolvedField": {
@@ -17631,7 +17783,8 @@
                     "link",
                     "note",
                     "finding",
-                    "start"
+                    "start",
+                    "resolve"
                   ],
                   "type": "string"
                 },
@@ -17918,6 +18071,112 @@
           }
         },
         "summary": "addTier2CaseNote",
+        "tags": [
+          "Tier 2 cases"
+        ],
+        "x-required-roles": [
+          "security_analyst",
+          "system_admin"
+        ]
+      }
+    },
+    "/api/v2/tier2/cases/{caseRef}/resolve": {
+      "post": {
+        "operationId": "resolveTier2Case",
+        "parameters": [
+          {
+            "description": "`Bearer <token>` from POST /api/auth/login",
+            "in": "header",
+            "name": "Authorization",
+            "required": false,
+            "schema": {
+              "example": "Bearer eyJhbGciOiJIUzI1NiJ9...",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "caseRef",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CaseCommand"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CaseMutation"
+                }
+              }
+            },
+            "description": "Audited case decision"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Validation failed"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not signed in, or the token expired"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Role not permitted"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          }
+        },
+        "summary": "resolveTier2Case",
         "tags": [
           "Tier 2 cases"
         ],

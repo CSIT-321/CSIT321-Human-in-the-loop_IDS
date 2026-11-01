@@ -14,9 +14,10 @@ from packages.detection.routing import RoutingAudit, decode_audit, state_version
 Finding = Literal['confirmed_malicious','suspicious','inconclusive','expected_activity']
 FinalAttackCategory = Literal['brute_force','botnet_c2','dos','ddos','web_attack','infiltration',
     'reconnaissance_port_scan','malware_exploit','other_known_attack']
-CaseAction = Literal['create','link','note','finding','start']
+CaseAction = Literal['create','link','note','finding','start','resolve']
 EVENTS = dict(create='V2_TIER2_CASE_CREATED', link='V2_TIER2_ALERT_LINKED',
-    note='V2_TIER2_NOTE_ADDED', finding='V2_TIER2_FINDING_RECORDED', start='V2_TIER2_INVESTIGATION_STARTED')
+    note='V2_TIER2_NOTE_ADDED', finding='V2_TIER2_FINDING_RECORDED', start='V2_TIER2_INVESTIGATION_STARTED',
+    resolve='V2_TIER2_CASE_RESOLVED')
 
 
 class CaseConflict(ValueError):
@@ -86,6 +87,31 @@ class InvestigationConclusion(V2Contract):
     record_kind: Literal['investigation_conclusion','legacy_finding']
 
 
+class ResolutionResponse(V2Contract):
+    recommendation_ref: UUID
+    recommendation_type: str
+    proposal_case_revision: int
+    approval_status: Literal['approved','rejected']
+    decision_actor_id: int
+    decision_at: str
+    execution_status: Literal['not_executed'] = 'not_executed'
+
+
+class CaseResolution(V2Contract):
+    event_id: int
+    case_ref: UUID
+    actor_id: int
+    actor_name: str
+    reason: str
+    created_at: str
+    previous_status: Literal['open','investigating']
+    new_status: Literal['resolved'] = 'resolved'
+    case_revision: int
+    request_id: UUID
+    conclusion: InvestigationConclusion
+    responses: list[ResolutionResponse]
+
+
 class CaseSnapshot(V2Contract):
     detector: OperationalAlertV2
     triage: OperationalTriageStateV2
@@ -104,11 +130,12 @@ class CaseView(V2Contract):
     decision_source: Literal['analyst', 'system_policy'] = 'analyst'
     created_at: str
     updated_at: str
-    status: Literal['open','investigating']
+    status: Literal['open','investigating','resolved']
     revision: int
     snapshot: CaseSnapshot
     system_attack_classification: AttackClassification | None = None
     latest_conclusion: InvestigationConclusion | None = None
+    resolution: CaseResolution | None = None
 
 
 class CaseEvent(V2Contract):
@@ -125,6 +152,7 @@ class CaseEvent(V2Contract):
     after_state: dict[str, Any]
     created_at: str
     conclusion: InvestigationConclusion | None = None
+    resolution: CaseResolution | None = None
 
 
 class CaseMutation(V2Contract):
@@ -165,7 +193,21 @@ def read_case(conn, ref):
         created_at=row['created_at'], updated_at=state['updated_at'], status=state['status'],
         revision=state['revision'], snapshot=snapshot,
         system_attack_classification=system_classification(conn,row['primary_operational_alert_id']),
-        latest_conclusion=latest_conclusion(conn,ref,row['id']))
+        latest_conclusion=latest_conclusion(conn,ref,row['id']),
+        resolution=latest_resolution(conn,ref,row['id']))
+
+
+def decode_resolution(row,ref):
+    if row is None or row['action']!='resolve': return None
+    after=json.loads(row['after_state']);snapshot=after['resolution']
+    return CaseResolution(event_id=row['id'],case_ref=ref,actor_id=row['actor_id'],actor_name=snapshot['actorName'],
+        reason=row['reason'],created_at=row['created_at'],previous_status=json.loads(row['before_state'])['status'],
+        case_revision=after['revision'],request_id=row['request_id'],conclusion=snapshot['conclusion'],responses=snapshot['responses'])
+
+
+def latest_resolution(conn,ref,case_id):
+    row=conn.execute("SELECT * FROM tier2_case_events WHERE case_id=? AND action='resolve' ORDER BY id DESC LIMIT 1",(case_id,)).fetchone()
+    return decode_resolution(row,ref)
 
 
 def system_classification(conn, alert_id):
@@ -271,7 +313,7 @@ def create_case(conn: sqlite3.Connection, alert_ref: UUID, *, actor_id: int, req
         raise
 
 
-def mutate_case(conn, ref: UUID, *, actor_id: int, action: Literal['link','note','finding','start'],
+def mutate_case(conn, ref: UUID, *, actor_id: int, action: Literal['link','note','finding','start','resolve'],
                 request: CaseCommand):
     model = (LinkCaseRequest if action == 'link' else
              InvestigationConclusionRequest if action == 'finding' and isinstance(request,InvestigationConclusionRequest) else
@@ -288,13 +330,31 @@ def mutate_case(conn, ref: UUID, *, actor_id: int, action: Literal['link','note'
             conn.commit()
             return result
         before = dict(conn.execute('SELECT * FROM tier2_case_state WHERE case_id=?',(case['id'],)).fetchone())
+        if before['status']=='resolved':
+            raise CaseConflict('Case is resolved; investigation is closed and cannot be reopened in V1')
         if before['revision'] != request.expected_revision:
             raise CaseConflict('case changed; refresh before recording another decision')
-        if action not in ('link','note','finding','start'):
+        if action not in ('link','note','finding','start','resolve'):
             raise CaseConflict('unsupported case action')
         if action == 'start' and before['status'] != 'open':
             raise CaseConflict('investigation has already started')
         linked_id = None
+        resolution=None
+        if action=='resolve':
+            conclusion=latest_conclusion(conn,ref,case['id'])
+            if conclusion is None:
+                raise CaseConflict('record an Investigation Conclusion before resolving the Case')
+            rows=conn.execute('SELECT r.*,d.decision,d.actor_id AS decision_actor,d.created_at AS decision_at '
+                'FROM response_recommendations r LEFT JOIN response_decisions d ON d.recommendation_id=r.id '
+                'WHERE r.case_id=? ORDER BY r.id',(case['id'],)).fetchall()
+            if any(row['decision'] is None for row in rows):
+                raise CaseConflict('complete human approval or rejection of pending response recommendations before resolving')
+            responses=[ResolutionResponse(recommendation_ref=row['recommendation_ref'],recommendation_type=row['recommendation_type'],
+                proposal_case_revision=row['case_revision'],approval_status=row['decision'],decision_actor_id=row['decision_actor'],
+                decision_at=row['decision_at']) for row in rows]
+            resolution=dict(actorName=db.get(conn,m.User,actor_id).display_name,
+                conclusion=conclusion.model_dump(mode='json',by_alias=True),
+                responses=[response.model_dump(mode='json',by_alias=True) for response in responses])
         if action == 'link':
             linked = conn.execute('SELECT id FROM operational_alerts_v2 WHERE operational_alert_ref=?',
                                    (str(request.operational_alert_ref),)).fetchone()
@@ -306,10 +366,11 @@ def mutate_case(conn, ref: UUID, *, actor_id: int, action: Literal['link','note'
                 raise CaseConflict('alert is already part of this case')
         previous_time = datetime.fromisoformat(before['updated_at'].replace('Z','+00:00'))
         stamp = db.format_timestamp(max(m.utc_now(),previous_time+timedelta(microseconds=1)))
-        status = 'investigating' if action == 'start' else before['status']
+        status = 'resolved' if action=='resolve' else 'investigating' if action == 'start' else before['status']
         conn.execute('UPDATE tier2_case_state SET status=?,revision=revision+1,updated_at=? WHERE case_id=?',
                      (status,stamp,case['id']))
         after = dict(conn.execute('SELECT * FROM tier2_case_state WHERE case_id=?',(case['id'],)).fetchone())
+        if resolution is not None: after['resolution']=resolution
         previous_learning=[]
         if isinstance(request,InvestigationConclusionRequest):
             from packages.detection.triage_memory import current_source_evidence,audit_expert_supersession
@@ -343,6 +404,6 @@ def read_events(conn, ref, limit, offset, action=None):
     items = [CaseEvent(id=row['id'],case_ref=ref,actor_id=row['actor_id'],action=row['action'],
         decision_source=dict(row).get('decision_source', 'analyst'),event_type=row['event_type'],reason=row['reason'],finding=row['finding'],linked_alert_ref=row['operational_alert_ref'],
         before_state=json.loads(row['before_state']),after_state=json.loads(row['after_state']),created_at=row['created_at'],
-        conclusion=decode_conclusion(row,ref))
+        conclusion=decode_conclusion(row,ref),resolution=decode_resolution(row,ref))
         for row in rows]
     return items,total

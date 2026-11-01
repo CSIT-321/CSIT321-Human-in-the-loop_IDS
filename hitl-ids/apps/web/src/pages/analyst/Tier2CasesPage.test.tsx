@@ -36,6 +36,26 @@ const assistance = {
 const empty = { items: [], page: { total: 0, returned: 0, offset: 0, limit: 50 } };
 
 describe("Tier 2 cases", () => {
+  it("keeps resolved Case history visible and hides all investigation, linking, response and learning write controls", async () => {
+    const closed={...record,status:"resolved",revision:4,resolution:{eventId:10,caseRef:ref,actorId:1,actorName:"Analyst",reason:"Investigation completed",createdAt:"2026-11-02T00:00:00Z",previousStatus:"investigating",newStatus:"resolved",caseRevision:4,requestId:ref,
+      conclusion:{eventId:9,finding:"expected_activity",finalAttackCategory:null},responses:[]}};
+    const event={id:10,eventType:"V2_TIER2_CASE_RESOLVED",decisionSource:"analyst",actorId:1,createdAt:closed.resolution.createdAt,reason:closed.resolution.reason,resolution:closed.resolution};
+    stubFetch(r=>jsonResponse(r.url.includes("/assistance")?assistance:r.url.includes("/responses")?{...empty,caseRevision:4}:r.url.includes("/events")?{...empty,items:[event]}:closed));
+    renderApp("/analyst/tier2-cases/"+ref,{session});
+    expect(await screen.findByText("Resolved")).toBeVisible();
+    expect(await screen.findByRole("heading",{name:"Investigation Brief"})).toBeVisible();
+    for(const tab of ["Investigation Notes","Investigation Conclusion","Linked Alerts","Audit Timeline"]){
+      await userEvent.click(screen.getByRole("tab",{name:tab}));
+      expect(screen.queryByLabelText("Investigation note")).not.toBeInTheDocument();
+      expect(screen.queryByRole("button",{name:"Record Investigation Conclusion"})).not.toBeInTheDocument();
+      expect(screen.queryByRole("button",{name:"Link alert"})).not.toBeInTheDocument();
+      expect(screen.queryByRole("button",{name:"Start investigation"})).not.toBeInTheDocument();
+    }
+    expect(screen.getByRole("tabpanel")).toHaveTextContent("Case Resolved");
+    expect(screen.queryByRole("button",{name:"Review link to Case"})).not.toBeInTheDocument();
+    expect(screen.queryByLabelText("Proposal reason")).not.toBeInTheDocument();
+    expect(screen.queryByRole("button",{name:"Use Expert Conclusion as Triage Memory Evidence"})).not.toBeInTheDocument();
+  });
   it("lists formal cases only and handles an empty list", async () => {
     const seen = stubFetch(() => jsonResponse(empty));
     renderApp("/analyst/tier2-cases", { session });

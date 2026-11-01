@@ -64,7 +64,7 @@ def assistance(caseRef: UUID, conn: ReadConn, principal: ReadPrincipal):
 
 @router.get('/tier2/cases/{caseRef}/events',response_model=Page[CaseEvent],operation_id='listTier2CaseEvents')
 def events(caseRef: UUID,conn: ReadConn,principal: ReadPrincipal,limit: int=Query(50,ge=1,le=200),offset: int=Query(0,ge=0),
-           action: Literal['create','link','note','finding','start'] | None=None):
+           action: Literal['create','link','note','finding','start','resolve'] | None=None):
     try:
         with conn:
             conn.execute('BEGIN')
@@ -103,6 +103,12 @@ def finding(caseRef: UUID,body: FindingRequest,conn: Conn,principal: Principal):
              operation_id='recordTier2InvestigationConclusion',dependencies=[MutationRole])
 def conclusion(caseRef: UUID,body: InvestigationConclusionRequest,conn: Conn,principal: Principal):
     return _mutate(conn,principal,caseRef,'finding',body)
+
+
+@router.post('/tier2/cases/{caseRef}/resolve',response_model=CaseMutation,
+             operation_id='resolveTier2Case',dependencies=[MutationRole])
+def resolve(caseRef: UUID,body: CaseCommand,conn: Conn,principal: Principal):
+    return _mutate(conn,principal,caseRef,'resolve',body)
 
 
 @router.post('/tier2/cases/{caseRef}/start-investigation',response_model=CaseMutation,
