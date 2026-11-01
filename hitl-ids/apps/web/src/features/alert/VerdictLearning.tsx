@@ -37,7 +37,7 @@ export function VerdictLearning({view,onVerdict,onContributed}:{view:Schemas["Ro
       <p>Analyst Verdict: <strong>{verdictLabels[current.outcome]}</strong></p>
       <p className="whitespace-pre-wrap break-words text-sm">Verdict reason: {current.reason}</p>
       <p className="text-xs text-muted">Verdict author: {current.actorName} · Revision {current.revision}</p>
-      {status?.contributionStatus==="superseded"&&<p role="status" className="text-warn">Previous Verdict evidence superseded. Contribute the current Verdict to update learning.</p>}
+      {status?.contributionStatus==="superseded"&&<p role="status" className="text-warn">{view.state.handlingRoute==="tier2_case"?"Previous Verdict evidence superseded by expert investigation. Use Human Learning in the Tier 2 Case.":"Previous Verdict evidence superseded. Contribute the current Verdict to update learning."}</p>}
       {status?.contributionStatus==="contributed"&&consistent&&<p role="status">Contributed · Scope: {status.scope}</p>}
       {status?.lessonRef&&<Link className="block text-accent underline" to={"/analyst/triage-memory?lessonRef="+status.lessonRef}>Open linked Memory lesson</Link>}
       {verdict.status==="success"&&verdict.data.canRecord&&consistent&&status?.contributionStatus!=="contributed"&&<div className="space-y-2">

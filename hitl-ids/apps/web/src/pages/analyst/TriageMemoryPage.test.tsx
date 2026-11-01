@@ -16,6 +16,20 @@ const view: Schemas["MemoryView"]={
 };
 
 describe("Triage memory",()=>{
+  it("distinguishes expert author/contributor, source Case and superseded evidence",async()=>{
+    const evidence={sourceKind:"tier2_conclusion",sourceConclusion:{eventId:9,finding:"confirmed_malicious",finalAttackCategory:"web_attack",actorId:1,caseRevision:3},
+      conclusionAuthorName:"Expert",contributionActorName:"Contributor",actorId:2,contributionScope:"exact",sourceCaseRef:ref,sourceOperationalAlertRef:ref,outcome:"confirmed_malicious",relation:"conflict",humanReason:"Canonical expert reason"};
+    stubFetch(req=>jsonResponse(req.url.includes("/events")?{...empty,items:[{id:4,eventType:"V2_TRIAGE_MEMORY_EXPERT_SUPERSEDED",actorId:2,createdAt:"2026-11-01T00:00:00Z",reason:"Expert correction",evidence,evidenceCurrent:false,lessonSnapshot:view}]}:view));
+    renderApp("/analyst/triage-memory?lessonRef="+ref,{session});
+    expect(await screen.findByText("Source: Tier 2 Investigation Conclusion")).toBeVisible();
+    expect(screen.getByText("Conclusion Author: Expert / #1")).toBeVisible();
+    expect(screen.getByText("Memory Contributor: Contributor / #2")).toBeVisible();
+    expect(screen.getByText("Human Final Attack Classification: Web Attack")).toBeVisible();
+    expect(screen.getByText("Investigation reason: Canonical expert reason")).toBeVisible();
+    expect(screen.getByRole("link",{name:"Source Alert"})).toHaveAttribute("href","/analyst/v2-triage?alertRef="+ref);
+    expect(screen.getByText("Superseded human evidence — excluded from effective support")).toBeVisible();
+    expect(screen.getByRole("link",{name:"Source Case"})).toHaveAttribute("href","/analyst/tier2-cases/"+ref);
+  });
   it("lists historical knowledge and keeps guidance advisory",async()=>{
     stubFetch(()=>jsonResponse({...empty,items:[view],page:{...empty.page,total:1}}));
     renderApp("/analyst/triage-memory",{session});

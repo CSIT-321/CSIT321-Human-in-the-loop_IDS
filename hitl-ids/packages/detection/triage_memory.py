@@ -5,7 +5,8 @@ import json
 from pathlib import Path
 from typing import Literal
 from uuid import UUID,uuid4
-from pydantic import AwareDatetime,Field,field_validator
+from pydantic import AwareDatetime,Field,field_validator,model_validator
+from packages.detection.tier2_cases import InvestigationConclusion
 from packages.contracts import db,models as m
 from packages.contracts.operational_v2 import V2Contract,OperationalAlertV2
 from packages.detection.adapters.operational_v2 import read_projection,read_triage
@@ -121,6 +122,11 @@ class MemoryView(V2Contract):
 
 
 class MemoryEvidence(V2Contract):
+    source_kind: Literal['analyst_verdict','tier2_conclusion','legacy_memory_review'] = 'legacy_memory_review'
+    source_conclusion: InvestigationConclusion | None = None
+    conclusion_author_name: str | None = None
+    contribution_actor_name: str | None = None
+    contribution_scope: Scope | None = None
     source_verdict_ref: UUID | None = None
     source_verdict_revision: int | None = None
     verdict_author_id: int | None = None
@@ -135,6 +141,13 @@ class MemoryEvidence(V2Contract):
     source_state_version: str
     relation: Literal['support','conflict']
     created_at: str
+
+    @model_validator(mode='before')
+    @classmethod
+    def historical_source_kind(cls,value):
+        if isinstance(value,dict) and 'sourceKind' not in value and 'source_kind' not in value:
+            value={**value,'source_kind':'analyst_verdict' if value.get('sourceVerdictRef',value.get('source_verdict_ref')) else 'legacy_memory_review'}
+        return value
 
 
 class MemoryAudit(V2Contract):
@@ -179,12 +192,109 @@ class VerdictMemoryState(V2Contract):
     lesson_ref: UUID | None
 
 
+class ConclusionMemoryRequest(V2Contract):
+    request_id: UUID
+    expected_case_revision: int = Field(strict=True,ge=1)
+    conclusion_event_id: int = Field(strict=True,ge=1)
+    scope: Scope = 'exact'
+
+
+class ConclusionMemoryState(V2Contract):
+    latest_conclusion: InvestigationConclusion | None
+    eligible: bool
+    contribution_status: Literal['not_contributed','contributed','superseded']
+    scope: Scope | None
+    lesson_ref: UUID | None
+    memory: MemoryView | None
+    previous_expert_evidence_superseded: bool
+    tier1_evidence_superseded: bool
+
+
+def expert_authority(conn,alert_ref):
+    # A Finding is authoritative only for its Case's primary alert, never linked alerts.
+    return conn.execute("SELECT e.id,e.finding FROM tier2_case_events e JOIN tier2_cases c ON c.id=e.case_id "
+        "JOIN operational_alerts_v2 a ON a.id=c.primary_operational_alert_id "
+        "WHERE a.operational_alert_ref=? AND e.action='finding' ORDER BY e.id DESC LIMIT 1",(str(alert_ref),)).fetchone()
+
+
+def conclusion_memory_state(conn,case_ref):
+    from packages.detection.tier2_cases import read_case
+    case=read_case(conn,case_ref);latest=case.latest_conclusion
+    contributions=conn.execute('SELECT c.*,l.lesson_ref FROM conclusion_memory_contributions c '
+        'JOIN tier2_cases t ON t.id=c.source_case_id JOIN triage_memory_lessons l ON l.id=c.primary_lesson_id '
+        'WHERE t.case_ref=? ORDER BY c.id DESC',(str(case_ref),)).fetchall()
+    prior=contributions[0] if contributions else None
+    current=bool(prior and latest and prior['conclusion_event_id']==latest.event_id)
+    tier1=conn.execute('SELECT 1 FROM verdict_memory_contributions c JOIN operational_alerts_v2 a ON a.id=c.source_alert_id '
+        'WHERE a.operational_alert_ref=?',(str(case.primary_operational_alert_ref),)).fetchone()
+    return ConclusionMemoryState(latest_conclusion=latest,
+        eligible=bool(latest and latest.record_kind=='investigation_conclusion' and latest.finding!='inconclusive'),
+        contribution_status='contributed' if current else 'superseded' if prior else 'not_contributed',
+        scope=prior['scope'] if prior else None,lesson_ref=prior['lesson_ref'] if prior else None,
+        memory=read_memory(conn,prior['lesson_ref']) if prior else None,
+        previous_expert_evidence_superseded=any(not latest or r['conclusion_event_id']!=latest.event_id for r in contributions),
+        tier1_evidence_superseded=bool(latest and tier1))
+
+
+def contribute_conclusion(conn,case_ref,*,actor_id,request:ConclusionMemoryRequest):
+    from packages.detection.tier2_cases import read_case
+    request=ConclusionMemoryRequest.model_validate(request.model_dump())
+    payload=_json(dict(caseRef=str(case_ref),request=request.model_dump(mode='json')))
+    _begin(conn,actor_id)
+    try:
+        prior=conn.execute('SELECT * FROM conclusion_memory_contributions WHERE request_id=?',(str(request.request_id),)).fetchone()
+        if prior:
+            if prior['actor_id']!=actor_id or prior['request_payload']!=payload:
+                raise MemoryConflict('requestId belongs to another expert contribution')
+            lesson=conn.execute('SELECT lesson_ref FROM triage_memory_lessons WHERE id=?',(prior['primary_lesson_id'],)).fetchone()
+            result=MemoryMutation(memory=read_memory(conn,lesson[0]),replayed=True);conn.commit();return result
+        for table in ('verdict_memory_contributions','triage_memory_support_events'):
+            if conn.execute(f'SELECT 1 FROM {table} WHERE request_id=?',(str(request.request_id),)).fetchone():
+                raise MemoryConflict('requestId already belongs to another human learning contribution')
+        case=read_case(conn,case_ref);latest=case.latest_conclusion
+        if case.revision!=request.expected_case_revision:
+            raise MemoryConflict('Case changed; refresh before contributing expert evidence')
+        if (not latest or latest.event_id!=request.conclusion_event_id or
+                latest.record_kind!='investigation_conclusion' or latest.finding=='inconclusive'):
+            raise MemoryConflict('only the latest eligible expert conclusion can be contributed; Inconclusive is not reusable')
+        if conn.execute('SELECT 1 FROM conclusion_memory_contributions WHERE conclusion_event_id=?',(latest.event_id,)).fetchone():
+            raise MemoryConflict('this conclusion already contributed; distinct alerts are required for support')
+        state=read_triage(conn,case.snapshot.detector.id)
+        return record_review(conn,case.primary_operational_alert_ref,actor_id=actor_id,request=MemoryReviewRequest(
+            request_id=request.request_id,outcome=latest.finding,reason=latest.reason,scope=request.scope,
+            expected_state_version=state_version(state)),_expert=latest,_linked_payload=payload)
+    except Exception:
+        conn.rollback();raise
+
+
+def current_source_evidence(conn,alert_ref):
+    result=[]
+    for table in ('triage_memory_support_events','verdict_memory_evidence','conclusion_memory_evidence'):
+        for row in conn.execute(f"SELECT lesson_id,evidence_snapshot FROM {table} WHERE json_extract(evidence_snapshot,'$.sourceOperationalAlertRef')=?",(str(alert_ref),)):
+            evidence=json.loads(row['evidence_snapshot'])
+            if evidence_is_current(conn,evidence): result.append((row['lesson_id'],MemoryEvidence.model_validate(evidence)))
+    return result
+
+
+def audit_expert_supersession(conn,previous,actor_id,event_id):
+    # Called inside the Case command's transaction after its immutable conclusion event.
+    for lesson_id,evidence in previous:
+        row=conn.execute('SELECT * FROM triage_memory_lessons WHERE id=?',(lesson_id,)).fetchone()
+        _audit(conn,row,actor_id,'V2_TRIAGE_MEMORY_EXPERT_SUPERSEDED',
+            f'Tier 2 investigation conclusion event #{event_id} superseded earlier learning evidence from the same alert. History is preserved.',evidence)
+
+
 def _has_verdict_memory(conn):
     return conn.execute("SELECT 1 FROM sqlite_master WHERE name='verdict_memory_contributions'").fetchone() is not None
 
 
 def evidence_is_current(conn,evidence):
     if evidence is None: return None
+    expert=expert_authority(conn,evidence['sourceOperationalAlertRef'])
+    if expert:
+        linked=evidence.get('sourceConclusion')
+        return bool(linked and linked['eventId']==expert['id'] and expert['finding']!='inconclusive')
+    if evidence.get('sourceConclusion'): return False
     ref=evidence.get('sourceVerdictRef')
     if ref:
         return conn.execute('SELECT 1 FROM analyst_verdict_events v WHERE verdict_ref=? AND NOT EXISTS (SELECT 1 FROM analyst_verdict_events newer WHERE newer.operational_alert_id=v.operational_alert_id AND newer.revision>v.revision)',(ref,)).fetchone() is not None
@@ -200,8 +310,15 @@ def effective_evidence(conn,lesson_id):
     if _has_verdict_memory(conn):
         linked=conn.execute('SELECT e.evidence_snapshot FROM verdict_memory_evidence e WHERE lesson_id=?',(lesson_id,)).fetchall()
         invalidation_revision=conn.execute('SELECT coalesce(sum((SELECT max(revision) FROM analyst_verdict_events WHERE operational_alert_id=c.source_alert_id)-v.revision),0) FROM verdict_memory_evidence e JOIN verdict_memory_contributions c ON c.id=e.contribution_id JOIN analyst_verdict_events v ON v.verdict_ref=c.source_verdict_ref WHERE e.lesson_id=?',(lesson_id,)).fetchone()[0]
-    current=[MemoryEvidence.model_validate_json(r[0]) for r in [*legacy,*linked] if evidence_is_current(conn,json.loads(r[0]))]
-    return current,len(legacy)+len(linked)+invalidation_revision
+    expert=conn.execute('SELECT evidence_snapshot FROM conclusion_memory_evidence WHERE lesson_id=?',(lesson_id,)).fetchall()
+    rows=[*legacy,*linked,*expert]
+    current={}
+    for row in rows:
+        evidence=json.loads(row[0]); authority=expert_authority(conn,evidence['sourceOperationalAlertRef'])
+        if authority and not evidence_is_current(conn,evidence): invalidation_revision+=authority['id']
+        if evidence_is_current(conn,evidence):
+            current[evidence['sourceOperationalAlertRef']]=MemoryEvidence.model_validate(evidence)
+    return list(current.values()),len(rows)+invalidation_revision
 
 
 def verdict_memory_state(conn,alert_ref):
@@ -209,7 +326,7 @@ def verdict_memory_state(conn,alert_ref):
     alert=_alert(conn,alert_ref)
     latest=conn.execute('SELECT verdict_ref,revision FROM analyst_verdict_events WHERE operational_alert_id=? ORDER BY revision DESC LIMIT 1',(alert.id,)).fetchone()
     contribution=conn.execute('SELECT c.*,l.lesson_ref FROM verdict_memory_contributions c JOIN triage_memory_lessons l ON l.id=c.primary_lesson_id WHERE c.source_alert_id=? ORDER BY c.id DESC LIMIT 1',(alert.id,)).fetchone()
-    status='not_contributed' if contribution is None else 'contributed' if latest and contribution['source_verdict_ref']==latest['verdict_ref'] else 'superseded'
+    status='not_contributed' if contribution is None else 'contributed' if latest and contribution['source_verdict_ref']==latest['verdict_ref'] and not expert_authority(conn,alert_ref) else 'superseded'
     return VerdictMemoryState(latest_verdict_ref=latest['verdict_ref'] if latest else None,latest_verdict_revision=latest['revision'] if latest else None,
         contribution_status=status,scope=contribution['scope'] if contribution else None,lesson_ref=contribution['lesson_ref'] if contribution else None)
 
@@ -227,7 +344,11 @@ def contribute_verdict(conn,alert_ref,*,actor_id,request:VerdictMemoryRequest):
             result=MemoryMutation(memory=read_memory(conn,lesson[0]),replayed=True);conn.commit();return result
         if conn.execute('SELECT 1 FROM triage_memory_support_events WHERE request_id=?',(str(request.request_id),)).fetchone():
             raise MemoryConflict('requestId already belongs to a historical memory review')
+        if conn.execute('SELECT 1 FROM conclusion_memory_contributions WHERE request_id=?',(str(request.request_id),)).fetchone():
+            raise MemoryConflict('requestId already belongs to expert memory evidence')
         view=read_verdict(conn,alert_ref,actor_id)
+        if expert_authority(conn,alert_ref):
+            raise MemoryConflict('Tier 2 investigation supersedes Tier 1 evidence; use the latest eligible expert conclusion')
         if view.latest is None or view.latest.verdict_ref!=request.verdict_ref:
             raise MemoryConflict('record or refresh the latest Analyst Verdict before contributing')
         if not view.can_record or view.source_state_version!=request.expected_state_version:
@@ -301,14 +422,25 @@ def _audit(conn,row,actor,kind,reason,evidence=None):
         (row['id'],actor,kind,_json(payload),db.format_timestamp(m.utc_now())))
 
 
-def record_review(conn,alert_ref,*,actor_id,request:MemoryReviewRequest,_verdict=None,_linked_payload=None):
+def record_review(conn,alert_ref,*,actor_id,request:MemoryReviewRequest,_verdict=None,_expert=None,_linked_payload=None):
     request=MemoryReviewRequest.model_validate(request.model_dump())
     payload=_json(dict(alertRef=str(alert_ref),request=request.model_dump(mode='json')))
-    if _verdict is None:
+    if _verdict is None and _expert is None:
         _begin(conn,actor_id)
     elif not conn.in_transaction:
         raise ValueError('verdict evidence requires the authorized contribution transaction')
     try:
+        if _expert is not None:
+            from packages.detection.tier2_cases import read_case
+            canonical=read_case(conn,_expert.case_ref)
+            if (canonical.latest_conclusion!=_expert or _expert.record_kind!='investigation_conclusion' or
+                _expert.finding=='inconclusive' or canonical.primary_operational_alert_ref!=alert_ref or
+                request.outcome!=_expert.finding or request.reason!=_expert.reason):
+                raise MemoryConflict('expert evidence must match the latest eligible canonical conclusion')
+        if _expert is None and _verdict is None:
+            for table in ('verdict_memory_contributions','conclusion_memory_contributions'):
+                if conn.execute(f'SELECT 1 FROM {table} WHERE request_id=?',(str(request.request_id),)).fetchone():
+                    raise MemoryConflict('requestId already belongs to canonical human learning evidence')
         if _verdict is not None:
             from packages.detection.analyst_verdict import read_verdict
             canonical=read_verdict(conn,alert_ref,actor_id)
@@ -332,9 +464,9 @@ def record_review(conn,alert_ref,*,actor_id,request:MemoryReviewRequest,_verdict
             raise MemoryConflict('alert state changed; refresh before recording human review')
         if state.handling_route not in ('tier1_review','tier2_candidate','tier2_case'):
             raise MemoryConflict('alert must be admitted to human review before memory review')
-        if _verdict is None and conn.execute('SELECT 1 FROM triage_memory_support_events WHERE source_alert_id=?',(source[0],)).fetchone():
+        if _verdict is None and _expert is None and conn.execute('SELECT 1 FROM triage_memory_support_events WHERE source_alert_id=?',(source[0],)).fetchone():
             raise MemoryConflict('this alert already contributed a human memory review; distinct alerts are required')
-        if _verdict is None and conn.execute('SELECT 1 FROM operational_system_routing WHERE operational_alert_id=?',(source[0],)).fetchone():
+        if _verdict is None and _expert is None and (expert_authority(conn,alert_ref) or conn.execute('SELECT 1 FROM operational_system_routing WHERE operational_alert_id=?',(source[0],)).fetchone()):
             raise MemoryConflict('current operational memory requires a canonical Analyst Verdict; use from-verdict')
         context=context_for(alert)
         values=context.model_dump(by_alias=True)
@@ -367,7 +499,7 @@ def record_review(conn,alert_ref,*,actor_id,request:MemoryReviewRequest,_verdict
             if old.status not in ('expired','rejected') and explain_match(old,context).strength=='high':
                 # Linked positive evidence must not generalize beyond the chosen scope.
                 # Contradictions still reach every compatible lesson for safety.
-                if (_verdict is not None and request.outcome==old.lesson.outcome
+                if ((_verdict is not None or _expert is not None) and request.outcome==old.lesson.outcome
                         and not set(fields).issubset(old.lesson.scope_fields)):
                     continue
                 targets.append((other,old,False,0))
@@ -375,17 +507,24 @@ def record_review(conn,alert_ref,*,actor_id,request:MemoryReviewRequest,_verdict
         if _verdict is not None:
             contribution_id=conn.execute('INSERT INTO verdict_memory_contributions(source_alert_id,source_verdict_ref,actor_id,scope,primary_lesson_id,request_id,request_payload) VALUES (?,?,?,?,?,?,?)',
                 (source[0],str(_verdict.verdict_ref),actor_id,request.scope,row['id'],str(request.request_id),_linked_payload)).lastrowid
+        elif _expert is not None:
+            contribution_id=conn.execute('INSERT INTO conclusion_memory_contributions(source_alert_id,source_case_id,conclusion_event_id,actor_id,scope,primary_lesson_id,request_id,request_payload) VALUES (?,?,?,?,?,?,?,?)',
+                (source[0],case['id'],_expert.event_id,actor_id,request.scope,row['id'],str(request.request_id),_linked_payload)).lastrowid
         for target,old,is_new,is_primary in targets:
             outcome=lesson.outcome if is_primary else old.lesson.outcome
             relation='support' if request.outcome==outcome else 'conflict'
-            evidence=MemoryEvidence(source_verdict_ref=_verdict.verdict_ref if _verdict else None,
+            evidence=MemoryEvidence(source_kind='tier2_conclusion' if _expert else 'analyst_verdict' if _verdict else 'legacy_memory_review',
+                source_conclusion=_expert,conclusion_author_name=db.get(conn,m.User,_expert.actor_id).display_name if _expert else None,
+                contribution_actor_name=db.get(conn,m.User,actor_id).display_name,contribution_scope=request.scope,
+                source_verdict_ref=_verdict.verdict_ref if _verdict else None,
                 source_verdict_revision=_verdict.revision if _verdict else None,
                 verdict_author_id=_verdict.actor_id if _verdict else None,verdict_author_name=_verdict.actor_name if _verdict else None,
                 source_operational_alert_ref=alert_ref,source_case_ref=case['case_ref'] if case else None,
                 actor_id=actor_id,outcome=request.outcome,human_reason=request.reason,context_snapshot=context,detector_snapshot=alert,
                 source_state_version=_verdict.source_state_version if _verdict else request.expected_state_version,relation=relation,created_at=stamp)
             if contribution_id is not None:
-                conn.execute('INSERT INTO verdict_memory_evidence(contribution_id,lesson_id,evidence_snapshot) VALUES (?,?,?)',
+                table='conclusion_memory_evidence' if _expert else 'verdict_memory_evidence'
+                conn.execute(f'INSERT INTO {table}(contribution_id,lesson_id,evidence_snapshot) VALUES (?,?,?)',
                     (contribution_id,target['id'],evidence.model_dump_json(by_alias=True)))
             else:
                 conn.execute('INSERT INTO triage_memory_support_events (lesson_id,source_alert_id,source_case_id,actor_id,outcome,relation,reason,evidence_snapshot,is_primary,request_id,request_payload,created_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)',

@@ -44,6 +44,7 @@ INSPECTION_ROUTES = (
     '/api/v2/external-alerts/{inboxId}',
     '/api/v2/tier2/cases',
     '/api/v2/tier2/cases/{caseRef}',
+    '/api/v2/tier2/cases/{caseRef}/triage-memory/conclusion-state',
     '/api/v2/tier2/cases/{caseRef}/assistance',
     '/api/v2/tier2/cases/{caseRef}/events',
     '/api/v2/tier2/cases/{caseRef}/responses',

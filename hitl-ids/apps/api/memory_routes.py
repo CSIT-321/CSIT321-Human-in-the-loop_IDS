@@ -8,6 +8,7 @@ from apps.api.read_only import ReadConn, ReadPrincipal
 from packages.detection.triage_memory import (
     MemoryReviewRequest,MemoryDecisionRequest,MemoryMutation,MemoryView,MemoryAudit,MemoryMatch,
     VerdictMemoryRequest,VerdictMemoryState,contribute_verdict,verdict_memory_state,
+    ConclusionMemoryRequest,ConclusionMemoryState,contribute_conclusion,conclusion_memory_state,
     MemoryConflict,record_review,decide_memory,read_memory,list_memory,memory_history,lookup_memory,
 )
 
@@ -92,4 +93,20 @@ def contribution_state(alertRef:UUID,conn:ReadConn,principal:ReadPrincipal):
     try:
         with conn:
             conn.execute('BEGIN');return verdict_memory_state(conn,alertRef)
+    except LookupError as exc: raise _error(exc) from exc
+
+
+@router.post('/tier2/cases/{caseRef}/triage-memory/from-conclusion',response_model=MemoryMutation,
+             dependencies=[MutationRole],operation_id='contributeConclusionMemory')
+def from_conclusion(caseRef:UUID,body:ConclusionMemoryRequest,conn:Conn,principal:Principal):
+    try: return contribute_conclusion(conn,caseRef,actor_id=principal.user_id,request=body)
+    except (MemoryConflict,LookupError,PermissionError) as exc: raise _error(exc) from exc
+
+
+@router.get('/tier2/cases/{caseRef}/triage-memory/conclusion-state',response_model=ConclusionMemoryState,
+            operation_id='getConclusionMemoryState')
+def expert_state(caseRef:UUID,conn:ReadConn,principal:ReadPrincipal):
+    try:
+        with conn:
+            conn.execute('BEGIN');return conclusion_memory_state(conn,caseRef)
     except LookupError as exc: raise _error(exc) from exc

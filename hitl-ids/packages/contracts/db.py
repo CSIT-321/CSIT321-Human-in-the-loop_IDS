@@ -162,6 +162,8 @@ MIGRATIONS += ((16, "append-only authenticated Tier 1 analyst verdicts",
                 Path(__file__).with_name("analyst_verdict.sql").read_text(encoding="utf-8")),)
 MIGRATIONS += ((17, "canonical verdict-linked memory evidence",
                 Path(__file__).with_name("verdict_memory.sql").read_text(encoding="utf-8")),)
+MIGRATIONS += ((18, "immutable Tier 2 conclusion-linked memory evidence",
+                Path(__file__).with_name("conclusion_memory.sql").read_text(encoding="utf-8")),)
 SCHEMA_VERSION = MIGRATIONS[-1][0]
 
 

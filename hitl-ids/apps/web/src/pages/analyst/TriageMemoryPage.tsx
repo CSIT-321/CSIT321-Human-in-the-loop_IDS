@@ -1,4 +1,5 @@
 import { VerdictLearning } from "../../features/alert/VerdictLearning";
+import { finalCategories } from "./InvestigationConclusion";
 import { useRef,useState } from "react";
 import { Link,useSearchParams } from "react-router";
 import { api,unwrap,type Schemas } from "../../api/client";
@@ -95,6 +96,19 @@ function MemoryDetail({view,canWrite,onChange}:{view:View;canWrite:boolean;onCha
         {history.data.items.map(event=><article key={event.id} className="min-w-0 space-y-2 border-b border-border py-3 text-sm">
           <p className="break-all text-xs text-muted">{event.eventType} / Actor #{event.actorId} / {event.createdAt}</p>
           <p className="whitespace-pre-wrap break-words">{event.reason}</p>
+          {event.evidence?.sourceConclusion&&<div className="min-w-0 space-y-1 border-l-2 border-primary pl-3 text-xs [overflow-wrap:anywhere]">
+            <p>Source: Tier 2 Investigation Conclusion</p>
+            <p>Finding: {pretty(event.evidence.sourceConclusion.finding)}</p>
+            <p>Human Final Attack Classification: {event.evidence.sourceConclusion.finalAttackCategory?finalCategories[event.evidence.sourceConclusion.finalAttackCategory]:"Not applicable / unresolved"}</p>
+            <p className="whitespace-pre-wrap">Investigation reason: {event.evidence.humanReason}</p>
+            <p>Conclusion Author: {event.evidence.conclusionAuthorName} / #{event.evidence.sourceConclusion.actorId}</p>
+            <p>Memory Contributor: {event.evidence.contributionActorName} / #{event.evidence.actorId}</p>
+            <p>Conclusion event #{event.evidence.sourceConclusion.eventId} · Case revision {event.evidence.sourceConclusion.caseRevision}</p>
+            <p>Scope: {event.evidence.contributionScope}</p>
+            <Link className="text-accent underline" to={`${prefix(session?.role)}/tier2-cases/${event.evidence.sourceCaseRef}`}>Source Case</Link>
+            <p>{event.evidenceCurrent?"Current human evidence":"Superseded human evidence — excluded from effective support"}</p>
+          </div>}
+          {event.evidence&&!event.evidence.sourceConclusion&&!event.evidence.sourceVerdictRef&&<p className="text-xs">Source: Historical compatibility evidence</p>}
           {event.evidence?.sourceVerdictRef&&<div className="space-y-1 border-l-2 border-primary pl-3 text-xs">
             <p className="capitalize">Source Human Verdict: {pretty(event.evidence.outcome)}</p>
             <p className="break-all">Verdict Reference: {event.evidence.sourceVerdictRef} · Revision {event.evidence.sourceVerdictRevision}</p>
@@ -104,7 +118,7 @@ function MemoryDetail({view,canWrite,onChange}:{view:View;canWrite:boolean;onCha
           </div>}
           <p className="text-xs text-muted">{event.evidence?"Memory Evidence History":"Memory Activation History"}</p>
           {event.evidence&&<><p>{pretty(event.evidence.outcome)} / {event.evidence.relation}</p>
-            <Link className="text-accent underline" to={prefix(session?.role)+"/v2-triage?alertRef="+event.evidence.sourceOperationalAlertRef}>Evidence alert</Link></>}
+            <Link className="text-accent underline" to={prefix(session?.role)+"/v2-triage?alertRef="+event.evidence.sourceOperationalAlertRef}>{event.evidence.sourceConclusion?"Source Alert":"Evidence alert"}</Link></>}
           <details><summary className="cursor-pointer">Immutable event snapshot</summary><pre className="max-h-80 overflow-auto whitespace-pre-wrap break-all text-xs">{JSON.stringify(event,null,2)}</pre></details>
         </article>)}
         <Pagination offset={offset} total={history.data.page.total} onChange={setOffset}/>

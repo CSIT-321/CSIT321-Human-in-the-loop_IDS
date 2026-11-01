@@ -7,6 +7,7 @@ import { useSession } from "../../session/SessionContext";
 import { ResponseRecommendations } from "./ResponseRecommendations";
 import { InvestigationAssistance } from "./InvestigationAssistance";
 import { ConclusionDetails, finalCategories, systemCategoryLabel, type FinalCategory } from "./InvestigationConclusion";
+import { ConclusionLearning } from "./ConclusionLearning";
 
 const button = "rounded-sm border border-border px-3 py-2 text-sm hover:bg-raised disabled:opacity-50";
 const input = "w-full min-w-0 rounded-sm border border-border bg-surface p-2 text-sm";
@@ -224,6 +225,7 @@ export function CaseInvestigation({ initial, refresh }: { initial: Case; refresh
       {message && <p role="status" className="text-sm text-ok">{message}</p>}
       <button className={button} disabled={busy} onClick={refresh}>Refresh case</button>
     </section>
+    <ConclusionLearning current={current} canWrite={canWrite} prefix={prefixFor(session?.role)} />
     <ResponseRecommendations key={current.caseRef} current={current} canWrite={canWrite} />
   </div>;
 }

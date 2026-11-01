@@ -81,6 +81,8 @@ REQUIRED_OPERATIONS = {
     ('/api/v2/tier2/cases/{caseRef}/events','get'),
     ('/api/v2/tier2/cases/{caseRef}/alerts','post'),
     ('/api/v2/tier2/cases/{caseRef}/notes','post'),
+    ('/api/v2/tier2/cases/{caseRef}/triage-memory/from-conclusion','post'),
+    ('/api/v2/tier2/cases/{caseRef}/triage-memory/conclusion-state','get'),
     ('/api/v2/tier2/cases/{caseRef}/conclusions','post'),
     ('/api/v2/tier2/cases/{caseRef}/findings','post'),
     ('/api/v2/tier2/cases/{caseRef}/start-investigation','post'),

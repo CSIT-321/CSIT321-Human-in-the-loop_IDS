@@ -1311,6 +1311,40 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v2/tier2/cases/{caseRef}/triage-memory/conclusion-state": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Read expert learning eligibility and supersession */
+        get: operations["getConclusionMemoryState"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/tier2/cases/{caseRef}/triage-memory/from-conclusion": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Explicitly contribute latest expert conclusion with reuse scope */
+        post: operations["contributeConclusionMemory"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v2/triage-memory": {
         parameters: {
             query?: never;
@@ -1994,6 +2028,44 @@ export interface components {
              * @enum {string}
              */
             status: "recorded" | "not_recorded";
+        };
+        /** ConclusionMemoryRequest */
+        ConclusionMemoryRequest: {
+            /** Conclusioneventid */
+            conclusionEventId: number;
+            /** Expectedcaserevision */
+            expectedCaseRevision: number;
+            /**
+             * Requestid
+             * Format: uuid
+             */
+            requestId: string;
+            /**
+             * Scope
+             * @default exact
+             * @enum {string}
+             */
+            scope: "exact" | "narrow";
+        };
+        /** ConclusionMemoryState */
+        ConclusionMemoryState: {
+            /**
+             * Contributionstatus
+             * @enum {string}
+             */
+            contributionStatus: "not_contributed" | "contributed" | "superseded";
+            /** Eligible */
+            eligible: boolean;
+            latestConclusion: components["schemas"]["InvestigationConclusion"] | null;
+            /** Lessonref */
+            lessonRef: string | null;
+            memory: components["schemas"]["MemoryView"] | null;
+            /** Previousexpertevidencesuperseded */
+            previousExpertEvidenceSuperseded: boolean;
+            /** Scope */
+            scope: ("exact" | "narrow") | null;
+            /** Tier1Evidencesuperseded */
+            tier1EvidenceSuperseded: boolean;
         };
         /** ContextPolicy */
         ContextPolicy: {
@@ -3644,7 +3716,22 @@ export interface components {
         MemoryEvidence: {
             /** Actorid */
             actorId: number;
+            /**
+             * Conclusionauthorname
+             * @default null
+             */
+            conclusionAuthorName: string | null;
             contextSnapshot: components["schemas"]["MemoryContext"];
+            /**
+             * Contributionactorname
+             * @default null
+             */
+            contributionActorName: string | null;
+            /**
+             * Contributionscope
+             * @default null
+             */
+            contributionScope: ("exact" | "narrow") | null;
             /** Createdat */
             createdAt: string;
             detectorSnapshot: components["schemas"]["OperationalAlertV2"];
@@ -3662,6 +3749,14 @@ export interface components {
             relation: "support" | "conflict";
             /** Sourcecaseref */
             sourceCaseRef: string | null;
+            /** @default null */
+            sourceConclusion: components["schemas"]["InvestigationConclusion"] | null;
+            /**
+             * Sourcekind
+             * @default legacy_memory_review
+             * @enum {string}
+             */
+            sourceKind: "analyst_verdict" | "tier2_conclusion" | "legacy_memory_review";
             /**
              * Sourceoperationalalertref
              * Format: uuid
@@ -10563,6 +10658,105 @@ export interface operations {
             };
             /** @description Role not permitted */
             403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    getConclusionMemoryState: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description `Bearer <token>` from POST /api/auth/login */
+                Authorization?: string;
+            };
+            path: {
+                caseRef: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Read-only expert learning state */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ConclusionMemoryState"];
+                };
+            };
+            /** @description Not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Database unavailable or schema unsupported; read-only requests never migrate */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    contributeConclusionMemory: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description `Bearer <token>` from POST /api/auth/login */
+                Authorization?: string;
+            };
+            path: {
+                caseRef: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ConclusionMemoryRequest"];
+            };
+        };
+        responses: {
+            /** @description Expert memory contribution */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MemoryMutation"];
+                };
+            };
+            /** @description Validation failed */
+            400: {
                 headers: {
                     [name: string]: unknown;
                 };

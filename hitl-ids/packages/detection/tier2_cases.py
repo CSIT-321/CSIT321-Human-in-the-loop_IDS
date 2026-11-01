@@ -310,7 +310,12 @@ def mutate_case(conn, ref: UUID, *, actor_id: int, action: Literal['link','note'
         conn.execute('UPDATE tier2_case_state SET status=?,revision=revision+1,updated_at=? WHERE case_id=?',
                      (status,stamp,case['id']))
         after = dict(conn.execute('SELECT * FROM tier2_case_state WHERE case_id=?',(case['id'],)).fetchone())
+        previous_learning=[]
         if isinstance(request,InvestigationConclusionRequest):
+            from packages.detection.triage_memory import current_source_evidence,audit_expert_supersession
+            alert_ref=conn.execute('SELECT operational_alert_ref FROM operational_alerts_v2 WHERE id=?',
+                (case['primary_operational_alert_id'],)).fetchone()[0]
+            previous_learning=current_source_evidence(conn,alert_ref)
             previous = latest_conclusion(conn,ref,case['id'])
             classification = system_classification(conn,case['primary_operational_alert_id'])
             after['investigationConclusion'] = dict(finalAttackCategory=request.final_attack_category,
@@ -318,6 +323,8 @@ def mutate_case(conn, ref: UUID, *, actor_id: int, action: Literal['link','note'
                 supersedesEventId=previous.event_id if previous else None)
         event_id = _event(conn,case['id'],actor_id,action,request,payload,before,after,stamp,linked_id,
                           request.finding if action == 'finding' else None)
+        if previous_learning:
+            audit_expert_supersession(conn,previous_learning,actor_id,event_id)
         result = CaseMutation(case=read_case(conn,ref),event_id=event_id,replayed=False)
         conn.commit()
         return result

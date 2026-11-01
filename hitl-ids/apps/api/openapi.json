@@ -1445,6 +1445,127 @@
         "title": "CollectionRecording",
         "type": "object"
       },
+      "ConclusionMemoryRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "conclusionEventId": {
+            "minimum": 1,
+            "title": "Conclusioneventid",
+            "type": "integer"
+          },
+          "expectedCaseRevision": {
+            "minimum": 1,
+            "title": "Expectedcaserevision",
+            "type": "integer"
+          },
+          "requestId": {
+            "format": "uuid",
+            "title": "Requestid",
+            "type": "string"
+          },
+          "scope": {
+            "default": "exact",
+            "enum": [
+              "exact",
+              "narrow"
+            ],
+            "title": "Scope",
+            "type": "string"
+          }
+        },
+        "required": [
+          "requestId",
+          "expectedCaseRevision",
+          "conclusionEventId"
+        ],
+        "title": "ConclusionMemoryRequest",
+        "type": "object"
+      },
+      "ConclusionMemoryState": {
+        "additionalProperties": false,
+        "properties": {
+          "contributionStatus": {
+            "enum": [
+              "not_contributed",
+              "contributed",
+              "superseded"
+            ],
+            "title": "Contributionstatus",
+            "type": "string"
+          },
+          "eligible": {
+            "title": "Eligible",
+            "type": "boolean"
+          },
+          "latestConclusion": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/InvestigationConclusion"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "lessonRef": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Lessonref"
+          },
+          "memory": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/MemoryView"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "previousExpertEvidenceSuperseded": {
+            "title": "Previousexpertevidencesuperseded",
+            "type": "boolean"
+          },
+          "scope": {
+            "anyOf": [
+              {
+                "enum": [
+                  "exact",
+                  "narrow"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Scope"
+          },
+          "tier1EvidenceSuperseded": {
+            "title": "Tier1Evidencesuperseded",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "latestConclusion",
+          "eligible",
+          "contributionStatus",
+          "scope",
+          "lessonRef",
+          "memory",
+          "previousExpertEvidenceSuperseded",
+          "tier1EvidenceSuperseded"
+        ],
+        "title": "ConclusionMemoryState",
+        "type": "object"
+      },
       "ContextPolicy": {
         "additionalProperties": false,
         "properties": {
@@ -5209,8 +5330,48 @@
             "title": "Actorid",
             "type": "integer"
           },
+          "conclusionAuthorName": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Conclusionauthorname"
+          },
           "contextSnapshot": {
             "$ref": "#/components/schemas/MemoryContext"
+          },
+          "contributionActorName": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Contributionactorname"
+          },
+          "contributionScope": {
+            "anyOf": [
+              {
+                "enum": [
+                  "exact",
+                  "narrow"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Contributionscope"
           },
           "createdAt": {
             "title": "Createdat",
@@ -5252,6 +5413,27 @@
               }
             ],
             "title": "Sourcecaseref"
+          },
+          "sourceConclusion": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/InvestigationConclusion"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
+          "sourceKind": {
+            "default": "legacy_memory_review",
+            "enum": [
+              "analyst_verdict",
+              "tier2_conclusion",
+              "legacy_memory_review"
+            ],
+            "title": "Sourcekind",
+            "type": "string"
           },
           "sourceOperationalAlertRef": {
             "format": "uuid",
@@ -18391,6 +18573,150 @@
         "x-required-roles": [
           "security_analyst",
           "system_admin"
+        ]
+      }
+    },
+    "/api/v2/tier2/cases/{caseRef}/triage-memory/conclusion-state": {
+      "get": {
+        "operationId": "getConclusionMemoryState",
+        "parameters": [
+          {
+            "description": "`Bearer <token>` from POST /api/auth/login",
+            "in": "header",
+            "name": "Authorization",
+            "required": false,
+            "schema": {
+              "example": "Bearer eyJhbGciOiJIUzI1NiJ9...",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "caseRef",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConclusionMemoryState"
+                }
+              }
+            },
+            "description": "Read-only expert learning state"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not found"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Database unavailable or schema unsupported; read-only requests never migrate"
+          }
+        },
+        "summary": "Read expert learning eligibility and supersession",
+        "tags": [
+          "Triage memory"
+        ]
+      }
+    },
+    "/api/v2/tier2/cases/{caseRef}/triage-memory/from-conclusion": {
+      "post": {
+        "operationId": "contributeConclusionMemory",
+        "parameters": [
+          {
+            "description": "`Bearer <token>` from POST /api/auth/login",
+            "in": "header",
+            "name": "Authorization",
+            "required": false,
+            "schema": {
+              "example": "Bearer eyJhbGciOiJIUzI1NiJ9...",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "caseRef",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ConclusionMemoryRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MemoryMutation"
+                }
+              }
+            },
+            "description": "Expert memory contribution"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Validation failed"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          }
+        },
+        "summary": "Explicitly contribute latest expert conclusion with reuse scope",
+        "tags": [
+          "Triage memory"
         ]
       }
     },

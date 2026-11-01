@@ -36,7 +36,7 @@ from packages.contracts.suricata_bundle import AttackCategory
 from apps.api.contract.external_admission import ExternalAdmissionView, ExternalAdmissionResponse
 from packages.detection.external_admission import AdmissionRequest, EligibilityRequest
 from apps.api.contract.responses import ResponsePage
-from packages.detection.triage_memory import VerdictMemoryRequest,VerdictMemoryState,MemoryReviewRequest,MemoryDecisionRequest,MemoryMutation,MemoryView,MemoryAudit,MemoryMatch
+from packages.detection.triage_memory import VerdictMemoryRequest,VerdictMemoryState,ConclusionMemoryRequest,ConclusionMemoryState,MemoryReviewRequest,MemoryDecisionRequest,MemoryMutation,MemoryView,MemoryAudit,MemoryMatch
 from packages.detection.selective_review import ReviewCommand,ReviewView,ReviewMutation,ReviewEvent,ReviewMetrics
 from packages.detection.context_store import FactRequest,FactPage,FactMutation
 from packages.detection.trusted_context import ResolvedTrustedContext
@@ -64,7 +64,7 @@ SCHEMA_REF = "#/components/schemas/{model}"
 #: model to the API is a deliberate act.
 MODELS: tuple[type[BaseModel], ...] = (
     InvestigationAssistance,
-    VerdictMemoryRequest,VerdictMemoryState,
+    VerdictMemoryRequest,VerdictMemoryState,ConclusionMemoryRequest,ConclusionMemoryState,
     VerdictCommand,VerdictView,VerdictHistory,VerdictMutation,
     RunCreate,RunView,RunPage,RunCommand,ObservationRequest,RecordedArchive,CollectionDocument,
     FactRequest,FactPage,FactMutation,ResolvedTrustedContext,
@@ -780,6 +780,13 @@ def _paths() -> dict[str, Any]:
     paths['/api/v2/alerts/{alertRef}/triage-memory/verdict-state']={'get':{
         'operationId':'getVerdictMemoryState','summary':'Read current or superseded contribution state','tags':['Triage memory'],
         'parameters':[AUTH_PARAMETER,alert_ref], 'responses':{'200':{'description':'Read-only contribution projection',**_json(VerdictMemoryState)},**_errors(404,503)}}}
+    paths['/api/v2/tier2/cases/{caseRef}/triage-memory/from-conclusion']={'post':{
+        'operationId':'contributeConclusionMemory','summary':'Explicitly contribute latest expert conclusion with reuse scope','tags':['Triage memory'],
+        'parameters':[AUTH_PARAMETER,case_ref],'requestBody':{'required':True,**_json(ConclusionMemoryRequest)},
+        'responses':{'200':{'description':'Expert memory contribution',**_json(MemoryMutation)},**_errors(400,404,409)}}}
+    paths['/api/v2/tier2/cases/{caseRef}/triage-memory/conclusion-state']={'get':{
+        'operationId':'getConclusionMemoryState','summary':'Read expert learning eligibility and supersession','tags':['Triage memory'],
+        'parameters':[AUTH_PARAMETER,case_ref],'responses':{'200':{'description':'Read-only expert learning state',**_json(ConclusionMemoryState)},**_errors(404,503)}}}
     return paths
 
 

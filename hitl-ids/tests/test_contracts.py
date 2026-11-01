@@ -66,6 +66,8 @@ DEVIATION_COLUMNS = {
     "flow_data": {"source_record_id"},
 }
 DEVIATION_TABLES = {
+    "conclusion_memory_contributions": {"id","source_alert_id","source_case_id","conclusion_event_id","actor_id","scope","primary_lesson_id","request_id","request_payload"},
+    "conclusion_memory_evidence": {"id","contribution_id","lesson_id","evidence_snapshot"},
     "verdict_memory_contributions": {"id","source_alert_id","source_verdict_ref","actor_id","scope","primary_lesson_id","request_id","request_payload"},
     "verdict_memory_evidence": {"id","contribution_id","lesson_id","evidence_snapshot"},
     "analyst_verdict_events": {"id","verdict_ref","operational_alert_id","actor_id","revision","supersedes_ref","request_id","request_payload","snapshot"},
@@ -318,7 +320,7 @@ def test_columns_are_tdm_names_plus_logged_deviations(conn):
 def test_every_table_model_matches_its_columns(conn):
     # The inbox uses the canonical contract and staging writer, not a legacy operational model.
     assert set(db.TABLE_MODELS) == table_names(conn) - {
-        "verdict_memory_contributions", "verdict_memory_evidence", "analyst_verdict_events", "suricata_eve_records", "operational_system_routing",
+        "conclusion_memory_contributions", "conclusion_memory_evidence", "verdict_memory_contributions", "verdict_memory_evidence", "analyst_verdict_events", "suricata_eve_records", "operational_system_routing",
         "prospective_runs", "prospective_run_events", "prospective_decisions", "prospective_observations",
         "external_alert_inbox", "operational_alerts_v2", "operational_triage_state_v2",
         "operational_triage_policy_audit", "operational_routing_audit",
@@ -329,6 +331,13 @@ def test_every_table_model_matches_its_columns(conn):
 
 
 EXPECTED_FOREIGN_KEYS = {
+    ('conclusion_memory_contributions','source_alert_id','operational_alerts_v2','id'),
+    ('conclusion_memory_contributions','source_case_id','tier2_cases','id'),
+    ('conclusion_memory_contributions','conclusion_event_id','tier2_case_events','id'),
+    ('conclusion_memory_contributions','actor_id','users','id'),
+    ('conclusion_memory_contributions','primary_lesson_id','triage_memory_lessons','id'),
+    ('conclusion_memory_evidence','contribution_id','conclusion_memory_contributions','id'),
+    ('conclusion_memory_evidence','lesson_id','triage_memory_lessons','id'),
     ('verdict_memory_contributions','source_alert_id','operational_alerts_v2','id'),
     ('verdict_memory_contributions','source_verdict_ref','analyst_verdict_events','verdict_ref'),
     ('verdict_memory_contributions','actor_id','users','id'),
