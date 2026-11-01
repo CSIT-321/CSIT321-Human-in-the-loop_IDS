@@ -8,7 +8,7 @@ test("human lessons earn deferral, conflict recalls it, and human override is st
   await page.getByLabel("Username").fill("g.ang");
   await page.getByLabel("Password",{exact:true}).fill("analyst-demo");
   await page.getByRole("button",{name:"Sign in"}).click();
-  await page.getByRole("link",{name:"Analyst Workspace"}).click();
+  await page.getByRole("link",{name:"Alert Triage"}).click();
   const options=page.locator("#v2-alert option").filter({hasText:"DEMO selective SSH scan"});
   await expect(options).toHaveCount(6);
   const refs=await options.evaluateAll(nodes=>nodes.map(node=>(node as HTMLOptionElement).value));

@@ -61,6 +61,19 @@ function stubWorkstation(corroboratedItem = false): Request[] {
 }
 
 describe("Analyst Workstation tabs", () => {
+  it("keeps the legacy deep link and explains the optional historical workflow", async () => {
+    stubWorkstation();
+    const { router } = renderApp("/analyst/workstation", { session: ANALYST });
+    expect(screen.getByRole("heading", { name: "Legacy Flow Workstation" })).toBeVisible();
+    expect(screen.queryByRole("heading", { name: "Workstation" })).toBeNull();
+    expect(screen.getByText(/Historical recorded-flow analysis using the legacy Signature\/XGBoost pipeline\. For current Tier 1\/Tier 2 operational routing, use Alert Triage\./)).toBeVisible();
+    expect(screen.getByRole("region", { name: "Alert queue" })).toBeVisible();
+    const triage = screen.getByRole("link", { name: "Open Alert Triage" });
+    expect(triage).toHaveAttribute("href", "/analyst/v2-triage");
+    await userEvent.click(triage);
+    await waitFor(() => expect(router.state.location.pathname).toBe("/analyst/v2-triage"));
+    expect(screen.getByRole("heading", { name: "Alert Triage" })).toBeVisible();
+  });
   it("renders queue counts and evidence counts from their separate summary fields", async () => {
     stubWorkstation();
     renderApp("/analyst/workstation", { session: ANALYST });

@@ -5,8 +5,8 @@ async function login(page: Page, user: string, password: string) {
   await page.getByLabel("Username").fill(user);
   await page.getByLabel("Password", { exact: true }).fill(password);
   await page.getByRole("button", { name: "Sign in" }).click();
-  await page.getByRole("link", { name: "Analyst Workspace" }).click();
-  await expect(page.getByRole("heading", { name: "Analyst Workspace" })).toBeVisible();
+  await page.getByRole("link", { name: "Alert Triage" }).click();
+  await expect(page.getByRole("heading", { name: "Alert Triage" })).toBeVisible();
 }
 
 test("real authenticated routing, approval and rejection", async ({ page }) => {
@@ -48,4 +48,31 @@ test("evaluator can inspect but cannot route", async ({ page }) => {
   await expect(page.getByLabel("Operational alert")).toBeVisible();
   await expect(page.getByLabel("Decision reason")).toHaveCount(0);
   await expect(page.getByRole("button", { name: "Manual Escalate" })).toHaveCount(0);
+});
+
+test("analyst workflow orientation starts in triage and keeps legacy analysis optional", async ({ page }) => {
+  await page.goto("/login");
+  await page.getByLabel("Username").fill("g.ang");
+  await page.getByLabel("Password", { exact: true }).fill("analyst-demo");
+  await page.getByRole("button", { name: "Sign in" }).click();
+  await expect(page).toHaveURL(/\/analyst\/v2-triage$/);
+  await expect(page.getByRole("heading", { name: "Alert Triage", exact: true })).toBeVisible();
+  const navigation = page.getByRole("navigation", { name: "Main" });
+  await expect(navigation.getByRole("link")).toHaveText([
+    "Incoming Alerts", "Alert Triage", "Tier 2 Cases", "Triage Memory", "Selective Review",
+    "Overview", "Dashboard", "Alert Queue", "Investigations", "Feedback Impact", "Legacy Flow Workstation",
+  ]);
+  await navigation.getByRole("link", { name: "Incoming Alerts", exact: true }).click();
+  await expect(page.getByRole("heading", { name: "Incoming Alerts", exact: true })).toBeVisible();
+  await navigation.getByRole("link", { name: "Legacy Flow Workstation", exact: true }).click();
+  await expect(page).toHaveURL(/\/analyst\/workstation$/);
+  await expect(page.getByRole("heading", { name: "Legacy Flow Workstation", exact: true })).toBeVisible();
+  await expect(page.getByText(/Historical recorded-flow analysis using the legacy Signature\/XGBoost pipeline/)).toBeVisible();
+  await page.getByRole("tab", { name: /^Verdict/ }).click();
+  await expect(page.getByRole("radio", { name: /Escalation Recommended/ })).toBeVisible();
+  await page.screenshot({ path: "test-results/workflow-clarity-legacy.png" });
+  await page.getByRole("link", { name: "Open Alert Triage", exact: true }).click();
+  await expect(page).toHaveURL(/\/analyst\/v2-triage$/);
+  await navigation.getByRole("link", { name: "Tier 2 Cases", exact: true }).click();
+  await expect(page).toHaveURL(/\/analyst\/tier2-cases$/);
 });

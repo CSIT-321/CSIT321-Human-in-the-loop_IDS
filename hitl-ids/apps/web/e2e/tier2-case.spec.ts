@@ -18,7 +18,7 @@ test("Suricata admission to explicit Tier 2 case, investigation note and finding
   await page.getByLabel("Decision reason").fill("Admit for operational review");
   await page.getByRole("button", { name: "Admit to HITL Workflow" }).click();
   await expect(page.getByRole("status")).toContainText("Operational admission completed");
-  await page.getByRole("link", { name: "Open Analyst Workspace" }).click();
+  await page.getByRole("link", { name: "Open Alert Triage" }).click();
   await expect(page.getByText("tier1 review", { exact: true })).toBeVisible();
   await expect(page.getByRole("button", { name: "Create Tier 2 Case", exact: true })).toHaveCount(0);
   await page.getByLabel("Decision reason").fill("Unresolved source-host investigation");

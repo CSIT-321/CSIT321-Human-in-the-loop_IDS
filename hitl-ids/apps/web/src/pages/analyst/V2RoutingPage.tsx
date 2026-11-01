@@ -119,7 +119,7 @@ export function V2RoutingPage() {
   const current = resource.status === "success"
     ? resource.data.items.find(item => item.operationalAlertRef === selected) ?? resource.data.items[0] : undefined;
   return <div className="min-w-0 space-y-5 p-4 sm:p-6">
-    <PageHeader title="Analyst Workspace" />
+    <PageHeader title="Alert Triage" />
     {requestedRef && <button className={button} onClick={() => { setOffset(0); setSearch({}); }}>All V2 alerts</button>}
     {resource.status === "loading" && <p role="status">Loading V2 alerts...</p>}
     {resource.status === "error" && <div><p role="alert">{resource.error.message}</p><button className={button} onClick={resource.reload}>Retry</button></div>}

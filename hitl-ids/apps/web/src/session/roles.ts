@@ -3,7 +3,7 @@
  *
  * The role literals mirror `packages/contracts/models.py::Role`; `roles.test.ts` fails if the
  * generated API schema stops accepting one of them. Each role's `home` is where its account lands
- * after sign-in, as the plan's S11 verification names it: analyst -> queue, admin -> system status,
+ * after sign-in: analyst -> operational alert triage, admin -> system status,
  * evaluator -> scenario list. Since S18a the role is a property of the signed-in account, not a
  * header a client sends.
  */
@@ -31,19 +31,19 @@ export const ROLE_META: Readonly<Record<Role, RoleMeta>> = {
   security_analyst: {
     label: "Security Analyst",
     short: "Analyst",
-    home: "/analyst/workstation",
+    home: "/analyst/v2-triage",
     nav: [
-      { to: "/analyst/workstation", label: "Workstation" },
+      { to: "/analyst/external-admission", label: "Incoming Alerts" },
+      { to: "/analyst/v2-triage", label: "Alert Triage" },
       { to: "/analyst/tier2-cases", label: "Tier 2 Cases" },
       { to: "/analyst/triage-memory", label: "Triage Memory" },
       { to: "/analyst/selective-review", label: "Selective Review" },
-      { to: "/analyst/external-admission", label: "Incoming Alerts" },
-      { to: "/analyst/v2-triage", label: "Analyst Workspace" },
       { to: "/analyst/overview", label: "Overview" },
       { to: "/analyst/dashboard", label: "Dashboard" },
       { to: "/analyst/queue", label: "Alert Queue" },
       { to: "/analyst/investigations", label: "Investigations" },
       { to: "/analyst/feedback-impact", label: "Feedback Impact" },
+      { to: "/analyst/workstation", label: "Legacy Flow Workstation" },
     ],
   },
   system_admin: {
@@ -56,7 +56,7 @@ export const ROLE_META: Readonly<Record<Role, RoleMeta>> = {
       { to: "/admin/triage-memory", label: "Triage Memory" },
       { to: "/admin/selective-review", label: "Selective Review" },
       { to: "/admin/external-admission", label: "Incoming Alerts" },
-      { to: "/admin/v2-triage", label: "Analyst Workspace" },
+      { to: "/admin/v2-triage", label: "Alert Triage" },
       { to: "/admin/guardrails", label: "Guardrails" },
       { to: "/admin/audit", label: "Audit Trail" },
       { to: "/admin/reports/ip", label: "IP Security Report" },
@@ -72,7 +72,7 @@ export const ROLE_META: Readonly<Record<Role, RoleMeta>> = {
       { to: "/evaluator/triage-memory", label: "Triage Memory" },
       { to: "/evaluator/selective-review", label: "Selective Review" },
       { to: "/evaluator/external-admission", label: "Incoming Alerts" },
-      { to: "/evaluator/v2-triage", label: "Analyst Workspace" },
+      { to: "/evaluator/v2-triage", label: "Alert Triage" },
       { to: "/evaluator/metrics", label: "Detection Metrics" },
     ],
   },

@@ -162,7 +162,7 @@ describe("admin IP security report: access and scope", () => {
     expect(ROLE_META.security_analyst.nav.some((item) => item.to === "/admin/reports/ip")).toBe(false);
 
     const second = renderApp("/admin/reports/ip", { session: ANALYST });
-    await waitFor(() => expect(second.router.state.location.pathname).toBe("/analyst/workstation"));
+    await waitFor(() => expect(second.router.state.location.pathname).toBe("/analyst/v2-triage"));
   });
 
   it("starts with the source-IP list and requires no manually entered IP", async () => {

@@ -21,7 +21,7 @@ test('authenticated UI collection uses actual decisions and survives post-window
   await page.getByLabel('Decision reason').fill('Human-authorized synthetic operational admission');
   await page.getByRole('button',{name:'Admit to HITL Workflow'}).click();
   await expect(page.getByRole('status')).toContainText('Operational admission completed');
-  await page.getByRole('link',{name:'Open Analyst Workspace'}).click();
+  await page.getByRole('link',{name:'Open Alert Triage'}).click();
   await page.getByRole('button',{name:'Add Trusted Context',exact:true}).click();
   const form=page.getByRole('region',{name:'Collect structured safety context'});
   await form.getByLabel('Asset Criticality',{exact:true}).selectOption('low');

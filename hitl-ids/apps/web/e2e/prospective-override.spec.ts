@@ -9,7 +9,7 @@ async function login(page:Page,user:string,password:string){
 test('human overrides survive expired and closed collection runs without changing their ledger',async({page,browser},testInfo)=>{
   const errors:string[]=[];page.on('pageerror',e=>errors.push(e.message));
   await login(page,'g.ang','analyst-demo');
-  await page.getByRole('link',{name:'Analyst Workspace',exact:true}).click();
+  await page.getByRole('link',{name:'Alert Triage',exact:true}).click();
   const options=page.locator('#v2-alert option').filter({hasText:'DEMO selective SSH scan'});
   await expect(options).toHaveCount(6);
   const refs=await options.evaluateAll(nodes=>nodes.map(node=>(node as HTMLOptionElement).value));

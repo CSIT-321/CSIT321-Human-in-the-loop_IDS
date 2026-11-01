@@ -217,9 +217,9 @@ describe("FeedbackPanel", () => {
     render(<FeedbackPanel alertRef={REF} current={null} onRecorded={onRecorded} />);
 
     expect(screen.queryByRole("radio", { name: /Escalate to Tier 2/ })).toBeNull();
-    expect(screen.getByText("Legacy verdict actions affect historical scoring and feedback. Operational Tier 2 routing is handled in Analyst Workspace.")).toBeVisible();
+    expect(screen.getByText("Legacy verdict actions affect historical scoring and feedback. Operational Tier 2 routing is handled in Alert Triage.")).toBeVisible();
     await user.click(screen.getByRole("radio", { name: /Escalation Recommended/ }));
-    expect(screen.getByText(/Raises the legacy review priority\. This does not create a Tier 2 Candidate or Tier 2 Case\. Use Analyst Workspace for operational escalation\./)).toBeVisible();
+    expect(screen.getByText(/Raises the legacy review priority\. This does not create a Tier 2 Candidate or Tier 2 Case\. Use Alert Triage for operational escalation\./)).toBeVisible();
     expect(categoryLabel("escalate")).toBe("Escalation Recommended");
     expect(categoryMeta("escalate")).toMatchObject({ requestedDelta: 15, forcesReview: true, teachesFamily: true });
     await user.click(screen.getByRole("button", { name: "Record verdict" }));

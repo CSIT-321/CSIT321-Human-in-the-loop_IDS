@@ -67,6 +67,7 @@ function stubApi(): Request[] {
             401,
           );
     }
+    if (pathname === "/api/v2/alerts") return jsonResponse({ items: [], page: { limit: 50, offset: 0, returned: 0, total: 0 } });
     if (pathname === "/api/dashboard/summary") return jsonResponse(SUMMARY);
     if (pathname === "/api/evaluation/runs") {
       return jsonResponse({ items: [], page: { limit: 1, offset: 0, returned: 0, total: 0 } });
@@ -85,7 +86,7 @@ async function signInAs(user: ReturnType<typeof userEvent.setup>, username: keyo
   await user.click(screen.getByRole("button", { name: "Sign in" }));
 }
 const SIGN_IN_CASES = [
-  { username: "g.ang", heading: "Workstation" },
+  { username: "g.ang", heading: "Alert Triage" },
   { username: "admin", heading: "System Status" },
   { username: "evaluator", heading: "Evaluation scenarios" },
 ] as const;
@@ -154,6 +155,12 @@ describe("shell: signing in as each account", () => {
 });
 
 describe("shell: route guards", () => {
+  it("redirects the analyst index to operational Alert Triage", async () => {
+    stubApi();
+    const { router } = renderApp("/analyst", { session: ANALYST });
+    await waitFor(() => expect(router.state.location.pathname).toBe("/analyst/v2-triage"));
+    expect(await screen.findByRole("heading", { name: "Alert Triage" })).toBeVisible();
+  });
   it("sends a signed-out visitor from a role route to /login", async () => {
     stubApi();
     const { router } = renderApp("/analyst/queue");
@@ -166,9 +173,9 @@ describe("shell: route guards", () => {
     stubApi();
     const { router } = renderApp("/admin/status", { session: ANALYST });
 
-    await waitFor(() => expect(router.state.location.pathname).toBe("/analyst/workstation"));
+    await waitFor(() => expect(router.state.location.pathname).toBe("/analyst/v2-triage"));
     expect(
-      await screen.findByRole("heading", { level: 1, name: "Workstation" }),
+      await screen.findByRole("heading", { level: 1, name: "Alert Triage" }),
     ).toBeInTheDocument();
   });
 
@@ -216,7 +223,7 @@ describe("shell: navigation", () => {
     await user.keyboard("{Enter}");
     expect(screen.getByRole("button", { name: "Expand sidebar" })).toHaveAttribute("aria-expanded", "false");
     expect(screen.getByRole("link", { name: "Incoming Alerts" })).toHaveAttribute("href", "/analyst/external-admission");
-    expect(screen.getByRole("link", { name: "Analyst Workspace" })).toHaveAttribute("href", "/analyst/v2-triage");
+    expect(screen.getByRole("link", { name: "Alert Triage" })).toHaveAttribute("href", "/analyst/v2-triage");
     screen.getByRole("button", { name: "Light theme" }).focus();
     await user.keyboard(" ");
     expect(document.documentElement).toHaveAttribute("data-theme", "light");

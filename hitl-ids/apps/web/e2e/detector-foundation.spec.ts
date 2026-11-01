@@ -11,7 +11,8 @@ test("analyst sees provenance and retains investigation workflow", async ({ page
   const errors: string[] = [];
   page.on("pageerror", error => errors.push(error.message));
   await login(page, "g.ang", "analyst-demo");
-  await expect(page).toHaveURL(/\/analyst\/workstation/);
+  await expect(page).toHaveURL(/\/analyst\/v2-triage/);
+  await page.getByRole("link", { name: "Legacy Flow Workstation", exact: true }).click();
   await expect(page.getByRole("region", { name: "Detector provenance" })).toBeVisible();
   await expect(page.getByText("Legacy Flow Detector", { exact: true })).toBeVisible();
   await page.getByRole("tab", { name: /^Verdict/ }).click();

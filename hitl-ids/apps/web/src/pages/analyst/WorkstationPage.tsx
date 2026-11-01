@@ -9,7 +9,7 @@
  */
 
 import { useCallback, useEffect, useState } from "react";
-import { useSearchParams } from "react-router";
+import { Link, useSearchParams } from "react-router";
 
 import { api, unwrap } from "../../api/client";
 import { useApi } from "../../api/useApi";
@@ -198,12 +198,16 @@ export function WorkstationPage() {
   return (
     <div className="workstation -mx-6 -my-5 flex h-[calc(100%+2.5rem)] min-h-[36rem] flex-col">
       <div className="flex items-center justify-between gap-4 border-b border-border bg-bg px-4 py-2">
-        <h1 className="text-sm font-semibold tracking-tight text-text">Workstation</h1>
+        <h1 className="text-sm font-semibold tracking-tight text-text">Legacy Flow Workstation</h1>
         <p className="hidden font-mono text-[11px] text-dim md:block">
           <kbd className="rounded-sm border border-border px-1">j</kbd> <kbd className="rounded-sm border border-border px-1">k</kbd> move ·{" "}
           <kbd className="rounded-sm border border-border px-1">/</kbd> search
         </p>
       </div>
+      <p className="shrink-0 border-b border-border bg-bg px-4 py-2 text-xs text-muted">
+        Historical recorded-flow analysis using the legacy Signature/XGBoost pipeline. For current Tier 1/Tier 2 operational routing, use Alert Triage.{" "}
+        <Link to="/analyst/v2-triage" className="text-accent underline">Open Alert Triage</Link>
+      </p>
       <KpiStrip summary={summary} breakdowns={breakdowns} />
       <div className="workstation-panes grid min-h-0 flex-1 grid-cols-[minmax(18rem,20rem)_minmax(0,1fr)] xl:grid-cols-[21rem_minmax(0,1fr)_20rem]">
         <QueuePane

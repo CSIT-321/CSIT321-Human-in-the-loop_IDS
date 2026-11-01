@@ -73,6 +73,8 @@ test("capture the demo guide", async ({ page }) => {
   await page.getByLabel("Password", { exact: true }).fill("analyst-demo");
   await shot(page, "01-login");
   await page.getByRole("button", { name: "Sign in" }).click();
+  await expect(page).toHaveURL(/\/analyst\/v2-triage$/);
+  await page.goto("/analyst/workstation");
   await expect(page.getByText("5,000 alerts")).toBeVisible();
 
   // Act 1b — the workstation: queue, alert and context in one view. Captured before any verdict.
@@ -285,7 +287,7 @@ test("capture the demo guide", async ({ page }) => {
   // moving scores, bands and ranks together. Captured at the very end so no earlier screenshot
   // sees these verdicts.
   // --------------------------------------------------------------------------------------------
-  await signInAs(page, "g.ang", "analyst-demo", "/analyst/workstation");
+  await signInAs(page, "g.ang", "analyst-demo", "/analyst/v2-triage");
   await page.goto("/analyst/workstation?group=family");
   const pane = page.locator('section[aria-label="Alert queue"]');
   const botnet = pane.getByRole("button", { name: /Botnet · port 8080/ });
