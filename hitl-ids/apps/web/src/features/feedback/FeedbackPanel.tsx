@@ -101,6 +101,9 @@ export function FeedbackPanel({
       title="Record a verdict"
       subtitle="The decision is yours. Guardrails bound how far it may move the score."
     >
+      <p className="mb-4 text-xs text-muted">
+        Legacy verdict actions affect historical scoring and feedback. Operational Tier 2 routing is handled in Analyst Workspace.
+      </p>
       {current !== null && current !== undefined && (
         <p className="mb-4 text-sm text-muted">
           Current verdict: <span className="text-text">{categoryMeta(current.category).label}</span>. A

@@ -10,6 +10,7 @@ import { describe, expect, it, vi } from "vitest";
 import type { Schemas } from "../../../api/client";
 import { jsonResponse, stubFetch } from "../../../test/renderApp";
 import { FeedbackPanel } from "../FeedbackPanel";
+import { categoryLabel, categoryMeta } from "../categories";
 import { ScoreAdjustmentChain } from "../ScoreAdjustmentChain";
 
 const CAPPED: Schemas["ScoreAdjustment"] = {
@@ -201,13 +202,46 @@ describe("FeedbackPanel", () => {
     expect(within(outcome).getByText("Similar-alert learning did not apply.")).toBeInTheDocument();
   });
 
+  it("recommends legacy review priority without calling operational Tier 2 routing", async () => {
+    const user = userEvent.setup();
+    const result = response();
+    result.feedback.category = "escalate";
+    result.feedback.adjustment = {
+      ...CAPPED, detectionScore: 60, scoreBefore: 60, requestedDelta: 15, actualDelta: 15,
+      scoreAfter: 75, action: "applied", interventions: [], requiresReview: true,
+      queueClassBefore: "ml_only", queueClassAfter: "ml_only",
+      summary: "Legacy review priority increased by the feedback engine.",
+    };
+    const seen = stubFetch(() => jsonResponse(result));
+    const onRecorded = vi.fn();
+    render(<FeedbackPanel alertRef={REF} current={null} onRecorded={onRecorded} />);
+
+    expect(screen.queryByRole("radio", { name: /Escalate to Tier 2/ })).toBeNull();
+    expect(screen.getByText("Legacy verdict actions affect historical scoring and feedback. Operational Tier 2 routing is handled in Analyst Workspace.")).toBeVisible();
+    await user.click(screen.getByRole("radio", { name: /Escalation Recommended/ }));
+    expect(screen.getByText(/Raises the legacy review priority\. This does not create a Tier 2 Candidate or Tier 2 Case\. Use Analyst Workspace for operational escalation\./)).toBeVisible();
+    expect(categoryLabel("escalate")).toBe("Escalation Recommended");
+    expect(categoryMeta("escalate")).toMatchObject({ requestedDelta: 15, forcesReview: true, teachesFamily: true });
+    await user.click(screen.getByRole("button", { name: "Record verdict" }));
+
+    await waitFor(() => expect(onRecorded).toHaveBeenCalledExactlyOnceWith(result));
+    expect(seen).toHaveLength(1);
+    expect(seen[0]?.method).toBe("POST");
+    expect(new URL(seen[0]!.url).pathname).toBe(`/api/alerts/${REF}/feedback`);
+    expect(await seen[0]!.clone().json()).toEqual({ category: "escalate", note: null });
+    const outcome = screen.getByRole("region", { name: "Verdict outcome" });
+    expect(within(outcome).getByText("Escalation Recommended")).toBeVisible();
+    expect(within(outcome).getByText("75.00")).toBeVisible();
+    expect(within(outcome).getByText("Applied as requested")).toBeVisible();
+  });
+
   it("shows the API's error envelope when the verdict cannot be recorded", async () => {
     const user = userEvent.setup();
     stubFetch(() => jsonResponse({ error: { code: "NOT_FOUND", message: "No alert with reference x" } }, 404));
     const onRecorded = vi.fn();
     render(<FeedbackPanel alertRef="x" current={null} onRecorded={onRecorded} />);
 
-    await user.click(screen.getByRole("radio", { name: /Escalate/ }));
+    await user.click(screen.getByRole("radio", { name: /Escalation Recommended/ }));
     await user.click(screen.getByRole("button", { name: "Record verdict" }));
 
     expect(await screen.findByRole("alert")).toHaveTextContent("No alert with reference x");

@@ -39,11 +39,11 @@ export const FEEDBACK_CATEGORIES: readonly CategoryMeta[] = [
   },
   {
     value: "escalate",
-    label: "Escalate to Tier 2",
+    label: "Escalation Recommended",
     requestedDelta: 15,
     forcesReview: true,
     teachesFamily: true,
-    description: "Real, and it needs higher-priority review.",
+    description: "Raises the legacy review priority. This does not create a Tier 2 Candidate or Tier 2 Case. Use Analyst Workspace for operational escalation.",
   },
   {
     value: "needs_investigation",
