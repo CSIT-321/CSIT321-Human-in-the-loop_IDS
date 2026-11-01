@@ -1,0 +1,850 @@
+{
+  "baseSha": "9ec9d4c7d453c4273cd87cf330871b0627a1e568",
+  "scenario": "FINAL coherent real UI/API Golden Path",
+  "source": "Synthetic correlated EVE through current importer; actual PCAP/Suricata not executed",
+  "verifiedSupportProgress": [
+    1,
+    2,
+    3
+  ],
+  "alerts": {
+    "A": {
+      "alertRef": "742ed971-8d22-5184-84a4-7485199749df",
+      "inboxId": 1,
+      "flowId": 970002,
+      "captureScope": "golden-routine",
+      "recordCount": 4,
+      "systemClassification": "brute_force",
+      "operationalPriority": 85,
+      "admissionRoute": "tier1_review",
+      "routingSource": "system_policy",
+      "latestRecordedVerdict": {
+        "verdictRef": "c78704b4-2124-49ed-b9b9-85f463b4828c",
+        "revision": 2,
+        "outcome": "confirmed_malicious",
+        "actorId": 1,
+        "actorName": "Glenn Ang"
+      }
+    },
+    "B": {
+      "alertRef": "c4f5a686-9862-5df0-bfb7-05082fe78626",
+      "inboxId": 2,
+      "flowId": 970005,
+      "captureScope": "golden-routine",
+      "recordCount": 4,
+      "systemClassification": "brute_force",
+      "operationalPriority": 85,
+      "admissionRoute": "tier1_review",
+      "routingSource": "system_policy",
+      "latestRecordedVerdict": {
+        "verdictRef": "c24a605f-2a04-4c8a-9f2b-5f9b1af774a9",
+        "revision": 1,
+        "outcome": "expected_activity",
+        "actorId": 1,
+        "actorName": "Glenn Ang"
+      }
+    },
+    "C": {
+      "alertRef": "5128df8c-8d1f-5e03-a501-644038540928",
+      "inboxId": 3,
+      "flowId": 970006,
+      "captureScope": "golden-routine",
+      "recordCount": 4,
+      "systemClassification": "brute_force",
+      "operationalPriority": 85,
+      "admissionRoute": "tier1_review",
+      "routingSource": "system_policy",
+      "latestRecordedVerdict": {
+        "verdictRef": "69070f04-caa9-4eb7-a70e-f0021c75b277",
+        "revision": 1,
+        "outcome": "expected_activity",
+        "actorId": 1,
+        "actorName": "Glenn Ang"
+      }
+    },
+    "D": {
+      "alertRef": "f22c8902-3339-5d15-ba80-7e6bb57f3fa9",
+      "inboxId": 4,
+      "flowId": 970007,
+      "captureScope": "golden-routine",
+      "recordCount": 4,
+      "systemClassification": "brute_force",
+      "operationalPriority": 85,
+      "admissionRoute": "tier1_review",
+      "routingSource": "system_policy",
+      "latestRecordedVerdict": {
+        "verdictRef": "009623d2-bc98-45f8-ba24-fb5ec43753ba",
+        "revision": 1,
+        "outcome": "confirmed_malicious",
+        "actorId": 1,
+        "actorName": "Glenn Ang"
+      },
+      "lastExplicitReviewDuringStory": {
+        "disposition": "no_immediate_review",
+        "reasonCodes": [
+          "VALIDATED_MEMORY_AND_CONTEXT"
+        ],
+        "humanOverride": false
+      }
+    },
+    "E": {
+      "alertRef": "2ec7e5e1-3053-5096-91c9-f7b7cbc3f05c",
+      "inboxId": 5,
+      "flowId": 970008,
+      "captureScope": "golden-routine",
+      "recordCount": 4,
+      "systemClassification": "brute_force",
+      "operationalPriority": 85,
+      "admissionRoute": "tier1_review",
+      "routingSource": "system_policy",
+      "lastExplicitReviewDuringStory": {
+        "disposition": "must_review",
+        "reasonCodes": [
+          "MEMORY_CONFLICT",
+          "NO_QUALIFIED_ACTIVE_EXACT_MEMORY"
+        ],
+        "humanOverride": false
+      }
+    },
+    "U": {
+      "alertRef": "d20e0df5-6189-535a-8e1c-433007188ba4",
+      "inboxId": 15,
+      "flowId": 970018,
+      "captureScope": "golden-unknown",
+      "recordCount": 2,
+      "systemClassification": "unknown_needs_expert",
+      "operationalPriority": 85,
+      "admissionRoute": "tier2_case",
+      "routingSource": "system_policy"
+    },
+    "I1": {
+      "alertRef": "1e98e9f1-bebc-5f51-a387-e473714f10f1",
+      "inboxId": 7,
+      "flowId": 970010,
+      "captureScope": "golden-authority",
+      "recordCount": 4,
+      "systemClassification": "brute_force",
+      "operationalPriority": 85,
+      "admissionRoute": "tier1_review",
+      "routingSource": "system_policy",
+      "latestRecordedVerdict": {
+        "verdictRef": "32854b6e-7849-4921-8f7a-3d4597adc3a8",
+        "revision": 1,
+        "outcome": "expected_activity",
+        "actorId": 1,
+        "actorName": "Glenn Ang"
+      },
+      "manualEscalation": {
+        "action": "manual_escalate",
+        "actorId": 1,
+        "decisionSource": "analyst"
+      }
+    },
+    "I2": {
+      "alertRef": "77761f6a-b6cb-5c8c-b063-919ff6d4d7e5",
+      "inboxId": 8,
+      "flowId": 970011,
+      "captureScope": "golden-authority",
+      "recordCount": 4,
+      "systemClassification": "brute_force",
+      "operationalPriority": 85,
+      "admissionRoute": "tier1_review",
+      "routingSource": "system_policy",
+      "latestRecordedVerdict": {
+        "verdictRef": "8b8367c3-d501-43e0-bd9c-d1943d34a30f",
+        "revision": 1,
+        "outcome": "expected_activity",
+        "actorId": 1,
+        "actorName": "Glenn Ang"
+      },
+      "manualEscalation": {
+        "action": "manual_escalate",
+        "actorId": 1,
+        "decisionSource": "analyst"
+      }
+    },
+    "I3": {
+      "alertRef": "cb808377-8a9c-51e4-9146-eb48abb01712",
+      "inboxId": 9,
+      "flowId": 970012,
+      "captureScope": "golden-authority",
+      "recordCount": 4,
+      "systemClassification": "brute_force",
+      "operationalPriority": 85,
+      "admissionRoute": "tier1_review",
+      "routingSource": "system_policy",
+      "latestRecordedVerdict": {
+        "verdictRef": "ed9c2b90-e822-415c-9228-481a07aff7e6",
+        "revision": 1,
+        "outcome": "expected_activity",
+        "actorId": 1,
+        "actorName": "Glenn Ang"
+      }
+    },
+    "T1": {
+      "alertRef": "59125e7b-b71b-58ab-bf86-4809f6638364",
+      "inboxId": 10,
+      "flowId": 970013,
+      "captureScope": "golden-aging",
+      "recordCount": 4,
+      "systemClassification": "brute_force",
+      "operationalPriority": 85,
+      "admissionRoute": "tier1_review",
+      "routingSource": "system_policy",
+      "latestRecordedVerdict": {
+        "verdictRef": "ea687ac9-5cde-4ce0-a300-c9f960586778",
+        "revision": 1,
+        "outcome": "expected_activity",
+        "actorId": 1,
+        "actorName": "Glenn Ang"
+      }
+    },
+    "T2": {
+      "alertRef": "4acc417b-2ac7-5fcb-bdc6-6edcf6868940",
+      "inboxId": 11,
+      "flowId": 970014,
+      "captureScope": "golden-aging",
+      "recordCount": 4,
+      "systemClassification": "brute_force",
+      "operationalPriority": 85,
+      "admissionRoute": "tier1_review",
+      "routingSource": "system_policy",
+      "latestRecordedVerdict": {
+        "verdictRef": "5646b29c-1510-4bd1-80f1-79984c2a0199",
+        "revision": 1,
+        "outcome": "expected_activity",
+        "actorId": 1,
+        "actorName": "Glenn Ang"
+      }
+    },
+    "T3": {
+      "alertRef": "af400122-5f7c-5e2e-aa35-2de7cf548533",
+      "inboxId": 12,
+      "flowId": 970015,
+      "captureScope": "golden-aging",
+      "recordCount": 4,
+      "systemClassification": "brute_force",
+      "operationalPriority": 85,
+      "admissionRoute": "tier1_review",
+      "routingSource": "system_policy",
+      "latestRecordedVerdict": {
+        "verdictRef": "ee82ab27-b7e8-4d2b-bc1b-334c4be9ccfd",
+        "revision": 1,
+        "outcome": "expected_activity",
+        "actorId": 1,
+        "actorName": "Glenn Ang"
+      }
+    },
+    "T5": {
+      "alertRef": "5f062c8e-6d87-5cef-a047-73103170044b",
+      "inboxId": 14,
+      "flowId": 970017,
+      "captureScope": "golden-aging",
+      "recordCount": 4,
+      "systemClassification": "brute_force",
+      "operationalPriority": 85,
+      "admissionRoute": "tier1_review",
+      "routingSource": "system_policy",
+      "latestRecordedVerdict": {
+        "verdictRef": "bae3a77f-4334-406c-84d8-dc5e259f0012",
+        "revision": 1,
+        "outcome": "expected_activity",
+        "actorId": 1,
+        "actorName": "Glenn Ang"
+      },
+      "lastExplicitReviewDuringStory": {
+        "disposition": "must_review",
+        "reasonCodes": [
+          "NO_QUALIFIED_ACTIVE_EXACT_MEMORY"
+        ],
+        "humanOverride": false
+      }
+    },
+    "T4": {
+      "alertRef": "bd77ca63-268d-53fe-9d7b-4a7ed37a5430",
+      "inboxId": 13,
+      "flowId": 970016,
+      "captureScope": "golden-aging",
+      "recordCount": 4,
+      "systemClassification": "brute_force",
+      "operationalPriority": 85,
+      "admissionRoute": "tier1_review",
+      "routingSource": "system_policy",
+      "latestRecordedVerdict": {
+        "verdictRef": "8ca938f5-e925-4fcf-858e-19bb128e7b38",
+        "revision": 1,
+        "outcome": "expected_activity",
+        "actorId": 1,
+        "actorName": "Glenn Ang"
+      },
+      "lastExplicitReviewDuringStory": {
+        "disposition": "no_immediate_review",
+        "reasonCodes": [
+          "VALIDATED_MEMORY_AND_CONTEXT"
+        ],
+        "humanOverride": false
+      }
+    }
+  },
+  "autoActive": {
+    "lessonRef": "db41e848-f5e5-4c3e-aaa2-4d3033fb5a42",
+    "outcome": "expected_activity",
+    "scope": "exact",
+    "status": "active",
+    "supportCount": 3,
+    "conflictCount": 0,
+    "agreementRatio": 1,
+    "validFrom": "2026-11-01T22:08:42.376371Z",
+    "expiresAt": "2026-12-01T22:08:42.376371Z",
+    "decision": {
+      "action": "activate",
+      "actorId": null,
+      "decisionSource": "system_policy",
+      "policyVersion": "safe-memory-auto-activation-v1",
+      "reason": "Auto-activated after 3 independent current Exact-scope expected_activity evidence items satisfied configured support, agreement and zero-conflict safety requirements.",
+      "createdAt": "2026-11-01T22:08:42.376371Z"
+    }
+  },
+  "conflict": {
+    "lessonRef": "db41e848-f5e5-4c3e-aaa2-4d3033fb5a42",
+    "outcome": "expected_activity",
+    "scope": "exact",
+    "status": "conflict_review",
+    "supportCount": 3,
+    "conflictCount": 1,
+    "agreementRatio": 0.75,
+    "validFrom": "2026-11-01T22:08:42.376371Z",
+    "expiresAt": "2026-12-01T22:08:42.376371Z",
+    "decision": {
+      "action": "activate",
+      "actorId": null,
+      "decisionSource": "system_policy",
+      "policyVersion": "safe-memory-auto-activation-v1",
+      "reason": "Auto-activated after 3 independent current Exact-scope expected_activity evidence items satisfied configured support, agreement and zero-conflict safety requirements.",
+      "createdAt": "2026-11-01T22:08:42.376371Z"
+    }
+  },
+  "initialAging": {
+    "lessonRef": "fc4847df-b565-4b02-b2a7-abce6b49054a",
+    "outcome": "expected_activity",
+    "scope": "exact",
+    "status": "active",
+    "supportCount": 3,
+    "conflictCount": 0,
+    "agreementRatio": 1,
+    "validFrom": "2026-11-01T22:09:07.572333Z",
+    "expiresAt": "2026-12-01T22:09:07.572333Z",
+    "decision": {
+      "action": "activate",
+      "actorId": null,
+      "decisionSource": "system_policy",
+      "policyVersion": "safe-memory-auto-activation-v1",
+      "reason": "Auto-activated after 3 independent current Exact-scope expected_activity evidence items satisfied configured support, agreement and zero-conflict safety requirements.",
+      "createdAt": "2026-11-01T22:09:07.572333Z"
+    }
+  },
+  "day15": {
+    "lessonRef": "fc4847df-b565-4b02-b2a7-abce6b49054a",
+    "outcome": "expected_activity",
+    "scope": "exact",
+    "status": "active",
+    "supportCount": 4,
+    "conflictCount": 0,
+    "agreementRatio": 1,
+    "validFrom": "2026-11-01T22:09:07.572333Z",
+    "expiresAt": "2026-12-01T22:09:07.572333Z",
+    "decision": {
+      "action": "activate",
+      "actorId": null,
+      "decisionSource": "system_policy",
+      "policyVersion": "safe-memory-auto-activation-v1",
+      "reason": "Auto-activated after 3 independent current Exact-scope expected_activity evidence items satisfied configured support, agreement and zero-conflict safety requirements.",
+      "createdAt": "2026-11-01T22:09:07.572333Z"
+    }
+  },
+  "expired": {
+    "lessonRef": "fc4847df-b565-4b02-b2a7-abce6b49054a",
+    "outcome": "expected_activity",
+    "scope": "exact",
+    "status": "expired",
+    "supportCount": 4,
+    "conflictCount": 0,
+    "agreementRatio": 1,
+    "validFrom": "2026-11-01T22:09:07.572333Z",
+    "expiresAt": "2026-12-01T22:09:07.572333Z",
+    "decision": {
+      "action": "activate",
+      "actorId": null,
+      "decisionSource": "system_policy",
+      "policyVersion": "safe-memory-auto-activation-v1",
+      "reason": "Auto-activated after 3 independent current Exact-scope expected_activity evidence items satisfied configured support, agreement and zero-conflict safety requirements.",
+      "createdAt": "2026-11-01T22:09:07.572333Z"
+    }
+  },
+  "postExpiry": {
+    "lessonRef": "fc4847df-b565-4b02-b2a7-abce6b49054a",
+    "outcome": "expected_activity",
+    "scope": "exact",
+    "status": "expired",
+    "supportCount": 5,
+    "conflictCount": 0,
+    "agreementRatio": 1,
+    "validFrom": "2026-11-01T22:09:07.572333Z",
+    "expiresAt": "2026-12-01T22:09:07.572333Z",
+    "decision": {
+      "action": "activate",
+      "actorId": null,
+      "decisionSource": "system_policy",
+      "policyVersion": "safe-memory-auto-activation-v1",
+      "reason": "Auto-activated after 3 independent current Exact-scope expected_activity evidence items satisfied configured support, agreement and zero-conflict safety requirements.",
+      "createdAt": "2026-11-01T22:09:07.572333Z"
+    }
+  },
+  "unknownCase": {
+    "caseRef": "28d04771-e327-55d5-a7a9-dd19bef72e27",
+    "decisionSource": "system_policy",
+    "ownerActorId": null,
+    "createdByActorId": null,
+    "status": "open",
+    "revision": 1
+  },
+  "resolvedCase": {
+    "caseRef": "28d04771-e327-55d5-a7a9-dd19bef72e27",
+    "status": "resolved",
+    "revision": 4,
+    "resolution": {
+      "eventId": 4,
+      "caseRef": "28d04771-e327-55d5-a7a9-dd19bef72e27",
+      "actorId": 1,
+      "actorName": "Glenn Ang",
+      "reason": "SYNTHETIC Golden investigation complete, response plan approved not executed",
+      "createdAt": "2026-11-01T22:08:52.712295Z",
+      "previousStatus": "investigating",
+      "newStatus": "resolved",
+      "caseRevision": 4,
+      "requestId": "3554f26a-0706-41d2-96a8-701297765f2e",
+      "conclusion": {
+        "eventId": 3,
+        "caseRef": "28d04771-e327-55d5-a7a9-dd19bef72e27",
+        "finding": "confirmed_malicious",
+        "finalAttackCategory": "web_attack",
+        "actorId": 1,
+        "reason": "SYNTHETIC Golden expert confirmed_malicious",
+        "createdAt": "2026-11-01T22:08:50.886255Z",
+        "caseRevision": 3,
+        "requestId": "372d94ab-4db3-4d47-981c-a56d774bfbab",
+        "systemClassification": {
+          "attackCategory": "unknown_needs_expert",
+          "status": "unmapped",
+          "source": "deterministic_suricata_mapping",
+          "reasons": [
+            "Unresolved evidence: neither a supported attack class nor complete explicit informational/policy identification. Expert review required."
+          ],
+          "policyVersion": "suricata-classification-v3",
+          "matches": [],
+          "conflictingCategories": []
+        },
+        "supersedesEventId": null,
+        "recordKind": "investigation_conclusion"
+      },
+      "responses": [
+        {
+          "recommendationRef": "5812ffa0-cc2c-47c1-82f5-151b2debfc7f",
+          "recommendationType": "block_source_ip",
+          "proposalCaseRevision": 3,
+          "approvalStatus": "approved",
+          "decisionActorId": 1,
+          "decisionAt": "2026-11-01T22:08:51.811981Z",
+          "executionStatus": "not_executed"
+        }
+      ]
+    },
+    "latestConclusion": {
+      "eventId": 3,
+      "caseRef": "28d04771-e327-55d5-a7a9-dd19bef72e27",
+      "finding": "confirmed_malicious",
+      "finalAttackCategory": "web_attack",
+      "actorId": 1,
+      "reason": "SYNTHETIC Golden expert confirmed_malicious",
+      "createdAt": "2026-11-01T22:08:50.886255Z",
+      "caseRevision": 3,
+      "requestId": "372d94ab-4db3-4d47-981c-a56d774bfbab",
+      "systemClassification": {
+        "attackCategory": "unknown_needs_expert",
+        "status": "unmapped",
+        "source": "deterministic_suricata_mapping",
+        "reasons": [
+          "Unresolved evidence: neither a supported attack class nor complete explicit informational/policy identification. Expert review required."
+        ],
+        "policyVersion": "suricata-classification-v3",
+        "matches": [],
+        "conflictingCategories": []
+      },
+      "supersedesEventId": null,
+      "recordKind": "investigation_conclusion"
+    },
+    "systemAttackClassification": {
+      "attackCategory": "unknown_needs_expert",
+      "status": "unmapped",
+      "source": "deterministic_suricata_mapping",
+      "reasons": [
+        "Unresolved evidence: neither a supported attack class nor complete explicit informational/policy identification. Expert review required."
+      ],
+      "policyVersion": "suricata-classification-v3",
+      "matches": [],
+      "conflictingCategories": []
+    }
+  },
+  "expertLearning": {
+    "source": "system_policy",
+    "memory": {
+      "lessonRef": "48c93b28-7a4f-451a-9d9b-c769f0960d1f",
+      "outcome": "confirmed_malicious",
+      "scope": "exact",
+      "status": "candidate",
+      "supportCount": 1,
+      "conflictCount": 0,
+      "agreementRatio": 1,
+      "validFrom": null,
+      "expiresAt": "2026-12-01T22:08:50.895108Z",
+      "decision": null
+    }
+  },
+  "inconclusive": {
+    "latestConclusion": {
+      "eventId": 6,
+      "caseRef": "1f07260e-7541-41f2-82c6-32e2fb0d59f9",
+      "finding": "inconclusive",
+      "finalAttackCategory": null,
+      "actorId": 1,
+      "reason": "SYNTHETIC Golden expert inconclusive",
+      "createdAt": "2026-11-01T22:08:58.779526Z",
+      "caseRevision": 2,
+      "requestId": "74f4efa6-8046-4625-b2f0-7914f479d6b4",
+      "systemClassification": {
+        "attackCategory": "brute_force",
+        "status": "mapped",
+        "source": "deterministic_suricata_mapping",
+        "reasons": [
+          "Rule brute-force: signature 970002 signature maps to brute_force.",
+          "Rule brute-force: signature 970001 signature maps to brute_force."
+        ],
+        "policyVersion": "suricata-classification-v3",
+        "matches": [
+          {
+            "ruleId": "brute-force",
+            "sourceRecordRef": "eve-sha256:1590589d39b897cf098e3eb7cb5b7420ba66f92be4a16d1f38911b80444a64fd",
+            "signatureId": 970002,
+            "field": "signature",
+            "value": "SYNTHETIC Golden authority SSH brute force",
+            "category": "brute_force"
+          },
+          {
+            "ruleId": "brute-force",
+            "sourceRecordRef": "eve-sha256:cde24bae0de24517c7a54c1fc0f9c4f6381098dd546d2b70ddaad33936e9c9d0",
+            "signatureId": 970001,
+            "field": "signature",
+            "value": "SYNTHETIC Golden authority SSH brute force",
+            "category": "brute_force"
+          }
+        ],
+        "conflictingCategories": []
+      },
+      "supersedesEventId": null,
+      "recordKind": "investigation_conclusion"
+    },
+    "eligible": false,
+    "contributionStatus": "not_contributed",
+    "tier1EvidenceSuperseded": true
+  },
+  "finalProof": {
+    "digest": "292e60a77cf9a0df562f8f4ff805c635d3e28158adf6c6c51e75c1487d3efd6d",
+    "votes": {
+      "48c93b28-7a4f-451a-9d9b-c769f0960d1f": [
+        {
+          "alertRef": "d20e0df5-6189-535a-8e1c-433007188ba4",
+          "sourceKind": "tier2_conclusion",
+          "outcome": "confirmed_malicious",
+          "actorId": null,
+          "authorId": 1
+        }
+      ],
+      "8923ed99-61e1-45d6-b45c-221eb727eeb8": [
+        {
+          "alertRef": "742ed971-8d22-5184-84a4-7485199749df",
+          "sourceKind": "analyst_verdict",
+          "outcome": "confirmed_malicious",
+          "actorId": 1,
+          "authorId": 1
+        }
+      ],
+      "db41e848-f5e5-4c3e-aaa2-4d3033fb5a42": [
+        {
+          "alertRef": "c4f5a686-9862-5df0-bfb7-05082fe78626",
+          "sourceKind": "analyst_verdict",
+          "outcome": "expected_activity",
+          "actorId": null,
+          "authorId": 1
+        },
+        {
+          "alertRef": "5128df8c-8d1f-5e03-a501-644038540928",
+          "sourceKind": "analyst_verdict",
+          "outcome": "expected_activity",
+          "actorId": null,
+          "authorId": 1
+        },
+        {
+          "alertRef": "f22c8902-3339-5d15-ba80-7e6bb57f3fa9",
+          "sourceKind": "analyst_verdict",
+          "outcome": "confirmed_malicious",
+          "actorId": null,
+          "authorId": 1
+        },
+        {
+          "alertRef": "742ed971-8d22-5184-84a4-7485199749df",
+          "sourceKind": "analyst_verdict",
+          "outcome": "confirmed_malicious",
+          "actorId": 1,
+          "authorId": 1
+        }
+      ],
+      "f4f17da1-1444-47ad-8b63-d25a9e11741c": [
+        {
+          "alertRef": "cb808377-8a9c-51e4-9146-eb48abb01712",
+          "sourceKind": "analyst_verdict",
+          "outcome": "expected_activity",
+          "actorId": null,
+          "authorId": 1
+        },
+        {
+          "alertRef": "77761f6a-b6cb-5c8c-b063-919ff6d4d7e5",
+          "sourceKind": "tier2_conclusion",
+          "outcome": "confirmed_malicious",
+          "actorId": null,
+          "authorId": 1
+        }
+      ],
+      "fc4847df-b565-4b02-b2a7-abce6b49054a": [
+        {
+          "alertRef": "59125e7b-b71b-58ab-bf86-4809f6638364",
+          "sourceKind": "analyst_verdict",
+          "outcome": "expected_activity",
+          "actorId": null,
+          "authorId": 1
+        },
+        {
+          "alertRef": "4acc417b-2ac7-5fcb-bdc6-6edcf6868940",
+          "sourceKind": "analyst_verdict",
+          "outcome": "expected_activity",
+          "actorId": null,
+          "authorId": 1
+        },
+        {
+          "alertRef": "af400122-5f7c-5e2e-aa35-2de7cf548533",
+          "sourceKind": "analyst_verdict",
+          "outcome": "expected_activity",
+          "actorId": null,
+          "authorId": 1
+        },
+        {
+          "alertRef": "bd77ca63-268d-53fe-9d7b-4a7ed37a5430",
+          "sourceKind": "analyst_verdict",
+          "outcome": "expected_activity",
+          "actorId": null,
+          "authorId": 1
+        },
+        {
+          "alertRef": "5f062c8e-6d87-5cef-a047-73103170044b",
+          "sourceKind": "analyst_verdict",
+          "outcome": "expected_activity",
+          "actorId": null,
+          "authorId": 1
+        }
+      ]
+    },
+    "collectionRuns": 0,
+    "foreignKeys": 0
+  },
+  "finalMetrics": {
+    "totalAlerts": 14,
+    "eligibleAlerts": 11,
+    "mustReviewCount": 14,
+    "recommendedReviewCount": 0,
+    "noImmediateReviewCount": 0,
+    "immediateReviewReductionRate": 0,
+    "unsafeSuppressionCount": 1,
+    "conflictTriggeredRecallCount": 1,
+    "sampledOverrideCount": 0,
+    "dataBasis": "Observed local decisions and human outcomes; not a measured real-world workload benefit."
+  },
+  "queueOrder": [
+    {
+      "alertRef": "d20e0df5-6189-535a-8e1c-433007188ba4",
+      "priority": 85,
+      "occurredAt": "2026-11-01T22:08:28.247838+00:00"
+    },
+    {
+      "alertRef": "5f062c8e-6d87-5cef-a047-73103170044b",
+      "priority": 85,
+      "occurredAt": "2026-11-01T22:08:28.238071+00:00"
+    },
+    {
+      "alertRef": "bd77ca63-268d-53fe-9d7b-4a7ed37a5430",
+      "priority": 85,
+      "occurredAt": "2026-11-01T22:08:28.237060+00:00"
+    },
+    {
+      "alertRef": "af400122-5f7c-5e2e-aa35-2de7cf548533",
+      "priority": 85,
+      "occurredAt": "2026-11-01T22:08:28.230353+00:00"
+    },
+    {
+      "alertRef": "4acc417b-2ac7-5fcb-bdc6-6edcf6868940",
+      "priority": 85,
+      "occurredAt": "2026-11-01T22:08:28.223863+00:00"
+    },
+    {
+      "alertRef": "59125e7b-b71b-58ab-bf86-4809f6638364",
+      "priority": 85,
+      "occurredAt": "2026-11-01T22:08:28.216843+00:00"
+    },
+    {
+      "alertRef": "cb808377-8a9c-51e4-9146-eb48abb01712",
+      "priority": 85,
+      "occurredAt": "2026-11-01T22:08:28.210067+00:00"
+    },
+    {
+      "alertRef": "77761f6a-b6cb-5c8c-b063-919ff6d4d7e5",
+      "priority": 85,
+      "occurredAt": "2026-11-01T22:08:28.202973+00:00"
+    },
+    {
+      "alertRef": "1e98e9f1-bebc-5f51-a387-e473714f10f1",
+      "priority": 85,
+      "occurredAt": "2026-11-01T22:08:28.193195+00:00"
+    },
+    {
+      "alertRef": "2ec7e5e1-3053-5096-91c9-f7b7cbc3f05c",
+      "priority": 85,
+      "occurredAt": "2026-11-01T22:08:28.181036+00:00"
+    },
+    {
+      "alertRef": "f22c8902-3339-5d15-ba80-7e6bb57f3fa9",
+      "priority": 85,
+      "occurredAt": "2026-11-01T22:08:28.174505+00:00"
+    },
+    {
+      "alertRef": "5128df8c-8d1f-5e03-a501-644038540928",
+      "priority": 85,
+      "occurredAt": "2026-11-01T22:08:28.166988+00:00"
+    },
+    {
+      "alertRef": "c4f5a686-9862-5df0-bfb7-05082fe78626",
+      "priority": 85,
+      "occurredAt": "2026-11-01T22:08:28.160205+00:00"
+    },
+    {
+      "alertRef": "742ed971-8d22-5184-84a4-7485199749df",
+      "priority": 85,
+      "occurredAt": "2026-11-01T22:08:28.149829+00:00"
+    }
+  ],
+  "evaluatorDenied": [
+    "/api/v2/alerts/742ed971-8d22-5184-84a4-7485199749df/verdict",
+    "/api/v2/alerts/742ed971-8d22-5184-84a4-7485199749df/triage-memory/from-verdict",
+    "/api/v2/tier2/cases/28d04771-e327-55d5-a7a9-dd19bef72e27/notes",
+    "/api/v2/tier2/cases/28d04771-e327-55d5-a7a9-dd19bef72e27/resolve",
+    "/api/v2/tier2/cases/28d04771-e327-55d5-a7a9-dd19bef72e27/responses/5812ffa0-cc2c-47c1-82f5-151b2debfc7f/approve"
+  ],
+  "consoleErrors": [],
+  "productWrites": [
+    "/api/auth/login",
+    "/api/v2/external-alerts/1/eligibility",
+    "/api/v2/external-alerts/1/admit",
+    "/api/v2/alerts/742ed971-8d22-5184-84a4-7485199749df/verdict",
+    "/api/v2/external-alerts/2/eligibility",
+    "/api/v2/external-alerts/2/admit",
+    "/api/v2/alerts/c4f5a686-9862-5df0-bfb7-05082fe78626/verdict",
+    "/api/v2/external-alerts/3/eligibility",
+    "/api/v2/external-alerts/3/admit",
+    "/api/v2/alerts/5128df8c-8d1f-5e03-a501-644038540928/verdict",
+    "/api/v2/external-alerts/4/eligibility",
+    "/api/v2/external-alerts/4/admit",
+    "/api/v2/alerts/f22c8902-3339-5d15-ba80-7e6bb57f3fa9/selective-review/evaluate",
+    "/api/v2/alerts/f22c8902-3339-5d15-ba80-7e6bb57f3fa9/verdict",
+    "/api/v2/external-alerts/5/eligibility",
+    "/api/v2/external-alerts/5/admit",
+    "/api/v2/alerts/2ec7e5e1-3053-5096-91c9-f7b7cbc3f05c/selective-review/evaluate",
+    "/api/v2/alerts/742ed971-8d22-5184-84a4-7485199749df/verdict",
+    "/api/v2/alerts/742ed971-8d22-5184-84a4-7485199749df/triage-memory/from-verdict",
+    "/api/v2/external-alerts/15/eligibility",
+    "/api/v2/external-alerts/15/admit",
+    "/api/v2/tier2/cases/28d04771-e327-55d5-a7a9-dd19bef72e27/start-investigation",
+    "/api/v2/tier2/cases/28d04771-e327-55d5-a7a9-dd19bef72e27/conclusions",
+    "/api/v2/tier2/cases/28d04771-e327-55d5-a7a9-dd19bef72e27/responses/recommend",
+    "/api/v2/tier2/cases/28d04771-e327-55d5-a7a9-dd19bef72e27/responses/5812ffa0-cc2c-47c1-82f5-151b2debfc7f/approve",
+    "/api/v2/tier2/cases/28d04771-e327-55d5-a7a9-dd19bef72e27/resolve",
+    "/api/v2/external-alerts/7/eligibility",
+    "/api/v2/external-alerts/7/admit",
+    "/api/v2/alerts/1e98e9f1-bebc-5f51-a387-e473714f10f1/verdict",
+    "/api/v2/external-alerts/8/eligibility",
+    "/api/v2/external-alerts/8/admit",
+    "/api/v2/alerts/77761f6a-b6cb-5c8c-b063-919ff6d4d7e5/verdict",
+    "/api/v2/external-alerts/9/eligibility",
+    "/api/v2/external-alerts/9/admit",
+    "/api/v2/alerts/cb808377-8a9c-51e4-9146-eb48abb01712/verdict",
+    "/api/v2/alerts/1e98e9f1-bebc-5f51-a387-e473714f10f1/tier2/escalate-case",
+    "/api/v2/tier2/cases/1f07260e-7541-41f2-82c6-32e2fb0d59f9/conclusions",
+    "/api/v2/alerts/77761f6a-b6cb-5c8c-b063-919ff6d4d7e5/tier2/escalate-case",
+    "/api/v2/tier2/cases/9e4f0c1d-eb76-4d09-8bf8-1490c2967880/conclusions",
+    "/api/auth/login",
+    "/api/auth/login",
+    "/api/v2/external-alerts/10/eligibility",
+    "/api/v2/external-alerts/10/admit",
+    "/api/v2/alerts/59125e7b-b71b-58ab-bf86-4809f6638364/verdict",
+    "/api/v2/external-alerts/11/eligibility",
+    "/api/v2/external-alerts/11/admit",
+    "/api/v2/alerts/4acc417b-2ac7-5fcb-bdc6-6edcf6868940/verdict",
+    "/api/v2/external-alerts/12/eligibility",
+    "/api/v2/external-alerts/12/admit",
+    "/api/v2/alerts/af400122-5f7c-5e2e-aa35-2de7cf548533/verdict",
+    "/api/v2/external-alerts/14/eligibility",
+    "/api/v2/external-alerts/14/admit",
+    "/api/v2/alerts/5f062c8e-6d87-5cef-a047-73103170044b/selective-review/evaluate",
+    "/api/v2/alerts/5f062c8e-6d87-5cef-a047-73103170044b/selective-review/evaluate",
+    "/api/v2/alerts/5f062c8e-6d87-5cef-a047-73103170044b/selective-review/evaluate",
+    "/api/v2/alerts/5f062c8e-6d87-5cef-a047-73103170044b/selective-review/evaluate",
+    "/api/v2/alerts/5f062c8e-6d87-5cef-a047-73103170044b/selective-review/evaluate",
+    "/api/v2/alerts/5f062c8e-6d87-5cef-a047-73103170044b/selective-review/evaluate",
+    "/api/v2/external-alerts/13/eligibility",
+    "/api/v2/external-alerts/13/admit",
+    "/api/v2/alerts/bd77ca63-268d-53fe-9d7b-4a7ed37a5430/selective-review/evaluate",
+    "/api/v2/alerts/bd77ca63-268d-53fe-9d7b-4a7ed37a5430/selective-review/require-human",
+    "/api/v2/alerts/bd77ca63-268d-53fe-9d7b-4a7ed37a5430/verdict",
+    "/api/v2/alerts/5f062c8e-6d87-5cef-a047-73103170044b/selective-review/evaluate",
+    "/api/v2/alerts/5f062c8e-6d87-5cef-a047-73103170044b/selective-review/evaluate",
+    "/api/v2/alerts/5f062c8e-6d87-5cef-a047-73103170044b/verdict"
+  ],
+  "validation": {
+    "backendPassed": 1511,
+    "backendSkipped": 5,
+    "frontendPassed": 254,
+    "frontendFiles": 35,
+    "coherentBrowserScenariosPassed": 1,
+    "responsiveWidths": [
+      1440,
+      1024,
+      390
+    ],
+    "themes": [
+      "light",
+      "dark"
+    ],
+    "screenshots": 30,
+    "typescript": "passed",
+    "openapi": "fresh",
+    "build": "passed",
+    "runtimeCodeChanges": 0,
+    "collectionOpened": false
+  }
+}
