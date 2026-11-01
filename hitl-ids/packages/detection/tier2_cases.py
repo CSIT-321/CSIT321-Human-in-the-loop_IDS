@@ -146,17 +146,25 @@ def _event(conn, case_id, actor_id, action, request, payload, before, after, mom
         payload,request.reason,finding,linked_id,_json(before),_json(after),moment)).lastrowid
 
 
-def create_case(conn: sqlite3.Connection, alert_ref: UUID, *, actor_id: int, request: CreateCaseRequest):
+def create_case(conn: sqlite3.Connection, alert_ref: UUID, *, actor_id: int, request: CreateCaseRequest,
+                _escalation_transaction: bool = False, _command_payload: str | None = None):
     request = CreateCaseRequest.model_validate(request.model_dump())
-    payload = _json(dict(alertRef=str(alert_ref), request=request.model_dump(mode='json')))
-    _start(conn)
+    if _command_payload is not None and not _escalation_transaction:
+        raise ValueError('compound payload requires escalation transaction')
+    payload = _command_payload or _json(dict(alertRef=str(alert_ref), request=request.model_dump(mode='json')))
+    if _escalation_transaction:
+        if not conn.in_transaction or not conn.execute('PRAGMA foreign_keys').fetchone()[0]:
+            raise ValueError('escalation requires an existing transaction with foreign keys')
+    else:
+        _start(conn)
     try:
         _actor(conn, actor_id)
         retry = _retry(conn, actor_id, 'create', payload, request.request_id)
         if retry:
             ref = conn.execute('SELECT case_ref FROM tier2_cases WHERE id=?', (retry['case_id'],)).fetchone()[0]
             result = CaseMutation(case=read_case(conn,ref), event_id=retry['id'], replayed=True)
-            conn.commit()
+            if not _escalation_transaction:
+                conn.commit()
             return result
         row = conn.execute('SELECT id FROM operational_alerts_v2 WHERE operational_alert_ref=?', (str(alert_ref),)).fetchone()
         if row is None:
@@ -191,7 +199,8 @@ def create_case(conn: sqlite3.Connection, alert_ref: UUID, *, actor_id: int, req
         event_id = _event(conn,case_id,actor_id,'create',request,payload,
                          before.model_dump(mode='json',by_alias=True),after.model_dump(mode='json',by_alias=True),stamp)
         result = CaseMutation(case=read_case(conn,ref),event_id=event_id,replayed=False)
-        conn.commit()
+        if not _escalation_transaction:
+            conn.commit()
         return result
     except Exception:
         conn.rollback()

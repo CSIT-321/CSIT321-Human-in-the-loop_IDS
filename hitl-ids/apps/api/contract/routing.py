@@ -3,6 +3,7 @@ from uuid import UUID
 from apps.api.contract.common import ApiModel
 from packages.contracts.operational_v2 import OperationalTriageStateV2
 from packages.detection.routing import RoutingAction, RoutingAudit
+from packages.detection.tier2_cases import CaseView
 
 
 class RoutingView(ApiModel):
@@ -14,9 +15,15 @@ class RoutingView(ApiModel):
     review_reasons: list[str]
     latest_decision: RoutingAudit | None
     allowed_actions: list[RoutingAction]
+    case_ref: UUID | None = None
 
 
 class RoutingResponse(ApiModel):
     view: RoutingView
     audit: RoutingAudit
     replayed: bool
+
+
+class EscalateCaseResponse(RoutingResponse):
+    case: CaseView
+    event_id: int

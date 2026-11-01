@@ -21,12 +21,9 @@ test("Suricata to human-approved response plan without execution",async({page})=
   await page.getByRole("link",{name:"Open Alert Triage"}).click();
   await expect(page.getByText("tier1 review",{exact:true})).toBeVisible();
   await page.getByLabel("Decision reason").fill("Unresolved attack evidence requires Tier 2");
-  await page.getByRole("button",{name:"Manual Escalate"}).click();
-  await expect(page.getByText("tier2 candidate",{exact:true})).toBeVisible();
-  await page.getByLabel("Case title").fill("Response authorization demonstration");
-  await page.getByLabel("Tier 1 handoff summary").fill("Investigate source IP using immutable detector evidence");
-  await page.getByLabel("Case creation reason").fill("Formal investigation required");
-  await page.getByRole("button",{name:"Create Tier 2 Case",exact:true}).click();
+  await page.getByRole("button",{name:"Escalate to Tier 2"}).click();
+  await expect(page.getByText("Tier 2 Case created successfully.",{exact:true})).toBeVisible();
+  await page.getByRole("link",{name:"Open Tier 2 Case",exact:true}).click();
   await expect(page).toHaveURL(/tier2-cases\/[0-9a-f-]+$/);
   await page.getByRole("tab",{name:"Audit Timeline"}).click();
   await page.getByLabel("Decision reason").fill("Begin source evidence investigation");

@@ -1,9 +1,9 @@
 import { useRef, useState } from "react";
-import { useSearchParams } from "react-router";
+import { Link, useSearchParams } from "react-router";
 import { api, unwrap, type Schemas } from "../../api/client";
 import { useApi } from "../../api/useApi";
 import { PageHeader, Pill } from "../../components/ui";
-import { CreateCasePanel } from "./Tier2CasesPage";
+import { useSession } from "../../session/SessionContext";
 import { AlertMemoryPanel } from "./TriageMemoryPage";
 import { SelectiveReviewPanel } from "./SelectiveReviewPage";
 
@@ -11,26 +11,25 @@ type View = Schemas["RoutingView"];
 type Action = View["allowedActions"][number];
 const labels: Record<Action, string> = {
   admit_tier1: "Admit to Tier 1", approve_tier2: "Approve Tier 2",
-  reject_tier2: "Keep in Tier 1", manual_escalate: "Manual Escalate",
+  reject_tier2: "Keep in Tier 1", manual_escalate: "Escalate to Tier 2",
 };
 const paths = {
   admit_tier1: "/api/v2/alerts/{alertRef}/admit-tier1",
-  approve_tier2: "/api/v2/alerts/{alertRef}/tier2/approve",
   reject_tier2: "/api/v2/alerts/{alertRef}/tier2/reject",
-  manual_escalate: "/api/v2/alerts/{alertRef}/tier2/escalate",
 } as const;
 const button = "rounded-sm border border-border px-3 py-2 text-sm hover:bg-raised disabled:opacity-50";
-const pretty = (value: string) => value.replaceAll("_", " ");
+const pretty = (value: string) => value === "tier2_candidate" ? "Tier 2" : value === "assessment" ? "Awaiting case recovery" : value.replaceAll("_", " ");
+type CommandAction = Action | "recover_case";
 
-export function RoutingDetail({ initial, refresh }: { initial: View; refresh: () => void }) {
+export function RoutingDetail({ initial, refresh, casePrefix = "/analyst", canRecover = false }: { initial: View; refresh: () => void; casePrefix?: string; canRecover?: boolean }) {
   const [view, setView] = useState(initial);
   const [reason, setReason] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [done, setDone] = useState("");
-  const caseForm = useRef<HTMLDivElement>(null);
-  const pending = useRef<{ action: Action; body: Schemas["RoutingRequest"] } | null>(null);
-  async function decide(action: Action) {
+  const [caseCreated, setCaseCreated] = useState(false);
+  const pending = useRef<{ action: CommandAction; body: Schemas["RoutingRequest"] } | null>(null);
+  async function decide(action: CommandAction) {
     if (busy || !reason.trim()) return;
     const previous = pending.current;
     if (!previous || previous.action !== action || previous.body.reason !== reason.trim()) {
@@ -39,16 +38,25 @@ export function RoutingDetail({ initial, refresh }: { initial: View; refresh: ()
     }
     setBusy(true); setError(""); setDone("");
     try {
-      const result = await unwrap(api.POST(paths[action], {
-        params: { path: { alertRef: view.operationalAlertRef } }, body: pending.current!.body,
-      }));
-      setView(result.view); setReason(""); pending.current = null;
-      setDone(`${labels[action]} recorded. Audit #${result.audit.id}`);
+      const params = { path: { alertRef: view.operationalAlertRef } };
+      if (action === "manual_escalate" || action === "approve_tier2" || action === "recover_case") {
+        const result = await unwrap(api.POST("/api/v2/alerts/{alertRef}/tier2/escalate-case", {
+          params, body: { ...pending.current!.body, action },
+        }));
+        setView({ ...result.view, caseRef: result.case.caseRef });
+        setCaseCreated(true);
+      } else {
+        const result = await unwrap(api.POST(paths[action], { params, body: pending.current!.body }));
+        setView(result.view);
+        setDone(`${labels[action]} recorded. Audit #${result.audit.id}`);
+      }
+      setReason(""); pending.current = null;
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : "Decision could not be confirmed.");
     } finally { setBusy(false); }
   }
   const state = view.state;
+  const recovery = canRecover && state.handlingRoute === "tier2_candidate" && state.workflowStage === "assessment";
   return <section className="min-w-0 space-y-5 border-t border-border pt-5" aria-label="V2 alert routing">
     <header className="space-y-1 break-words">
       <h2 className="text-lg font-semibold">{view.title}</h2>
@@ -77,32 +85,34 @@ export function RoutingDetail({ initial, refresh }: { initial: View; refresh: ()
       <p className="text-xs text-muted">{pretty(view.latestDecision.beforeState.handlingRoute)} → {pretty(view.latestDecision.afterState.handlingRoute)}</p>
       <p className="text-xs text-dim">{view.latestDecision.createdAt}</p>
     </section>}
-    {view.allowedActions.length > 0 && <div className="space-y-3 border-t border-border pt-4">
+    {(view.allowedActions.length > 0 || recovery) && <div className="space-y-3 border-t border-border pt-4">
       <label className="block text-sm" htmlFor="routing-reason">Decision reason</label>
       <textarea id="routing-reason" rows={3} maxLength={2000} value={reason} disabled={busy}
         onChange={event => setReason(event.target.value)}
         className="w-full rounded-sm border border-border bg-surface p-2 text-sm" />
-      <div className="flex flex-wrap gap-2">{view.allowedActions.map(action =>
+      {recovery && <p className="text-sm text-muted">An earlier escalation has no formal case. Complete it explicitly; no records are changed on page load.</p>}
+      <div className="flex flex-wrap gap-2">{recovery && <button className={button} disabled={busy || !reason.trim()} onClick={() => void decide("recover_case")}>Complete Earlier Escalation</button>}{view.allowedActions.map(action =>
         <button className={button} key={action} disabled={busy || !reason.trim()} onClick={() => void decide(action)}>{labels[action]}</button>)}</div>
     </div>}
     {error && <p role="alert" className="text-sm text-danger">{error}</p>}
     {done && <p role="status" className="text-sm text-ok">{done}</p>}
-    {state.handlingRoute === "tier2_candidate" && state.workflowStage === "assessment" && <>
-      <div role="status" className="space-y-2 rounded-sm border border-warn/50 bg-warn-dim p-4">
-        <h3 className="font-semibold">Escalated to Tier 2 Candidate</h3>
-        <p className="text-sm">A formal Tier 2 Case has not been created yet.</p>
-        <button className={button} onClick={() => {
-          caseForm.current?.scrollIntoView({ block: "start" });
-          caseForm.current?.querySelector<HTMLInputElement>("#case-title")?.focus();
-        }}>Next step: Create Tier 2 Case</button>
+    {caseCreated && view.caseRef && <div role="status" aria-label="Tier 2 escalation result" className="space-y-2 rounded-sm border border-ok/50 bg-ok-dim p-4">
+      <h3 className="font-semibold">Escalated to Tier 2</h3>
+      <p className="text-sm">Tier 2 Case created successfully.</p>
+      <p className="break-all font-mono text-xs">Case: {view.caseRef}</p>
+      <div className="flex flex-wrap gap-2">
+        <Link className={button} to={casePrefix + "/tier2-cases/" + view.caseRef}>Open Tier 2 Case</Link>
+        <button className={button} onClick={() => setCaseCreated(false)}>Continue Reviewing</button>
       </div>
-      <div ref={caseForm}><CreateCasePanel alert={view} /></div>
-    </>}
+    </div>}
+    {!caseCreated && view.caseRef && <Link className="inline-block text-sm text-accent underline" to={casePrefix + "/tier2-cases/" + view.caseRef}>Open Tier 2 Case</Link>}
     <button className={button} disabled={busy} onClick={refresh}>Refresh state</button>
   </section>;
 }
 
 export function V2RoutingPage() {
+  const { session } = useSession();
+  const casePrefix = session?.role === "system_admin" ? "/admin" : session?.role === "evaluator" ? "/evaluator" : "/analyst";
   const [search, setSearch] = useSearchParams();
   const requestedRef = search.get("alertRef");
   const [offset, setOffset] = useState(0);
@@ -136,7 +146,7 @@ export function V2RoutingPage() {
         <span>{resource.data.page.total} alerts</span>
         <button className={button} disabled={offset + 50 >= resource.data.page.total} onClick={() => setOffset(offset + 50)}>Next</button>
       </div>
-      {current && <RoutingDetail key={current.operationalAlertRef + current.stateVersion} initial={current} refresh={resource.reload} />}
+      {current && <RoutingDetail key={current.operationalAlertRef + current.stateVersion} initial={current} refresh={resource.reload} casePrefix={casePrefix} canRecover={session?.role === "security_analyst" || session?.role === "system_admin"} />}
       {current && <AlertMemoryPanel key={"memory:"+current.operationalAlertRef+current.stateVersion} view={current}/>}
       {current && <SelectiveReviewPanel key={"selective:"+current.operationalAlertRef+current.stateVersion} alertRef={current.operationalAlertRef}/>}
     </>}

@@ -6,7 +6,9 @@ import sqlite3
 from fastapi import APIRouter, Depends, Query
 from apps.api import auth
 from apps.api.contract.common import Page, PageInfo
-from apps.api.contract.routing import RoutingView, RoutingResponse
+from apps.api.contract.routing import RoutingView, RoutingResponse, EscalateCaseResponse
+from packages.detection.tier2_escalation import EscalateCaseRequest, escalate_case
+from packages.detection.tier2_cases import CaseConflict
 from apps.api.deps import ApiError, get_connection
 from apps.api.read_only import ReadConn, ReadPrincipal
 from packages.detection.adapters.operational_v2 import read_triage
@@ -33,10 +35,12 @@ def _view(conn, alert_id, principal):
     state = read_triage(conn, alert_id)
     audit = conn.execute('SELECT * FROM operational_routing_audit WHERE operational_alert_id=? '
                          'ORDER BY id DESC LIMIT 1', (alert_id,)).fetchone()
+    case = conn.execute('SELECT case_ref FROM tier2_cases WHERE primary_operational_alert_id=?', (alert_id,)).fetchone()
     return RoutingView(operational_alert_ref=row['operational_alert_ref'], title=row['detection_title'],
         detector_name=row['detector_name'], state=state, state_version=state_version(state),
         review_reasons=[state.review_reason], latest_decision=decode_audit(audit) if audit else None,
-        allowed_actions=list(allowed_actions(state)) if principal.role in ('security_analyst', 'system_admin') else [])
+        allowed_actions=list(allowed_actions(state)) if principal.role in ('security_analyst', 'system_admin') else [],
+        case_ref=case['case_ref'] if case else None)
 
 
 @router.get('', response_model=Page[RoutingView], operation_id='listV2Routing')
@@ -88,3 +92,20 @@ def reject(alertRef: UUID, body: RoutingRequest, conn: Conn, principal: Principa
 @router.post('/{alertRef}/tier2/escalate', response_model=RoutingResponse, dependencies=[MutationRole], operation_id='escalateV2Tier2')
 def escalate(alertRef: UUID, body: RoutingRequest, conn: Conn, principal: Principal):
     return _decide(alertRef, body, conn, principal, 'manual_escalate')
+
+
+@router.post('/{alertRef}/tier2/escalate-case', response_model=EscalateCaseResponse,
+             dependencies=[MutationRole], operation_id='escalateV2Tier2Case')
+def escalate_with_case(alertRef: UUID, body: EscalateCaseRequest, conn: Conn, principal: Principal):
+    try:
+        result = escalate_case(conn, alertRef, actor_id=principal.user_id, request=body)
+    except PermissionError as exc:
+        raise ApiError(403, 'FORBIDDEN_ROLE', str(exc)) from exc
+    except LookupError as exc:
+        raise ApiError(404, 'NOT_FOUND', str(exc)) from exc
+    except (RoutingConflict, CaseConflict) as exc:
+        raise ApiError(409, 'ROUTING_CONFLICT', str(exc)) from exc
+    with conn:
+        conn.execute('BEGIN')
+        return EscalateCaseResponse(view=_view(conn, result.case.snapshot.detector.id, principal),
+            audit=result.case.snapshot.routing_decision, case=result.case, event_id=result.event_id, replayed=result.replayed)

@@ -66,6 +66,7 @@ test("canonical detector fixtures do not inherit historical flow evidence", asyn
   await page.getByLabel("Username").fill("g.ang");
   await page.getByLabel("Password", { exact: true }).fill("analyst-demo");
   await page.getByRole("button", { name: "Sign in" }).click();
+  await expect(page).toHaveURL(/\/analyst\/v2-triage$/);
   await page.goto("/analyst/workstation");
   const fullPage = page.getByRole("link", { name: "Open full page" });
   await expect(fullPage).toBeVisible();

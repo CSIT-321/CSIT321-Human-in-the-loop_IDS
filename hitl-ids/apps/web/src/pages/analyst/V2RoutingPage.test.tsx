@@ -8,7 +8,7 @@ import { RoutingDetail, V2RoutingPage } from "./V2RoutingPage";
 import { SessionProvider } from "../../session/SessionContext";
 
 const view: Schemas["RoutingView"] = {
-  operationalAlertRef: "fe130e6f-af86-4fc6-89f2-bc76b6cad68b", title: "External NIDS alert", detectorName: "Suricata",
+  caseRef: null, operationalAlertRef: "fe130e6f-af86-4fc6-89f2-bc76b6cad68b", title: "External NIDS alert", detectorName: "Suricata",
   stateVersion: "a".repeat(64), reviewReasons: ["Critical asset requires review"], latestDecision: null,
   allowedActions: ["approve_tier2", "reject_tier2", "manual_escalate"],
   state: { operationalAlertId: 1, operationalPriority: 85, priorityBand: "P1", priorityBandScheme: "p1_p4",
@@ -18,26 +18,48 @@ const view: Schemas["RoutingView"] = {
 };
 
 describe("V2 routing", () => {
-  it("manual escalation highlights the candidate and keeps case creation explicit", async () => {
-    const posts: string[] = [];
-    stubFetch(async request => {
-      posts.push(request.url);
-      return jsonResponse({ view: { ...view, allowedActions: [], state: { ...view.state,
-        handlingRoute: "tier2_candidate", workflowStage: "assessment" } }, audit: { id: 9 } });
+  it.each(["manual_escalate", "approve_tier2"] as const)("%s creates a case in one request and stays on the alert", async action => {
+    const bodies: unknown[] = [];
+    const caseRef = "00000000-0000-4000-8000-000000000123";
+    const completed = { ...view, caseRef, allowedActions: [], state: { ...view.state,
+      handlingRoute: "tier2_case", workflowStage: "investigation" } };
+    const seen = stubFetch(async request => {
+      bodies.push(await request.json());
+      return jsonResponse({ view: completed, case: { caseRef }, audit: { id: 9 } });
     });
-    sessionStorage.setItem("hitl-ids.session.v1", JSON.stringify({ username: "g.ang", displayName: "Analyst",
-      role: "security_analyst", token: "test" }));
-    render(<SessionProvider><MemoryRouter><RoutingDetail initial={view} refresh={vi.fn()} /></MemoryRouter></SessionProvider>);
+    render(<MemoryRouter><RoutingDetail initial={view} refresh={vi.fn()} /></MemoryRouter>);
     await userEvent.type(screen.getByLabelText("Decision reason"), "Needs deeper investigation");
-    await userEvent.click(screen.getByRole("button", { name: "Manual Escalate" }));
-    expect(await screen.findByText("Escalated to Tier 2 Candidate")).toBeVisible();
-    expect(screen.getByText("A formal Tier 2 Case has not been created yet.")).toBeVisible();
-    expect(screen.getByLabelText("Case title")).toBeVisible();
-    expect(screen.getByLabelText("Tier 1 handoff summary")).toBeVisible();
-    expect(screen.getByLabelText("Case creation reason")).toBeVisible();
-    expect(screen.getByRole("button", { name: /^Create Tier 2 Case$/ })).toBeDisabled();
-    expect(posts).toHaveLength(1);
-    expect(posts[0]).toContain("/tier2/escalate");
+    await userEvent.click(screen.getByRole("button", { name: action === "manual_escalate" ? "Escalate to Tier 2" : "Approve Tier 2" }));
+    expect(await screen.findByRole("heading", { name: "Escalated to Tier 2" })).toBeVisible();
+    expect(screen.getByText("Tier 2 Case created successfully.")).toBeVisible();
+    expect(screen.getByText("Case: " + caseRef)).toBeVisible();
+    expect(screen.queryByText(/Tier 2 Candidate|assessment/i)).toBeNull();
+    expect(screen.queryByLabelText("Case title")).toBeNull();
+    expect(screen.queryByRole("button", { name: /^Create Tier 2 Case$/ })).toBeNull();
+    expect(screen.getByRole("link", { name: "Open Tier 2 Case" })).toHaveAttribute("href", "/analyst/tier2-cases/" + caseRef);
+    expect(screen.getByRole("heading", { name: "External NIDS alert" })).toBeVisible();
+    expect(seen).toHaveLength(1);
+    expect(new URL(seen[0]!.url).pathname).toBe("/api/v2/alerts/" + view.operationalAlertRef + "/tier2/escalate-case");
+    expect(bodies[0]).toMatchObject({ action, expectedStateVersion: view.stateVersion, reason: "Needs deeper investigation" });
+    expect(bodies[0]).not.toHaveProperty("title");
+    await userEvent.click(screen.getByRole("button", { name: "Continue Reviewing" }));
+    expect(screen.queryByRole("status", { name: "Tier 2 escalation result" })).toBeNull();
+    expect(screen.getByRole("heading", { name: "External NIDS alert" })).toBeVisible();
+    expect(seen).toHaveLength(1);
+  });
+
+  it("only offers explicit historical recovery to operational roles, with no writes on mount", async () => {
+    const seen = stubFetch(() => { throw new Error("No writes expected"); });
+    const old = { ...view, allowedActions: [], state: { ...view.state,
+      handlingRoute: "tier2_candidate" as const, workflowStage: "assessment" as const } };
+    const rendered = render(<RoutingDetail initial={old} refresh={vi.fn()} canRecover />);
+    expect(screen.getByRole("button", { name: "Complete Earlier Escalation" })).toBeDisabled();
+    expect(screen.queryByText(/candidate|assessment/i)).toBeNull();
+    expect(screen.queryByLabelText("Case title")).toBeNull();
+    expect(seen).toHaveLength(0);
+    rendered.rerender(<RoutingDetail initial={old} refresh={vi.fn()} canRecover={false} />);
+    expect(screen.queryByRole("button", { name: "Complete Earlier Escalation" })).toBeNull();
+    expect(screen.queryByLabelText("Decision reason")).toBeNull();
   });
   it("distinguishes recommendation from route and requires a reason", async () => {
     render(<RoutingDetail initial={view} refresh={vi.fn()} />);
@@ -82,11 +104,11 @@ describe("V2 routing", () => {
 
   it("renders empty and API failure states", async () => {
     stubFetch(() => jsonResponse({ items: [], page: { total: 0, limit: 50, offset: 0, returned: 0 } }));
-    const result = render(<MemoryRouter><V2RoutingPage /></MemoryRouter>);
+    const result = render(<SessionProvider><MemoryRouter><V2RoutingPage /></MemoryRouter></SessionProvider>);
     expect(await screen.findByText("No materialized V2 alerts.")).toBeInTheDocument();
     result.unmount();
     stubFetch(() => jsonResponse({ error: { code: "OFFLINE", message: "Database unavailable" } }, 503));
-    render(<MemoryRouter><V2RoutingPage /></MemoryRouter>);
+    render(<SessionProvider><MemoryRouter><V2RoutingPage /></MemoryRouter></SessionProvider>);
     expect(await screen.findByRole("alert")).toHaveTextContent("Database unavailable");
   });
 
