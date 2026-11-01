@@ -96,7 +96,7 @@ def test_correction_history_supersession_and_request_id_conflicts(conn,api):
 def frozen_tables(conn):
     excluded={'tier2_case_state','tier2_case_events','sqlite_sequence'}
     return {row[0]:[tuple(r) for r in conn.execute(f'SELECT * FROM "{row[0]}" ORDER BY rowid')]
-        for row in conn.execute("SELECT name FROM sqlite_master WHERE type='table'").fetchall() if row[0] not in excluded}
+        for row in conn.execute("SELECT name FROM sqlite_master WHERE type='table'").fetchall() if row[0] not in excluded and not row[0].startswith(('triage_memory_','conclusion_memory_'))}
 
 
 def test_known_category_correction_preserves_all_other_tables_and_tier1_verdict(conn):
@@ -115,7 +115,7 @@ def test_known_category_correction_preserves_all_other_tables_and_tier1_verdict(
     assert result.case.system_attack_classification.attack_category=='brute_force'
     assert result.case.latest_conclusion.final_attack_category=='infiltration'
     assert result.case.latest_conclusion.system_classification==case.system_attack_classification
-    assert frozen_tables(conn)==before  # evidence, system V3, priority/route, Verdict, Memory, Review, collection
+    assert frozen_tables(conn)==before  # detector evidence, system V3, priority/route, Verdict, Review, collection
     assert [tuple(r) for r in conn.execute('SELECT * FROM tier2_case_events WHERE id<>?',(result.event_id,))]==old_events
     after=read_assistance(conn,case.case_ref)
     assert after.brief.at_case_creation==assistance.brief.at_case_creation

@@ -32,7 +32,7 @@ export function MemorySummary({view}:{view:View}) {
       <div><dt className="text-muted">Support</dt><dd>{view.supportCount}</dd></div>
       <div><dt className="text-muted">Conflicts</dt><dd>{view.conflictCount}</dd></div>
       <div><dt className="text-muted">Agreement</dt><dd>{(view.agreementRatio*100).toFixed(1)}%</dd></div>
-      <div><dt className="text-muted">Created by</dt><dd>Actor #{view.lesson.createdByActorId}</dd></div>
+      <div><dt className="text-muted">Created by</dt><dd>{view.lesson.decisionSource==="system_policy"?"System Policy":`Actor #${view.lesson.createdByActorId}`}</dd></div>
       <div><dt className="text-muted">Created at</dt><dd className="break-all">{view.lesson.createdAt}</dd></div>
       <div><dt className="text-muted">Expires at</dt><dd className="break-all">{view.expiresAt??"Not assigned"}</dd></div>
       <div><dt className="text-muted">Last support</dt><dd className="break-all">{view.lastSupportedAt}</dd></div>
@@ -76,7 +76,7 @@ function MemoryDetail({view,canWrite,onChange}:{view:View;canWrite:boolean;onCha
     <details><summary className="cursor-pointer text-sm">Context snapshot</summary><pre className="overflow-auto whitespace-pre-wrap break-all text-xs">{JSON.stringify(view.lesson.contextSnapshot,null,2)}</pre></details>
     <details><summary className="cursor-pointer text-sm">Activation policy</summary><pre className="overflow-auto whitespace-pre-wrap break-all text-xs">{JSON.stringify(view.lesson.configuration,null,2)}</pre></details>
     {view.decision&&<div className="space-y-1 border-t border-border pt-3 text-sm">
-      <p>{view.decision.action==="activate"?"Activated":"Rejected"} by actor #{view.decision.actorId}</p>
+      <p>{view.decision.decisionSource==="system_policy"?`Auto-activated by System Policy · ${view.decision.policyVersion}`:`${view.decision.action==="activate"?"Activated":"Rejected"} by actor #${view.decision.actorId}`}</p>
       <p className="break-all">{view.decision.createdAt}</p><p className="whitespace-pre-wrap break-words">{view.decision.reason}</p>
     </div>}
     {canWrite&&!view.decision&&view.status!=="expired"&&<div className="space-y-2 border-t border-border pt-3">
@@ -94,7 +94,7 @@ function MemoryDetail({view,canWrite,onChange}:{view:View;canWrite:boolean;onCha
       {history.status==="error"&&<p role="alert">{history.error.message}</p>}
       {history.status==="success"&&<>
         {history.data.items.map(event=><article key={event.id} className="min-w-0 space-y-2 border-b border-border py-3 text-sm">
-          <p className="break-all text-xs text-muted">{event.eventType} / Actor #{event.actorId} / {event.createdAt}</p>
+          <p className="break-all text-xs text-muted">{event.eventType} / {event.decisionSource==="system_policy"?"System Policy":`Actor #${event.actorId}`} / {event.createdAt}</p>
           <p className="whitespace-pre-wrap break-words">{event.reason}</p>
           {event.evidence?.sourceConclusion&&<div className="min-w-0 space-y-1 border-l-2 border-primary pl-3 text-xs [overflow-wrap:anywhere]">
             <p>Source: Tier 2 Investigation Conclusion</p>
@@ -102,7 +102,7 @@ function MemoryDetail({view,canWrite,onChange}:{view:View;canWrite:boolean;onCha
             <p>Human Final Attack Classification: {event.evidence.sourceConclusion.finalAttackCategory?finalCategories[event.evidence.sourceConclusion.finalAttackCategory]:"Not applicable / unresolved"}</p>
             <p className="whitespace-pre-wrap">Investigation reason: {event.evidence.humanReason}</p>
             <p>Conclusion Author: {event.evidence.conclusionAuthorName} / #{event.evidence.sourceConclusion.actorId}</p>
-            <p>Memory Contributor: {event.evidence.contributionActorName} / #{event.evidence.actorId}</p>
+            <p>Memory Contributor: {event.evidence.decisionSource==="system_policy"?"Automatic System Policy":`${event.evidence.contributionActorName} / #${event.evidence.actorId}`}</p>
             <p>Conclusion event #{event.evidence.sourceConclusion.eventId} · Case revision {event.evidence.sourceConclusion.caseRevision}</p>
             <p>Scope: {event.evidence.contributionScope}</p>
             <Link className="text-accent underline" to={`${prefix(session?.role)}/tier2-cases/${event.evidence.sourceCaseRef}`}>Source Case</Link>
@@ -113,7 +113,7 @@ function MemoryDetail({view,canWrite,onChange}:{view:View;canWrite:boolean;onCha
             <p className="capitalize">Source Human Verdict: {pretty(event.evidence.outcome)}</p>
             <p className="break-all">Verdict Reference: {event.evidence.sourceVerdictRef} · Revision {event.evidence.sourceVerdictRevision}</p>
             <p>Verdict Author: {event.evidence.verdictAuthorName} / #{event.evidence.verdictAuthorId}</p>
-            <p>Memory Contribution Actor: #{event.evidence.actorId} · Scope: {event.lessonSnapshot.lesson.scope}</p>
+            <p>Memory Contribution: {event.evidence.decisionSource==="system_policy"?"Automatic System Policy":`Actor #${event.evidence.actorId}`} · Scope: {event.lessonSnapshot.lesson.scope}</p>
             <p>{event.evidenceCurrent?"Current human evidence":"Superseded human evidence — excluded from effective support"}</p>
           </div>}
           <p className="text-xs text-muted">{event.evidence?"Memory Evidence History":"Memory Activation History"}</p>

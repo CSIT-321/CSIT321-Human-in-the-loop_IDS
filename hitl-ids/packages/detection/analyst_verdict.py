@@ -114,6 +114,8 @@ def record_verdict(conn,ref,*,actor_id,request):
                 triage=read_triage(conn,alert.id).model_dump(mode='json',by_alias=True)))
         conn.execute('INSERT INTO analyst_verdict_events(verdict_ref,operational_alert_id,actor_id,revision,supersedes_ref,request_id,request_payload,snapshot) VALUES (?,?,?,?,?,?,?,?)',
             (str(verdict.verdict_ref),alert.id,actor_id,verdict.revision,str(verdict.supersedes_ref) if verdict.supersedes_ref else None,str(request.request_id),payload,verdict.model_dump_json(by_alias=True)))
+        from packages.detection.triage_memory import automatic_evidence
+        automatic_evidence(conn,ref,verdict=verdict)
         conn.commit();return VerdictMutation(verdict=verdict,replayed=False)
     except Exception:
         conn.rollback();raise

@@ -1,6 +1,6 @@
 import {expect,test} from "@playwright/test";
 
-test("canonical Verdict recalls attention without learning; correction updates current safety metric",async({page})=>{
+test("canonical Verdict recalls attention with automatic learning; correction updates current safety metric",async({page})=>{
  const writes:string[]=[];const errors:string[]=[];let authorization="";
  page.on("pageerror",e=>errors.push(e.message));
  page.on("request",r=>{if(r.url().includes("/api/v2/"))authorization=r.headers()["authorization"]??authorization;if(r.method()==="POST")writes.push(new URL(r.url()).pathname);});
@@ -16,16 +16,16 @@ test("canonical Verdict recalls attention without learning; correction updates c
  await expect(detail).toContainText("Review Disposition: No Immediate Review");
  await detail.getByRole("tab",{name:"Analyst Verdict",exact:true}).click();
  const verdict=detail.getByRole("region",{name:"Analyst Verdict",exact:true});
- await verdict.getByLabel("Verdict outcome").selectOption("confirmed_malicious");await verdict.getByLabel("Verdict reason").fill("SYNTHETIC malicious evidence; no learning contribution");
+ await verdict.getByLabel("Verdict outcome").selectOption("confirmed_malicious");await verdict.getByLabel("Verdict reason").fill("SYNTHETIC malicious evidence; automatic learning conflict");
  await verdict.getByRole("button",{name:"Record Verdict",exact:true}).click();
- await expect(workload.getByRole("button",{name:"No Immediate Review 2",exact:true})).toBeVisible();
+ await expect(workload.getByRole("button",{name:"No Immediate Review 0",exact:true})).toBeVisible();
  await expect(detail).toContainText("Review Disposition: Human Review Required");await expect(rail).toContainText("Review Required: Yes");
- await expect(queue.getByRole("button")).toHaveCount(2);
+ await expect(queue.getByRole("button")).toHaveCount(0);
  const headers=()=>({Authorization:authorization});
  const get=async(path:string)=>(await page.request.get(path,{headers:headers()})).json();
  const current=await get(`/api/v2/alerts/${selected}/selective-review`);
  expect(current.recalled).toBe(true);expect(current.policyEvaluation.inputs.humanVerdictPresent).toBe(true);expect(current.policyEvaluation.inputs.canonicalVerdict.outcome).toBe("confirmed_malicious");
- expect((await get(`/api/v2/alerts/${selected}/triage-memory/verdict-state`)).contributionStatus).toBe("not_contributed");
+ expect((await get(`/api/v2/alerts/${selected}/triage-memory/verdict-state`)).contributionStatus).toBe("contributed");
  expect((await get('/api/v2/selective-review/metrics')).unsafeSuppressionCount).toBe(1);
  const needs=await get('/api/v2/alerts?reviewRequired=true&limit=200');expect(needs.items.some((a:{operationalAlertRef:string})=>a.operationalAlertRef===selected)).toBe(true);
  const deferred=await get('/api/v2/alerts?reviewDisposition=no_immediate_review');expect(deferred.items.some((a:{operationalAlertRef:string})=>a.operationalAlertRef===selected)).toBe(false);

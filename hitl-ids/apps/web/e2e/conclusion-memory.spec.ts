@@ -22,9 +22,7 @@ test("expert learning: automatic Unknown, Tier 1 replacement, Inconclusive, corr
   await expect(learning).toContainText(`Reason: ${reason}`);
  }
  async function contribute(){
-  await learning.getByLabel("Learning Scope").selectOption("exact");
-  await learning.getByRole("button",{name:"Use Expert Conclusion as Triage Memory Evidence",exact:true}).click();
-  await expect(learning).toContainText("Contribution: Contributed · Scope: exact");
+  await expect(learning).toContainText("Contribution: Automatically recorded as Exact evidence");
  }
  async function escalate(){
   await workspace.getByRole("tab",{name:"Overview",exact:true}).click();
@@ -39,32 +37,31 @@ test("expert learning: automatic Unknown, Tier 1 replacement, Inconclusive, corr
   await verdict.getByRole("button",{name:"Record Verdict",exact:true}).click();
   await verdict.getByRole("button",{name:"Use in Triage Memory",exact:true}).click();
   const human=workspace.getByRole("region",{name:"Human Learning",exact:true});
-  await human.getByRole("button",{name:"Use Verdict as Triage Memory Evidence",exact:true}).click();
-  await expect(human).toContainText("Contributed · Scope: exact");await escalate();
+  await expect(human).toContainText("Automatically recorded as Exact evidence");await escalate();
  }
  // E: existing active guidance loses a distinct source before a replacement is contributed.
  await select("SYNTHETIC selective SSH scan",-1);
  await expect(page.getByRole("button",{name:"No Immediate Review 3",exact:true})).toBeVisible();
  await workspace.getByRole("tab",{name:"Triage Memory",exact:true}).click();
  const human=workspace.getByRole("region",{name:"Human Learning",exact:true});
- await expect(human).toContainText("Contributed · Scope: exact");
+ await expect(human).toContainText("Automatically recorded as Exact evidence");
  await expect(human).toContainText("Support: 3 · Conflicts: 0");await escalate();
  await conclude("inconclusive","","SYNTHETIC expert withdraws stale active lesson support");
  await page.goto("/analyst/operations");await expect(page.getByRole("button",{name:"No Immediate Review 0",exact:true})).toBeVisible();
  await select("SYNTHETIC selective SSH scan",0);await workspace.getByRole("tab",{name:"Triage Memory",exact:true}).click();
  await expect(human).toContainText("Support: 2 · Conflicts: 0");await expect(human).toContainText("Active guidance: No");
 
- // A: no Tier 1 Verdict needed; contribution remains a separate explicit action.
+ // A: no Tier 1 Verdict needed; Exact evidence is automatic.
  await select("SYNTHETIC Unresolved suspicious network activity 0");await openCase();
  await conclude("confirmed_malicious","web_attack","SYNTHETIC expert reusable Web Attack evidence");
- await expect(learning).toContainText("Contribution: Not contributed");
+ await expect(learning).toContainText("Contribution: Automatically recorded as Exact evidence");
  expect(writes.filter(p=>p.endsWith("from-conclusion"))).toHaveLength(0);
  for(const width of [1440,1024,390]){
   await page.setViewportSize({width,height:900});
   for(const theme of ["dark","light"]){
    if(await page.locator("html").getAttribute("data-theme")!==theme)await page.getByRole("button",{name:"Light theme",exact:true}).click();
    await learning.getByLabel("Learning Scope").scrollIntoViewIfNeeded();
-   await expect(learning.getByRole("button",{name:"Use Expert Conclusion as Triage Memory Evidence",exact:true})).toBeVisible();
+   await expect(learning.getByRole("button",{name:"Expand Expert Learning Scope to Narrow",exact:true})).toBeVisible();
    expect(await learning.evaluate(el=>el.scrollWidth<=el.clientWidth)).toBe(true);
    expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
    await page.screenshot({path:`test-results/expert-learning-${width}-${theme}.png`});
@@ -78,11 +75,11 @@ test("expert learning: automatic Unknown, Tier 1 replacement, Inconclusive, corr
  await expect(history).toContainText("Human Final Attack Classification: Web Attack");
  await expect(history).toContainText("Conclusion Author:");await expect(history).toContainText("Memory Contributor:");
  await history.getByRole("link",{name:"Source Case",exact:true}).click();await expect(page).toHaveURL(firstCase);
- // B: expert replaces this alert's Tier 1 vote before the expert contribution.
+ // B: expert replaces this alert's Tier 1 vote with the automatic expert contribution.
  await tier1Learn(0);
  await conclude("confirmed_malicious","infiltration","SYNTHETIC expert overrides earlier Tier 1 reuse");
  await expect(learning).toContainText("Previous Tier 1 learning evidence: Superseded by expert investigation conclusion.");
- await expect(learning).toContainText("Contribution: Not contributed");await contribute();
+ await expect(learning).toContainText("Contribution: Automatically recorded as Exact evidence");await contribute();
  await learning.getByRole("link",{name:"Open linked Memory lesson",exact:true}).click();
  await expect(history).toContainText("V2_TRIAGE_MEMORY_EXPERT_SUPERSEDED");
  await expect(history).toContainText("Superseded human evidence — excluded from effective support");
@@ -91,7 +88,7 @@ test("expert learning: automatic Unknown, Tier 1 replacement, Inconclusive, corr
  await tier1Learn(1);await conclude("inconclusive","","SYNTHETIC expert cannot support reusable outcome");
  await expect(learning).toContainText("Not eligible for reusable Memory evidence");
  await expect(learning).toContainText("Previous Tier 1 learning evidence: Superseded");
- await expect(learning.getByRole("button",{name:"Use Expert Conclusion as Triage Memory Evidence",exact:true})).toHaveCount(0);
+ await expect(learning.getByRole("button",{name:"Expand Expert Learning Scope to Narrow",exact:true})).toHaveCount(0);
  // D: correcting an expert conclusion immediately supersedes its previous evidence.
  await select("SYNTHETIC Unresolved suspicious network activity 1");await openCase();
  await conclude("suspicious","web_attack","SYNTHETIC first expert conclusion");await contribute();

@@ -1,6 +1,7 @@
 """Disposable real API; adds distinct alerts sharing the exact learning context."""
 from pathlib import Path
 import runpy
+import os
 import tempfile
 base=runpy.run_path(str(Path(__file__).with_name('pre-freeze-fixture.py')))
 from pre_freeze_fixture import event,stage,admit_all
@@ -16,4 +17,4 @@ if __name__=='__main__':
             stage(conn,[event(30000+i,'SYNTHETIC canonical learning SSH scan',severity=1) for i in range(4)],scope='verdict-learning-browser')
             admit_all(conn,actor)
             assert conn.execute('SELECT count(*) FROM prospective_runs').fetchone()[0]==0
-        uvicorn.run(create_app(path),host='127.0.0.1',port=8018,log_level='warning')
+        uvicorn.run(create_app(path),host='127.0.0.1',port=int(os.environ.get("HITL_VERDICT_MEMORY_API_PORT","8018")),log_level='warning')

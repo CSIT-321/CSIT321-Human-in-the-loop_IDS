@@ -196,20 +196,43 @@ def test_concurrent_resolution_is_single_terminal_event(conn,same_request):
 
 
 def test_migration_19_preserves_populated_event_ids_memory_and_response_foreign_keys(tmp_path,monkeypatch):
-    path=tmp_path/'upgrade.db'
-    with closing(db.connect(path)) as c:
+    # Build authentic historical human-owned rows, then load only the pre-migration columns.
+    with closing(db.connect(':memory:')) as seed:
+        db.create_schema(seed)
+        db.insert(seed,m.User(username='reviewer',display_name='Reviewer',password_hash='x',email='r@example.test',role='security_analyst'));seed.commit()
         with monkeypatch.context() as patch:
-            patch.setattr(db,'MIGRATIONS',tuple(m for m in db.MIGRATIONS if m[0]<19));db.create_schema(c)
-        db.insert(c,m.User(username='reviewer',display_name='Reviewer',password_hash='x',email='r@example.test',role='security_analyst'));c.commit()
-        case=conclude(c,automatic_case(c,admit(c))).case;contribute(c,case)
-        p=proposal(c,case);decide(c,case,p)
-        tables=[r[0] for r in c.execute("SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%'")]
-        before={t:[tuple(r) for r in c.execute('SELECT * FROM '+t+' ORDER BY rowid')] for t in tables}
-        assert db.migrate(c)==[19] and db.migrate(c)==[]
-        assert {t:[tuple(r) for r in c.execute('SELECT * FROM '+t+' ORDER BY rowid')] for t in tables}==before
-        assert c.execute('PRAGMA foreign_keys').fetchone()[0]==1
-        assert c.execute('PRAGMA foreign_key_check').fetchall()==[]
-        assert resolve(c,read_case(c,case.case_ref)).case.status=='resolved'
+            patch.setattr(memory,'automatic_evidence',lambda *a,**k:None)
+            case=conclude(seed,automatic_case(seed,admit(seed))).case
+        contribute(seed,case);p=proposal(seed,case);decide(seed,case,p)
+        with closing(db.connect(tmp_path/'upgrade.db')) as c:
+            with monkeypatch.context() as patch:
+                patch.setattr(db,'MIGRATIONS',db.MIGRATIONS[:18]);db.create_schema(c)
+            tables=[r[0] for r in c.execute("SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%' AND name!='schema_migrations'")]
+            columns={t:[r[1] for r in c.execute('PRAGMA table_info('+t+')')] for t in tables}
+            c.execute('PRAGMA foreign_keys=OFF')
+            for t in tables:
+                names=','.join(columns[t]);rows=seed.execute('SELECT '+names+' FROM '+t).fetchall()
+                existing=[tuple(r) for r in c.execute('SELECT '+names+' FROM '+t)]
+                if existing:
+                    assert t=='guardrail_config'
+                    continue
+                c.executemany('INSERT INTO '+t+' ('+names+') VALUES ('+','.join('?' for _ in columns[t])+')',[tuple(r) for r in rows])
+            c.commit();c.execute('PRAGMA foreign_keys=ON')
+            before={t:[tuple(r) for r in c.execute('SELECT '+','.join(columns[t])+' FROM '+t+' ORDER BY rowid')] for t in tables}
+            migrations=db.MIGRATIONS
+            with monkeypatch.context() as patch:
+                patch.setattr(db,'MIGRATIONS',migrations[:19]);assert db.migrate(c)==[19]
+            snapshot='\n'.join(c.iterdump())
+            with monkeypatch.context() as patch:
+                patch.setattr(db,'MIGRATIONS',migrations[:19]+((20,'injected',migrations[19][2]+'\nSELECT * FROM missing_auto_table;\n'),))
+                with pytest.raises(sqlite3.OperationalError):db.migrate(c)
+            assert '\n'.join(c.iterdump())==snapshot
+            assert c.execute('PRAGMA foreign_keys').fetchone()[0]==1
+            assert db.migrate(c)==[20] and db.migrate(c)==[]
+            assert {t:[tuple(r) for r in c.execute('SELECT '+','.join(columns[t])+' FROM '+t+' ORDER BY rowid')] for t in tables}==before
+            assert c.execute('PRAGMA foreign_keys').fetchone()[0]==1
+            assert c.execute('PRAGMA foreign_key_check').fetchall()==[]
+            assert resolve(c,read_case(c,case.case_ref)).case.status=='resolved'
 
 
 def test_resolved_case_is_historical_tier2_but_not_counted_as_open(conn,api):

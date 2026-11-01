@@ -64,8 +64,7 @@ def build_queue_fixture(path):
         for alert in routine: seed_synthetic_facts(conn,alert,safe_context(),m.utc_now())
         for alert in routine[:3]:
             lesson=contribute_review(conn,alert,actor_id=actor,request=review_request(conn,alert)).memory
-        memory.decide_memory(conn,lesson.lesson.lesson_ref,actor_id=actor,action='activate',request=memory.MemoryDecisionRequest(
-            request_id=uuid4(),expected_revision=lesson.revision,reason='SYNTHETIC scoped scanner lesson'))
+        assert lesson.status=='active' and lesson.decision.decision_source=='system_policy'
         for alert in routine[-2:]: assert defer(conn,alert,actor).disposition=='no_immediate_review'
         # One case in each currently supported open status.
         case_ref = conn.execute('SELECT case_ref FROM tier2_cases ORDER BY id LIMIT 1').fetchone()[0]

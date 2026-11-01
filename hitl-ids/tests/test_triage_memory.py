@@ -126,7 +126,7 @@ def test_expiry_for_candidates_and_active_lessons(database,alerts,monkeypatch):
         assert memory.read_memory(conn,view.lesson.lesson_ref).status=='expired'
         assert not memory.lookup_memory(conn,items[3].operational_alert_ref,50,0)[0][0].guidance_active
         replacement=memory.record_review(conn,items[3].operational_alert_ref,actor_id=actor,request=request(conn,items[3])).memory
-        assert replacement.lesson.lesson_ref!=view.lesson.lesson_ref and replacement.support_count==1
+        assert replacement.lesson.lesson_ref==view.lesson.lesson_ref and replacement.support_count==4 and replacement.status=='expired'
 
 
 def test_configuration_is_snapshotted_and_threshold_configurable(database,alerts,monkeypatch):

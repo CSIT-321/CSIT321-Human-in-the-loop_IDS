@@ -386,6 +386,9 @@ def mutate_case(conn, ref: UUID, *, actor_id: int, action: Literal['link','note'
                           request.finding if action == 'finding' else None)
         if previous_learning:
             audit_expert_supersession(conn,previous_learning,actor_id,event_id)
+        if isinstance(request,InvestigationConclusionRequest):
+            from packages.detection.triage_memory import automatic_evidence
+            automatic_evidence(conn,UUID(alert_ref),conclusion=latest_conclusion(conn,ref,case['id']))
         result = CaseMutation(case=read_case(conn,ref),event_id=event_id,replayed=False)
         conn.commit()
         return result

@@ -230,8 +230,12 @@ def test_migration_fourteen_preserves_populated_history_and_constraints(tmp_path
         historical_stage(connection,Path(__file__).parent/'fixtures/suricata-alerts.json','historic')
         result,_=admit(connection)
         alert=read_projection(connection,result['operational_alert_id']);state=read_triage(connection,alert.id)
-        created=escalate_case(connection,alert.operational_alert_ref,actor_id=1,request=EscalateCaseRequest(
-            request_id=uuid4(),expected_state_version=state_version(state),reason='Historical manual escalation'))
+        # Schema 13 predates the system classification table. Reproduce that historical
+        # projection while constructing the fixture; use the real reader after upgrade.
+        with monkeypatch.context() as patch:
+            patch.setattr('packages.detection.tier2_cases.system_classification',lambda *args:None)
+            created=escalate_case(connection,alert.operational_alert_ref,actor_id=1,request=EscalateCaseRequest(
+                request_id=uuid4(),expected_state_version=state_version(state),reason='Historical manual escalation'))
         tables=[r[0] for r in connection.execute("SELECT name FROM sqlite_master WHERE type='table' AND name!='sqlite_sequence'")]
         before={table:([r[1] for r in connection.execute(f'PRAGMA table_info({table})')],
             [tuple(r) for r in connection.execute(f'SELECT * FROM {table}')]) for table in tables}

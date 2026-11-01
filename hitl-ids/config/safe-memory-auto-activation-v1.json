@@ -1,0 +1,9 @@
+{
+  "version": "safe-memory-auto-activation-v1",
+  "memoryConfigurationVersion": "triage-memory-v1",
+  "evidenceScope": "exact",
+  "activationScope": "exact",
+  "eligibleOutcomes": ["expected_activity", "false_positive"],
+  "slidingRenewal": false,
+  "postExpiryReactivation": false
+}

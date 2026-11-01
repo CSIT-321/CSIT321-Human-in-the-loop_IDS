@@ -36,7 +36,7 @@ def test_canonical_mapping_provenance_no_source_side_effects(conn,outcome):
     assert result.support_count==1 and result.status=='candidate' and result.decision is None
     e=memory.memory_history(conn,result.lesson.lesson_ref,50,0)[0][0].evidence
     assert e.outcome==v.outcome and e.human_reason==v.reason and e.source_verdict_ref==v.verdict_ref
-    assert e.source_verdict_revision==v.revision and e.verdict_author_id==1 and e.actor_id==uid
+    assert e.source_verdict_revision==v.revision and e.verdict_author_id==1 and e.actor_id is None and e.decision_source=='system_policy'
     assert e.source_state_version==v.source_state_version and e.detector_snapshot.operational_alert_ref==a.operational_alert_ref
     assert {t:[tuple(r) for r in conn.execute('SELECT * FROM '+t)] for t in tables}==before
 
@@ -47,11 +47,12 @@ def test_support_distinct_alerts_retry_and_conflicts_across_scopes(conn):
         last=memory.contribute_verdict(conn,a.operational_alert_ref,actor_id=1,request=req).memory
         assert last.support_count==index
         assert memory.contribute_verdict(conn,a.operational_alert_ref,actor_id=1,request=req).replayed
-        with pytest.raises(memory.MemoryConflict):contribute(conn,a,v)
-        with pytest.raises(memory.MemoryConflict):contribute(conn,a,v,'narrow')
-        with pytest.raises(memory.MemoryConflict):memory.contribute_verdict(conn,a.operational_alert_ref,actor_id=1,request=req.model_copy(update={'scope':'narrow'}))
-    assert last.status=='eligible_for_activation'
-    active=memory.decide_memory(conn,last.lesson.lesson_ref,actor_id=1,action='activate',request=memory.MemoryDecisionRequest(request_id=uuid4(),expected_revision=last.revision,reason='Review three distinct human conclusions')).memory
+        assert contribute(conn,a,v).replayed
+        narrow=contribute(conn,a,v,'narrow').memory
+        assert narrow.support_count==index and narrow.decision is None
+        assert memory.read_memory(conn,last.lesson.lesson_ref).support_count==index
+    assert last.status=='active'
+    active=last
     assert active.status=='active'
     contribute(conn,aa[3],verdict(conn,aa[3],'confirmed_malicious'),'narrow')
     conflict=memory.read_memory(conn,active.lesson.lesson_ref)
@@ -67,9 +68,9 @@ def test_correction_invalidates_active_guidance_and_future_deferral_without_writ
     v=verdict(conn,target,'confirmed_malicious')
     original_dump='\n'.join(conn.iterdump());conn.execute('PRAGMA query_only=ON')
     projected=memory.read_memory(conn,lesson.lesson.lesson_ref)
-    assert projected.support_count==2 and projected.conflict_count==0 and projected.status=='candidate'
+    assert projected.support_count==2 and projected.conflict_count==1 and projected.status=='conflict_review'
     assert projected.revision>old_revision
-    assert memory.verdict_memory_state(conn,target.operational_alert_ref).contribution_status=='superseded'
+    assert memory.verdict_memory_state(conn,target.operational_alert_ref).contribution_status=='contributed'
     assert read_review(conn,aa[3].operational_alert_ref).disposition=='must_review'
     assert '\n'.join(conn.iterdump())==original_dump;conn.execute('PRAGMA query_only=OFF')
     replacement=contribute(conn,target,v).memory
@@ -122,7 +123,7 @@ def test_evidence_immutability_and_atomic_failure(conn):
     before='\n'.join(conn.iterdump())
     conn.execute("CREATE TRIGGER fail_linked_evidence BEFORE INSERT ON verdict_memory_evidence BEGIN SELECT RAISE(ABORT,'injected'); END");conn.commit()
     failed='\n'.join(conn.iterdump())
-    with pytest.raises(sqlite3.IntegrityError):contribute(conn,a,v)
+    with pytest.raises(sqlite3.IntegrityError):contribute(conn,a,v,'narrow')
     assert '\n'.join(conn.iterdump())==failed
     conn.execute('DROP TRIGGER fail_linked_evidence');conn.commit()
     assert '\n'.join(conn.iterdump())==before
@@ -138,6 +139,8 @@ def test_migration_seventeen_preserves_verdicts_and_rolls_back(tmp_path,monkeypa
     try:
         monkeypatch.setattr(db,'MIGRATIONS',migrations[:16]);db.create_schema(c)
         db.insert(c,m.User(username='reviewer',password_hash='x',display_name='Reviewer',email='r@example.test',role='security_analyst'));c.commit()
+        # Construct a genuine pre-feature Verdict; migration must not backfill on reads.
+        monkeypatch.setattr(memory,'automatic_evidence',lambda *a,**k:None)
         a=alerts(c,1)[0];verdict(c,a)
         tables=[r[0] for r in c.execute("SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%'")]
         before={t:[tuple(r) for r in c.execute('SELECT * FROM '+t)] for t in tables};dump='\n'.join(c.iterdump())
@@ -145,7 +148,7 @@ def test_migration_seventeen_preserves_verdicts_and_rolls_back(tmp_path,monkeypa
         with pytest.raises(sqlite3.OperationalError):db.migrate(c)
         assert '\n'.join(c.iterdump())==dump
         monkeypatch.setattr(db,'MIGRATIONS',migrations)
-        assert db.migrate(c)==[17,18,19] and db.migrate(c)==[]
+        assert db.migrate(c)==[17,18,19,20] and db.migrate(c)==[]
         assert {t:[tuple(r) for r in c.execute('SELECT * FROM '+t)] for t in tables}==before
         assert not c.execute('PRAGMA foreign_key_check').fetchall()
     finally:c.close()

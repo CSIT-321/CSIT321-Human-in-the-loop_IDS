@@ -166,6 +166,8 @@ MIGRATIONS += ((18, "immutable Tier 2 conclusion-linked memory evidence",
                 Path(__file__).with_name("conclusion_memory.sql").read_text(encoding="utf-8")),)
 MIGRATIONS += ((19, "human Case resolution and terminal investigation lifecycle",
                 Path(__file__).with_name("tier2_case_resolution.sql").read_text(encoding="utf-8")),)
+MIGRATIONS += ((20, "system-attributed automatic human learning and activation",
+                Path(__file__).with_name("safe_memory_auto_activation.sql").read_text(encoding="utf-8")),)
 SCHEMA_VERSION = MIGRATIONS[-1][0]
 
 
@@ -179,7 +181,7 @@ def migrate(conn: sqlite3.Connection) -> list[int]:
     for version, _description, sql in MIGRATIONS:
         if version <= current:
             continue
-        rebuild = version in (14, 15, 19)
+        rebuild = version in (14, 15, 19, 20)
         foreign_keys = conn.execute("PRAGMA foreign_keys").fetchone()[0]
         if rebuild:
             if conn.in_transaction:

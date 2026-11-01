@@ -2114,6 +2114,11 @@ export interface components {
              * @enum {string}
              */
             contributionStatus: "not_contributed" | "contributed" | "superseded";
+            /**
+             * Decisionsource
+             * @default null
+             */
+            decisionSource: ("analyst" | "system_policy") | null;
             /** Eligible */
             eligible: boolean;
             latestConclusion: components["schemas"]["InvestigationConclusion"] | null;
@@ -3655,9 +3660,15 @@ export interface components {
         /** MemoryAudit */
         MemoryAudit: {
             /** Actorid */
-            actorId: number;
+            actorId: number | null;
             /** Createdat */
             createdAt: string;
+            /**
+             * Decisionsource
+             * @default analyst
+             * @enum {string}
+             */
+            decisionSource: "analyst" | "system_policy";
             /** Eventtype */
             eventType: string;
             evidence: components["schemas"]["MemoryEvidence"] | null;
@@ -3674,6 +3685,11 @@ export interface components {
              */
             lessonRef: string;
             lessonSnapshot: components["schemas"]["MemoryView"];
+            /**
+             * Policyversion
+             * @default null
+             */
+            policyVersion: string | null;
             /** Reason */
             reason: string;
         };
@@ -3754,9 +3770,20 @@ export interface components {
              */
             action: "activate" | "reject";
             /** Actorid */
-            actorId: number;
+            actorId: number | null;
             /** Createdat */
             createdAt: string;
+            /**
+             * Decisionsource
+             * @default analyst
+             * @enum {string}
+             */
+            decisionSource: "analyst" | "system_policy";
+            /**
+             * Policyversion
+             * @default null
+             */
+            policyVersion: string | null;
             /** Reason */
             reason: string;
         };
@@ -3775,7 +3802,7 @@ export interface components {
         /** MemoryEvidence */
         MemoryEvidence: {
             /** Actorid */
-            actorId: number;
+            actorId: number | null;
             /**
              * Conclusionauthorname
              * @default null
@@ -3794,6 +3821,12 @@ export interface components {
             contributionScope: ("exact" | "narrow") | null;
             /** Createdat */
             createdAt: string;
+            /**
+             * Decisionsource
+             * @default analyst
+             * @enum {string}
+             */
+            decisionSource: "analyst" | "system_policy";
             detectorSnapshot: components["schemas"]["OperationalAlertV2"];
             /** Humanreason */
             humanReason: string;
@@ -3802,6 +3835,11 @@ export interface components {
              * @enum {string}
              */
             outcome: "expected_activity" | "false_positive" | "confirmed_malicious" | "suspicious";
+            /**
+             * Policyversion
+             * @default null
+             */
+            policyVersion: string | null;
             /**
              * Relation
              * @enum {string}
@@ -3852,7 +3890,13 @@ export interface components {
             /** Createdat */
             createdAt: string;
             /** Createdbyactorid */
-            createdByActorId: number;
+            createdByActorId: number | null;
+            /**
+             * Decisionsource
+             * @default analyst
+             * @enum {string}
+             */
+            decisionSource: "analyst" | "system_policy";
             /** Humanreason */
             humanReason: string;
             /**
@@ -3865,6 +3909,11 @@ export interface components {
              * @enum {string}
              */
             outcome: "expected_activity" | "false_positive" | "confirmed_malicious" | "suspicious";
+            /**
+             * Policyversion
+             * @default null
+             */
+            policyVersion: string | null;
             /**
              * Scope
              * @enum {string}
@@ -5759,12 +5808,19 @@ export interface components {
              * @enum {string}
              */
             contributionStatus: "not_contributed" | "contributed" | "superseded";
+            /**
+             * Decisionsource
+             * @default null
+             */
+            decisionSource: ("analyst" | "system_policy") | null;
             /** Latestverdictref */
             latestVerdictRef: string | null;
             /** Latestverdictrevision */
             latestVerdictRevision: number | null;
             /** Lessonref */
             lessonRef: string | null;
+            /** @default null */
+            memory: components["schemas"]["MemoryView"] | null;
             /** Scope */
             scope: ("exact" | "narrow") | null;
         };

@@ -66,9 +66,9 @@ DEVIATION_COLUMNS = {
     "flow_data": {"source_record_id"},
 }
 DEVIATION_TABLES = {
-    "conclusion_memory_contributions": {"id","source_alert_id","source_case_id","conclusion_event_id","actor_id","scope","primary_lesson_id","request_id","request_payload"},
+    "conclusion_memory_contributions": {"id","source_alert_id","source_case_id","conclusion_event_id","actor_id","scope","primary_lesson_id","request_id","request_payload","decision_source","policy_version"},
     "conclusion_memory_evidence": {"id","contribution_id","lesson_id","evidence_snapshot"},
-    "verdict_memory_contributions": {"id","source_alert_id","source_verdict_ref","actor_id","scope","primary_lesson_id","request_id","request_payload"},
+    "verdict_memory_contributions": {"id","source_alert_id","source_verdict_ref","actor_id","scope","primary_lesson_id","request_id","request_payload","decision_source","policy_version"},
     "verdict_memory_evidence": {"id","contribution_id","lesson_id","evidence_snapshot"},
     "analyst_verdict_events": {"id","verdict_ref","operational_alert_id","actor_id","revision","supersedes_ref","request_id","request_payload","snapshot"},
     # Migration 14, documented in suricata-correlation-auto-routing.md.
@@ -81,10 +81,10 @@ DEVIATION_TABLES = {
     "trusted_context_facts": {"id","fact_ref","actor_id","request_id","request_payload","snapshot"},
     "triage_context_provenance": {"id","policy_audit_id","snapshot"},
     "selective_review_events": {"id","event_ref","operational_alert_id","actor_id","action","reason","request_id","request_payload","decision_snapshot","event_type","created_at"},
-    "triage_memory_lessons": {"id","lesson_ref","context_key","detector_source","source_alert_id","source_case_id","actor_id","snapshot","created_at"},
+    "triage_memory_lessons": {"id","lesson_ref","context_key","detector_source","source_alert_id","source_case_id","actor_id","snapshot","created_at","decision_source","policy_version"},
     "triage_memory_support_events": {"id","lesson_id","source_alert_id","source_case_id","actor_id","outcome","relation","reason","evidence_snapshot","is_primary","request_id","request_payload","created_at"},
-    "triage_memory_decisions": {"id","lesson_id","actor_id","action","reason","lesson_snapshot","valid_from","expires_at","request_id","request_payload","created_at"},
-    "triage_memory_audit": {"id","lesson_id","actor_id","event_type","payload","created_at"},
+    "triage_memory_decisions": {"id","lesson_id","actor_id","action","reason","lesson_snapshot","valid_from","expires_at","request_id","request_payload","created_at","decision_source","policy_version"},
+    "triage_memory_audit": {"id","lesson_id","actor_id","event_type","payload","created_at","decision_source","policy_version"},
     "response_recommendations": {"id","recommendation_ref","case_id","proposed_by_actor_id","proposal_source",
         "recommendation_type","target_type","target_value","rationale","proposal_reason","case_revision",
         "policy_version","evidence_snapshot","request_id","request_payload","event_type","created_at"},

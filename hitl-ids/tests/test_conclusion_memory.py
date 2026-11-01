@@ -28,7 +28,7 @@ def contribute(conn,case,scope='exact',actor=1):
 def test_auto_expert_mapping_provenance_and_complete_source_isolation(conn,api,finding,category):
     alert=admit(conn);case=automatic_case(conn,alert)
     case=conclude(conn,case,command(finding,category)).case
-    assert conn.execute('SELECT count(*) FROM triage_memory_lessons').fetchone()[0]==0
+    assert conn.execute('SELECT count(*) FROM triage_memory_lessons').fetchone()[0]==1
     assert conn.execute('SELECT count(*) FROM analyst_verdict_events').fetchone()[0]==0
     uid=db.insert(conn,m.User(username='contributor',password_hash='synthetic',display_name='Memory Contributor',email='c@example.test',role='security_analyst'));conn.commit()
     tables=[r[0] for r in conn.execute("SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%' AND name NOT LIKE 'triage_memory_%' AND name NOT LIKE 'conclusion_memory_%'")]
@@ -41,7 +41,7 @@ def test_auto_expert_mapping_provenance_and_complete_source_isolation(conn,api,f
     assert evidence.source_conclusion==case.latest_conclusion
     assert evidence.source_conclusion.final_attack_category==category
     assert evidence.source_operational_alert_ref==alert.operational_alert_ref and evidence.source_case_ref==case.case_ref
-    assert evidence.actor_id==uid and evidence.contribution_actor_name=='Memory Contributor'
+    assert evidence.actor_id is None and evidence.contribution_actor_name is None and evidence.decision_source=='system_policy'
     assert evidence.source_conclusion.actor_id==1 and evidence.conclusion_author_name=='Reviewer'
     assert evidence.human_reason==case.latest_conclusion.reason and evidence.outcome==finding
     assert evidence.context_snapshot==memory.context_for(alert) and evidence.detector_snapshot==alert
@@ -61,10 +61,10 @@ def test_tier1_superseded_immediately_even_without_expert_contribution(conn,find
     assert memory.read_memory(conn,lesson.lesson.lesson_ref).support_count==0
     assert memory.verdict_memory_state(conn,alert.operational_alert_ref).contribution_status=='superseded'
     state=memory.conclusion_memory_state(conn,case.case_ref)
-    assert state.tier1_evidence_superseded and state.contribution_status=='not_contributed'
-    assert conn.execute('SELECT count(*) FROM conclusion_memory_contributions').fetchone()[0]==0
+    assert state.tier1_evidence_superseded and state.contribution_status==('not_contributed' if finding=='inconclusive' else 'contributed')
+    assert conn.execute('SELECT count(*) FROM conclusion_memory_contributions').fetchone()[0]==int(finding!='inconclusive')
     history=memory.memory_history(conn,lesson.lesson.lesson_ref,200,0)[0]
-    assert all(e.evidence_current is False for e in history if e.evidence)
+    assert all(e.evidence_current is False for e in history if e.evidence and e.evidence.source_kind=='analyst_verdict')
     assert any(e.event_type=='V2_TRIAGE_MEMORY_EXPERT_SUPERSEDED' for e in history)
     if finding=='inconclusive':
         assert state.eligible is False
@@ -82,17 +82,17 @@ def test_correction_replay_dedup_and_conflicting_identity(conn):
     case=automatic_case(conn,admit(conn));case=conclude(conn,case,command('suspicious','web_attack')).case
     req=request(case);first=memory.contribute_conclusion(conn,case.case_ref,actor_id=1,request=req).memory
     assert memory.contribute_conclusion(conn,case.case_ref,actor_id=1,request=req).replayed
-    with pytest.raises(memory.MemoryConflict):contribute(conn,case)
-    with pytest.raises(memory.MemoryConflict):contribute(conn,case,'narrow')
-    with pytest.raises(memory.MemoryConflict):memory.contribute_conclusion(conn,case.case_ref,actor_id=1,request=req.model_copy(update={'scope':'narrow'}))
+    assert contribute(conn,case).replayed
+    narrow=contribute(conn,case,'narrow')
+    assert narrow.memory.support_count==1 and narrow.memory.decision is None
     uid=db.insert(conn,m.User(username='other',display_name='Other',password_hash='synthetic',email='o@example.test',role='security_analyst'));conn.commit()
-    with pytest.raises(memory.MemoryConflict):memory.contribute_conclusion(conn,case.case_ref,actor_id=uid,request=req)
+    assert memory.contribute_conclusion(conn,case.case_ref,actor_id=uid,request=req).replayed
     newer=conclude(conn,case,command('confirmed_malicious','infiltration',case.revision)).case
     assert memory.read_memory(conn,first.lesson.lesson_ref).support_count==0
     state=memory.conclusion_memory_state(conn,newer.case_ref)
-    assert state.previous_expert_evidence_superseded and state.contribution_status=='superseded'
+    assert state.previous_expert_evidence_superseded and state.contribution_status=='contributed'
     with pytest.raises(memory.MemoryConflict):memory.contribute_conclusion(conn,case.case_ref,actor_id=1,request=req.model_copy(update={'request_id':uuid4(),'expected_case_revision':newer.revision}))
-    assert memory.contribute_conclusion(conn,case.case_ref,actor_id=1,request=req).replayed
+    with pytest.raises(memory.MemoryConflict):memory.contribute_conclusion(conn,case.case_ref,actor_id=1,request=req)
     current=contribute(conn,newer).memory
     assert current.support_count==0 and current.conflict_count==1
     events=memory.memory_history(conn,current.lesson.lesson_ref,200,0)[0]
@@ -163,7 +163,7 @@ def test_contribution_rollback_and_immutable_evidence(conn):
     case=conclude(conn,automatic_case(conn,admit(conn))).case
     conn.execute("CREATE TRIGGER fail_expert BEFORE INSERT ON conclusion_memory_evidence BEGIN SELECT RAISE(ABORT,'injected'); END");conn.commit()
     before=dump(conn)
-    with pytest.raises(sqlite3.IntegrityError):contribute(conn,case)
+    with pytest.raises(sqlite3.IntegrityError):contribute(conn,case,'narrow')
     assert dump(conn)==before
     conn.execute('DROP TRIGGER fail_expert');conn.commit();contribute(conn,case)
     for table in ('conclusion_memory_contributions','conclusion_memory_evidence'):
@@ -177,7 +177,7 @@ def test_concurrent_same_conclusion_cannot_add_support_twice(conn):
     def write(_):
         with closing(db.connect(path)) as c:return memory.contribute_conclusion(c,case.case_ref,actor_id=1,request=req)
     with ThreadPoolExecutor(max_workers=2) as pool: results=list(pool.map(write,range(2)))
-    assert sorted(r.replayed for r in results)==[False,True]
+    assert sorted(r.replayed for r in results)==[True,True]
     assert results[0].memory.support_count==1 and conn.execute('SELECT count(*) FROM conclusion_memory_contributions').fetchone()[0]==1
 
 
@@ -186,7 +186,7 @@ def test_exact_positive_does_not_broaden_narrow_support_but_conflict_fans_out(co
     narrow=contribute(conn,conclude(conn,cases[0],command('expected_activity',None)).case,'narrow').memory
     exact=contribute(conn,conclude(conn,cases[1],command('expected_activity',None)).case).memory
     assert memory.read_memory(conn,narrow.lesson.lesson_ref).support_count==1
-    assert exact.support_count==1
+    assert exact.support_count==2
     contribute(conn,conclude(conn,cases[2],command()).case)
     assert memory.read_memory(conn,narrow.lesson.lesson_ref).conflict_count==1
     assert memory.read_memory(conn,exact.lesson.lesson_ref).conflict_count==1

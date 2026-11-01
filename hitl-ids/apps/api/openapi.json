@@ -1595,6 +1595,22 @@
             "title": "Contributionstatus",
             "type": "string"
           },
+          "decisionSource": {
+            "anyOf": [
+              {
+                "enum": [
+                  "analyst",
+                  "system_policy"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Decisionsource"
+          },
           "eligible": {
             "title": "Eligible",
             "type": "boolean"
@@ -5102,11 +5118,27 @@
         "additionalProperties": false,
         "properties": {
           "actorId": {
-            "title": "Actorid",
-            "type": "integer"
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Actorid"
           },
           "createdAt": {
             "title": "Createdat",
+            "type": "string"
+          },
+          "decisionSource": {
+            "default": "analyst",
+            "enum": [
+              "analyst",
+              "system_policy"
+            ],
+            "title": "Decisionsource",
             "type": "string"
           },
           "eventType": {
@@ -5146,6 +5178,18 @@
           },
           "lessonSnapshot": {
             "$ref": "#/components/schemas/MemoryView"
+          },
+          "policyVersion": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Policyversion"
           },
           "reason": {
             "title": "Reason",
@@ -5376,12 +5420,40 @@
             "type": "string"
           },
           "actorId": {
-            "title": "Actorid",
-            "type": "integer"
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Actorid"
           },
           "createdAt": {
             "title": "Createdat",
             "type": "string"
+          },
+          "decisionSource": {
+            "default": "analyst",
+            "enum": [
+              "analyst",
+              "system_policy"
+            ],
+            "title": "Decisionsource",
+            "type": "string"
+          },
+          "policyVersion": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Policyversion"
           },
           "reason": {
             "title": "Reason",
@@ -5429,8 +5501,15 @@
         "additionalProperties": false,
         "properties": {
           "actorId": {
-            "title": "Actorid",
-            "type": "integer"
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Actorid"
           },
           "conclusionAuthorName": {
             "anyOf": [
@@ -5479,6 +5558,15 @@
             "title": "Createdat",
             "type": "string"
           },
+          "decisionSource": {
+            "default": "analyst",
+            "enum": [
+              "analyst",
+              "system_policy"
+            ],
+            "title": "Decisionsource",
+            "type": "string"
+          },
           "detectorSnapshot": {
             "$ref": "#/components/schemas/OperationalAlertV2"
           },
@@ -5495,6 +5583,18 @@
             ],
             "title": "Outcome",
             "type": "string"
+          },
+          "policyVersion": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Policyversion"
           },
           "relation": {
             "enum": [
@@ -5625,8 +5725,24 @@
             "type": "string"
           },
           "createdByActorId": {
-            "title": "Createdbyactorid",
-            "type": "integer"
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Createdbyactorid"
+          },
+          "decisionSource": {
+            "default": "analyst",
+            "enum": [
+              "analyst",
+              "system_policy"
+            ],
+            "title": "Decisionsource",
+            "type": "string"
           },
           "humanReason": {
             "title": "Humanreason",
@@ -5646,6 +5762,18 @@
             ],
             "title": "Outcome",
             "type": "string"
+          },
+          "policyVersion": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Policyversion"
           },
           "scope": {
             "enum": [
@@ -10361,6 +10489,22 @@
             "title": "Contributionstatus",
             "type": "string"
           },
+          "decisionSource": {
+            "anyOf": [
+              {
+                "enum": [
+                  "analyst",
+                  "system_policy"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Decisionsource"
+          },
           "latestVerdictRef": {
             "anyOf": [
               {
@@ -10395,6 +10539,17 @@
               }
             ],
             "title": "Lessonref"
+          },
+          "memory": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/MemoryView"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
           },
           "scope": {
             "anyOf": [

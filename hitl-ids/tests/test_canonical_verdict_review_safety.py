@@ -11,9 +11,11 @@ from packages.detection import selective_review as review
 
 
 @pytest.mark.parametrize('outcome,unsafe', [('confirmed_malicious',1),('suspicious',1),('expected_activity',0),('false_positive',0)])
-def test_canonical_verdict_recall_without_contribution(conn,api,outcome,unsafe):
+def test_canonical_verdict_recall_without_contribution(conn,api,monkeypatch,outcome,unsafe):
     alerts=review_scenario(conn);a=alerts[3];ref=a.operational_alert_ref
     before=review.read_review(conn,ref);assert before.disposition=='no_immediate_review'
+    # Isolate R01: canonical safety must work even when optional context cannot be learned.
+    monkeypatch.setattr('packages.detection.triage_memory.automatic_evidence',lambda *a,**k:None)
     original_events=[tuple(r) for r in conn.execute('SELECT * FROM selective_review_events')]
     v=verdict(conn,a,outcome)
     snapshot='\n'.join(conn.iterdump())
@@ -65,8 +67,9 @@ def test_distinct_alerts_multiple_deferrals_and_optional_contribution(conn):
     ('confirmed_malicious','expected_activity',None,0),
     ('suspicious','inconclusive',None,0),
 ])
-def test_latest_expert_supersedes_tier1_without_contribution(conn,tier1,expert,category,unsafe):
+def test_latest_expert_supersedes_tier1_without_contribution(conn,monkeypatch,tier1,expert,category,unsafe):
     a=review_scenario(conn)[3];verdict(conn,a,tier1)
+    monkeypatch.setattr('packages.detection.triage_memory.automatic_evidence',lambda *a,**k:None)
     case=escalate(conn,a);case=conclude(conn,case,command(expert,category,case.revision)).case
     assert review.unsafe_suppression_count(conn)==unsafe
     assert not conn.execute('SELECT 1 FROM conclusion_memory_contributions').fetchone()

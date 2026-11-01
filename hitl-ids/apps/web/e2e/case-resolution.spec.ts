@@ -51,8 +51,7 @@ test("final Case lifecycle: investigated malicious case, approved plan, learning
  await block.getByLabel("Approval or rejection reason").fill("SYNTHETIC approve plan only, not execution");
  await block.getByRole("button",{name:"Approve",exact:true}).click();
  await expect(resolution).toContainText("Approved - Not Executed");
- await learning.getByRole("button",{name:"Use Expert Conclusion as Triage Memory Evidence",exact:true}).click();
- await expect(learning).toContainText("Contribution: Contributed · Scope: exact");
+ await expect(learning).toContainText("Contribution: Automatically recorded as Exact evidence");
  const memoryHref=await learning.getByRole("link",{name:"Open linked Memory lesson",exact:true}).getAttribute("href");
  const caseUrl=page.url();
  await expect(summary).toContainText("investigating"); // neither response approval nor learning closes the Case
@@ -73,7 +72,7 @@ test("final Case lifecycle: investigated malicious case, approved plan, learning
  await expect(summary.getByText("Resolved",{exact:true})).toBeVisible();
  await expect(resolution).toContainText("Resolved by: Glenn Ang");await expect(resolution).toContainText("Approved - Not Executed");
  await expect(resolution.getByLabel("Resolution Reason")).toHaveCount(0);
- await expect(learning).toContainText("Contribution: Contributed · Scope: exact");
+ await expect(learning).toContainText("Contribution: Automatically recorded as Exact evidence");
  await expect(page.getByRole("region",{name:"Investigation Brief",exact:true})).toContainText("unknown_needs_expert");
  // C: UI is read-only, server also rejects new investigation attempts.
  for(const tab of ["Investigation Notes","Investigation Conclusion","Linked Alerts","Audit Timeline"]){

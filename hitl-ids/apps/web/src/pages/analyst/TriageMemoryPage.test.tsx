@@ -8,7 +8,7 @@ const ref="fe130e6f-af86-4fc6-89f2-bc76b6cad68b";
 const session={username:"g.ang",displayName:"Analyst",role:"security_analyst" as const,token:"test"};
 const empty={items:[],page:{total:0,limit:50,offset:0,returned:0}};
 const view: Schemas["MemoryView"]={
-  lesson:{lessonRef:ref,outcome:"expected_activity",humanReason:"Authorised internal vulnerability scanner",scope:"exact",scopeFields:["sourceIp","detectorSource"],
+  lesson:{decisionSource:"analyst",policyVersion:null,lessonRef:ref,outcome:"expected_activity",humanReason:"Authorised internal vulnerability scanner",scope:"exact",scopeFields:["sourceIp","detectorSource"],
     sourceOperationalAlertRef:ref,sourceCaseRef:null,createdByActorId:1,createdAt:"2026-10-31T00:00:00Z",
     contextSnapshot:{detectorSource:"suricata",detectionTitle:"SSH scan",detectionCategory:"SSH Scan",sourceIp:"10.0.0.50",destinationIp:"10.0.0.20",sourcePort:44444,destinationPort:22,protocol:"TCP",assetCriticality:null,assetIdentifier:null,knownScannerIdentity:null,authorisedActivityType:null,scheduleWindow:null,analystDefinedTag:null},
     configuration:{version:"triage-memory-v1",minimumSupport:3,minimumAgreementRatio:0.67,maximumConflicts:0,defaultValidityDays:30,exactRequiredFields:[],narrowRequiredFields:[]}},

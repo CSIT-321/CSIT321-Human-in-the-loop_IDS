@@ -20,7 +20,7 @@ def command(conn,a,outcome='suspicious',**changes):
         outcome=outcome,reason='Independent analyst conclusion',**changes)
 
 def unchanged(conn):
-    tables=[r[0] for r in conn.execute("SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%' AND name!='analyst_verdict_events'")]
+    tables=[r[0] for r in conn.execute("SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%' AND name!='analyst_verdict_events' AND name NOT LIKE 'triage_memory_%' AND name NOT LIKE 'verdict_memory_%'")]
     return {t:[tuple(r) for r in conn.execute('SELECT * FROM '+t)] for t in tables}
 
 @pytest.mark.parametrize('outcome',['confirmed_malicious','suspicious','expected_activity','false_positive'])
