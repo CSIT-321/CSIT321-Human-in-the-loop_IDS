@@ -28,6 +28,7 @@ from apps.api.contract import auth as au
 from apps.api.contract import operations as o
 from apps.api.contract.routing import RoutingView, RoutingResponse, EscalateCaseResponse, OperationalSummary
 from packages.detection.tier2_escalation import EscalateCaseRequest
+from packages.detection.investigation_assistance import InvestigationAssistance
 from packages.detection.analyst_verdict import VerdictCommand,VerdictView,VerdictHistory,VerdictMutation
 from packages.detection.routing import RoutingRequest
 from packages.contracts.operational_v2 import OperationalAlertV2, HandlingRouteV2, PriorityBandV2
@@ -62,6 +63,7 @@ SCHEMA_REF = "#/components/schemas/{model}"
 #: Every model that appears on the wire. Listed explicitly rather than discovered, so adding a
 #: model to the API is a deliberate act.
 MODELS: tuple[type[BaseModel], ...] = (
+    InvestigationAssistance,
     VerdictMemoryRequest,VerdictMemoryState,
     VerdictCommand,VerdictView,VerdictHistory,VerdictMutation,
     RunCreate,RunView,RunPage,RunCommand,ObservationRequest,RecordedArchive,CollectionDocument,
@@ -662,6 +664,10 @@ def _paths() -> dict[str, Any]:
         'operationId':'getTier2Case','summary':'Read case and immutable handoff','tags':['Tier 2 cases'],
         'parameters':[AUTH_PARAMETER,case_ref],
         'responses':{'200':{'description':'Case',**_json(CaseView)},**_errors(400,404)}}}
+    paths['/api/v2/tier2/cases/{caseRef}/assistance'] = {'get': {
+        'operationId':'getTier2InvestigationAssistance','summary':'Read advisory case assistance','tags':['Tier 2 cases'],
+        'parameters':[AUTH_PARAMETER,case_ref],
+        'responses':{'200':{'description':'Read-only assistance',**_json(InvestigationAssistance)},**_errors(400,404)}}}
     paths['/api/v2/tier2/cases/{caseRef}/events'] = {'get': {
         'operationId':'listTier2CaseEvents','summary':'Read immutable investigation timeline','tags':['Tier 2 cases'],
         'parameters':[AUTH_PARAMETER,case_ref,*paging,

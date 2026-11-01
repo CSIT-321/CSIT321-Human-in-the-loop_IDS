@@ -1124,6 +1124,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v2/tier2/cases/{caseRef}/assistance": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Read advisory case assistance */
+        get: operations["getTier2InvestigationAssistance"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v2/tier2/cases/{caseRef}/events": {
         parameters: {
             query?: never;
@@ -3124,6 +3141,42 @@ export interface components {
              */
             updatedAt: string | null;
         };
+        /** InvestigationAssistance */
+        InvestigationAssistance: {
+            /** Assistancepolicyversion */
+            assistancePolicyVersion: string;
+            brief: components["schemas"]["InvestigationBrief"];
+            /**
+             * Caseref
+             * Format: uuid
+             */
+            caseRef: string;
+            /** Correlationwindowhours */
+            correlationWindowHours: number;
+            /** Maximumrelated */
+            maximumRelated: number;
+            /** Relatedalerts */
+            relatedAlerts: components["schemas"]["RelatedAlert"][];
+            /** Suggestedsteps */
+            suggestedSteps: string[];
+        };
+        /** InvestigationBrief */
+        InvestigationBrief: {
+            atCaseCreation: components["schemas"]["CaseSnapshot"];
+            classificationAtAdmission: components["schemas"]["AttackClassification"] | null;
+            /** Currentcaserevision */
+            currentCaseRevision: number;
+            /** Currentcasestatus */
+            currentCaseStatus: string;
+            currentTier1Verdict: components["schemas"]["AnalystVerdict"] | null;
+            currentTrustedContext: components["schemas"]["ResolvedTrustedContext"];
+            suricataEvidenceAtCreation: components["schemas"]["SuricataEvidenceBundle"] | null;
+            systemRoutingAtAdmission: components["schemas"]["SystemRoutingDecision"] | null;
+            /** Tier1Verdictexplanation */
+            tier1VerdictExplanation: string;
+            /** Uncertainties */
+            uncertainties: string[];
+        };
         /** IpAttackBehaviour */
         IpAttackBehaviour: {
             /** Alertcount */
@@ -4213,6 +4266,53 @@ export interface components {
             recalled: boolean;
             request: components["schemas"]["ObservationRequest"];
         };
+        /** RelatedAlert */
+        RelatedAlert: {
+            /** Attackcategory */
+            attackCategory: string | null;
+            /** Destinationip */
+            destinationIp: string;
+            /** Handlingroute */
+            handlingRoute: string;
+            /** Occurredat */
+            occurredAt: string;
+            /**
+             * Operationalalertref
+             * Format: uuid
+             */
+            operationalAlertRef: string;
+            /** Operationalpriority */
+            operationalPriority: number | null;
+            /** Priorityband */
+            priorityBand: string | null;
+            /** Relationshipreasons */
+            relationshipReasons: string[];
+            /** Sourceip */
+            sourceIp: string;
+            /** Title */
+            title: string;
+        };
+        /** RelatedSignature */
+        RelatedSignature: {
+            /** Action */
+            action: string | null;
+            /** Metadata */
+            metadata: {
+                [key: string]: unknown;
+            };
+            /** Nativecategory */
+            nativeCategory: string;
+            /** Nativeseverity */
+            nativeSeverity: number;
+            /** Signature */
+            signature: string;
+            /** Signatureid */
+            signatureId: number;
+            /** Sourcerecordref */
+            sourceRecordRef: string;
+            /** Timestamp */
+            timestamp: string;
+        };
         /** ResolvedField */
         ResolvedField: {
             /** Availableat */
@@ -5065,6 +5165,76 @@ export interface components {
              * @enum {string}
              */
             status: "new" | "claimed" | "in_progress" | "resolved" | "dismissed";
+        };
+        /** SuricataEvidenceBundle */
+        SuricataEvidenceBundle: {
+            /**
+             * Capturescope
+             * @default null
+             */
+            captureScope: string | null;
+            /**
+             * Correlationbasis
+             * @enum {string}
+             */
+            correlationBasis: "sensor_flow_id" | "sensor_capture_flow_id" | "independent_record";
+            /** Evidencetypes */
+            evidenceTypes: ("alert" | "flow" | "http" | "dns" | "tls" | "ssh" | "fileinfo" | "anomaly")[];
+            /** Flowid */
+            flowId: string | null;
+            /**
+             * Mlenrichment
+             * @default unavailable_no_validated_feature_bridge
+             * @constant
+             */
+            mlEnrichment: "unavailable_no_validated_feature_bridge";
+            /** Nativeseverity */
+            nativeSeverity: number;
+            /** Primaryrecordref */
+            primaryRecordRef: string;
+            /** Records */
+            records: components["schemas"]["SuricataRecord"][];
+            /** Relatedsignatures */
+            relatedSignatures: components["schemas"]["RelatedSignature"][];
+            /**
+             * Schemaversion
+             * @default suricata-bundle-v1
+             * @enum {string}
+             */
+            schemaVersion: "suricata-bundle-v1" | "suricata-bundle-v2";
+            /** Sensorid */
+            sensorId: string;
+            /** Transactionrecords */
+            transactionRecords: {
+                [key: string]: string[];
+            };
+        };
+        /** SuricataRecord */
+        SuricataRecord: {
+            /**
+             * Capturescope
+             * @default null
+             */
+            captureScope: string | null;
+            /**
+             * Eventtype
+             * @enum {string}
+             */
+            eventType: "alert" | "flow" | "http" | "dns" | "tls" | "ssh" | "fileinfo" | "anomaly";
+            /** Flowid */
+            flowId: string | null;
+            /** Raw */
+            raw: {
+                [key: string]: unknown;
+            };
+            /** Sensorid */
+            sensorId: string;
+            /** Sourcerecordref */
+            sourceRecordRef: string;
+            /** Timestamp */
+            timestamp: string;
+            /** Txid */
+            txId: string | null;
         };
         /** SystemRoutingDecision */
         SystemRoutingDecision: {
@@ -9541,6 +9711,67 @@ export interface operations {
             };
             /** @description Conflict */
             409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    getTier2InvestigationAssistance: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description `Bearer <token>` from POST /api/auth/login */
+                Authorization?: string;
+            };
+            path: {
+                caseRef: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Read-only assistance */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InvestigationAssistance"];
+                };
+            };
+            /** @description Validation failed */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not signed in, or the token expired */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Database unavailable or schema unsupported; read-only requests never migrate */
+            503: {
                 headers: {
                     [name: string]: unknown;
                 };

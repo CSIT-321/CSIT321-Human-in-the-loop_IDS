@@ -1,0 +1,16 @@
+{
+  "version": "tier2-assistance-v1",
+  "windowHours": 24,
+  "maximumRelated": 20,
+  "relationships": ["source", "destination", "pair", "category", "signature", "sensor"],
+  "templates": {
+    "open_case": ["When ready, explicitly Start Investigation and document the review; opening assistance does not start it."],
+    "critical_route": ["Review the recorded Critical Escalation reasons and affected asset urgency; any containment recommendation still requires human approval."],
+    "unknown_needs_expert": ["Inspect the primary and supporting Suricata signatures and raw evidence; preserve Unknown / Needs Expert until evidence supports a human Finding.", "Compare conflicting classification matches and document uncertainty without asserting maliciousness."],
+    "brute_force": ["Inspect authentication attempt frequency, target accounts and success or failure evidence where available.", "Check authorized authentication activity and source ownership before drawing a conclusion."],
+    "web_attack": ["Inspect available HTTP request details, target application and signatures for the suspected web attack.", "Check application logs and expected testing or scanner activity where authorized."],
+    "reconnaissance_port_scan": ["Inspect target ports, hosts and timing for possible reconnaissance.", "Check whether the source is an authorized scanner before drawing a conclusion."],
+    "informational": ["Review the informational or policy signal in its operational context; do not assume an attack.", "Confirm expected application or policy activity with the responsible owner where available."],
+    "generic_known": ["Inspect the normalized attack category together with native signatures and raw evidence.", "Check source and destination context and seek corroborating evidence before drawing a conclusion."]
+  }
+}

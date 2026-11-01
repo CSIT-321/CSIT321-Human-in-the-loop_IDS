@@ -5,6 +5,7 @@ import { useApi } from "../../api/useApi";
 import { PageHeader, Pill } from "../../components/ui";
 import { useSession } from "../../session/SessionContext";
 import { ResponseRecommendations } from "./ResponseRecommendations";
+import { InvestigationAssistance } from "./InvestigationAssistance";
 
 const button = "rounded-sm border border-border px-3 py-2 text-sm hover:bg-raised disabled:opacity-50";
 const input = "w-full min-w-0 rounded-sm border border-border bg-surface p-2 text-sm";
@@ -142,6 +143,11 @@ export function CaseInvestigation({ initial, refresh }: { initial: Case; refresh
         <div><dt className="text-muted">Policy at Creation</dt><dd>{snapshot.triage.triagePolicyVersion ?? "Not applied"}</dd></div>
       </dl>
     </section>
+    <InvestigationAssistance caseRef={current.caseRef} revision={current.revision} prefix={prefixFor(session?.role)}
+      onSelect={canWrite ? ref => {
+        setTab("link"); setOffset(0); setLinkedRef(ref); setReason(""); setError(""); setMessage("Review the selected alert and enter a reason before linking.");
+        window.setTimeout(() => document.getElementById("linked-alert")?.scrollIntoView({ block: "center", behavior: "smooth" }), 0);
+      } : undefined} />
     <section className="space-y-2 border-t border-border pt-4" aria-label="Tier 1 handoff">
       <h2 className="text-base font-semibold">{current.decisionSource === "system_policy" ? "System Routing at Creation" : "Tier 1 Handoff"}</h2>
       <p className="whitespace-pre-wrap break-words text-sm">{snapshot.tier1HandoffSummary}</p>

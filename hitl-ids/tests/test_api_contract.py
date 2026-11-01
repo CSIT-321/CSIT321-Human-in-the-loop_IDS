@@ -77,6 +77,7 @@ REQUIRED_OPERATIONS = {
     ('/api/v2/alerts/{alertRef}/tier2/case','post'),
     ('/api/v2/tier2/cases','get'),
     ('/api/v2/tier2/cases/{caseRef}','get'),
+    ('/api/v2/tier2/cases/{caseRef}/assistance','get'),
     ('/api/v2/tier2/cases/{caseRef}/events','get'),
     ('/api/v2/tier2/cases/{caseRef}/alerts','post'),
     ('/api/v2/tier2/cases/{caseRef}/notes','post'),

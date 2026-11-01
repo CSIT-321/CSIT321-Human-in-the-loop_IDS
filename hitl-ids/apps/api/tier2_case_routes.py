@@ -10,6 +10,7 @@ from packages.detection.tier2_cases import (
     CaseView, CaseEvent, CaseMutation, CreateCaseRequest, CaseCommand, LinkCaseRequest,
     FindingRequest, CaseConflict, create_case, mutate_case, read_case, read_events,
 )
+from packages.detection.investigation_assistance import InvestigationAssistance, read_assistance
 
 router = APIRouter(prefix='/api/v2', tags=['Tier 2 cases'])
 
@@ -47,6 +48,16 @@ def get_case(caseRef: UUID,conn: ReadConn,principal: ReadPrincipal):
         with conn:
             conn.execute('BEGIN')
             return read_case(conn,caseRef)
+    except LookupError as exc:
+        raise _error(exc) from exc
+
+
+@router.get('/tier2/cases/{caseRef}/assistance', response_model=InvestigationAssistance, operation_id='getTier2InvestigationAssistance')
+def assistance(caseRef: UUID, conn: ReadConn, principal: ReadPrincipal):
+    try:
+        with conn:
+            conn.execute('BEGIN')
+            return read_assistance(conn, caseRef)
     except LookupError as exc:
         raise _error(exc) from exc
 

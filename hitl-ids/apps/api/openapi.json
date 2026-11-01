@@ -3895,6 +3895,140 @@
         "title": "GuardrailSetting",
         "type": "object"
       },
+      "InvestigationAssistance": {
+        "additionalProperties": false,
+        "properties": {
+          "assistancePolicyVersion": {
+            "title": "Assistancepolicyversion",
+            "type": "string"
+          },
+          "brief": {
+            "$ref": "#/components/schemas/InvestigationBrief"
+          },
+          "caseRef": {
+            "format": "uuid",
+            "title": "Caseref",
+            "type": "string"
+          },
+          "correlationWindowHours": {
+            "title": "Correlationwindowhours",
+            "type": "integer"
+          },
+          "maximumRelated": {
+            "title": "Maximumrelated",
+            "type": "integer"
+          },
+          "relatedAlerts": {
+            "items": {
+              "$ref": "#/components/schemas/RelatedAlert"
+            },
+            "title": "Relatedalerts",
+            "type": "array"
+          },
+          "suggestedSteps": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Suggestedsteps",
+            "type": "array"
+          }
+        },
+        "required": [
+          "caseRef",
+          "assistancePolicyVersion",
+          "correlationWindowHours",
+          "maximumRelated",
+          "brief",
+          "relatedAlerts",
+          "suggestedSteps"
+        ],
+        "title": "InvestigationAssistance",
+        "type": "object"
+      },
+      "InvestigationBrief": {
+        "additionalProperties": false,
+        "properties": {
+          "atCaseCreation": {
+            "$ref": "#/components/schemas/CaseSnapshot"
+          },
+          "classificationAtAdmission": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/AttackClassification"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "currentCaseRevision": {
+            "title": "Currentcaserevision",
+            "type": "integer"
+          },
+          "currentCaseStatus": {
+            "title": "Currentcasestatus",
+            "type": "string"
+          },
+          "currentTier1Verdict": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/AnalystVerdict"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "currentTrustedContext": {
+            "$ref": "#/components/schemas/ResolvedTrustedContext"
+          },
+          "suricataEvidenceAtCreation": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/SuricataEvidenceBundle"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "systemRoutingAtAdmission": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/SystemRoutingDecision"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "tier1VerdictExplanation": {
+            "title": "Tier1Verdictexplanation",
+            "type": "string"
+          },
+          "uncertainties": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Uncertainties",
+            "type": "array"
+          }
+        },
+        "required": [
+          "atCaseCreation",
+          "classificationAtAdmission",
+          "systemRoutingAtAdmission",
+          "suricataEvidenceAtCreation",
+          "currentCaseStatus",
+          "currentCaseRevision",
+          "currentTier1Verdict",
+          "tier1VerdictExplanation",
+          "currentTrustedContext",
+          "uncertainties"
+        ],
+        "title": "InvestigationBrief",
+        "type": "object"
+      },
       "IpAttackBehaviour": {
         "additionalProperties": false,
         "properties": {
@@ -6536,6 +6670,147 @@
         "title": "RecordedObservation",
         "type": "object"
       },
+      "RelatedAlert": {
+        "additionalProperties": false,
+        "properties": {
+          "attackCategory": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Attackcategory"
+          },
+          "destinationIp": {
+            "title": "Destinationip",
+            "type": "string"
+          },
+          "handlingRoute": {
+            "title": "Handlingroute",
+            "type": "string"
+          },
+          "occurredAt": {
+            "title": "Occurredat",
+            "type": "string"
+          },
+          "operationalAlertRef": {
+            "format": "uuid",
+            "title": "Operationalalertref",
+            "type": "string"
+          },
+          "operationalPriority": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Operationalpriority"
+          },
+          "priorityBand": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Priorityband"
+          },
+          "relationshipReasons": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Relationshipreasons",
+            "type": "array"
+          },
+          "sourceIp": {
+            "title": "Sourceip",
+            "type": "string"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "operationalAlertRef",
+          "title",
+          "occurredAt",
+          "sourceIp",
+          "destinationIp",
+          "attackCategory",
+          "operationalPriority",
+          "priorityBand",
+          "handlingRoute",
+          "relationshipReasons"
+        ],
+        "title": "RelatedAlert",
+        "type": "object"
+      },
+      "RelatedSignature": {
+        "additionalProperties": false,
+        "properties": {
+          "action": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Action"
+          },
+          "metadata": {
+            "additionalProperties": true,
+            "title": "Metadata",
+            "type": "object"
+          },
+          "nativeCategory": {
+            "title": "Nativecategory",
+            "type": "string"
+          },
+          "nativeSeverity": {
+            "title": "Nativeseverity",
+            "type": "integer"
+          },
+          "signature": {
+            "title": "Signature",
+            "type": "string"
+          },
+          "signatureId": {
+            "title": "Signatureid",
+            "type": "integer"
+          },
+          "sourceRecordRef": {
+            "title": "Sourcerecordref",
+            "type": "string"
+          },
+          "timestamp": {
+            "title": "Timestamp",
+            "type": "string"
+          }
+        },
+        "required": [
+          "sourceRecordRef",
+          "timestamp",
+          "signatureId",
+          "signature",
+          "nativeCategory",
+          "nativeSeverity",
+          "action",
+          "metadata"
+        ],
+        "title": "RelatedSignature",
+        "type": "object"
+      },
       "ResolvedField": {
         "additionalProperties": false,
         "properties": {
@@ -8739,6 +9014,211 @@
           "status"
         ],
         "title": "StatusChangeRequest",
+        "type": "object"
+      },
+      "SuricataEvidenceBundle": {
+        "additionalProperties": false,
+        "properties": {
+          "captureScope": {
+            "anyOf": [
+              {
+                "maxLength": 200,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Capturescope"
+          },
+          "correlationBasis": {
+            "enum": [
+              "sensor_flow_id",
+              "sensor_capture_flow_id",
+              "independent_record"
+            ],
+            "title": "Correlationbasis",
+            "type": "string"
+          },
+          "evidenceTypes": {
+            "items": {
+              "enum": [
+                "alert",
+                "flow",
+                "http",
+                "dns",
+                "tls",
+                "ssh",
+                "fileinfo",
+                "anomaly"
+              ],
+              "type": "string"
+            },
+            "title": "Evidencetypes",
+            "type": "array"
+          },
+          "flowId": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Flowid"
+          },
+          "mlEnrichment": {
+            "const": "unavailable_no_validated_feature_bridge",
+            "default": "unavailable_no_validated_feature_bridge",
+            "title": "Mlenrichment",
+            "type": "string"
+          },
+          "nativeSeverity": {
+            "title": "Nativeseverity",
+            "type": "integer"
+          },
+          "primaryRecordRef": {
+            "title": "Primaryrecordref",
+            "type": "string"
+          },
+          "records": {
+            "items": {
+              "$ref": "#/components/schemas/SuricataRecord"
+            },
+            "minItems": 1,
+            "title": "Records",
+            "type": "array"
+          },
+          "relatedSignatures": {
+            "items": {
+              "$ref": "#/components/schemas/RelatedSignature"
+            },
+            "minItems": 1,
+            "title": "Relatedsignatures",
+            "type": "array"
+          },
+          "schemaVersion": {
+            "default": "suricata-bundle-v1",
+            "enum": [
+              "suricata-bundle-v1",
+              "suricata-bundle-v2"
+            ],
+            "title": "Schemaversion",
+            "type": "string"
+          },
+          "sensorId": {
+            "title": "Sensorid",
+            "type": "string"
+          },
+          "transactionRecords": {
+            "additionalProperties": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            "title": "Transactionrecords",
+            "type": "object"
+          }
+        },
+        "required": [
+          "sensorId",
+          "flowId",
+          "correlationBasis",
+          "primaryRecordRef",
+          "nativeSeverity",
+          "relatedSignatures",
+          "records",
+          "transactionRecords",
+          "evidenceTypes"
+        ],
+        "title": "SuricataEvidenceBundle",
+        "type": "object"
+      },
+      "SuricataRecord": {
+        "additionalProperties": false,
+        "properties": {
+          "captureScope": {
+            "anyOf": [
+              {
+                "maxLength": 200,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Capturescope"
+          },
+          "eventType": {
+            "enum": [
+              "alert",
+              "flow",
+              "http",
+              "dns",
+              "tls",
+              "ssh",
+              "fileinfo",
+              "anomaly"
+            ],
+            "title": "Eventtype",
+            "type": "string"
+          },
+          "flowId": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Flowid"
+          },
+          "raw": {
+            "additionalProperties": true,
+            "title": "Raw",
+            "type": "object"
+          },
+          "sensorId": {
+            "title": "Sensorid",
+            "type": "string"
+          },
+          "sourceRecordRef": {
+            "title": "Sourcerecordref",
+            "type": "string"
+          },
+          "timestamp": {
+            "title": "Timestamp",
+            "type": "string"
+          },
+          "txId": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Txid"
+          }
+        },
+        "required": [
+          "sourceRecordRef",
+          "sensorId",
+          "eventType",
+          "timestamp",
+          "flowId",
+          "txId",
+          "raw"
+        ],
+        "title": "SuricataRecord",
         "type": "object"
       },
       "SystemRoutingDecision": {
@@ -16518,6 +16998,88 @@
         "x-required-roles": [
           "security_analyst",
           "system_admin"
+        ]
+      }
+    },
+    "/api/v2/tier2/cases/{caseRef}/assistance": {
+      "get": {
+        "operationId": "getTier2InvestigationAssistance",
+        "parameters": [
+          {
+            "description": "`Bearer <token>` from POST /api/auth/login",
+            "in": "header",
+            "name": "Authorization",
+            "required": false,
+            "schema": {
+              "example": "Bearer eyJhbGciOiJIUzI1NiJ9...",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "caseRef",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InvestigationAssistance"
+                }
+              }
+            },
+            "description": "Read-only assistance"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Validation failed"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not signed in, or the token expired"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not found"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Database unavailable or schema unsupported; read-only requests never migrate"
+          }
+        },
+        "summary": "Read advisory case assistance",
+        "tags": [
+          "Tier 2 cases"
         ]
       }
     },
