@@ -1,3 +1,4 @@
+import { AnalystVerdictPanel, AnalystVerdictHistory } from "../../features/alert/AnalystVerdict";
 import { useEffect, useRef, useState } from "react";
 import { Link, useSearchParams } from "react-router";
 import { api, unwrap, type Schemas } from "../../api/client";
@@ -15,7 +16,7 @@ import { needsReview, reviewLabel, reviewProjection } from "../../features/alert
 
 type View = Schemas["RoutingView"];
 const button = "rounded-sm border border-border bg-raised px-2.5 py-1.5 text-xs hover:border-border-strong disabled:opacity-40";
-const tabs = ["Overview", "Evidence", "Context & Review", "Triage Memory", "History & Notes", "Technical"] as const;
+const tabs = ["Overview", "Evidence", "Context & Review", "Analyst Verdict", "Triage Memory", "History & Notes", "Technical"] as const;
 type Tab = typeof tabs[number];
 const routeLabel = (value: string) => value === "tier2_candidate" ? "Tier 2 · recovery pending" : value.replaceAll("_", " ");
 
@@ -94,6 +95,9 @@ function AlertWorkspace({ view, onChanged, refresh, onReview }: { view: View; on
         {evidence.status === "error" && <ErrorState error={evidence.error} onRetry={evidence.reload} />}
         {evidence.status === "success" && <OperationalEvidence alert={evidence.data} summaryOnly={tab === "Overview"} />}
       </>}
+      <div hidden={tab !== "Overview" && tab !== "Analyst Verdict"}>
+        <AnalystVerdictPanel alertRef={view.operationalAlertRef} stateVersion={view.stateVersion}/>
+      </div>
       {/* Keep this mounted across tabs so draft reasons, retry IDs and success remain stable. */}
       <div hidden={tab !== "Overview"} className="space-y-4">
         <SystemRouting view={view} />
@@ -102,6 +106,7 @@ function AlertWorkspace({ view, onChanged, refresh, onReview }: { view: View; on
       {tab === "Context & Review" && <SelectiveReviewPanel key={view.stateVersion} alertRef={view.operationalAlertRef} onReview={onReview} />}
       {tab === "Triage Memory" && <AlertMemoryPanel key={view.stateVersion} view={view} />}
       {tab === "History & Notes" && <section className="space-y-3" aria-label="Operational decision history">
+        <AnalystVerdictHistory alertRef={view.operationalAlertRef}/>
         <h3 className="label-mono">Latest routing decision</h3>
         {view.latestDecision ? <>
           <p className="capitalize">{view.latestDecision.action.replaceAll("_", " ")} · {view.latestDecision.decisionSource === "system_policy" ? "System Policy" : `Actor #${view.latestDecision.actorId}`}</p>

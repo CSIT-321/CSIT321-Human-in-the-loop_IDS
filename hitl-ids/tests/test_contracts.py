@@ -66,6 +66,7 @@ DEVIATION_COLUMNS = {
     "flow_data": {"source_record_id"},
 }
 DEVIATION_TABLES = {
+    "analyst_verdict_events": {"id","verdict_ref","operational_alert_id","actor_id","revision","supersedes_ref","request_id","request_payload","snapshot"},
     # Migration 14, documented in suricata-correlation-auto-routing.md.
     "suricata_eve_records": {"id","sensor_id","capture_scope","source_record_ref","event_type","flow_id","tx_id","timestamp","raw_snapshot","imported_at"},
     "operational_system_routing": {"operational_alert_id","classification","classification_policy","routing_decision","routing_policy","context_provenance","routing_audit_id","policy_audit_id","case_ref","created_at"},
@@ -315,7 +316,7 @@ def test_columns_are_tdm_names_plus_logged_deviations(conn):
 def test_every_table_model_matches_its_columns(conn):
     # The inbox uses the canonical contract and staging writer, not a legacy operational model.
     assert set(db.TABLE_MODELS) == table_names(conn) - {
-        "suricata_eve_records", "operational_system_routing",
+        "analyst_verdict_events", "suricata_eve_records", "operational_system_routing",
         "prospective_runs", "prospective_run_events", "prospective_decisions", "prospective_observations",
         "external_alert_inbox", "operational_alerts_v2", "operational_triage_state_v2",
         "operational_triage_policy_audit", "operational_routing_audit",
@@ -326,6 +327,9 @@ def test_every_table_model_matches_its_columns(conn):
 
 
 EXPECTED_FOREIGN_KEYS = {
+    ('analyst_verdict_events','actor_id','users','id'),
+    ('analyst_verdict_events','operational_alert_id','operational_alerts_v2','id'),
+    ('analyst_verdict_events','supersedes_ref','analyst_verdict_events','verdict_ref'),
     ("operational_system_routing","operational_alert_id","operational_alerts_v2","id"),
     ("operational_system_routing","routing_audit_id","operational_routing_audit","id"),
     ("operational_system_routing","policy_audit_id","operational_triage_policy_audit","id"),

@@ -192,7 +192,7 @@ def test_migration_fifteen_preserves_unscoped_history_and_rolls_back(tmp_path,mo
     from packages.detection.adapters.staging import inbox_row
     from packages.detection.adapters.admission_policy import load_admission_policy
     from packages.detection.external_admission import validate_source
-    migrations=db.MIGRATIONS
+    migrations=db.MIGRATIONS[:15]
     conn=db.connect(tmp_path/'migration.db')
     try:
         monkeypatch.setattr(db,'MIGRATIONS',migrations[:14]);db.create_schema(conn)

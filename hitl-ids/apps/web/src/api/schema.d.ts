@@ -747,6 +747,41 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v2/alerts/{alertRef}/verdict": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Read current human verdict */
+        get: operations["getAnalystVerdict"];
+        put?: never;
+        /** Record or correct authenticated Tier 1 verdict */
+        post: operations["recordAnalystVerdict"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/alerts/{alertRef}/verdict-history": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Read append-only human verdict history */
+        get: operations["getAnalystVerdictHistory"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v2/collection/runs": {
         parameters: {
             query?: never;
@@ -1475,6 +1510,48 @@ export interface components {
              * Format: date-time
              */
             updatedAt: string;
+        };
+        /** AnalystVerdict */
+        AnalystVerdict: {
+            /** Actorid */
+            actorId: number;
+            /** Actorname */
+            actorName: string;
+            /** Createdat */
+            createdAt: string;
+            /**
+             * Decisionsource
+             * @default analyst
+             * @constant
+             */
+            decisionSource: "analyst";
+            /** Evidencesnapshot */
+            evidenceSnapshot: {
+                [key: string]: unknown;
+            };
+            /**
+             * Operationalalertref
+             * Format: uuid
+             */
+            operationalAlertRef: string;
+            /**
+             * Outcome
+             * @enum {string}
+             */
+            outcome: "confirmed_malicious" | "suspicious" | "expected_activity" | "false_positive";
+            /** Reason */
+            reason: string;
+            /** Revision */
+            revision: number;
+            /** Sourcestateversion */
+            sourceStateVersion: string;
+            /** Supersedesref */
+            supersedesRef: string | null;
+            /**
+             * Verdictref
+             * Format: uuid
+             */
+            verdictRef: string;
         };
         /** ArmResultOut */
         ArmResultOut: {
@@ -5113,6 +5190,57 @@ export interface components {
             /** Value */
             value: boolean | number | string | null;
         };
+        /** VerdictCommand */
+        VerdictCommand: {
+            /** Expectedrevision */
+            expectedRevision: number;
+            /** Expectedstateversion */
+            expectedStateVersion: string;
+            /**
+             * Outcome
+             * @enum {string}
+             */
+            outcome: "confirmed_malicious" | "suspicious" | "expected_activity" | "false_positive";
+            /** Reason */
+            reason: string;
+            /**
+             * Requestid
+             * Format: uuid
+             */
+            requestId: string;
+        };
+        /** VerdictHistory */
+        VerdictHistory: {
+            /** Items */
+            items: components["schemas"]["AnalystVerdict"][];
+            /** Limit */
+            limit: number;
+            /** Offset */
+            offset: number;
+            /** Total */
+            total: number;
+        };
+        /** VerdictMutation */
+        VerdictMutation: {
+            /** Replayed */
+            replayed: boolean;
+            verdict: components["schemas"]["AnalystVerdict"];
+        };
+        /** VerdictView */
+        VerdictView: {
+            /** Canrecord */
+            canRecord: boolean;
+            latest: components["schemas"]["AnalystVerdict"] | null;
+            /**
+             * Operationalalertref
+             * Format: uuid
+             */
+            operationalAlertRef: string;
+            /** Revision */
+            revision: number;
+            /** Sourcestateversion */
+            sourceStateVersion: string;
+        };
     };
     responses: never;
     parameters: never;
@@ -7744,6 +7872,160 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Database unavailable or schema unsupported; read-only requests never migrate */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    getAnalystVerdict: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description `Bearer <token>` from POST /api/auth/login */
+                Authorization?: string;
+            };
+            path: {
+                alertRef: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Current verdict */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VerdictView"];
+                };
+            };
+            /** @description Not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Database unavailable or schema unsupported; read-only requests never migrate */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    recordAnalystVerdict: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description `Bearer <token>` from POST /api/auth/login */
+                Authorization?: string;
+            };
+            path: {
+                alertRef: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["VerdictCommand"];
+            };
+        };
+        responses: {
+            /** @description Recorded verdict */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VerdictMutation"];
+                };
+            };
+            /** @description Validation failed */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Role not permitted */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    getAnalystVerdictHistory: {
+        parameters: {
+            query?: {
+                limit?: number;
+                offset?: number;
+            };
+            header?: {
+                /** @description `Bearer <token>` from POST /api/auth/login */
+                Authorization?: string;
+            };
+            path: {
+                alertRef: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Verdict history */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VerdictHistory"];
                 };
             };
             /** @description Not found */

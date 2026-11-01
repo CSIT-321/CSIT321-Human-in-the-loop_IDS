@@ -386,6 +386,93 @@
         "title": "AlertSummary",
         "type": "object"
       },
+      "AnalystVerdict": {
+        "additionalProperties": false,
+        "properties": {
+          "actorId": {
+            "title": "Actorid",
+            "type": "integer"
+          },
+          "actorName": {
+            "title": "Actorname",
+            "type": "string"
+          },
+          "createdAt": {
+            "title": "Createdat",
+            "type": "string"
+          },
+          "decisionSource": {
+            "const": "analyst",
+            "default": "analyst",
+            "title": "Decisionsource",
+            "type": "string"
+          },
+          "evidenceSnapshot": {
+            "additionalProperties": true,
+            "title": "Evidencesnapshot",
+            "type": "object"
+          },
+          "operationalAlertRef": {
+            "format": "uuid",
+            "title": "Operationalalertref",
+            "type": "string"
+          },
+          "outcome": {
+            "enum": [
+              "confirmed_malicious",
+              "suspicious",
+              "expected_activity",
+              "false_positive"
+            ],
+            "title": "Outcome",
+            "type": "string"
+          },
+          "reason": {
+            "title": "Reason",
+            "type": "string"
+          },
+          "revision": {
+            "title": "Revision",
+            "type": "integer"
+          },
+          "sourceStateVersion": {
+            "title": "Sourcestateversion",
+            "type": "string"
+          },
+          "supersedesRef": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Supersedesref"
+          },
+          "verdictRef": {
+            "format": "uuid",
+            "title": "Verdictref",
+            "type": "string"
+          }
+        },
+        "required": [
+          "verdictRef",
+          "operationalAlertRef",
+          "actorId",
+          "actorName",
+          "revision",
+          "supersedesRef",
+          "outcome",
+          "reason",
+          "createdAt",
+          "sourceStateVersion",
+          "evidenceSnapshot"
+        ],
+        "title": "AnalystVerdict",
+        "type": "object"
+      },
       "ArmResultOut": {
         "additionalProperties": false,
         "properties": {
@@ -9024,6 +9111,142 @@
         ],
         "title": "TrustedContextFact",
         "type": "object"
+      },
+      "VerdictCommand": {
+        "additionalProperties": false,
+        "properties": {
+          "expectedRevision": {
+            "minimum": 0,
+            "title": "Expectedrevision",
+            "type": "integer"
+          },
+          "expectedStateVersion": {
+            "pattern": "^[a-f0-9]{64}$",
+            "title": "Expectedstateversion",
+            "type": "string"
+          },
+          "outcome": {
+            "enum": [
+              "confirmed_malicious",
+              "suspicious",
+              "expected_activity",
+              "false_positive"
+            ],
+            "title": "Outcome",
+            "type": "string"
+          },
+          "reason": {
+            "maxLength": 4000,
+            "minLength": 1,
+            "title": "Reason",
+            "type": "string"
+          },
+          "requestId": {
+            "format": "uuid",
+            "title": "Requestid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "requestId",
+          "expectedRevision",
+          "expectedStateVersion",
+          "outcome",
+          "reason"
+        ],
+        "title": "VerdictCommand",
+        "type": "object"
+      },
+      "VerdictHistory": {
+        "additionalProperties": false,
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/AnalystVerdict"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "limit": {
+            "title": "Limit",
+            "type": "integer"
+          },
+          "offset": {
+            "title": "Offset",
+            "type": "integer"
+          },
+          "total": {
+            "title": "Total",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "items",
+          "total",
+          "limit",
+          "offset"
+        ],
+        "title": "VerdictHistory",
+        "type": "object"
+      },
+      "VerdictMutation": {
+        "additionalProperties": false,
+        "properties": {
+          "replayed": {
+            "title": "Replayed",
+            "type": "boolean"
+          },
+          "verdict": {
+            "$ref": "#/components/schemas/AnalystVerdict"
+          }
+        },
+        "required": [
+          "verdict",
+          "replayed"
+        ],
+        "title": "VerdictMutation",
+        "type": "object"
+      },
+      "VerdictView": {
+        "additionalProperties": false,
+        "properties": {
+          "canRecord": {
+            "title": "Canrecord",
+            "type": "boolean"
+          },
+          "latest": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/AnalystVerdict"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "operationalAlertRef": {
+            "format": "uuid",
+            "title": "Operationalalertref",
+            "type": "string"
+          },
+          "revision": {
+            "title": "Revision",
+            "type": "integer"
+          },
+          "sourceStateVersion": {
+            "title": "Sourcestateversion",
+            "type": "string"
+          }
+        },
+        "required": [
+          "operationalAlertRef",
+          "revision",
+          "sourceStateVersion",
+          "canRecord",
+          "latest"
+        ],
+        "title": "VerdictView",
+        "type": "object"
       }
     }
   },
@@ -13881,6 +14104,239 @@
         "summary": "Read V2 state and latest routing decision",
         "tags": [
           "V2 routing"
+        ]
+      }
+    },
+    "/api/v2/alerts/{alertRef}/verdict": {
+      "get": {
+        "operationId": "getAnalystVerdict",
+        "parameters": [
+          {
+            "description": "`Bearer <token>` from POST /api/auth/login",
+            "in": "header",
+            "name": "Authorization",
+            "required": false,
+            "schema": {
+              "example": "Bearer eyJhbGciOiJIUzI1NiJ9...",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "alertRef",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VerdictView"
+                }
+              }
+            },
+            "description": "Current verdict"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not found"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Database unavailable or schema unsupported; read-only requests never migrate"
+          }
+        },
+        "summary": "Read current human verdict",
+        "tags": [
+          "Analyst verdict"
+        ]
+      },
+      "post": {
+        "operationId": "recordAnalystVerdict",
+        "parameters": [
+          {
+            "description": "`Bearer <token>` from POST /api/auth/login",
+            "in": "header",
+            "name": "Authorization",
+            "required": false,
+            "schema": {
+              "example": "Bearer eyJhbGciOiJIUzI1NiJ9...",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "alertRef",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VerdictCommand"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VerdictMutation"
+                }
+              }
+            },
+            "description": "Recorded verdict"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Validation failed"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Role not permitted"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          }
+        },
+        "summary": "Record or correct authenticated Tier 1 verdict",
+        "tags": [
+          "Analyst verdict"
+        ]
+      }
+    },
+    "/api/v2/alerts/{alertRef}/verdict-history": {
+      "get": {
+        "operationId": "getAnalystVerdictHistory",
+        "parameters": [
+          {
+            "description": "`Bearer <token>` from POST /api/auth/login",
+            "in": "header",
+            "name": "Authorization",
+            "required": false,
+            "schema": {
+              "example": "Bearer eyJhbGciOiJIUzI1NiJ9...",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "alertRef",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "schema": {
+              "default": 50,
+              "maximum": 200,
+              "minimum": 1,
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "offset",
+            "schema": {
+              "default": 0,
+              "minimum": 0,
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VerdictHistory"
+                }
+              }
+            },
+            "description": "Verdict history"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not found"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Database unavailable or schema unsupported; read-only requests never migrate"
+          }
+        },
+        "summary": "Read append-only human verdict history",
+        "tags": [
+          "Analyst verdict"
         ]
       }
     },

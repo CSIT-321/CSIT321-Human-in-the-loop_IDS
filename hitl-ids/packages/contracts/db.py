@@ -158,6 +158,8 @@ MIGRATIONS += ((14, "immutable correlated EVE and system-attributed routing/case
                 Path(__file__).with_name("suricata_system_routing.sql").read_text(encoding="utf-8")),)
 MIGRATIONS += ((15, "capture-scoped immutable Suricata raw evidence",
                 Path(__file__).with_name("suricata_capture_scope.sql").read_text(encoding="utf-8")),)
+MIGRATIONS += ((16, "append-only authenticated Tier 1 analyst verdicts",
+                Path(__file__).with_name("analyst_verdict.sql").read_text(encoding="utf-8")),)
 SCHEMA_VERSION = MIGRATIONS[-1][0]
 
 

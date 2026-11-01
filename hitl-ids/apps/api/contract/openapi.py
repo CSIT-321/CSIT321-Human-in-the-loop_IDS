@@ -28,6 +28,7 @@ from apps.api.contract import auth as au
 from apps.api.contract import operations as o
 from apps.api.contract.routing import RoutingView, RoutingResponse, EscalateCaseResponse, OperationalSummary
 from packages.detection.tier2_escalation import EscalateCaseRequest
+from packages.detection.analyst_verdict import VerdictCommand,VerdictView,VerdictHistory,VerdictMutation
 from packages.detection.routing import RoutingRequest
 from packages.contracts.operational_v2 import OperationalAlertV2, HandlingRouteV2, PriorityBandV2
 from packages.contracts.suricata_bundle import AttackCategory
@@ -61,6 +62,7 @@ SCHEMA_REF = "#/components/schemas/{model}"
 #: Every model that appears on the wire. Listed explicitly rather than discovered, so adding a
 #: model to the API is a deliberate act.
 MODELS: tuple[type[BaseModel], ...] = (
+    VerdictCommand,VerdictView,VerdictHistory,VerdictMutation,
     RunCreate,RunView,RunPage,RunCommand,ObservationRequest,RecordedArchive,CollectionDocument,
     FactRequest,FactPage,FactMutation,ResolvedTrustedContext,
     ReviewCommand,ReviewView,ReviewMutation,ReviewEvent,ReviewMetrics,
@@ -751,6 +753,18 @@ def _paths() -> dict[str, Any]:
         for operation in operations.values():
             if isinstance(operation, dict):
                 operation["responses"]["401"] = _errors(401)["401"]
+    paths['/api/v2/alerts/{alertRef}/verdict'] = {
+        'get': {'operationId':'getAnalystVerdict','summary':'Read current human verdict','tags':['Analyst verdict'],
+            'parameters':[AUTH_PARAMETER,alert_ref], 'responses':{'200':{'description':'Current verdict',**_json(VerdictView)},**_errors(404,503)}},
+        'post': {'operationId':'recordAnalystVerdict','summary':'Record or correct authenticated Tier 1 verdict','tags':['Analyst verdict'],
+            'parameters':[AUTH_PARAMETER,alert_ref], 'requestBody':{'required':True,**_json(VerdictCommand)},
+            'responses':{'200':{'description':'Recorded verdict',**_json(VerdictMutation)},**_errors(400,403,404,409)}}}
+    paths['/api/v2/alerts/{alertRef}/verdict-history'] = {'get': {
+        'operationId':'getAnalystVerdictHistory','summary':'Read append-only human verdict history','tags':['Analyst verdict'],
+        'parameters':[AUTH_PARAMETER,alert_ref,
+            {'name':'limit','in':'query','schema':{'type':'integer','minimum':1,'maximum':200,'default':50}},
+            {'name':'offset','in':'query','schema':{'type':'integer','minimum':0,'default':0}}],
+        'responses':{'200':{'description':'Verdict history',**_json(VerdictHistory)},**_errors(404,503)}}}
     return paths
 
 
