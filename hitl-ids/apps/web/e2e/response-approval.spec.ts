@@ -29,10 +29,11 @@ test("Suricata to human-approved response plan without execution",async({page})=
   await page.getByLabel("Decision reason").fill("Begin source evidence investigation");
   await page.getByRole("button",{name:"Start investigation"}).click();
   await expect(page.getByText("investigating",{exact:true})).toBeVisible();
-  await page.getByRole("tab",{name:"Findings"}).click();
-  await page.getByLabel("Finding",{exact:true}).selectOption("confirmed_malicious");
-  await page.getByLabel("Decision reason").fill("Corroborated malicious activity from the recorded source IP");
-  await page.getByRole("button",{name:"Record finding"}).click();
+  await page.getByRole("tab",{name:"Investigation Conclusion"}).click();
+  await page.getByLabel("Human Investigation Finding",{exact:true}).selectOption("confirmed_malicious");
+  await page.getByLabel("Investigation Reason").fill("Corroborated malicious activity from the recorded source IP");
+  await page.getByLabel("Human Final Attack Classification", {exact:true}).selectOption("web_attack");
+  await page.getByRole("button",{name:"Record Investigation Conclusion"}).click();
   await expect(page.getByRole("tabpanel")).toContainText("Corroborated malicious activity");
   const section=page.getByRole("region",{name:"Response Recommendations"});
   await expect(section.getByText("No response recommendations.")).toBeVisible();

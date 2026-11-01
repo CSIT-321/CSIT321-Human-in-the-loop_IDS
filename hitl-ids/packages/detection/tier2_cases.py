@@ -4,13 +4,16 @@ import json
 import sqlite3
 from typing import Any, Literal
 from uuid import UUID, uuid4
-from pydantic import Field, field_validator
+from pydantic import Field, field_validator, model_validator
+from packages.contracts.suricata_bundle import AttackClassification
 from packages.contracts import db, models as m
 from packages.contracts.operational_v2 import V2Contract, OperationalAlertV2, OperationalTriageStateV2
 from packages.detection.adapters.operational_v2 import read_projection, read_triage
 from packages.detection.routing import RoutingAudit, decode_audit, state_version
 
 Finding = Literal['confirmed_malicious','suspicious','inconclusive','expected_activity']
+FinalAttackCategory = Literal['brute_force','botnet_c2','dos','ddos','web_attack','infiltration',
+    'reconnaissance_port_scan','malware_exploit','other_known_attack']
 CaseAction = Literal['create','link','note','finding','start']
 EVENTS = dict(create='V2_TIER2_CASE_CREATED', link='V2_TIER2_ALERT_LINKED',
     note='V2_TIER2_NOTE_ADDED', finding='V2_TIER2_FINDING_RECORDED', start='V2_TIER2_INVESTIGATION_STARTED')
@@ -56,6 +59,33 @@ class FindingRequest(CaseCommand):
     finding: Finding
 
 
+class InvestigationConclusionRequest(FindingRequest):
+    final_attack_category: FinalAttackCategory | None = None
+
+    @model_validator(mode='after')
+    def appropriate_category(self):
+        if self.finding == 'confirmed_malicious' and self.final_attack_category is None:
+            raise ValueError('Confirmed Malicious requires an explicit human final attack category')
+        if self.finding == 'expected_activity' and self.final_attack_category is not None:
+            raise ValueError('Expected Activity requires a null / not applicable final attack category')
+        return self
+
+
+class InvestigationConclusion(V2Contract):
+    event_id: int
+    case_ref: UUID
+    finding: Finding
+    final_attack_category: FinalAttackCategory | None
+    actor_id: int
+    reason: str
+    created_at: str
+    case_revision: int
+    request_id: UUID
+    system_classification: AttackClassification | None
+    supersedes_event_id: int | None
+    record_kind: Literal['investigation_conclusion','legacy_finding']
+
+
 class CaseSnapshot(V2Contract):
     detector: OperationalAlertV2
     triage: OperationalTriageStateV2
@@ -77,6 +107,8 @@ class CaseView(V2Contract):
     status: Literal['open','investigating']
     revision: int
     snapshot: CaseSnapshot
+    system_attack_classification: AttackClassification | None = None
+    latest_conclusion: InvestigationConclusion | None = None
 
 
 class CaseEvent(V2Contract):
@@ -92,6 +124,7 @@ class CaseEvent(V2Contract):
     before_state: dict[str, Any]
     after_state: dict[str, Any]
     created_at: str
+    conclusion: InvestigationConclusion | None = None
 
 
 class CaseMutation(V2Contract):
@@ -130,7 +163,35 @@ def read_case(conn, ref):
     return CaseView(case_ref=row['case_ref'], primary_operational_alert_ref=snapshot.detector.operational_alert_ref,
         title=row['title'], decision_source=dict(row).get('decision_source', 'analyst'), owner_actor_id=row['owner_actor_id'], created_by_actor_id=row['created_by_actor_id'],
         created_at=row['created_at'], updated_at=state['updated_at'], status=state['status'],
-        revision=state['revision'], snapshot=snapshot)
+        revision=state['revision'], snapshot=snapshot,
+        system_attack_classification=system_classification(conn,row['primary_operational_alert_id']),
+        latest_conclusion=latest_conclusion(conn,ref,row['id']))
+
+
+def system_classification(conn, alert_id):
+    row = conn.execute('SELECT classification FROM operational_system_routing WHERE operational_alert_id=?',
+                       (alert_id,)).fetchone()
+    return AttackClassification.model_validate_json(row[0]) if row else None
+
+
+def decode_conclusion(row, ref):
+    if row is None or row['action'] != 'finding':
+        return None
+    after = json.loads(row['after_state'])
+    recorded = after.get('investigationConclusion')
+    return InvestigationConclusion(event_id=row['id'],case_ref=ref,finding=row['finding'],
+        final_attack_category=recorded['finalAttackCategory'] if recorded else None,
+        actor_id=row['actor_id'],reason=row['reason'],created_at=row['created_at'],
+        case_revision=after['revision'],request_id=row['request_id'],
+        system_classification=recorded['systemClassification'] if recorded else None,
+        supersedes_event_id=recorded['supersedesEventId'] if recorded else None,
+        record_kind='investigation_conclusion' if recorded else 'legacy_finding')
+
+
+def latest_conclusion(conn, ref, case_id):
+    row=conn.execute("SELECT * FROM tier2_case_events WHERE case_id=? AND action='finding' ORDER BY id DESC LIMIT 1",
+                     (case_id,)).fetchone()
+    return decode_conclusion(row,ref)
 
 
 def _retry(conn, actor_id, action, payload, request_id):
@@ -144,7 +205,8 @@ def _event(conn, case_id, actor_id, action, request, payload, before, after, mom
            linked_id=None, finding=None):
     return conn.execute('INSERT INTO tier2_case_events (case_id,actor_id,request_id,action,event_type,'
         'request_payload,reason,finding,linked_alert_id,before_state,after_state,created_at) '
-        'VALUES (?,?,?,?,?,?,?,?,?,?,?,?)', (case_id,actor_id,str(request.request_id),action,EVENTS[action],
+        'VALUES (?,?,?,?,?,?,?,?,?,?,?,?)', (case_id,actor_id,str(request.request_id),action,
+        'V2_TIER2_INVESTIGATION_CONCLUSION_RECORDED' if isinstance(request,InvestigationConclusionRequest) else EVENTS[action],
         payload,request.reason,finding,linked_id,_json(before),_json(after),moment)).lastrowid
 
 
@@ -211,7 +273,9 @@ def create_case(conn: sqlite3.Connection, alert_ref: UUID, *, actor_id: int, req
 
 def mutate_case(conn, ref: UUID, *, actor_id: int, action: Literal['link','note','finding','start'],
                 request: CaseCommand):
-    model = LinkCaseRequest if action == 'link' else FindingRequest if action == 'finding' else CaseCommand
+    model = (LinkCaseRequest if action == 'link' else
+             InvestigationConclusionRequest if action == 'finding' and isinstance(request,InvestigationConclusionRequest) else
+             FindingRequest if action == 'finding' else CaseCommand)
     request = model.model_validate(request.model_dump())
     payload = _json(dict(caseRef=str(ref),request=request.model_dump(mode='json')))
     _start(conn)
@@ -246,6 +310,12 @@ def mutate_case(conn, ref: UUID, *, actor_id: int, action: Literal['link','note'
         conn.execute('UPDATE tier2_case_state SET status=?,revision=revision+1,updated_at=? WHERE case_id=?',
                      (status,stamp,case['id']))
         after = dict(conn.execute('SELECT * FROM tier2_case_state WHERE case_id=?',(case['id'],)).fetchone())
+        if isinstance(request,InvestigationConclusionRequest):
+            previous = latest_conclusion(conn,ref,case['id'])
+            classification = system_classification(conn,case['primary_operational_alert_id'])
+            after['investigationConclusion'] = dict(finalAttackCategory=request.final_attack_category,
+                systemClassification=classification.model_dump(mode='json',by_alias=True) if classification else None,
+                supersedesEventId=previous.event_id if previous else None)
         event_id = _event(conn,case['id'],actor_id,action,request,payload,before,after,stamp,linked_id,
                           request.finding if action == 'finding' else None)
         result = CaseMutation(case=read_case(conn,ref),event_id=event_id,replayed=False)
@@ -265,6 +335,7 @@ def read_events(conn, ref, limit, offset, action=None):
         'ON a.id=e.linked_alert_id WHERE '+where+' ORDER BY e.id DESC LIMIT ? OFFSET ?',[*values,limit,offset])
     items = [CaseEvent(id=row['id'],case_ref=ref,actor_id=row['actor_id'],action=row['action'],
         decision_source=dict(row).get('decision_source', 'analyst'),event_type=row['event_type'],reason=row['reason'],finding=row['finding'],linked_alert_ref=row['operational_alert_ref'],
-        before_state=json.loads(row['before_state']),after_state=json.loads(row['after_state']),created_at=row['created_at'])
+        before_state=json.loads(row['before_state']),after_state=json.loads(row['after_state']),created_at=row['created_at'],
+        conclusion=decode_conclusion(row,ref))
         for row in rows]
     return items,total

@@ -58,7 +58,7 @@ test("one operational workstation: evidence, context, direct cases, compatibilit
     } else {
       await page.getByRole("link", { name: "Open Tier 2 Case", exact: true }).click();
       await expect(page).toHaveURL(new RegExp("/tier2-cases/" + result.case.caseRef + "$"));
-      await expect(page.getByRole("tab", { name: "Findings" })).toBeVisible();
+      await expect(page.getByRole("tab", { name: "Investigation Conclusion" })).toBeVisible();
       await expect(page.getByRole("region", { name: "Response Recommendations" })).toBeVisible();
     }
   }

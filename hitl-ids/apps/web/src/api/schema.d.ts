@@ -1141,6 +1141,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v2/tier2/cases/{caseRef}/conclusions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** recordTier2InvestigationConclusion */
+        post: operations["recordTier2InvestigationConclusion"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v2/tier2/cases/{caseRef}/events": {
         parameters: {
             query?: never;
@@ -1834,6 +1851,8 @@ export interface components {
              * Format: uuid
              */
             caseRef: string;
+            /** @default null */
+            conclusion: components["schemas"]["InvestigationConclusion"] | null;
             /** Createdat */
             createdAt: string;
             /**
@@ -1890,6 +1909,8 @@ export interface components {
              * @enum {string}
              */
             decisionSource: "analyst" | "system_policy";
+            /** @default null */
+            latestConclusion: components["schemas"]["InvestigationConclusion"] | null;
             /** Owneractorid */
             ownerActorId: number | null;
             /**
@@ -1905,6 +1926,8 @@ export interface components {
              * @enum {string}
              */
             status: "open" | "investigating";
+            /** @default null */
+            systemAttackClassification: components["schemas"]["AttackClassification"] | null;
             /** Title */
             title: string;
             /** Updatedat */
@@ -3176,6 +3199,66 @@ export interface components {
             tier1VerdictExplanation: string;
             /** Uncertainties */
             uncertainties: string[];
+        };
+        /** InvestigationConclusion */
+        InvestigationConclusion: {
+            /** Actorid */
+            actorId: number;
+            /**
+             * Caseref
+             * Format: uuid
+             */
+            caseRef: string;
+            /** Caserevision */
+            caseRevision: number;
+            /** Createdat */
+            createdAt: string;
+            /** Eventid */
+            eventId: number;
+            /** Finalattackcategory */
+            finalAttackCategory: ("brute_force" | "botnet_c2" | "dos" | "ddos" | "web_attack" | "infiltration" | "reconnaissance_port_scan" | "malware_exploit" | "other_known_attack") | null;
+            /**
+             * Finding
+             * @enum {string}
+             */
+            finding: "confirmed_malicious" | "suspicious" | "inconclusive" | "expected_activity";
+            /** Reason */
+            reason: string;
+            /**
+             * Recordkind
+             * @enum {string}
+             */
+            recordKind: "investigation_conclusion" | "legacy_finding";
+            /**
+             * Requestid
+             * Format: uuid
+             */
+            requestId: string;
+            /** Supersedeseventid */
+            supersedesEventId: number | null;
+            systemClassification: components["schemas"]["AttackClassification"] | null;
+        };
+        /** InvestigationConclusionRequest */
+        InvestigationConclusionRequest: {
+            /** Expectedrevision */
+            expectedRevision: number;
+            /**
+             * Finalattackcategory
+             * @default null
+             */
+            finalAttackCategory: ("brute_force" | "botnet_c2" | "dos" | "ddos" | "web_attack" | "infiltration" | "reconnaissance_port_scan" | "malware_exploit" | "other_known_attack") | null;
+            /**
+             * Finding
+             * @enum {string}
+             */
+            finding: "confirmed_malicious" | "suspicious" | "inconclusive" | "expected_activity";
+            /** Reason */
+            reason: string;
+            /**
+             * Requestid
+             * Format: uuid
+             */
+            requestId: string;
         };
         /** IpAttackBehaviour */
         IpAttackBehaviour: {
@@ -9772,6 +9855,80 @@ export interface operations {
             };
             /** @description Database unavailable or schema unsupported; read-only requests never migrate */
             503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    recordTier2InvestigationConclusion: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description `Bearer <token>` from POST /api/auth/login */
+                Authorization?: string;
+            };
+            path: {
+                caseRef: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["InvestigationConclusionRequest"];
+            };
+        };
+        responses: {
+            /** @description Audited case decision */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CaseMutation"];
+                };
+            };
+            /** @description Validation failed */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not signed in, or the token expired */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Role not permitted */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
                 headers: {
                     [name: string]: unknown;
                 };

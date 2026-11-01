@@ -1,4 +1,4 @@
-import { screen, waitFor } from "@testing-library/react";
+import { screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 import { renderApp, stubFetch, jsonResponse } from "../../test/renderApp";
@@ -62,8 +62,8 @@ describe("Tier 2 cases", () => {
     await screen.findByRole("heading", { name: "Investigation Brief" });
     expect(screen.queryByRole("button", { name: "Review link to Case" })).not.toBeInTheDocument();
     expect(screen.queryByLabelText("Investigation note")).not.toBeInTheDocument();
-    await userEvent.click(screen.getByRole("tab", { name: "Findings" }));
-    expect(screen.queryByRole("button", { name: "Record finding" })).not.toBeInTheDocument();
+    await userEvent.click(screen.getByRole("tab", { name: "Investigation Conclusion" }));
+    expect(screen.queryByRole("button", { name: "Record Investigation Conclusion" })).not.toBeInTheDocument();
   });
 
   it("records notes with a revision and retains retry identity on conflicts", async () => {
@@ -124,5 +124,63 @@ describe("Tier 2 cases", () => {
     renderApp("/analyst/tier2-cases", { session });
     expect(await screen.findByRole("alert")).toHaveTextContent("Database unavailable");
     expect(screen.queryByText("No Tier 2 cases.")).not.toBeInTheDocument();
+  });
+
+  it("requires an explicit human category, preserves system classification and displays conclusion history", async () => {
+    const bodies: Record<string, unknown>[] = [];
+    let saved = false;
+    const conclusion = { eventId: 9, caseRef: ref, finding: "confirmed_malicious", finalAttackCategory: "infiltration", actorId: 1,
+      reason: "Expert corroborated infiltration", createdAt: "2026-11-02T00:00:00Z", caseRevision: 2,
+      requestId: ref, systemClassification: assistance.brief.classificationAtAdmission, supersedesEventId: null, recordKind: "investigation_conclusion" };
+    const event = { id: 9, eventType: "V2_TIER2_INVESTIGATION_CONCLUSION_RECORDED", decisionSource: "analyst", actorId: 1,
+      createdAt: conclusion.createdAt, reason: conclusion.reason, finding: conclusion.finding, conclusion };
+    const seen = stubFetch(async request => {
+      if (request.method === "POST") { bodies.push(await request.json() as Record<string, unknown>); saved = true;
+        return jsonResponse({ case: { ...record, revision: 2, systemAttackClassification: conclusion.systemClassification, latestConclusion: conclusion }, eventId: 9, replayed: false }); }
+      return jsonResponse(request.url.includes("/assistance") ? assistance : request.url.includes("/responses") ? { ...empty, caseRevision: saved ? 2 : 1 } :
+        request.url.includes("/events") ? saved ? { ...empty, items: [event] } : empty : { ...record, systemAttackClassification: conclusion.systemClassification });
+    });
+    renderApp("/analyst/tier2-cases/" + ref, { session });
+    await userEvent.click(await screen.findByRole("tab", { name: "Investigation Conclusion" }));
+    await userEvent.selectOptions(screen.getByLabelText("Human Investigation Finding"), "confirmed_malicious");
+    const category = screen.getByLabelText("Human Final Attack Classification");
+    expect(category).toHaveValue(""); expect(category).toBeRequired();
+    expect(within(category).queryByRole("option", { name: "Unknown / Needs Expert" })).not.toBeInTheDocument();
+    await userEvent.type(screen.getByLabelText("Investigation Reason"), conclusion.reason);
+    expect(screen.getByRole("button", { name: "Record Investigation Conclusion" })).toBeDisabled();
+    await userEvent.selectOptions(category, "infiltration");
+    await userEvent.click(screen.getByRole("button", { name: "Record Investigation Conclusion" }));
+    const latest = await screen.findByRole("region", { name: "Latest Human Investigation Conclusion" });
+    expect(latest).toHaveTextContent("Human Final Attack Classification: Infiltration");
+    expect(screen.getByRole("region", { name: "Case summary" })).toHaveTextContent("System Attack Classification: Unknown / Needs Expert");
+    expect(bodies[0]).toMatchObject({ expectedRevision: 1, finding: "confirmed_malicious", finalAttackCategory: "infiltration", reason: conclusion.reason });
+    expect(await screen.findByRole("tabpanel")).toHaveTextContent("Human Final Attack Classification: Infiltration");
+    expect(seen.filter(r => r.method === "POST").map(r => new URL(r.url).pathname)).toEqual([`/api/v2/tier2/cases/${ref}/conclusions`]);
+    expect(seen.filter(r => r.url.includes("/responses")).length).toBeGreaterThan(1);
+  });
+
+  it("clears category for Expected Activity and preserves retry identity until the conclusion changes", async () => {
+    const bodies: Record<string, unknown>[] = [];
+    stubFetch(async request => {
+      if (request.method === "POST") { bodies.push(await request.json() as Record<string, unknown>); return jsonResponse({ error: { code: "CASE_CONFLICT", message: "Refresh conclusion" } }, 409); }
+      return jsonResponse(request.url.includes("/assistance") ? assistance : request.url.includes("/responses") ? { ...empty,caseRevision:1 } : request.url.includes("/events") ? empty : record);
+    });
+    renderApp("/analyst/tier2-cases/" + ref, { session });
+    await userEvent.click(await screen.findByRole("tab", { name: "Investigation Conclusion" }));
+    await userEvent.selectOptions(screen.getByLabelText("Human Final Attack Classification"), "web_attack");
+    await userEvent.selectOptions(screen.getByLabelText("Human Investigation Finding"), "expected_activity");
+    expect(screen.getByLabelText("Human Final Attack Classification")).toBeDisabled();
+    expect(screen.getByLabelText("Human Final Attack Classification")).toHaveValue("");
+    await userEvent.type(screen.getByLabelText("Investigation Reason"), "Authorized expected activity");
+    await userEvent.click(screen.getByRole("button", { name: "Record Investigation Conclusion" }));
+    await screen.findByText("Refresh conclusion");
+    await userEvent.click(screen.getByRole("button", { name: "Record Investigation Conclusion" }));
+    await waitFor(() => expect(bodies).toHaveLength(2));
+    expect(bodies[0]).toEqual(bodies[1]); expect(bodies[0]?.finalAttackCategory).toBeNull();
+    await userEvent.selectOptions(screen.getByLabelText("Human Investigation Finding"), "suspicious");
+    await userEvent.selectOptions(screen.getByLabelText("Human Final Attack Classification"), "infiltration");
+    await userEvent.click(screen.getByRole("button", { name: "Record Investigation Conclusion" }));
+    await waitFor(() => expect(bodies).toHaveLength(3));
+    expect(bodies[2]?.requestId).not.toBe(bodies[0]?.requestId);
   });
 });

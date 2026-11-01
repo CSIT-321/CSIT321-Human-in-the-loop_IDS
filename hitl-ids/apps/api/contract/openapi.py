@@ -45,7 +45,7 @@ from packages.evaluation.prospective_recorded import RecordedArchive
 from apps.api.collection_routes import CollectionDocument
 from packages.detection.response_approval import ResponseRequest,ManualResponseRequest,ResponseDecisionRequest,ResponseMutation
 from packages.detection.tier2_cases import (
-    CaseView, CaseEvent, CaseMutation, CreateCaseRequest, CaseCommand, LinkCaseRequest, FindingRequest,
+    CaseView, CaseEvent, CaseMutation, CreateCaseRequest, CaseCommand, LinkCaseRequest, FindingRequest, InvestigationConclusionRequest,
 )
 from apps.api.contract.common import (
     FAMILY_QUERY_OMITS,
@@ -71,7 +71,7 @@ MODELS: tuple[type[BaseModel], ...] = (
     ReviewCommand,ReviewView,ReviewMutation,ReviewEvent,ReviewMetrics,
     MemoryReviewRequest,MemoryDecisionRequest,MemoryMutation,MemoryView,MemoryAudit,MemoryMatch,
     ResponsePage,ResponseRequest,ManualResponseRequest,ResponseDecisionRequest,ResponseMutation,
-    CaseView, CaseEvent, CaseMutation, CreateCaseRequest, CaseCommand, LinkCaseRequest, FindingRequest,
+    CaseView, CaseEvent, CaseMutation, CreateCaseRequest, CaseCommand, LinkCaseRequest, FindingRequest, InvestigationConclusionRequest,
     ExternalAdmissionView, ExternalAdmissionResponse, AdmissionRequest, EligibilityRequest,
     RoutingView, RoutingResponse, RoutingRequest, EscalateCaseRequest, EscalateCaseResponse, OperationalSummary,
     ErrorResponse,
@@ -677,6 +677,7 @@ def _paths() -> dict[str, Any]:
         ('/api/v2/alerts/{alertRef}/tier2/case','createTier2Case',CreateCaseRequest,ALERT_REF),
         ('/api/v2/tier2/cases/{caseRef}/alerts','linkTier2CaseAlert',LinkCaseRequest,case_ref),
         ('/api/v2/tier2/cases/{caseRef}/notes','addTier2CaseNote',CaseCommand,case_ref),
+        ('/api/v2/tier2/cases/{caseRef}/conclusions','recordTier2InvestigationConclusion',InvestigationConclusionRequest,case_ref),
         ('/api/v2/tier2/cases/{caseRef}/findings','recordTier2CaseFinding',FindingRequest,case_ref),
         ('/api/v2/tier2/cases/{caseRef}/start-investigation','startTier2Investigation',CaseCommand,case_ref)]
     for path, operation, request_model, ref in case_operations:

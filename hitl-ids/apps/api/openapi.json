@@ -1027,6 +1027,17 @@
             "title": "Caseref",
             "type": "string"
           },
+          "conclusion": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/InvestigationConclusion"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
           "createdAt": {
             "title": "Createdat",
             "type": "string"
@@ -1189,6 +1200,17 @@
             "title": "Decisionsource",
             "type": "string"
           },
+          "latestConclusion": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/InvestigationConclusion"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
           "ownerActorId": {
             "anyOf": [
               {
@@ -1219,6 +1241,17 @@
             ],
             "title": "Status",
             "type": "string"
+          },
+          "systemAttackClassification": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/AttackClassification"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
           },
           "title": {
             "title": "Title",
@@ -4027,6 +4060,180 @@
           "uncertainties"
         ],
         "title": "InvestigationBrief",
+        "type": "object"
+      },
+      "InvestigationConclusion": {
+        "additionalProperties": false,
+        "properties": {
+          "actorId": {
+            "title": "Actorid",
+            "type": "integer"
+          },
+          "caseRef": {
+            "format": "uuid",
+            "title": "Caseref",
+            "type": "string"
+          },
+          "caseRevision": {
+            "title": "Caserevision",
+            "type": "integer"
+          },
+          "createdAt": {
+            "title": "Createdat",
+            "type": "string"
+          },
+          "eventId": {
+            "title": "Eventid",
+            "type": "integer"
+          },
+          "finalAttackCategory": {
+            "anyOf": [
+              {
+                "enum": [
+                  "brute_force",
+                  "botnet_c2",
+                  "dos",
+                  "ddos",
+                  "web_attack",
+                  "infiltration",
+                  "reconnaissance_port_scan",
+                  "malware_exploit",
+                  "other_known_attack"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Finalattackcategory"
+          },
+          "finding": {
+            "enum": [
+              "confirmed_malicious",
+              "suspicious",
+              "inconclusive",
+              "expected_activity"
+            ],
+            "title": "Finding",
+            "type": "string"
+          },
+          "reason": {
+            "title": "Reason",
+            "type": "string"
+          },
+          "recordKind": {
+            "enum": [
+              "investigation_conclusion",
+              "legacy_finding"
+            ],
+            "title": "Recordkind",
+            "type": "string"
+          },
+          "requestId": {
+            "format": "uuid",
+            "title": "Requestid",
+            "type": "string"
+          },
+          "supersedesEventId": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Supersedeseventid"
+          },
+          "systemClassification": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/AttackClassification"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "eventId",
+          "caseRef",
+          "finding",
+          "finalAttackCategory",
+          "actorId",
+          "reason",
+          "createdAt",
+          "caseRevision",
+          "requestId",
+          "systemClassification",
+          "supersedesEventId",
+          "recordKind"
+        ],
+        "title": "InvestigationConclusion",
+        "type": "object"
+      },
+      "InvestigationConclusionRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "expectedRevision": {
+            "minimum": 1,
+            "title": "Expectedrevision",
+            "type": "integer"
+          },
+          "finalAttackCategory": {
+            "anyOf": [
+              {
+                "enum": [
+                  "brute_force",
+                  "botnet_c2",
+                  "dos",
+                  "ddos",
+                  "web_attack",
+                  "infiltration",
+                  "reconnaissance_port_scan",
+                  "malware_exploit",
+                  "other_known_attack"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Finalattackcategory"
+          },
+          "finding": {
+            "enum": [
+              "confirmed_malicious",
+              "suspicious",
+              "inconclusive",
+              "expected_activity"
+            ],
+            "title": "Finding",
+            "type": "string"
+          },
+          "reason": {
+            "maxLength": 4000,
+            "minLength": 1,
+            "title": "Reason",
+            "type": "string"
+          },
+          "requestId": {
+            "format": "uuid",
+            "title": "Requestid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "requestId",
+          "reason",
+          "expectedRevision",
+          "finding"
+        ],
+        "title": "InvestigationConclusionRequest",
         "type": "object"
       },
       "IpAttackBehaviour": {
@@ -17080,6 +17287,112 @@
         "summary": "Read advisory case assistance",
         "tags": [
           "Tier 2 cases"
+        ]
+      }
+    },
+    "/api/v2/tier2/cases/{caseRef}/conclusions": {
+      "post": {
+        "operationId": "recordTier2InvestigationConclusion",
+        "parameters": [
+          {
+            "description": "`Bearer <token>` from POST /api/auth/login",
+            "in": "header",
+            "name": "Authorization",
+            "required": false,
+            "schema": {
+              "example": "Bearer eyJhbGciOiJIUzI1NiJ9...",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "caseRef",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/InvestigationConclusionRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CaseMutation"
+                }
+              }
+            },
+            "description": "Audited case decision"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Validation failed"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not signed in, or the token expired"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Role not permitted"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          }
+        },
+        "summary": "recordTier2InvestigationConclusion",
+        "tags": [
+          "Tier 2 cases"
+        ],
+        "x-required-roles": [
+          "security_analyst",
+          "system_admin"
         ]
       }
     },

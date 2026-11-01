@@ -8,7 +8,7 @@ from apps.api.routing_routes import Conn, Principal, MutationRole
 from apps.api.read_only import ReadConn, ReadPrincipal
 from packages.detection.tier2_cases import (
     CaseView, CaseEvent, CaseMutation, CreateCaseRequest, CaseCommand, LinkCaseRequest,
-    FindingRequest, CaseConflict, create_case, mutate_case, read_case, read_events,
+    FindingRequest, InvestigationConclusionRequest, CaseConflict, create_case, mutate_case, read_case, read_events,
 )
 from packages.detection.investigation_assistance import InvestigationAssistance, read_assistance
 
@@ -96,6 +96,12 @@ def note(caseRef: UUID,body: CaseCommand,conn: Conn,principal: Principal):
 @router.post('/tier2/cases/{caseRef}/findings',response_model=CaseMutation,
              operation_id='recordTier2CaseFinding',dependencies=[MutationRole])
 def finding(caseRef: UUID,body: FindingRequest,conn: Conn,principal: Principal):
+    return _mutate(conn,principal,caseRef,'finding',body)
+
+
+@router.post('/tier2/cases/{caseRef}/conclusions',response_model=CaseMutation,
+             operation_id='recordTier2InvestigationConclusion',dependencies=[MutationRole])
+def conclusion(caseRef: UUID,body: InvestigationConclusionRequest,conn: Conn,principal: Principal):
     return _mutate(conn,principal,caseRef,'finding',body)
 
 

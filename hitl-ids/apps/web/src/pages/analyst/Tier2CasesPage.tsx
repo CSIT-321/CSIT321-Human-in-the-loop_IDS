@@ -6,6 +6,7 @@ import { PageHeader, Pill } from "../../components/ui";
 import { useSession } from "../../session/SessionContext";
 import { ResponseRecommendations } from "./ResponseRecommendations";
 import { InvestigationAssistance } from "./InvestigationAssistance";
+import { ConclusionDetails, finalCategories, systemCategoryLabel, type FinalCategory } from "./InvestigationConclusion";
 
 const button = "rounded-sm border border-border px-3 py-2 text-sm hover:bg-raised disabled:opacity-50";
 const input = "w-full min-w-0 rounded-sm border border-border bg-surface p-2 text-sm";
@@ -103,6 +104,7 @@ export function CaseInvestigation({ initial, refresh }: { initial: Case; refresh
   const [reason, setReason] = useState("");
   const [linkedRef, setLinkedRef] = useState("");
   const [finding, setFinding] = useState<Schemas["FindingRequest"]["finding"]>("inconclusive");
+  const [finalCategory, setFinalCategory] = useState<FinalCategory | "">("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
@@ -112,18 +114,18 @@ export function CaseInvestigation({ initial, refresh }: { initial: Case; refresh
     params: { path: { caseRef: current.caseRef }, query: { limit: 50, offset, ...(tab === "timeline" ? {} : { action: tab }) } }, signal,
   })), [current.caseRef, current.revision, tab, offset]);
   async function act(action: "note" | "finding" | "link" | "start") {
-    if (busy || !reason.trim() || (action === "link" && !linkedRef.trim())) return;
-    const key = JSON.stringify([action, reason.trim(), linkedRef.trim(), finding, current.revision]);
+    if (busy || !reason.trim() || (action === "link" && !linkedRef.trim()) || (action === "finding" && finding === "confirmed_malicious" && !finalCategory)) return;
+    const key = JSON.stringify([action, reason.trim(), linkedRef.trim(), finding, finalCategory, current.revision]);
     if (pending.current?.key !== key) pending.current = { key, id: crypto.randomUUID() };
     const body = { requestId: pending.current.id, reason: reason.trim(), expectedRevision: current.revision };
     const params = { path: { caseRef: current.caseRef } };
     setBusy(true); setError(""); setMessage("");
     try {
       const result = action === "link" ? await unwrap(api.POST("/api/v2/tier2/cases/{caseRef}/alerts", { params, body: { ...body, operationalAlertRef: linkedRef.trim() } }))
-        : action === "finding" ? await unwrap(api.POST("/api/v2/tier2/cases/{caseRef}/findings", { params, body: { ...body, finding } }))
+        : action === "finding" ? await unwrap(api.POST("/api/v2/tier2/cases/{caseRef}/conclusions", { params, body: { ...body, finding, finalAttackCategory: finding === "expected_activity" ? null : finalCategory || null } }))
         : action === "start" ? await unwrap(api.POST("/api/v2/tier2/cases/{caseRef}/start-investigation", { params, body }))
         : await unwrap(api.POST("/api/v2/tier2/cases/{caseRef}/notes", { params, body }));
-      setCurrent(result.case); setOffset(0); setReason(""); setLinkedRef(""); pending.current = null;
+      setCurrent(result.case); setOffset(0); setReason(""); setLinkedRef(""); setFinalCategory(""); pending.current = null;
       setMessage("Investigation decision recorded.");
     } catch (cause) { setError(cause instanceof Error ? cause.message : "Decision could not be confirmed."); }
     finally { setBusy(false); }
@@ -142,6 +144,11 @@ export function CaseInvestigation({ initial, refresh }: { initial: Case; refresh
         <div><dt className="text-muted">Operational Priority at Creation</dt><dd>{snapshot.triage.priorityBand ?? "Unassigned"} / {snapshot.triage.operationalPriority ?? "Not assigned"}</dd></div>
         <div><dt className="text-muted">Policy at Creation</dt><dd>{snapshot.triage.triagePolicyVersion ?? "Not applied"}</dd></div>
       </dl>
+      <p className="text-sm">System Attack Classification: {systemCategoryLabel(current.systemAttackClassification)}</p>
+      {current.latestConclusion && <section aria-label="Latest Human Investigation Conclusion" className="space-y-2 border-t border-border pt-3">
+        <h2 className="text-base font-semibold">Latest Human Investigation Conclusion</h2>
+        <ConclusionDetails conclusion={current.latestConclusion} />
+      </section>}
     </section>
     <InvestigationAssistance caseRef={current.caseRef} revision={current.revision} prefix={prefixFor(session?.role)}
       onSelect={canWrite ? ref => {
@@ -168,7 +175,7 @@ export function CaseInvestigation({ initial, refresh }: { initial: Case; refresh
     </section>
     <section className="space-y-4 border-t border-border pt-4">
       <div className="flex flex-wrap gap-2" role="tablist" aria-label="Case investigation">
-        {([["note","Investigation Notes"],["finding","Findings"],["link","Linked Alerts"],["timeline","Audit Timeline"]] as const).map(([value,label]) =>
+        {([["note","Investigation Notes"],["finding","Investigation Conclusion"],["link","Linked Alerts"],["timeline","Audit Timeline"]] as const).map(([value,label]) =>
           <button role="tab" aria-selected={tab === value} disabled={busy} className={button} key={value}
             onClick={() => { setTab(value); setOffset(0); setReason(""); setError(""); setMessage(""); }}>{label}</button>)}
       </div>
@@ -178,8 +185,11 @@ export function CaseInvestigation({ initial, refresh }: { initial: Case; refresh
         {events.data.items.length === 0 && <p className="text-sm">No records yet.</p>}
         {events.data.items.map(event => <article key={event.id} className="space-y-1 border-b border-border py-3">
           <p className="text-xs text-muted">{event.eventType} / {event.decisionSource === "system_policy" ? "System Policy" : `actor #${event.actorId}`} / {event.createdAt}</p>
-          {event.finding && <Pill tone="warn">{event.finding.replaceAll("_"," ")}</Pill>}
-          <p className="whitespace-pre-wrap break-words text-sm">{event.reason}</p>
+          {event.conclusion ? <><h3 className="font-semibold">{event.conclusion.recordKind === "legacy_finding" ? "Historical Finding" : "Investigation Conclusion"}</h3>
+            <ConclusionDetails conclusion={event.conclusion} />
+            <p className="text-xs text-muted">System classification recorded with conclusion: {systemCategoryLabel(event.conclusion.systemClassification)}</p></> : <>
+            {event.finding && <Pill tone="warn">{event.finding.replaceAll("_"," ")}</Pill>}
+            <p className="whitespace-pre-wrap break-words text-sm">{event.reason}</p></>}
           {event.linkedAlertRef && <Link className="break-all text-sm text-accent underline" to={prefixFor(session?.role) + "/v2-triage?alertRef=" + event.linkedAlertRef}>{event.linkedAlertRef}</Link>}
           {tab === "timeline" && <details><summary className="cursor-pointer text-xs">State change</summary><pre className="max-h-64 overflow-auto whitespace-pre-wrap break-all text-xs">{JSON.stringify({ before: event.beforeState, after: event.afterState },null,2)}</pre></details>}
         </article>)}
@@ -191,13 +201,23 @@ export function CaseInvestigation({ initial, refresh }: { initial: Case; refresh
       </div>}
       {canWrite && (tab !== "timeline" || current.status === "open") && <div className="space-y-3">
         {tab === "link" && <><label htmlFor="linked-alert" className="block text-sm">Operational alert UUID</label><input id="linked-alert" value={linkedRef} disabled={busy} onChange={e => setLinkedRef(e.target.value)} className={input} /></>}
-        {tab === "finding" && <><label htmlFor="case-finding" className="block text-sm">Finding</label><select id="case-finding" value={finding} disabled={busy} onChange={e => setFinding(e.target.value as typeof finding)} className={input}>
+        {tab === "finding" && <>
+          <p className="text-sm">System Attack Classification: {systemCategoryLabel(current.systemAttackClassification)}</p>
+          <label htmlFor="case-finding" className="block text-sm">Human Investigation Finding</label><select id="case-finding" value={finding} disabled={busy} onChange={e => { setFinding(e.target.value as typeof finding); if (e.target.value === "expected_activity") setFinalCategory(""); }} className={input}>
           <option value="inconclusive">Inconclusive</option><option value="suspicious">Suspicious</option><option value="confirmed_malicious">Confirmed malicious</option><option value="expected_activity">Expected activity</option>
-        </select></>}
-        <label htmlFor="investigation-note" className="block text-sm">{tab === "note" ? "Investigation note" : "Decision reason"}</label>
+        </select>
+          <label htmlFor="final-category" className="block text-sm">Human Final Attack Classification</label>
+          <select id="final-category" className={input} disabled={busy || finding === "expected_activity"} required={finding === "confirmed_malicious"}
+            value={finalCategory} onChange={e => setFinalCategory(e.target.value as FinalCategory | "")}>
+            <option value="">{finding === "expected_activity" ? "Not applicable" : "Unresolved / select category"}</option>
+            {Object.entries(finalCategories).map(([value,label]) => <option key={value} value={value}>{label}</option>)}
+          </select>
+          <p className="text-xs text-muted">{finding === "confirmed_malicious" ? "Required. Explicitly select a concrete category; use Other Known Attack if needed and explain the evidence." : finding === "expected_activity" ? "Not applicable to Expected Activity." : "Optional when the attack type remains uncertain."} The system classification is preserved.</p>
+        </>}
+        <label htmlFor="investigation-note" className="block text-sm">{tab === "note" ? "Investigation note" : tab === "finding" ? "Investigation Reason" : "Decision reason"}</label>
         <textarea id="investigation-note" rows={3} maxLength={4000} value={reason} disabled={busy} onChange={e => setReason(e.target.value)} className={input} />
-        <button className={button} disabled={busy || !reason.trim() || (tab === "link" && !linkedRef.trim())} onClick={() => void act(tab === "timeline" ? "start" : tab)}>
-          {tab === "note" ? "Add investigation note" : tab === "finding" ? "Record finding" : tab === "link" ? "Link alert" : "Start investigation"}
+        <button className={button} disabled={busy || !reason.trim() || (tab === "link" && !linkedRef.trim()) || (tab === "finding" && finding === "confirmed_malicious" && !finalCategory)} onClick={() => void act(tab === "timeline" ? "start" : tab)}>
+          {tab === "note" ? "Add investigation note" : tab === "finding" ? "Record Investigation Conclusion" : tab === "link" ? "Link alert" : "Start investigation"}
         </button>
       </div>}
       {error && <p role="alert" className="text-sm text-danger">{error}</p>}

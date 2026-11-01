@@ -77,10 +77,11 @@ test("real case assistance: Unknown, human investigation, related link, approved
   await expect(page.getByRole("tabpanel")).toContainText("V2_TIER2_ALERT_LINKED");
   await expect(page.getByRole("tabpanel").getByRole("link", { name: linkRef })).toBeVisible();
   await expect(related.locator(`a[href="${relatedHref}"]`)).toHaveCount(0);
-  await page.getByRole("tab", { name: "Findings", exact: true }).click();
-  await page.getByLabel("Finding", { exact: true }).selectOption("confirmed_malicious");
-  await page.getByLabel("Decision reason", { exact: true }).fill("SYNTHETIC human corroborated malicious activity; assistance did not decide");
-  await page.getByRole("button", { name: "Record finding", exact: true }).click();
+  await page.getByRole("tab", { name: "Investigation Conclusion", exact: true }).click();
+  await page.getByLabel("Human Investigation Finding", { exact: true }).selectOption("confirmed_malicious");
+  await page.getByLabel("Investigation Reason", { exact: true }).fill("SYNTHETIC human corroborated malicious activity; assistance did not decide");
+  await page.getByLabel("Human Final Attack Classification", {exact:true}).selectOption("web_attack");
+  await page.getByRole("button", { name: "Record Investigation Conclusion", exact: true }).click();
   await expect(page.getByRole("tabpanel")).toContainText("SYNTHETIC human corroborated");
   const responses = page.getByRole("region", { name: "Response Recommendations", exact: true });
   await responses.getByLabel("Proposal reason").fill("SYNTHETIC propose containment plan after human Finding");

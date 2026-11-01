@@ -42,10 +42,10 @@ test("Suricata admission to explicit Tier 2 case, investigation note and finding
   await page.getByLabel("Investigation note").fill("Affected account identified; additional host requires review.");
   await page.getByRole("button", { name: "Add investigation note" }).click();
   await expect(page.getByRole("tabpanel")).toContainText("Affected account identified");
-  await page.getByRole("tab", { name: "Findings" }).click();
-  await page.getByLabel("Finding", { exact: true }).selectOption("suspicious");
-  await page.getByLabel("Decision reason").fill("Suspicious activity needs corroboration; no response authorized.");
-  await page.getByRole("button", { name: "Record finding" }).click();
+  await page.getByRole("tab", { name: "Investigation Conclusion" }).click();
+  await page.getByLabel("Human Investigation Finding", { exact: true }).selectOption("suspicious");
+  await page.getByLabel("Investigation Reason").fill("Suspicious activity needs corroboration; no response authorized.");
+  await page.getByRole("button", { name: "Record Investigation Conclusion" }).click();
   await expect(page.getByRole("tabpanel")).toContainText("Suspicious activity needs corroboration");
   await page.locator("main").evaluate(element => { element.scrollTop = 0; });
   await page.screenshot({ path: "test-results/tier2-case-desktop.png", fullPage: true });
@@ -53,7 +53,7 @@ test("Suricata admission to explicit Tier 2 case, investigation note and finding
   await page.locator("main").evaluate(element => { element.scrollTop = 0; });
   await page.screenshot({ path: "test-results/tier2-case-mobile.png", fullPage: true });
   expect(await page.locator("main").evaluate(element => element.scrollWidth <= element.clientWidth)).toBe(true);
-  await page.getByRole("button", { name: "Record finding" }).scrollIntoViewIfNeeded();
+  await page.getByRole("button", { name: "Record Investigation Conclusion" }).scrollIntoViewIfNeeded();
   await page.screenshot({ path: "test-results/tier2-case-mobile-investigation.png", fullPage: true });
   await page.getByRole("link", { name: "Primary alert", exact: true }).click();
   await expect(page.getByRole("region", { name: "Operational alert workspace" }).getByText("tier2 case", { exact: true })).toBeVisible();
