@@ -40,7 +40,7 @@ def records():
 def stage(conn, tmp_path, events, sensor='sensor-a'):
     path = tmp_path / 'eve.json'
     path.write_text(json.dumps(events), encoding='utf-8')
-    return stage_file(conn, path, sensor)
+    return stage_file(conn, path, sensor, capture_scope="correlation-test")
 
 
 def admission(conn, source=1):
@@ -218,7 +218,8 @@ def test_guarded_rules_unknown_is_not_true(context,expected):
 
 def test_migration_fourteen_preserves_populated_history_and_constraints(tmp_path,monkeypatch):
     from legacy_suricata_fixture import stage_file as historical_stage
-    migrations=db.MIGRATIONS
+    migrations=db.MIGRATIONS[:14]
+    monkeypatch.setattr(db,'MIGRATIONS',migrations)
     connection=db.connect(tmp_path/'historical.db')
     try:
         with monkeypatch.context() as patch:
@@ -249,7 +250,8 @@ def test_migration_fourteen_preserves_populated_history_and_constraints(tmp_path
 
 
 def test_failed_rebuild_restores_foreign_keys_schema_and_data(tmp_path,monkeypatch):
-    migrations=db.MIGRATIONS
+    migrations=db.MIGRATIONS[:14]
+    monkeypatch.setattr(db,'MIGRATIONS',migrations)
     connection=db.connect(tmp_path/'rollback.db')
     try:
         monkeypatch.setattr(db,'MIGRATIONS',migrations[:13]);db.create_schema(connection)

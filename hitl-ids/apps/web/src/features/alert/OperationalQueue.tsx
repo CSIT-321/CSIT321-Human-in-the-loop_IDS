@@ -2,6 +2,8 @@ import { Link } from "react-router";
 import type { Schemas } from "../../api/client";
 import type { paths } from "../../api/schema";
 
+import { needsReview } from "./EffectiveReview";
+
 type Summary = Schemas["OperationalSummary"];
 type Query = NonNullable<paths["/api/v2/alerts"]["get"]["parameters"]["query"]>;
 export const queueViews = [
@@ -11,7 +13,7 @@ export const queueViews = [
   { key: "expert", label: "Expert Review", count: "expertReview", query: { routeClass: "EXPERT_REVIEW_REQUIRED" } },
   { key: "critical", label: "Critical", count: "criticalAlerts", query: { priorityBand: "P1" } },
   { key: "needs-review", label: "Needs Review", count: "reviewRequired", query: { reviewRequired: true } },
-  { key: "no-review", label: "No Immediate Review", count: "noImmediateReview", query: { handlingRoute: "no_immediate_review" } },
+  { key: "no-review", label: "No Immediate Review", count: "noImmediateReview", query: { reviewDisposition: "no_immediate_review" } },
 ] as const satisfies readonly { key: string; label: string; count: keyof Summary; query: Query }[];
 export type QueueView = typeof queueViews[number]["key"];
 export const attackCategories = [
@@ -25,8 +27,8 @@ const metrics = [
   ["critical", "Critical", "criticalAlerts", "Current priority band P1 / critical"],
   ["tier2", "Tier 2", "tier2Cases", "Current route is Tier 2 Case"],
   ["expert", "Expert Review", "expertReview", "Persisted Expert Review Required class or Unknown / Needs Expert classification"],
-  ["needs-review", "Needs Review", "reviewRequired", "Current Review Required is true"],
-  ["no-review", "No Immediate Review", "noImmediateReview", "Current route is No Immediate Review; not a human verdict"],
+  ["needs-review", "Needs Review", "reviewRequired", "Effective attention requires human review, including audit samples"],
+  ["no-review", "No Immediate Review", "noImmediateReview", "Effective attention is No Immediate Review; not a human verdict"],
   ["cases", "Open Tier 2 Cases", "openTier2Cases", "Cases with status open or investigating"],
   ["tier1", "Tier 1", "tier1Review", "Current route is Tier 1 Review"],
   ["all", "Total Alerts", "totalAlerts", "All persisted operational V2 alerts"],
@@ -82,11 +84,12 @@ export function QueueItem({ item }: { item: Schemas["RoutingView"] }) {
       </span>
     </span>
     <span className="block break-words font-semibold">{item.title}</span>
-    <span className="block text-muted">{categoryLabel(item.classification?.attackCategory ?? "")}</span>
+    {!needsReview(item) && <span className="block text-ok">No Immediate Review</span>}
+    <span className="block text-muted">{item.classification?.status === "informational_policy_signal" ? "Informational / Policy Signal" : categoryLabel(item.classification?.attackCategory ?? "")}</span>
     {detail && <span className="block break-all font-mono text-[10px]">{detail.sourceIp} → {detail.destinationIp}{detail.destinationPort != null ? ":" + detail.destinationPort : ""}</span>}
     <span className="block text-[10px] text-muted">{item.detectorSource === "current_flow" ? "Legacy Flow Detector" : item.detectorName}
       {detail?.relatedSignatureCount != null && ` · ${detail.relatedSignatureCount} signature${detail.relatedSignatureCount === 1 ? "" : "s"}`}
       {!!detail?.evidenceTypes.length && ` · ${detail.evidenceTypes.filter(type => type !== "alert").map(type => type.toUpperCase()).join(" + ") || "Alert"}`}</span>
-    <span className="sr-only">Review Required: {state.reviewRequired ? "Yes" : "No"}</span>
+    <span className="sr-only">Review Required: {needsReview(item) ? "Yes" : "No"}</span>
   </>;
 }

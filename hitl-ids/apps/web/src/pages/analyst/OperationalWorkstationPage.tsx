@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link, useSearchParams } from "react-router";
 import { api, unwrap, type Schemas } from "../../api/client";
 import { useApi } from "../../api/useApi";
@@ -11,23 +11,27 @@ import { AlertMemoryPanel } from "./TriageMemoryPage";
 import { SelectiveReviewPanel } from "./SelectiveReviewPage";
 import { OperationalKpis, QueueTabs, QueueItem, queueViews, attackCategories, type QueueView } from "../../features/alert/OperationalQueue";
 
+import { needsReview, reviewLabel, reviewProjection } from "../../features/alert/EffectiveReview";
+
 type View = Schemas["RoutingView"];
 const button = "rounded-sm border border-border bg-raised px-2.5 py-1.5 text-xs hover:border-border-strong disabled:opacity-40";
 const tabs = ["Overview", "Evidence", "Context & Review", "Triage Memory", "History & Notes", "Technical"] as const;
 type Tab = typeof tabs[number];
 const routeLabel = (value: string) => value === "tier2_candidate" ? "Tier 2 · recovery pending" : value.replaceAll("_", " ");
 
-function Assistance({ view }: { view: View }) {
+function Assistance({ view, onReview }: { view: View; onReview: (review: Schemas["ReviewView"]) => void }) {
   const ref = view.operationalAlertRef;
   const review = useApi(signal => unwrap(api.GET("/api/v2/alerts/{alertRef}/selective-review", { params: { path: { alertRef: ref } }, signal })), [ref, view.stateVersion]);
   const memory = useApi(signal => unwrap(api.GET("/api/v2/alerts/{alertRef}/triage-memory/matches", { params: { path: { alertRef: ref }, query: { limit: 5, offset: 0 } }, signal })), [ref, view.stateVersion]);
+  const onReviewRef = useRef(onReview); onReviewRef.current = onReview;
+  useEffect(() => { if (review.status === "success") onReviewRef.current(review.data); }, [review.status === "success" ? review.data.version : ""]);
   const refreshReview = review.reload; const refreshMemory = memory.reload;
   useEffect(() => { const timer = setInterval(() => { refreshReview(); refreshMemory(); }, 15000); return () => clearInterval(timer); }, [refreshReview, refreshMemory]);
   return <aside aria-label="Context and assistance" className="ops-context divide-y divide-border overflow-y-auto border-l border-border bg-surface text-xs">
     <section className="space-y-2 p-4">
       <h2 className="label-mono">Why this alert needs attention</h2>
-      <p>Review Required: <strong>{view.state.reviewRequired ? "Yes" : "No"}</strong></p>
-      {view.reviewReasons.map((reason, index) => <p className="break-words text-muted" key={index}>{reason}</p>)}
+      <p>Review Required: <strong>{needsReview(view) ? "Yes" : "No"}</strong></p>
+      {(view.effectiveReview ? [view.effectiveReview.explanation] : view.reviewReasons).map((reason, index) => <p className="break-words text-muted" key={index}>{reason}</p>)}
     </section>
     <section className="space-y-2 p-4">
       <h2 className="label-mono">Routing summary</h2>
@@ -40,7 +44,7 @@ function Assistance({ view }: { view: View }) {
       {review.status === "loading" && <p role="status">Checking review context…</p>}
       {review.status === "error" && <p role="alert">{review.error.message}</p>}
       {review.status === "success" && <>
-        <p className="font-semibold capitalize">{review.data.disposition.replaceAll("_", " ")}</p>
+        <p className="font-semibold capitalize">{reviewLabel(view)}</p>
         <p className="text-muted">No Immediate Review is an automation decision, not a human verdict.</p>
         <p>Trusted fields: {review.data.policyEvaluation.contextProvenance?.fields.filter(field => field.status === "trusted").length ?? 0} / {review.data.policyEvaluation.contextProvenance?.fields.length ?? 0}</p>
         <p className="text-muted">Inspect provenance and evaluate policy in Context &amp; Review.</p>
@@ -48,7 +52,7 @@ function Assistance({ view }: { view: View }) {
     </section>
     <section className="space-y-2 p-4" aria-label="Triage Memory summary">
       <h2 className="label-mono">Related Triage Memory</h2>
-      <p className="text-muted">Guidance only — human review still required.</p>
+      <p className="text-muted">Memory provides guidance; current attention follows Review Disposition.</p>
       {memory.status === "loading" && <p role="status">Looking up lessons…</p>}
       {memory.status === "error" && <p role="alert">{memory.error.message}</p>}
       {memory.status === "success" && <>
@@ -65,7 +69,7 @@ function Assistance({ view }: { view: View }) {
   </aside>;
 }
 
-function AlertWorkspace({ view, onChanged, refresh }: { view: View; onChanged: (view: View) => void; refresh: () => void }) {
+function AlertWorkspace({ view, onChanged, refresh, onReview }: { view: View; onChanged: (view: View) => void; refresh: () => void; onReview: (review: Schemas["ReviewView"]) => void }) {
   const [tab, setTab] = useState<Tab>("Overview");
   const evidence = useApi(signal => unwrap(api.GET("/api/v2/alerts/{alertRef}/evidence", { params: { path: { alertRef: view.operationalAlertRef } }, signal })), [view.operationalAlertRef]);
   return <section aria-label="Operational alert workspace" className="ops-detail flex min-h-0 min-w-0 flex-col bg-bg">
@@ -76,7 +80,7 @@ function AlertWorkspace({ view, onChanged, refresh }: { view: View; onChanged: (
         <span>{operationalDetector(view.detectorSource, view.detectorName)}</span>
         <Pill tone="accent">{view.state.priorityBand ?? "Unassigned"} / {view.state.operationalPriority ?? "—"}</Pill>
         <Pill>{routeLabel(view.state.handlingRoute)}</Pill>
-        <span>Review Required: {view.state.reviewRequired ? "Yes" : "No"}</span>
+        <span>Review Disposition: <strong>{reviewLabel(view)}</strong></span>
       </div>
     </header>
     <div role="tablist" aria-label="Operational alert sections" className="flex shrink-0 overflow-x-auto whitespace-nowrap border-b border-border bg-surface px-2">
@@ -85,7 +89,7 @@ function AlertWorkspace({ view, onChanged, refresh }: { view: View; onChanged: (
     </div>
     <div id="ops-alert-panel" role="tabpanel" aria-label={tab} className="min-h-0 flex-1 space-y-4 overflow-auto p-4">
       {(tab === "Overview" || tab === "Evidence") && <>
-        {view.classification && <p className="text-sm capitalize">Attack Category: <strong>{attackLabel(view.classification.attackCategory)}</strong></p>}
+        {view.classification && <p className="text-sm capitalize">{view.classification.status === "informational_policy_signal" ? "Classification" : "Attack Category"}: <strong>{attackLabel(view.classification.attackCategory)}</strong></p>}
         {evidence.status === "loading" && <LoadingState label="Loading canonical evidence…" />}
         {evidence.status === "error" && <ErrorState error={evidence.error} onRetry={evidence.reload} />}
         {evidence.status === "success" && <OperationalEvidence alert={evidence.data} summaryOnly={tab === "Overview"} />}
@@ -95,7 +99,7 @@ function AlertWorkspace({ view, onChanged, refresh }: { view: View; onChanged: (
         <SystemRouting view={view} />
         <RoutingDetail initial={view} refresh={refresh} canRecover compact onChanged={onChanged} />
       </div>
-      {tab === "Context & Review" && <SelectiveReviewPanel key={view.stateVersion} alertRef={view.operationalAlertRef} />}
+      {tab === "Context & Review" && <SelectiveReviewPanel key={view.stateVersion} alertRef={view.operationalAlertRef} onReview={onReview} />}
       {tab === "Triage Memory" && <AlertMemoryPanel key={view.stateVersion} view={view} />}
       {tab === "History & Notes" && <section className="space-y-3" aria-label="Operational decision history">
         <h3 className="label-mono">Latest routing decision</h3>
@@ -133,18 +137,29 @@ export function OperationalWorkstationPage() {
   const linked = useApi(async signal => requested ? unwrap(api.GET("/api/v2/alerts/{alertRef}/triage-state", { params: { path: { alertRef: requested } }, signal })) : null, [requested]);
   const items = queue.status === "success" ? queue.data.items.map(item => overrides[item.operationalAlertRef] ?? item) : [];
   const visible = items;
-  const selected = requested ?? visible[0]?.operationalAlertRef;
-  const current = selected ? overrides[selected] ?? items.find(item => item.operationalAlertRef === selected)
+  const [lastCurrent, setLastCurrent] = useState<View>();
+  const selected = requested ?? visible[0]?.operationalAlertRef ??
+    (queue.status === "loading" || (lastCurrent && overrides[lastCurrent.operationalAlertRef]) ? lastCurrent?.operationalAlertRef : undefined);
+  const fresh = selected ? overrides[selected] ?? items.find(item => item.operationalAlertRef === selected)
     ?? (linked.status === "success" && linked.data?.operationalAlertRef === selected ? linked.data : undefined) : undefined;
+  const current = fresh ?? (lastCurrent?.operationalAlertRef === selected ? lastCurrent : undefined);
+  useEffect(() => { if (fresh) setLastCurrent(fresh); }, [fresh]);
+  function reviewChanged(review: Schemas["ReviewView"]) {
+    if (!current || current.operationalAlertRef !== review.operationalAlertRef || current.effectiveReview?.version === review.version) return;
+    changed({ ...current, effectiveReview: reviewProjection(review) });
+  }
   function select(ref: string) { setSearch(previous => { const next = new URLSearchParams(previous); next.set("alertRef", ref); return next; }, { replace: true }); }
   function page(nextOffset: number) { setSearch(previous => { const next = new URLSearchParams(previous); next.set("offset", String(nextOffset)); next.delete("alertRef"); return next; }); }
   function setFilter(key: string, value: string, replace = false) {
+    setOverrides({});
     setSearch(previous => { const next = new URLSearchParams(previous); if (value) next.set(key, value); else next.delete(key);
       next.set("sort", sort); next.delete("offset"); next.delete("alertRef"); return next; }, { replace, flushSync: true });
   }
   function chooseView(view: QueueView) { setFilter("view", view); }
   function refresh() { setOverrides({}); queue.reload(); linked.reload(); summary.reload(); }
   function changed(updated: View) { select(updated.operationalAlertRef); setOverrides(previous => ({ ...previous, [updated.operationalAlertRef]: updated })); queue.reload(); summary.reload(); }
+  const refreshRef = useRef(refresh); refreshRef.current = refresh;
+  useEffect(() => { const timer = setInterval(() => refreshRef.current(), 15000); return () => clearInterval(timer); }, []);
   useEffect(() => {
     function key(event: KeyboardEvent) {
       if (event.ctrlKey || event.metaKey || event.altKey || (event.target instanceof HTMLElement && (event.target.isContentEditable || /INPUT|TEXTAREA|SELECT/.test(event.target.tagName)))) return;
@@ -205,9 +220,9 @@ export function OperationalWorkstationPage() {
           <button className={button} disabled={queue.status !== "success" || offset + 50 >= queue.data.page.total} onClick={() => page(offset + 50)}>Next alerts</button>
         </footer>
       </section>
-      {current ? <AlertWorkspace key={current.operationalAlertRef} view={current} onChanged={changed} refresh={refresh} />
+      {current ? <AlertWorkspace key={current.operationalAlertRef} view={current} onChanged={changed} refresh={refresh} onReview={reviewChanged} />
         : <section aria-label="Operational alert workspace" className="p-5 text-sm text-muted">{linked.status === "error" ? <ErrorState error={linked.error} onRetry={linked.reload} /> : "Select an operational alert."}</section>}
-      {current && <Assistance key={"assistance-" + current.operationalAlertRef} view={current} />}
+      {current && <Assistance key={"assistance-" + current.operationalAlertRef} view={current} onReview={reviewChanged} />}
     </div>
   </div>;
 }

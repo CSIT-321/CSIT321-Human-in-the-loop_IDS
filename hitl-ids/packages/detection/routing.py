@@ -112,6 +112,9 @@ def route_alert(conn: sqlite3.Connection, alert_id: int, *, actor_id: int,
             raise RoutingConflict('V2 state changed; refresh and review before deciding again')
         if action not in allowed_actions(before):
             raise RoutingConflict('action is not allowed for the current route, stage and recommendation')
+        if action in ('manual_escalate', 'approve_tier2') and not _case_transaction and conn.execute(
+                'SELECT 1 FROM operational_system_routing WHERE operational_alert_id=?', (alert_id,)).fetchone():
+            raise RoutingConflict('current system-routed alerts require atomic tier2/escalate-case; standalone Candidate routing is historical only')
         moment = max(m.utc_now(), before.updated_at + timedelta(microseconds=1))
         route, stage = (('tier1_review', 'triage') if action in ('admit_tier1', 'reject_tier2')
                         else ('tier2_candidate', 'assessment'))

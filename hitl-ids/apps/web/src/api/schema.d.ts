@@ -461,7 +461,7 @@ export interface paths {
         };
         /**
          * List explicitly materialized V2 alerts
-         * @description Whole-dataset composable filters before pagination. Operational Priority DESC (null last), occurredAt instant DESC, operationalAlertRef ASC. No scoring or policy application on GET.
+         * @description Whole-dataset composable filters before pagination. Operational Priority DESC (null last), occurredAt instant DESC, operationalAlertRef ASC. No scoring or routing mutations on GET; effective attention is evaluated read-only.
          */
         get: operations["listV2Routing"];
         put?: never;
@@ -481,7 +481,7 @@ export interface paths {
         };
         /**
          * Read whole-dataset operational workload
-         * @description Authenticated read-only consistent snapshot of persisted current V2 values. Categories intentionally overlap. No filtering, recomputation, migration or materialization.
+         * @description Authenticated read-only consistent snapshot of persisted current V2 values. Categories intentionally overlap. Effective review attention is evaluated read-only; no scoring, routing changes, migration or materialization.
          */
         get: operations["getV2AlertsSummary"];
         put?: never;
@@ -1528,11 +1528,18 @@ export interface components {
         };
         /** AttackClassification */
         AttackClassification: {
+            /** Attackcategory */
+            attackCategory: ("brute_force" | "botnet_c2" | "dos" | "ddos" | "web_attack" | "infiltration" | "reconnaissance_port_scan" | "malware_exploit" | "other_known_attack" | "unknown_needs_expert") | null;
             /**
-             * Attackcategory
-             * @enum {string}
+             * Conflictingcategories
+             * @default []
              */
-            attackCategory: "brute_force" | "botnet_c2" | "dos" | "ddos" | "web_attack" | "infiltration" | "reconnaissance_port_scan" | "malware_exploit" | "other_known_attack" | "unknown_needs_expert";
+            conflictingCategories: ("brute_force" | "botnet_c2" | "dos" | "ddos" | "web_attack" | "infiltration" | "reconnaissance_port_scan" | "malware_exploit" | "other_known_attack" | "unknown_needs_expert")[];
+            /**
+             * Matches
+             * @default []
+             */
+            matches: components["schemas"]["ClassificationMatch"][];
             /** Policyversion */
             policyVersion: string;
             /** Reasons */
@@ -1547,7 +1554,7 @@ export interface components {
              * Status
              * @enum {string}
              */
-            status: "mapped" | "unmapped" | "conflict";
+            status: "mapped" | "unmapped" | "conflict" | "informational_policy_signal";
         };
         /**
          * AuditEntryOut
@@ -1792,6 +1799,21 @@ export interface components {
             /** Support */
             support: number;
         };
+        /** ClassificationMatch */
+        ClassificationMatch: {
+            /** Category */
+            category: ("brute_force" | "botnet_c2" | "dos" | "ddos" | "web_attack" | "infiltration" | "reconnaissance_port_scan" | "malware_exploit" | "other_known_attack" | "unknown_needs_expert") | null;
+            /** Field */
+            field: string;
+            /** Ruleid */
+            ruleId: string;
+            /** Signatureid */
+            signatureId: number;
+            /** Sourcerecordref */
+            sourceRecordRef: string;
+            /** Value */
+            value: string;
+        };
         /** CollectionDocument */
         CollectionDocument: {
             /** Payload */
@@ -2010,6 +2032,27 @@ export interface components {
              * @enum {string}
              */
             status: "pending" | "running" | "completed" | "aborted";
+        };
+        /**
+         * EffectiveReview
+         * @description Current attention projection, separate from immutable/persisted routing facts.
+         */
+        EffectiveReview: {
+            /**
+             * Disposition
+             * @enum {string}
+             */
+            disposition: "must_review" | "recommended_review" | "no_immediate_review";
+            /** Explanation */
+            explanation: string;
+            /** Reasoncodes */
+            reasonCodes: string[];
+            /** Recalled */
+            recalled: boolean;
+            /** Reviewrequired */
+            reviewRequired: boolean;
+            /** Version */
+            version: string;
         };
         /** EligibilityRequest */
         EligibilityRequest: {
@@ -4443,6 +4486,8 @@ export interface components {
              * @default null
              */
             detectorSource: string | null;
+            /** @default null */
+            effectiveReview: components["schemas"]["EffectiveReview"] | null;
             latestDecision: components["schemas"]["RoutingAudit"] | null;
             /**
              * Operationalalertref
@@ -6573,6 +6618,7 @@ export interface operations {
                 priorityBand?: "critical" | "high" | "medium" | "low" | "informational" | "P1" | "P2" | "P3" | "P4";
                 routeClass?: "ROUTINE_REVIEW" | "CRITICAL_ESCALATION" | "EXPERT_REVIEW_REQUIRED";
                 attackCategory?: "brute_force" | "botnet_c2" | "dos" | "ddos" | "web_attack" | "infiltration" | "reconnaissance_port_scan" | "malware_exploit" | "other_known_attack" | "unknown_needs_expert";
+                reviewDisposition?: "must_review" | "recommended_review" | "no_immediate_review";
                 reviewRequired?: boolean;
                 q?: string;
                 sort?: "priority_desc";

@@ -156,6 +156,8 @@ MIGRATIONS += ((13, "append-only prospective collection runs and recorded decisi
                 Path(__file__).with_name("prospective_collection.sql").read_text(encoding="utf-8")),)
 MIGRATIONS += ((14, "immutable correlated EVE and system-attributed routing/cases",
                 Path(__file__).with_name("suricata_system_routing.sql").read_text(encoding="utf-8")),)
+MIGRATIONS += ((15, "capture-scoped immutable Suricata raw evidence",
+                Path(__file__).with_name("suricata_capture_scope.sql").read_text(encoding="utf-8")),)
 SCHEMA_VERSION = MIGRATIONS[-1][0]
 
 
@@ -169,7 +171,7 @@ def migrate(conn: sqlite3.Connection) -> list[int]:
     for version, _description, sql in MIGRATIONS:
         if version <= current:
             continue
-        rebuild = version == 14
+        rebuild = version in (14, 15)
         foreign_keys = conn.execute("PRAGMA foreign_keys").fetchone()[0]
         if rebuild:
             if conn.in_transaction:

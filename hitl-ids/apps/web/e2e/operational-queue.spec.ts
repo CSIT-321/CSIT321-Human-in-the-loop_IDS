@@ -16,7 +16,7 @@ test("whole-dataset operational workload, filters, priority, pagination, URL and
   await page.getByRole("button", { name: "Sign in" }).click();
   await expect(page).toHaveURL(/\/analyst\/operations$/);
   const workload = page.getByRole("region", { name: "Operational workload" });
-  for (const name of ["Critical 54", "Tier 2 54", "Expert Review 2", "Needs Review 64", "No Immediate Review 2", "Tier 1 9", "Total Alerts 66"])
+  for (const name of ["Critical 54", "Tier 2 54", "Expert Review 2", "Needs Review 64", "No Immediate Review 2", "Tier 1 11", "Total Alerts 66"])
     await expect(workload.getByRole("button", { name, exact: true })).toBeVisible();
   await expect(workload.getByRole("link", { name: "Open Tier 2 Cases 54", exact: true })).toBeVisible();
   const queue = page.getByRole("list", { name: "Operational alerts" });
@@ -55,11 +55,11 @@ test("whole-dataset operational workload, filters, priority, pagination, URL and
   await expect(queue.getByRole("button")).toHaveCount(2);
   expect((await queue.getByRole("button").allTextContents()).every(text => text.includes("EXPERT") && text.includes("Unknown / Needs Expert"))).toBe(true);
   await page.screenshot({ path: "test-results/queue-expert.png", fullPage: true });
-  await views.getByRole("tab", { name: "Tier 1 9", exact: true }).click();
-  await expect(queueRegion).toContainText("1–9 of 9");
-  await expect(queue.getByRole("button")).toHaveCount(9);
+  await views.getByRole("tab", { name: "Tier 1 11", exact: true }).click();
+  await expect(queueRegion).toContainText("1–11 of 11");
+  await expect(queue.getByRole("button")).toHaveCount(11);
   expect((await queue.getByRole("button").allTextContents()).every(text => text.includes("Tier 1") && text.includes("Routine Review"))).toBe(true);
-  expect(await scores().evaluateAll(elements => elements.map(element => Number(element.getAttribute("aria-label")!.split(": ")[1])))).toEqual([85,85,40,40,40,40,40,40,40]);
+  expect(await scores().evaluateAll(elements => elements.map(element => Number(element.getAttribute("aria-label")!.split(": ")[1])))).toEqual([85,85,40,40,40,40,40,40,40,20,20]);
   await views.getByRole("tab", { name: "Needs Review 64", exact: true }).click();
   await expect(queueRegion).toContainText("1–50 of 64");
   expect((await queue.getByRole("button").allTextContents()).every(text => text.includes("Review Required: Yes"))).toBe(true);

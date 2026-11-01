@@ -67,7 +67,7 @@ DEVIATION_COLUMNS = {
 }
 DEVIATION_TABLES = {
     # Migration 14, documented in suricata-correlation-auto-routing.md.
-    "suricata_eve_records": {"id","sensor_id","source_record_ref","event_type","flow_id","tx_id","timestamp","raw_snapshot","imported_at"},
+    "suricata_eve_records": {"id","sensor_id","capture_scope","source_record_ref","event_type","flow_id","tx_id","timestamp","raw_snapshot","imported_at"},
     "operational_system_routing": {"operational_alert_id","classification","classification_policy","routing_decision","routing_policy","context_provenance","routing_audit_id","policy_audit_id","case_ref","created_at"},
     "prospective_runs": {"id","run_ref","actor_id","request_id","request_payload","snapshot","created_at"},
     "prospective_run_events": {"id","run_id","actor_id","request_id","request_payload","action","snapshot","created_at"},

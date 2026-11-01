@@ -31,7 +31,7 @@ def build_fixture(path):
             subject_type='ip', subject_value='198.51.100.99', context_key='assetCriticality', value='critical',
             observed_at=now-timedelta(seconds=1), valid_from=now-timedelta(minutes=1), expires_at=now+timedelta(hours=12),
             reason='SYNTHETIC critical asset fixture, not observed production evidence', source_reference='synthetic:asset-register'))
-        stage_file(conn, HITL / 'tests/fixtures/suricata-correlated.json', 'synthetic-correlated-e2e')
+        stage_file(conn, HITL / 'tests/fixtures/suricata-correlated.json', 'synthetic-correlated-e2e', capture_scope='correlated-demo')
         for row in conn.execute('SELECT id FROM external_alert_inbox ORDER BY id').fetchall():
             review = review_eligibility(conn,row[0],actor_id=actor,request=EligibilityRequest(
                 request_id=uuid4(),expected_review_id=None,decision='accepted',reason='SYNTHETIC EVE fixture reviewed'))

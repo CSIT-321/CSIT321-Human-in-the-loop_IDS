@@ -7,9 +7,11 @@ import { useSession } from "../../session/SessionContext";
 import { TrustedContextPanel } from "./TrustedContextPanel";
 import {CollectionRunsPanel,CollectionDecisionPanel,ContextCollectionForm} from "./CollectionPanel";
 
+import { reviewLabels } from "../../features/alert/EffectiveReview";
+
 type View=Schemas["ReviewView"];
 type Disposition=View["disposition"];
-const labels:Record<Disposition,string>={must_review:"Must Review",recommended_review:"Recommended Review",no_immediate_review:"No Immediate Review"};
+const labels:Record<Disposition,string>=reviewLabels;
 const button="rounded-sm border border-border px-3 py-2 text-sm hover:bg-raised disabled:opacity-50";
 const prefix=(role?:string)=>role==="system_admin"?"/admin":role==="evaluator"?"/evaluator":"/analyst";
 const warning="No Immediate Review is an automation decision, not a human verdict.";
@@ -38,7 +40,7 @@ export function ReviewSummary({view}:{view:View}) {
   </div>;
 }
 
-export function SelectiveReviewPanel({alertRef}:{alertRef:string}) {
+export function SelectiveReviewPanel({alertRef,onReview}:{alertRef:string;onReview?:(view:View)=>void}) {
   const {session}=useSession();
   const [reason,setReason]=useState("");
   const [busy,setBusy]=useState(false);
@@ -52,6 +54,8 @@ export function SelectiveReviewPanel({alertRef}:{alertRef:string}) {
   const pending=useRef<{key:string;id:string}|null>(null);
   const resource=useApi(signal=>unwrap(api.GET("/api/v2/alerts/{alertRef}/selective-review",{params:{path:{alertRef}},signal})),[alertRef]);
   const history=useApi(async signal=>historyOpen?unwrap(api.GET("/api/v2/alerts/{alertRef}/selective-review/events",{params:{path:{alertRef},query:{limit:50,offset}},signal})):null,[alertRef,historyOpen,offset,resource.status==="success"?resource.data.version:""]);
+  const onReviewRef=useRef(onReview);onReviewRef.current=onReview;
+  useEffect(()=>{if(resource.status==="success")onReviewRef.current?.(resource.data);},[resource.status==="success"?resource.data.version:""]);
   const reload=resource.reload;
   useEffect(()=>{if(busy)return;const timer=setInterval(reload,15000);return()=>clearInterval(timer);},[reload,busy]);
   const canWrite=session?.role==="security_analyst"||session?.role==="system_admin";

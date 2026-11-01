@@ -8,7 +8,7 @@ import { RoutingDetail, V2RoutingPage } from "./V2RoutingPage";
 import { SessionProvider } from "../../session/SessionContext";
 
 const view: Schemas["RoutingView"] = {
-  detectionSummary: null,
+  effectiveReview: null, detectionSummary: null,
   classification: null, systemRouting: null, caseRef: null, operationalAlertRef: "fe130e6f-af86-4fc6-89f2-bc76b6cad68b", title: "External NIDS alert", detectorName: "Suricata", detectorSource: "suricata",
   stateVersion: "a".repeat(64), reviewReasons: ["Critical asset requires review"], latestDecision: null,
   allowedActions: ["approve_tier2", "reject_tier2", "manual_escalate"],

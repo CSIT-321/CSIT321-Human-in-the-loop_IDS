@@ -12,7 +12,7 @@ from typing import Any
 from packages.contracts import db
 from packages.contracts.models import utc_now
 from .admission_policy import AdmissionPolicy, load_admission_policy
-from .suricata_bundle import SUPPORTED, parse_record, correlation_key, build_bundle, canonical_json
+from .suricata_bundle import SUPPORTED, parse_record, correlation_key, build_bundle, canonical_json, validate_flow
 
 PENDING = "Operational admission: pending; requires separately reviewed Alert Contract V2."
 
@@ -79,14 +79,16 @@ def _has_inbox(conn: sqlite3.Connection) -> bool:
                         "AND name='external_alert_inbox'").fetchone() is not None
 
 
-def _correlated_batch(conn, path, sensor_id, report, dry_run):
+def _correlated_batch(conn, path, sensor_id, capture_scope, report, dry_run):
     """Preserve validated records, then seal complete per-flow snapshots for this offline batch.
 
     Earlier evidence-only batches can contribute. A late change to a sealed detection fails
     the whole import explicitly; it cannot mutate admitted evidence or produce a duplicate.
     """
-    has_records = conn is not None and conn.execute(
-        "SELECT 1 FROM sqlite_master WHERE name='suricata_eve_records'").fetchone() is not None
+    # A dry-run may inspect a pre-scope database without migrating it. Historical
+    # unscoped records cannot contribute to a newly named capture.
+    has_records = conn is not None and any(
+        column[1] == 'capture_scope' for column in conn.execute('PRAGMA table_info(suricata_eve_records)'))
     groups, seen = {}, set()
     for index, raw, error in records(path):
         if error is not None:
@@ -102,7 +104,7 @@ def _correlated_batch(conn, path, sensor_id, report, dry_run):
             report.skipped += 1
             continue
         try:
-            record = parse_record(raw, sensor_id)
+            record = parse_record(raw, sensor_id, capture_scope)
         except (ValueError, TypeError):
             report.invalid += 1
             report.issues.append({'record': index, 'reason': 'invalid EVE evidence'})
@@ -111,40 +113,43 @@ def _correlated_batch(conn, path, sensor_id, report, dry_run):
         if key not in groups:
             groups[key] = {}
             if has_records and record.flow_id is not None:
-                for previous in conn.execute('SELECT raw_snapshot FROM suricata_eve_records WHERE sensor_id=? AND flow_id=?',
-                                             (sensor_id, record.flow_id)):
-                    old = parse_record(json.loads(previous[0]), sensor_id)
+                for previous in conn.execute('SELECT raw_snapshot FROM suricata_eve_records WHERE sensor_id=? AND capture_scope=? AND flow_id=?',
+                                             (sensor_id, capture_scope, record.flow_id)):
+                    old = parse_record(json.loads(previous[0]), sensor_id, capture_scope)
                     groups[key][old.source_record_ref] = old
         groups[key][record.source_record_ref] = record
         exists = record.source_record_ref in seen or (has_records and conn.execute(
-            'SELECT 1 FROM suricata_eve_records WHERE sensor_id=? AND source_record_ref=?',
-            (sensor_id, record.source_record_ref)).fetchone())
+            'SELECT 1 FROM suricata_eve_records WHERE sensor_id=? AND capture_scope=? AND source_record_ref=?',
+            (sensor_id, capture_scope, record.source_record_ref)).fetchone())
         if exists:
             report.duplicate_records += 1
         else:
             if not dry_run:
-                conn.execute('INSERT INTO suricata_eve_records (sensor_id,source_record_ref,event_type,flow_id,tx_id,'
-                    'timestamp,raw_snapshot,imported_at) VALUES (?,?,?,?,?,?,?,?)', (sensor_id,record.source_record_ref,
+                conn.execute('INSERT INTO suricata_eve_records (sensor_id,capture_scope,source_record_ref,event_type,flow_id,tx_id,'
+                    'timestamp,raw_snapshot,imported_at) VALUES (?,?,?,?,?,?,?,?,?)', (sensor_id,capture_scope,record.source_record_ref,
                     record.event_type,record.flow_id,record.tx_id,record.timestamp,canonical_json(record.raw),
                     db.format_timestamp(utc_now())))
             report.preserved += 1
         seen.add(record.source_record_ref)
     for index, group in enumerate(groups.values(), 1):
+        validate_flow(group.values())
         if any(record.event_type == 'alert' for record in group.values()):
             yield index, build_bundle(group.values())
 
 
 def stage_file(conn: sqlite3.Connection | None, path: Path, sensor_id: str, *,
-               policy: AdmissionPolicy | None = None, dry_run: bool = False) -> ImportReport:
+               capture_scope: str, policy: AdmissionPolicy | None = None, dry_run: bool = False) -> ImportReport:
     """Stage a batch atomically. Caller has migrated; dry-run can use a read-only connection.
 
-    Detection identity is sensor + flow_id, or sensor + record hash without flow_id.
+    Detection identity is sensor + explicit capture scope + flow_id (or raw hash).
     Raw record hashes ignore JSON formatting and key order. Invalid evidence is never stored.
     Unsupported native severity may be preserved but cannot enter the alert inbox.
     Infrastructure or sealed-bundle conflicts roll back the batch.
     """
     if not sensor_id.strip():
         raise ValueError("sensor-id must be nonempty")
+    if not isinstance(capture_scope, str) or not 1 <= len(capture_scope) <= 200 or capture_scope != capture_scope.strip() or not capture_scope.strip():
+        raise ValueError('explicit stable capture scope is required')
     policy = policy or load_admission_policy()
     report = ImportReport(dry_run=dry_run)
     has_inbox = conn is not None and _has_inbox(conn)
@@ -155,7 +160,7 @@ def stage_file(conn: sqlite3.Connection | None, path: Path, sensor_id: str, *,
     if conn is not None:
         conn.execute("BEGIN" if dry_run else "BEGIN IMMEDIATE")
     try:
-        for index, alert in _correlated_batch(conn, path, sensor_id, report, dry_run):
+        for index, alert in _correlated_batch(conn, path, sensor_id, capture_scope, report, dry_run):
             identity = str(alert.canonical_alert_id)
             reference = alert.source_record_reference
             previous = conn.execute('SELECT canonical_snapshot FROM external_alert_inbox WHERE canonical_alert_id=?',
@@ -213,12 +218,12 @@ def open_readonly(path: Path) -> sqlite3.Connection:
 
 
 def import_file(path: Path, sensor_id: str, database: Path, *,
-                policy: AdmissionPolicy | None = None, dry_run: bool = False) -> ImportReport:
+                capture_scope: str, policy: AdmissionPolicy | None = None, dry_run: bool = False) -> ImportReport:
     if dry_run:
         if not database.exists():
-            return stage_file(None, path, sensor_id, policy=policy, dry_run=True)
+            return stage_file(None, path, sensor_id, capture_scope=capture_scope, policy=policy, dry_run=True)
         with closing(open_readonly(database)) as conn:
-            return stage_file(conn, path, sensor_id, policy=policy, dry_run=True)
+            return stage_file(conn, path, sensor_id, capture_scope=capture_scope, policy=policy, dry_run=True)
     # Require an existing project database. A typo must not create an empty operational database.
     with closing(sqlite3.connect(database.resolve().as_uri() + "?mode=rw", uri=True)) as conn:
         conn.row_factory = sqlite3.Row
@@ -227,7 +232,7 @@ def import_file(path: Path, sensor_id: str, database: Path, *,
         if not conn.execute("SELECT 1 FROM sqlite_master WHERE type='table' AND name='alerts'").fetchone():
             raise ValueError("expected an existing HITL project database")
         db.migrate(conn)
-        return stage_file(conn, path, sensor_id, policy=policy)
+        return stage_file(conn, path, sensor_id, capture_scope=capture_scope, policy=policy)
 
 
 def inspect_inbox(database: Path, limit: int = 50) -> dict[str, Any]:

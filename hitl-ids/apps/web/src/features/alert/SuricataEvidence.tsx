@@ -36,7 +36,7 @@ export function SuricataEvidence({ detector, summaryOnly }: { detector: Schemas[
       <RecordGroup title="Application Evidence" records={records.filter(record => ["http", "dns", "tls", "ssh", "fileinfo"].includes(text(record.eventType)))} />
       <RecordGroup title="Anomaly Evidence" records={records.filter(record => record.eventType === "anomaly")} />
       <Card title="Correlation Details"><KeyValues rows={[
-        ["Sensor", text(bundle.sensorId)], ["flow_id", text(bundle.flowId)],
+        ["Sensor", text(bundle.sensorId)], ["Capture scope", bundle.captureScope == null ? "Historical unscoped evidence" : text(bundle.captureScope)], ["flow_id", text(bundle.flowId)],
         ["Correlation", text(bundle.correlationBasis).replaceAll("_", " ")],
         ["Transaction IDs", Object.keys(asObject(bundle.transactionRecords)).join(", ") || "Not provided"],
       ]} /><p className="mt-3 text-xs text-muted">Same-flow signatures are supporting evidence within one detection. They do not count as independent campaign alerts.</p></Card>

@@ -48,7 +48,7 @@ def test_populated_migration_does_not_rebuild_or_change_core(tmp_path, sample, p
         schema = list(map(tuple, conn.execute("SELECT name, rootpage, sql FROM sqlite_master "
                                              "WHERE name NOT LIKE 'sqlite_%' ORDER BY name")))
         original_bytes = path.read_bytes()
-        assert import_file(FIXTURE, "dry-run-old-schema", path, dry_run=True).staged == 2
+        assert import_file(FIXTURE, "dry-run-old-schema", path, dry_run=True, capture_scope="staging-test").staged == 2
         assert inspect_inbox(path)["total"] == 0
         assert path.read_bytes() == original_bytes
         assert conn.execute("PRAGMA user_version").fetchone()[0] == 2
@@ -81,7 +81,7 @@ def test_staging_isolated_from_api_feedback_learning_evaluation_and_ip_reports(c
         overview = store.source_ip_security_overview(conn)
         source_ip = conn.execute("SELECT src_ip FROM flow_data LIMIT 1").fetchone()[0]
         ip_report = store.ip_security_report(conn, source_ip)
-        report = stage_file(conn, FIXTURE, "sensor-a")
+        report = stage_file(conn, FIXTURE, "sensor-a", capture_scope="staging-test")
         assert report.staged == 2 and report.parsed == 2
         assert table_rows(conn) == before
         assert metrics.read_queue(conn, truth) == evaluation
@@ -112,14 +112,14 @@ def test_staging_isolated_from_api_feedback_learning_evaluation_and_ip_reports(c
 
 
 def test_idempotent_reformatted_and_concurrent_import(database, tmp_path):
-    first = import_file(FIXTURE, "sensor-a", database)
+    first = import_file(FIXTURE, "sensor-a", database, capture_scope="staging-test")
     moved = tmp_path / "moved.jsonl"
     events = json.loads(FIXTURE.read_text())
     moved.write_text("\n".join(json.dumps(e) for e in reversed(events)), encoding="utf-8")
     assert first.staged == 2
-    assert import_file(moved, "sensor-a", database).duplicate == 2
+    assert import_file(moved, "sensor-a", database, capture_scope="staging-test").duplicate == 2
     with ThreadPoolExecutor(max_workers=2) as pool:
-        results = list(pool.map(lambda _: import_file(moved, "sensor-b", database), range(2)))
+        results = list(pool.map(lambda _: import_file(moved, "sensor-b", database, capture_scope="staging-test"), range(2)))
     assert sorted((r.staged, r.duplicate) for r in results) == [(0, 2), (2, 0)]
     assert inspect_inbox(database)["total"] == 4
 
@@ -132,7 +132,7 @@ def test_invalid_skipped_rejected_and_ground_truth_have_no_rows(database, tmp_pa
     path = tmp_path / "mixed.jsonl"
     path.write_text("\n".join([json.dumps(e) for e in
                     [event, event, {"event_type": "flow"}, bad, truth_event, rejected, {}]] + ["{bad json"]), encoding="utf-8")
-    result = import_file(path, "sensor-a", database)
+    result = import_file(path, "sensor-a", database, capture_scope="staging-test")
     assert (result.parsed, result.staged, result.duplicate, result.skipped,
             result.invalid, result.rejected_by_policy) == (7, 1, 0, 0, 5, 1)
     assert result.duplicate_records == 1
@@ -142,20 +142,20 @@ def test_invalid_skipped_rejected_and_ground_truth_have_no_rows(database, tmp_pa
 
 def test_dry_run_and_inspection_are_read_only(database, tmp_path):
     before = database.read_bytes()
-    result = import_file(FIXTURE, "sensor-a", database, dry_run=True)
+    result = import_file(FIXTURE, "sensor-a", database, dry_run=True, capture_scope="staging-test")
     assert result.staged == 2 and result.dry_run
     assert inspect_inbox(database)["total"] == 0
     assert database.read_bytes() == before
     missing = tmp_path / "missing.db"
-    assert import_file(FIXTURE, "sensor-a", missing, dry_run=True).staged == 2
+    assert import_file(FIXTURE, "sensor-a", missing, dry_run=True, capture_scope="staging-test").staged == 2
     assert not missing.exists()
     with pytest.raises(sqlite3.OperationalError):
-        import_file(FIXTURE, "sensor-a", missing)
+        import_file(FIXTURE, "sensor-a", missing, capture_scope="staging-test")
     assert not missing.exists()
 
 
 def test_canonical_row_is_immutable_even_without_recursive_triggers(database):
-    import_file(FIXTURE, "sensor-a", database)
+    import_file(FIXTURE, "sensor-a", database, capture_scope="staging-test")
     with closing(sqlite3.connect(database)) as conn:
         before = conn.execute("SELECT * FROM external_alert_inbox").fetchall()
         for statement in [
@@ -176,7 +176,7 @@ def test_infrastructure_failure_rolls_back_batch(database):
                      "WHEN NEW.native_severity=3 BEGIN SELECT RAISE(ABORT, 'test failure'); END")
         conn.commit()
         with pytest.raises(sqlite3.IntegrityError, match="test failure"):
-            stage_file(conn, FIXTURE, "sensor-a")
+            stage_file(conn, FIXTURE, "sensor-a", capture_scope="staging-test")
         assert conn.execute("SELECT COUNT(*) FROM external_alert_inbox").fetchone()[0] == 0
 
 
@@ -185,13 +185,13 @@ def test_infrastructure_failure_rolls_back_batch(database):
 def test_malformed_json_is_invalid(database, tmp_path, text):
     path = tmp_path / "invalid.json"
     path.write_text(text, encoding="utf-8")
-    report = import_file(path, "sensor-a", database)
+    report = import_file(path, "sensor-a", database, capture_scope="staging-test")
     assert report.invalid == 1 and report.staged == 0
 
 
 def test_cli_import_and_list(database):
     run = subprocess.run([sys.executable, str(SCRIPT), "--input", str(FIXTURE),
-                          "--sensor-id", "cli", "--database", str(database)],
+                          "--sensor-id", "cli", "--capture-scope", "cli-fixture", "--database", str(database)],
                          capture_output=True, text=True)
     assert run.returncode == 0, run.stderr
     assert json.loads(run.stdout)["staged"] == 2

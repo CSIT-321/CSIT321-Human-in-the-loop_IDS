@@ -88,6 +88,24 @@ class ReviewMutation(V2Contract):
     replayed: bool
 
 
+class EffectiveReview(V2Contract):
+    """Current attention projection, separate from immutable/persisted routing facts."""
+    disposition: Disposition
+    review_required: bool
+    reason_codes: list[str]
+    explanation: str
+    recalled: bool
+    version: str
+
+
+def effective_review(conn, ref):
+    # read_review is the single authority for persisted decisions, live guardrails,
+    # expiry, conflicts and human recall. Never copy its policy into queue SQL.
+    view = read_review(conn, ref)
+    return EffectiveReview(disposition=view.disposition, review_required=view.disposition != 'no_immediate_review',
+        reason_codes=view.reason_codes, explanation=view.explanation, recalled=view.recalled, version=view.version)
+
+
 class ReviewMetrics(V2Contract):
     total_alerts: int
     eligible_alerts: int

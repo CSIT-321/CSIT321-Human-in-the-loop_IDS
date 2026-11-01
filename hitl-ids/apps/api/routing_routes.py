@@ -16,6 +16,7 @@ from apps.api.read_only import ReadConn, ReadPrincipal
 from packages.detection.adapters.operational_v2 import read_triage, read_projection
 from packages.contracts.operational_v2 import OperationalAlertV2, HandlingRouteV2, PriorityBandV2
 from packages.contracts.suricata_bundle import AttackCategory
+from packages.detection.selective_review import Disposition, effective_review
 from packages.detection.routing import (
     RoutingRequest, RoutingAction, RoutingConflict, allowed_actions, decode_audit,
     route_alert, state_version,
@@ -34,7 +35,7 @@ def _id(conn, ref):
     return row[0]
 
 
-def _view(conn, alert_id, principal):
+def _view(conn, alert_id, principal, review=None):
     row = conn.execute('SELECT * FROM operational_alerts_v2 WHERE id=?', (alert_id,)).fetchone()
     state = read_triage(conn, alert_id)
     audit = conn.execute('SELECT * FROM operational_routing_audit WHERE operational_alert_id=? '
@@ -42,7 +43,8 @@ def _view(conn, alert_id, principal):
     case = conn.execute('SELECT case_ref FROM tier2_cases WHERE primary_operational_alert_id=?', (alert_id,)).fetchone()
     system = conn.execute('SELECT classification,routing_decision FROM operational_system_routing WHERE operational_alert_id=?', (alert_id,)).fetchone()
     bundle = json.loads(row['detector_evidence']).get('structured_evidence', {}).get('suricataBundle')
-    return RoutingView(classification=json.loads(system['classification']) if system else None,
+    return RoutingView(effective_review=review or effective_review(conn, row['operational_alert_ref']),
+        classification=json.loads(system['classification']) if system else None,
         detection_summary=QueueDetectionSummary(source_ip=row['source_ip'], destination_ip=row['destination_ip'],
             destination_port=row['destination_port'], occurred_at=row['occurred_at'],
             related_signature_count=len(bundle['relatedSignatures']) if bundle else None,
@@ -58,25 +60,28 @@ def _view(conn, alert_id, principal):
 def list_routing(conn: ReadConn, principal: ReadPrincipal, limit: int = Query(50, ge=1, le=200),
                  offset: int = Query(0, ge=0),
                  handlingRoute: HandlingRouteV2 | None = None, reviewRequired: bool | None = None,
+                 reviewDisposition: Disposition | None = None,
                  priorityBand: PriorityBandV2 | None = None,
                  routeClass: Literal['ROUTINE_REVIEW', 'CRITICAL_ESCALATION', 'EXPERT_REVIEW_REQUIRED'] | None = None,
                  attackCategory: AttackCategory | None = None, q: str | None = Query(None, max_length=200),
                  sort: Literal['priority_desc'] = 'priority_desc'):
     """Filter the full V2 dataset before paging. Order: Operational Priority DESC (null last),
-    occurredAt instant DESC, operationalAlertRef ASC. No policy is applied on read."""
+    occurredAt instant DESC, operationalAlertRef ASC. Attention is evaluated read-only."""
     with conn:
         conn.execute('BEGIN')
-        total, ids = operational_queue.queue_page(conn, limit=limit, offset=offset,
+        reviews = {}
+        total, ids = operational_queue.queue_page(conn, limit=limit, offset=offset, reviews=reviews,
             handling_route=handlingRoute, review_required=reviewRequired, priority_band=priorityBand,
+            review_disposition=reviewDisposition,
             route_class=routeClass, attack_category=attackCategory, q=q)
-        items = [_view(conn, alert_id, principal) for alert_id in ids]
+        items = [_view(conn, alert_id, principal, reviews.get(alert_id)) for alert_id in ids]
         return Page(items=items, page=PageInfo(total=total, limit=limit, offset=offset, returned=len(items)))
 
 
 @router.get('/summary', response_model=OperationalSummary, operation_id='getV2AlertsSummary')
 def get_summary(conn: ReadConn, principal: ReadPrincipal):
     """Whole-dataset current operational counts; categories intentionally overlap.
-    Read-only connection and one snapshot, with no migration/materialization/recomputation."""
+    One read-only snapshot; evaluate effective attention without changing stored state."""
     with conn:
         conn.execute('BEGIN')
         return operational_queue.summary(conn)

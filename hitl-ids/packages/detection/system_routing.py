@@ -58,7 +58,7 @@ def evaluate_system_route(classification, priority, context, policy=None):
         critical.append(f'Trusted repeated campaign AND {context.correlated_alert_count} independent alerts meet threshold {policy.campaign_alert_threshold}; same-flow signatures are not counted.')
     # Classification uncertainty stays visible even if strong risk is also present.
     route_class = 'EXPERT_REVIEW_REQUIRED' if expert else 'CRITICAL_ESCALATION' if critical else 'ROUTINE_REVIEW'
-    reasons = expert + critical or ['Known attack classification; no configured trusted critical or expert condition is satisfied. Routine Tier 1 review.']
+    reasons = expert + critical or [('Explicit informational/policy signal; ' if classification.status == 'informational_policy_signal' else 'Known attack classification; ') + 'no configured trusted critical or expert condition is satisfied. Routine Tier 1 review.']
     return SystemRoutingDecision(route_class=route_class, route='tier2_case' if expert or critical else 'tier1_review',
         policy_version=policy.version, reasons=tuple(reasons))
 

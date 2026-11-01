@@ -2,8 +2,7 @@
  * The workstation's top bar: identity and data provenance on the left; the UTC clock, the signed-in
  * account and sign-out on the right.
  *
- * "Recorded flows" replaces the reference design's LIVE feed badge: this console scores recorded lab
- * traffic (CSE-CIC-IDS2018), and a live indicator would be a claim the system cannot make.
+ * Imported evidence describes the current offline Suricata workflow without claiming a live feed.
  *
  * There is no role switch. Since S18a the view belongs to the account signed in; to see another
  * view, sign out and sign in as that account.
@@ -60,10 +59,10 @@ export function TopBar() {
         <span className="hidden truncate text-xs text-muted md:inline">Human-in-the-loop triage</span>
         <span
           className="hidden items-center gap-1.5 rounded-sm border border-border bg-surface px-2 py-0.5 font-mono text-[11px] uppercase tracking-wider text-muted lg:inline-flex"
-          title="Scores recorded CSE-CIC-IDS2018 flows; nothing here is a live feed"
+          title="Imported Suricata evidence, classification, Operational Priority and system routing; not a live feed"
         >
           <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-dim" />
-          Recorded flows
+          Imported evidence
         </span>
       </div>
       <div className="flex items-center gap-2 sm:gap-3">

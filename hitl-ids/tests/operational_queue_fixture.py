@@ -1,7 +1,6 @@
 """Disposable queue read-model fixture shared by HTTP tests and browser rehearsal.
 
-All detections/cases use real staging/admission. Two no-review rows are explicitly
-seeded current-state examples (not a policy experiment); the production policy is untouched.
+All detections/cases use real staging/admission. No-review rows are earned through real memory, trusted context and Selective Review; no routing state is fabricated.
 """
 from contextlib import closing
 from copy import deepcopy
@@ -9,6 +8,12 @@ from datetime import timedelta
 import json
 from pathlib import Path
 from uuid import uuid4
+from hashlib import sha256
+from pre_freeze_fixture import safe_context, review_request, defer
+from packages.detection import triage_memory as memory
+from packages.detection.adapters.operational_v2 import read_projection
+from packages.detection.adapters.suricata_bundle import build_bundle, parse_record
+from packages.detection.context_store import seed_synthetic_facts
 
 from apps.api import auth
 from packages.contracts import db, models as m
@@ -34,23 +39,34 @@ def build_queue_fixture(path):
         events = []
         groups = [(52, 'Critical SQL injection', 1, '198.51.100.99'), (2, 'Unresolved encrypted pattern', 2, '198.51.100.2'),
                   (2, 'High SSH brute force', 1, '198.51.100.3'), (7, 'Routine port scan', 3, '198.51.100.4'),
-                  (2, 'No-review port scan', 4, '198.51.100.5')]
+                  (2, 'No-review port scan', 4, '198.51.100.4')]
         for count, title, severity, destination in groups:
             for i in range(count):
                 event = deepcopy(template)
                 event.update(flow_id=len(events)+1000, dest_ip=destination, timestamp=f'2026-10-31T12:{len(events):02d}:00+0000' if len(events)<60 else f'2026-10-31T13:{len(events)-60:02d}:00+0000')
                 event['alert'].update(signature=f'SYNTHETIC {title} {i+1:02d}', severity=severity)
+                if title in ('Routine port scan', 'No-review port scan'):
+                    event['alert']['signature'] = 'SYNTHETIC Routine port scan'
+                if title == 'No-review port scan':
+                    event['flow_id'] += 100000
+                    while int(sha256(str(build_bundle([parse_record(event,'synthetic-queue','queue-demo')]).canonical_alert_id).encode()).hexdigest()[:8],16)%100 < 10:
+                        event['flow_id'] += 100
                 events.append(event)
         eve = Path(path).with_suffix('.eve.json')
         eve.write_text(json.dumps(events), encoding='utf-8')
-        stage_file(conn, eve, 'synthetic-queue')
+        stage_file(conn, eve, 'synthetic-queue', capture_scope='queue-demo')
         for row in conn.execute('SELECT id FROM external_alert_inbox ORDER BY id').fetchall():
             review = review_eligibility(conn,row[0],actor_id=actor,request=EligibilityRequest(
                 request_id=uuid4(),expected_review_id=None,decision='accepted',reason='SYNTHETIC fixture reviewed'))
             admit_external(conn,row[0],actor_id=actor,request=AdmissionRequest(
                 request_id=uuid4(),expected_review_id=review['id'],reason='SYNTHETIC queue admission'))
-        with conn:
-            conn.execute("UPDATE operational_triage_state_v2 SET handling_route='no_immediate_review', review_required=0, review_reason='SYNTHETIC persisted no-review example' WHERE operational_alert_id IN (SELECT id FROM operational_alerts_v2 WHERE detection_title LIKE '%No-review%')")
+        routine=[read_projection(conn,row[0]) for row in conn.execute("SELECT id FROM operational_alerts_v2 WHERE detection_title='SYNTHETIC Routine port scan' ORDER BY id")]
+        for alert in routine: seed_synthetic_facts(conn,alert,safe_context(),m.utc_now())
+        for alert in routine[:3]:
+            lesson=memory.record_review(conn,alert.operational_alert_ref,actor_id=actor,request=review_request(conn,alert)).memory
+        memory.decide_memory(conn,lesson.lesson.lesson_ref,actor_id=actor,action='activate',request=memory.MemoryDecisionRequest(
+            request_id=uuid4(),expected_revision=lesson.revision,reason='SYNTHETIC scoped scanner lesson'))
+        for alert in routine[-2:]: assert defer(conn,alert,actor).disposition=='no_immediate_review'
         # One case in each currently supported open status.
         case_ref = conn.execute('SELECT case_ref FROM tier2_cases ORDER BY id LIMIT 1').fetchone()[0]
         mutate_case(conn, case_ref, actor_id=actor, action='start', request=CaseCommand(request_id=uuid4(), expected_revision=1, reason='SYNTHETIC investigation'))

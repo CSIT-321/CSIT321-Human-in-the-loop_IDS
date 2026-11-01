@@ -143,14 +143,16 @@ returns a JWT bearer token; send it as `Authorization: Bearer <token>` on every 
 token, a forged token or an expired one is a 401. The role gates only where a role genuinely gates
 an action, so `PUT /api/config/guardrails` refuses anything but `system_admin`.
 
-**Queue ordering is fixed by contract**: `{QUEUE_ORDER}`. Feedback moves an alert between queue
+**Historical /api/alerts queue ordering**: `{QUEUE_ORDER}`. Feedback moves an alert between queue
 *bands*, never across evidence classes, so a client that re-sorts by `evidenceClass` will hide the
 re-ranking the system exists to perform.
+
+**Current operational workflow:** Suricata evidence → normalized classification → Operational Priority → System Routing → human investigation. V2 queues rank Operational Priority DESC, event time DESC, then reference; they do not use legacy feedback scoring.
 
 **Alerts are addressed by UUID.** V2 routing uses the separate operational alert UUID;
 V2 state/audit bodies include internal correlation ids, never legacy alert identifiers.
 
-**Every flow becomes an alert**, including flows no detector flagged. They are the queue's bottom
+**In the historical recorded-flow pipeline, every flow becomes an alert**, including flows no detector flagged. They are the queue's bottom
 band and the evaluation's denominator.
 """.strip()
 
@@ -582,21 +584,22 @@ def _paths() -> dict[str, Any]:
     # the literal above.
     paths['/api/v2/alerts'] = {'get': {
         'operationId': 'listV2Routing', 'summary': 'List explicitly materialized V2 alerts',
-        'description': 'Whole-dataset composable filters before pagination. Operational Priority DESC (null last), occurredAt instant DESC, operationalAlertRef ASC. No scoring or policy application on GET.',
+        'description': 'Whole-dataset composable filters before pagination. Operational Priority DESC (null last), occurredAt instant DESC, operationalAlertRef ASC. No scoring or routing mutations on GET; effective attention is evaluated read-only.',
         'tags': ['V2 routing'], 'parameters': [AUTH_PARAMETER,
             {'name': 'limit', 'in': 'query', 'schema': {'type': 'integer', 'minimum': 1, 'maximum': 200, 'default': 50}},
             {'name': 'offset', 'in': 'query', 'schema': {'type': 'integer', 'minimum': 0, 'default': 0}},
             *[{'name': name, 'in': 'query', 'schema': {'type': 'string', 'enum': list(values)}} for name, values in (
                 ('handlingRoute', get_args(HandlingRouteV2)), ('priorityBand', get_args(PriorityBandV2)),
                 ('routeClass', ['ROUTINE_REVIEW', 'CRITICAL_ESCALATION', 'EXPERT_REVIEW_REQUIRED']),
-                ('attackCategory', get_args(AttackCategory)))],
+                ('attackCategory', get_args(AttackCategory)),
+                ('reviewDisposition', ['must_review', 'recommended_review', 'no_immediate_review']))],
             {'name': 'reviewRequired', 'in': 'query', 'schema': {'type': 'boolean'}},
             {'name': 'q', 'in': 'query', 'schema': {'type': 'string', 'maxLength': 200}},
             {'name': 'sort', 'in': 'query', 'schema': {'type': 'string', 'enum': ['priority_desc'], 'default': 'priority_desc'}}],
         'responses': {'200': {'description': 'V2 routing page', **_page_of(RoutingView)}, **_errors(400, 503)}}}
     paths['/api/v2/alerts/summary'] = {'get': {
         'operationId': 'getV2AlertsSummary', 'summary': 'Read whole-dataset operational workload',
-        'description': 'Authenticated read-only consistent snapshot of persisted current V2 values. Categories intentionally overlap. No filtering, recomputation, migration or materialization.',
+        'description': 'Authenticated read-only consistent snapshot of persisted current V2 values. Categories intentionally overlap. Effective review attention is evaluated read-only; no scoring, routing changes, migration or materialization.',
         'tags': ['V2 routing'], 'parameters': [AUTH_PARAMETER],
         'responses': {'200': {'description': 'Current operational counts', **_json(OperationalSummary)}, **_errors(503)}}}
     paths['/api/v2/alerts/{alertRef}/triage-state'] = {'get': {

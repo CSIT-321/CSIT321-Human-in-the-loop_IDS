@@ -57,7 +57,7 @@ test("correlated Suricata: routine, multiple signatures, automatic expert/critic
   for (const [title, routeClass] of [["SYNTHETIC Unresolved encrypted protocol pattern", "Expert Review Required"], ["SYNTHETIC SQL injection attempt", "Critical Escalation"]]) {
     await select(title);
     await expect(page.getByRole("region", { name: "System Routing", exact: true })).toContainText(routeClass);
-    if (routeClass === "Expert Review Required") await expect(page.getByText("Unknown / Needs Expert", { exact: true })).toBeVisible();
+    if (routeClass === "Expert Review Required") await expect(page.getByRole("tabpanel", { name: "Overview" }).getByText("Unknown / Needs Expert", { exact: true })).toBeVisible();
     await expect(page.getByRole("button", { name: "Approve Tier 2" })).toHaveCount(0);
     await expect(page.getByRole("button", { name: "Escalate to Tier 2" })).toHaveCount(0);
     const alertUrl = page.url();

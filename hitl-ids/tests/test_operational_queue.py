@@ -51,7 +51,7 @@ def test_whole_dataset_summary_overlap_and_readonly_snapshot(api, queue_db, monk
     monkeypatch.setattr(sqlite3, 'connect', traced)
     response = api.get('/api/v2/alerts/summary')
     assert response.status_code == 200
-    assert response.json() == dict(totalAlerts=66, criticalAlerts=54, tier1Review=9, tier2Cases=54,
+    assert response.json() == dict(totalAlerts=66, criticalAlerts=54, tier1Review=11, tier2Cases=54,
         expertReview=2, reviewRequired=64, noImmediateReview=2, openTier2Cases=54)
     assert traces.count('BEGIN') == 1 and traces.count('COMMIT') == 1
     assert all(not sql.lstrip().upper().startswith(('INSERT','UPDATE','DELETE','CREATE','ALTER','REPLACE')) for sql in traces)
@@ -61,10 +61,10 @@ def test_whole_dataset_summary_overlap_and_readonly_snapshot(api, queue_db, monk
 
 
 @pytest.mark.parametrize('query,total', [
-    ({'handlingRoute':'tier2_case'},54), ({'handlingRoute':'tier1_review'},9),
+    ({'handlingRoute':'tier2_case'},54), ({'handlingRoute':'tier1_review'},11),
     ({'routeClass':'EXPERT_REVIEW_REQUIRED'},2), ({'priorityBand':'P1'},54),
     ({'priorityBand':'critical'},54), ({'reviewRequired':True},64),
-    ({'reviewRequired':False},2), ({'handlingRoute':'no_immediate_review'},2),
+    ({'reviewRequired':False},2), ({'reviewDisposition':'no_immediate_review'},2),
     ({'attackCategory':'web_attack'},52),
     ({'routeClass':'EXPERT_REVIEW_REQUIRED','attackCategory':'unknown_needs_expert'},2),
     ({'handlingRoute':'tier1_review','attackCategory':'web_attack'},0),
@@ -81,7 +81,7 @@ def test_filters_apply_before_pagination(api, query, total):
         assert page(api, **query, offset=total)['items'] == []
     for row in all_rows:
         if 'handlingRoute' in query: assert row['state']['handlingRoute'] == query['handlingRoute']
-        if 'reviewRequired' in query: assert row['state']['reviewRequired'] == query['reviewRequired']
+        if 'reviewRequired' in query: assert row['effectiveReview']['reviewRequired'] == query['reviewRequired']
         if 'attackCategory' in query: assert row['classification']['attackCategory'] == query['attackCategory']
         if 'routeClass' in query: assert row['systemRouting']['routeClass'] == query['routeClass']
         if 'priorityBand' in query: assert row['state']['priorityBand'] == 'P1'

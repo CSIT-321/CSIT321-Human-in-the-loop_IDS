@@ -67,8 +67,8 @@ def validate_source(row):
         canonical = alert.detector_evidence
         raw = canonical.model_dump(mode='json')['original_detector_fields']
         reference = 'eve-sha256:' + hashlib.sha256(_json(raw).encode()).hexdigest()
-        if canonical.provenance.get('adapterVersion') == 'suricata-bundle-v1':
-            reconstructed = build_bundle([parse_record(event, row['sensor_id']) for event in raw['events']],
+        if canonical.provenance.get('adapterVersion') in ('suricata-bundle-v1', 'suricata-bundle-v2'):
+            reconstructed = build_bundle([parse_record(event, row['sensor_id'], canonical.provenance.get('captureScope')) for event in raw['events']],
                                          detector_version=canonical.detector_version)
         else:
             reconstructed = SuricataEveAdapter().adapt(SuricataOutput(
@@ -170,7 +170,7 @@ def admit_external(conn: sqlite3.Connection, inbox_id: int, *, actor_id: int,
         if conn.execute('SELECT 1 FROM operational_alerts_v2 WHERE external_inbox_id=?', (inbox_id,)).fetchone():
             raise AdmissionConflict('pre-existing projection is outside this admission workflow; manual reconciliation required')
         alert = materialize_source(conn, 'external_nids_alert', inbox_id, _admission_transaction=True)
-        if alert.detector_evidence.provenance.get('adapterVersion') == 'suricata-bundle-v1':
+        if alert.detector_evidence.provenance.get('adapterVersion') in ('suricata-bundle-v1', 'suricata-bundle-v2'):
             if trusted_context is not None:
                 raise AdmissionConflict('bundled detections require persisted trusted facts, not caller-supplied context')
             policy_audit_id, routing = admit_system_route(conn, alert, request.request_id)

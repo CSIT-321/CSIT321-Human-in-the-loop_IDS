@@ -33,6 +33,70 @@ function reads(request: Request) {
 }
 
 describe("unified operational workstation", () => {
+  it("uses effective attention across the queue, header, rail and panel, then refreshes on recall", async () => {
+    let recalled = false;
+    const decision = () => ({ operationalAlertRef: ref, version: (recalled ? "c" : "b").repeat(64),
+      disposition: recalled ? "must_review" : "no_immediate_review", reasonCodes: [], explanation: "Current trusted review decision",
+      recalled, humanOverride: recalled, eligibleAlert: true, priority: 85, lastDecision: null,
+      policyEvaluation: { inputs: { matches: [] }, result: { policyVersion: "selective-review-v1" } } });
+    const projected = () => ({ ...view, effectiveReview: { ...decision(), reviewRequired: recalled } });
+    const requests = stubFetch(request => {
+      const url = new URL(request.url);
+      if (request.method === "POST") { recalled = true; return jsonResponse({}); }
+      if (url.pathname === "/api/v2/alerts/summary") return jsonResponse({ ...summary, totalAlerts: 1, noImmediateReview: recalled ? 0 : 1, reviewRequired: recalled ? 1 : 0 });
+      if (url.pathname === "/api/v2/alerts") {
+        const items = recalled && url.searchParams.get("reviewDisposition") === "no_immediate_review" ? [] : [projected()];
+        return jsonResponse({ items, page: { ...empty.page, total: items.length } });
+      }
+      if (url.pathname.endsWith("/triage-state")) return jsonResponse(projected());
+      if (url.pathname.endsWith("/selective-review")) return jsonResponse(decision());
+      return reads(request);
+    });
+    renderApp("/analyst/operations?alertRef=" + ref, { session });
+    const workload = screen.getByRole("region", { name: "Operational workload" });
+    await userEvent.click(await within(workload).findByRole("button", { name: "No Immediate Review 1" }));
+    await waitFor(() => expect(requests.some(request => new URL(request.url).searchParams.get("reviewDisposition") === "no_immediate_review")).toBe(true));
+    const detail = screen.getByRole("region", { name: "Operational alert workspace" });
+    const rail = screen.getByRole("complementary", { name: "Context and assistance" });
+    expect(detail).toHaveTextContent("Review Disposition: No Immediate Review");
+    expect(rail).toHaveTextContent("Review Required: No");
+    expect(screen.getByRole("list", { name: "Operational alerts" })).toHaveTextContent("Review Required: No");
+    await userEvent.click(within(detail).getByRole("tab", { name: "Context & Review" }));
+    const panel = await within(detail).findByRole("region", { name: "Selective Human Review" });
+    expect(await within(panel).findByText("No Immediate Review", { exact: true })).toBeVisible();
+    await userEvent.type(within(panel).getByLabelText("Review policy or override reason"), "Inspect this alert");
+    await userEvent.click(within(panel).getByRole("button", { name: "Require Human Review" }));
+    expect(await within(workload).findByRole("button", { name: "No Immediate Review 0" })).toBeVisible();
+    expect(within(workload).getByRole("button", { name: "Needs Review 1" })).toBeVisible();
+    await waitFor(() => expect(screen.getByRole("list", { name: "Operational alerts" })).toBeEmptyDOMElement());
+    expect(await within(panel).findByText("Human Review Required", { exact: true })).toBeVisible();
+    expect(detail).toHaveTextContent("Review Disposition: Human Review Required");
+    expect(rail).toHaveTextContent("Review Required: Yes");
+    expect(requests.filter(request => request.method === "POST").map(request => new URL(request.url).pathname))
+      .toEqual([`/api/v2/alerts/${ref}/selective-review/require-human`]);
+  });
+
+  it("shows informational status separately from attack category and expert routing", async () => {
+    const informational = { ...view, classification: { attackCategory: null, status: "informational_policy_signal",
+      reasons: ["Explicit versioned signal rule"], source: "deterministic_suricata_mapping", policyVersion: "suricata-classification-v2" },
+      systemRouting: { routeClass: "ROUTINE_REVIEW", route: "tier1_review", reasons: ["Normal review"], policyVersion: "system-routing-v1" } };
+    stubFetch(request => {
+      const path = new URL(request.url).pathname;
+      if (path === "/api/v2/alerts") return jsonResponse({ ...empty, items: [informational] });
+      if (path.endsWith("/triage-state")) return jsonResponse(informational);
+      return reads(request);
+    });
+    renderApp("/analyst/operations?alertRef=" + ref, { session });
+    await screen.findByRole("heading", { name: view.title });
+    const detail = screen.getByRole("region", { name: "Operational alert workspace" });
+    expect(await within(detail).findByText("Informational / Policy Signal", { exact: true })).toBeVisible();
+    expect(detail).toHaveTextContent("Classification: Informational / Policy Signal");
+    expect(detail).toHaveTextContent("Routine Review");
+    expect(detail).not.toHaveTextContent("Unknown / Needs Expert");
+    expect(detail).not.toHaveTextContent("Attack Category:");
+    expect(within(detail).queryByRole("link", { name: "Open Tier 2 Case" })).toBeNull();
+  });
+
   it("loads a deep-linked alert outside the current page without replacing server order", async () => {
     stubFetch(request => new URL(request.url).pathname === "/api/v2/alerts" ? jsonResponse(empty) : reads(request));
     renderApp("/analyst/operations?alertRef=" + ref, { session });

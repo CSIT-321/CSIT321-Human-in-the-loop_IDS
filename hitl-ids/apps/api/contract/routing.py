@@ -5,6 +5,7 @@ from packages.contracts.operational_v2 import OperationalTriageStateV2
 from packages.detection.routing import RoutingAction, RoutingAudit
 from packages.detection.tier2_cases import CaseView
 from packages.contracts.suricata_bundle import AttackClassification, SystemRoutingDecision
+from packages.detection.selective_review import EffectiveReview
 
 
 class OperationalSummary(ApiModel):
@@ -42,6 +43,7 @@ class RoutingView(ApiModel):
     classification: AttackClassification | None = None
     system_routing: SystemRoutingDecision | None = None
     detection_summary: QueueDetectionSummary | None = None
+    effective_review: EffectiveReview | None = None
 
 
 class RoutingResponse(ApiModel):

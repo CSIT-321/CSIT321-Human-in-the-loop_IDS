@@ -513,20 +513,55 @@
         "additionalProperties": false,
         "properties": {
           "attackCategory": {
-            "enum": [
-              "brute_force",
-              "botnet_c2",
-              "dos",
-              "ddos",
-              "web_attack",
-              "infiltration",
-              "reconnaissance_port_scan",
-              "malware_exploit",
-              "other_known_attack",
-              "unknown_needs_expert"
+            "anyOf": [
+              {
+                "enum": [
+                  "brute_force",
+                  "botnet_c2",
+                  "dos",
+                  "ddos",
+                  "web_attack",
+                  "infiltration",
+                  "reconnaissance_port_scan",
+                  "malware_exploit",
+                  "other_known_attack",
+                  "unknown_needs_expert"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
             ],
-            "title": "Attackcategory",
-            "type": "string"
+            "title": "Attackcategory"
+          },
+          "conflictingCategories": {
+            "default": [],
+            "items": {
+              "enum": [
+                "brute_force",
+                "botnet_c2",
+                "dos",
+                "ddos",
+                "web_attack",
+                "infiltration",
+                "reconnaissance_port_scan",
+                "malware_exploit",
+                "other_known_attack",
+                "unknown_needs_expert"
+              ],
+              "type": "string"
+            },
+            "title": "Conflictingcategories",
+            "type": "array"
+          },
+          "matches": {
+            "default": [],
+            "items": {
+              "$ref": "#/components/schemas/ClassificationMatch"
+            },
+            "title": "Matches",
+            "type": "array"
           },
           "policyVersion": {
             "title": "Policyversion",
@@ -550,7 +585,8 @@
             "enum": [
               "mapped",
               "unmapped",
-              "conflict"
+              "conflict",
+              "informational_policy_signal"
             ],
             "title": "Status",
             "type": "string"
@@ -1167,6 +1203,64 @@
         "title": "ClassMetrics",
         "type": "object"
       },
+      "ClassificationMatch": {
+        "additionalProperties": false,
+        "properties": {
+          "category": {
+            "anyOf": [
+              {
+                "enum": [
+                  "brute_force",
+                  "botnet_c2",
+                  "dos",
+                  "ddos",
+                  "web_attack",
+                  "infiltration",
+                  "reconnaissance_port_scan",
+                  "malware_exploit",
+                  "other_known_attack",
+                  "unknown_needs_expert"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Category"
+          },
+          "field": {
+            "title": "Field",
+            "type": "string"
+          },
+          "ruleId": {
+            "title": "Ruleid",
+            "type": "string"
+          },
+          "signatureId": {
+            "title": "Signatureid",
+            "type": "integer"
+          },
+          "sourceRecordRef": {
+            "title": "Sourcerecordref",
+            "type": "string"
+          },
+          "value": {
+            "title": "Value",
+            "type": "string"
+          }
+        },
+        "required": [
+          "ruleId",
+          "sourceRecordRef",
+          "signatureId",
+          "field",
+          "value",
+          "category"
+        ],
+        "title": "ClassificationMatch",
+        "type": "object"
+      },
       "CollectionDocument": {
         "additionalProperties": false,
         "properties": {
@@ -1603,6 +1697,54 @@
           "startedAt"
         ],
         "title": "DetectionRunSummary",
+        "type": "object"
+      },
+      "EffectiveReview": {
+        "additionalProperties": false,
+        "description": "Current attention projection, separate from immutable/persisted routing facts.",
+        "properties": {
+          "disposition": {
+            "enum": [
+              "must_review",
+              "recommended_review",
+              "no_immediate_review"
+            ],
+            "title": "Disposition",
+            "type": "string"
+          },
+          "explanation": {
+            "title": "Explanation",
+            "type": "string"
+          },
+          "reasonCodes": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Reasoncodes",
+            "type": "array"
+          },
+          "recalled": {
+            "title": "Recalled",
+            "type": "boolean"
+          },
+          "reviewRequired": {
+            "title": "Reviewrequired",
+            "type": "boolean"
+          },
+          "version": {
+            "title": "Version",
+            "type": "string"
+          }
+        },
+        "required": [
+          "disposition",
+          "reviewRequired",
+          "reasonCodes",
+          "explanation",
+          "recalled",
+          "version"
+        ],
+        "title": "EffectiveReview",
         "type": "object"
       },
       "EligibilityRequest": {
@@ -7386,6 +7528,17 @@
             "default": null,
             "title": "Detectorsource"
           },
+          "effectiveReview": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/EffectiveReview"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
           "latestDecision": {
             "anyOf": [
               {
@@ -8875,7 +9028,7 @@
     }
   },
   "info": {
-    "description": "The demo API for the Human-in-the-Loop IDS dashboard (FYP-26-S3-13).\n\n**Deliberately narrow.** Only the endpoints the demo path exercises; the remaining TDM surface is\nS18. Adding endpoints \"while we're here\" is on the plan's anti-pattern list.\n\n**Authentication is real (S18a).** `POST /api/auth/login` with one of the three seeded accounts\nreturns a JWT bearer token; send it as `Authorization: Bearer <token>` on every other request. No\ntoken, a forged token or an expired one is a 401. The role gates only where a role genuinely gates\nan action, so `PUT /api/config/guardrails` refuses anything but `system_admin`.\n\n**Queue ordering is fixed by contract**: `CASE severity WHEN 'Critical' THEN 4 WHEN 'High' THEN 3 WHEN 'Medium' THEN 2 WHEN 'Low' THEN 1 ELSE 0 END DESC, combined_score DESC, id ASC`. Feedback moves an alert between queue\n*bands*, never across evidence classes, so a client that re-sorts by `evidenceClass` will hide the\nre-ranking the system exists to perform.\n\n**Alerts are addressed by UUID.** V2 routing uses the separate operational alert UUID;\nV2 state/audit bodies include internal correlation ids, never legacy alert identifiers.\n\n**Every flow becomes an alert**, including flows no detector flagged. They are the queue's bottom\nband and the evaluation's denominator.",
+    "description": "The demo API for the Human-in-the-Loop IDS dashboard (FYP-26-S3-13).\n\n**Deliberately narrow.** Only the endpoints the demo path exercises; the remaining TDM surface is\nS18. Adding endpoints \"while we're here\" is on the plan's anti-pattern list.\n\n**Authentication is real (S18a).** `POST /api/auth/login` with one of the three seeded accounts\nreturns a JWT bearer token; send it as `Authorization: Bearer <token>` on every other request. No\ntoken, a forged token or an expired one is a 401. The role gates only where a role genuinely gates\nan action, so `PUT /api/config/guardrails` refuses anything but `system_admin`.\n\n**Historical /api/alerts queue ordering**: `CASE severity WHEN 'Critical' THEN 4 WHEN 'High' THEN 3 WHEN 'Medium' THEN 2 WHEN 'Low' THEN 1 ELSE 0 END DESC, combined_score DESC, id ASC`. Feedback moves an alert between queue\n*bands*, never across evidence classes, so a client that re-sorts by `evidenceClass` will hide the\nre-ranking the system exists to perform.\n\n**Current operational workflow:** Suricata evidence → normalized classification → Operational Priority → System Routing → human investigation. V2 queues rank Operational Priority DESC, event time DESC, then reference; they do not use legacy feedback scoring.\n\n**Alerts are addressed by UUID.** V2 routing uses the separate operational alert UUID;\nV2 state/audit bodies include internal correlation ids, never legacy alert identifiers.\n\n**In the historical recorded-flow pipeline, every flow becomes an alert**, including flows no detector flagged. They are the queue's bottom\nband and the evaluation's denominator.",
     "title": "HITL IDS demo API",
     "version": "0.1.0"
   },
@@ -11958,7 +12111,7 @@
     },
     "/api/v2/alerts": {
       "get": {
-        "description": "Whole-dataset composable filters before pagination. Operational Priority DESC (null last), occurredAt instant DESC, operationalAlertRef ASC. No scoring or policy application on GET.",
+        "description": "Whole-dataset composable filters before pagination. Operational Priority DESC (null last), occurredAt instant DESC, operationalAlertRef ASC. No scoring or routing mutations on GET; effective attention is evaluated read-only.",
         "operationId": "listV2Routing",
         "parameters": [
           {
@@ -12055,6 +12208,18 @@
           },
           {
             "in": "query",
+            "name": "reviewDisposition",
+            "schema": {
+              "enum": [
+                "must_review",
+                "recommended_review",
+                "no_immediate_review"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
             "name": "reviewRequired",
             "schema": {
               "type": "boolean"
@@ -12145,7 +12310,7 @@
     },
     "/api/v2/alerts/summary": {
       "get": {
-        "description": "Authenticated read-only consistent snapshot of persisted current V2 values. Categories intentionally overlap. No filtering, recomputation, migration or materialization.",
+        "description": "Authenticated read-only consistent snapshot of persisted current V2 values. Categories intentionally overlap. Effective review attention is evaluated read-only; no scoring, routing changes, migration or materialization.",
         "operationId": "getV2AlertsSummary",
         "parameters": [
           {
