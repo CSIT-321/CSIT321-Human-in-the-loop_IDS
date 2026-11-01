@@ -10,7 +10,7 @@ import sys
 
 import pytest
 
-from packages.contracts import db
+from packages.contracts import db, models as m
 from packages.evaluation.temporal_fixture import SCENARIOS, synthetic_archive
 from packages.evaluation.temporal_review import TemporalArchive, evaluate_temporal, memory_at, render_markdown, timestamp
 from packages.evaluation.temporal_source import load_database
@@ -193,9 +193,17 @@ def test_database_empty_export_is_read_only_and_does_not_create_missing_db(tmp_p
 
 
 def test_populated_database_export_uses_events_not_final_memory(database, alerts, monkeypatch):
-    with closing(db.connect(database)) as conn:
-        teach(conn, alerts)
-        before = list(conn.iterdump())
+    # Windows can return the same wall-clock tick for the last support and activation.
+    # Supply a forward-only fixture clock; keep the strict temporal validation intact.
+    clock = [m.utc_now()]
+    def next_tick():
+        clock[0] += timedelta(milliseconds=1)
+        return clock[0]
+    with monkeypatch.context() as fixture_clock:
+        fixture_clock.setattr(m, 'utc_now', next_tick)
+        with closing(db.connect(database)) as conn:
+            teach(conn, alerts)
+            before = list(conn.iterdump())
     digest = sha256(Path(database).read_bytes()).hexdigest()
     demo = synthetic_archive('safe_learning')
     real_connect = sqlite3.connect

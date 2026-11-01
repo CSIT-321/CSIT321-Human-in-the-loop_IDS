@@ -1503,6 +1503,29 @@ export interface components {
              */
             reason: string | null;
         };
+        /** AttackClassification */
+        AttackClassification: {
+            /**
+             * Attackcategory
+             * @enum {string}
+             */
+            attackCategory: "brute_force" | "botnet_c2" | "dos" | "ddos" | "web_attack" | "infiltration" | "reconnaissance_port_scan" | "malware_exploit" | "other_known_attack" | "unknown_needs_expert";
+            /** Policyversion */
+            policyVersion: string;
+            /** Reasons */
+            reasons: string[];
+            /**
+             * Source
+             * @default deterministic_suricata_mapping
+             * @constant
+             */
+            source: "deterministic_suricata_mapping";
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "mapped" | "unmapped" | "conflict";
+        };
         /**
          * AuditEntryOut
          * @description One append-only audit record. ``UPDATE`` and ``DELETE`` raise at the database (NFR-02/03).
@@ -1639,7 +1662,7 @@ export interface components {
              */
             action: "create" | "link" | "note" | "finding" | "start";
             /** Actorid */
-            actorId: number;
+            actorId: number | null;
             /** Afterstate */
             afterState: {
                 [key: string]: unknown;
@@ -1655,6 +1678,12 @@ export interface components {
             caseRef: string;
             /** Createdat */
             createdAt: string;
+            /**
+             * Decisionsource
+             * @default analyst
+             * @enum {string}
+             */
+            decisionSource: "analyst" | "system_policy";
             /** Eventtype */
             eventType: string;
             /** Finding */
@@ -1696,9 +1725,15 @@ export interface components {
             /** Createdat */
             createdAt: string;
             /** Createdbyactorid */
-            createdByActorId: number;
+            createdByActorId: number | null;
+            /**
+             * Decisionsource
+             * @default analyst
+             * @enum {string}
+             */
+            decisionSource: "analyst" | "system_policy";
             /** Owneractorid */
-            ownerActorId: number;
+            ownerActorId: number | null;
             /**
              * Primaryoperationalalertref
              * Format: uuid
@@ -4273,17 +4308,20 @@ export interface components {
         };
         /** RoutingAudit */
         RoutingAudit: {
-            /**
-             * Action
-             * @enum {string}
-             */
-            action: "admit_tier1" | "approve_tier2" | "reject_tier2" | "manual_escalate";
+            /** Action */
+            action: ("admit_tier1" | "approve_tier2" | "reject_tier2" | "manual_escalate") | "system_route";
             /** Actorid */
-            actorId: number;
+            actorId: number | null;
             afterState: components["schemas"]["OperationalTriageStateV2"];
             beforeState: components["schemas"]["OperationalTriageStateV2"];
             /** Createdat */
             createdAt: string;
+            /**
+             * Decisionsource
+             * @default analyst
+             * @enum {string}
+             */
+            decisionSource: "analyst" | "system_policy";
             /** Eventtype */
             eventType: string;
             /** Expectedstateversion */
@@ -4328,6 +4366,8 @@ export interface components {
              * @default null
              */
             caseRef: string | null;
+            /** @default null */
+            classification: components["schemas"]["AttackClassification"] | null;
             /** Detectorname */
             detectorName: string;
             /**
@@ -4346,6 +4386,8 @@ export interface components {
             state: components["schemas"]["OperationalTriageStateV2"];
             /** Stateversion */
             stateVersion: string;
+            /** @default null */
+            systemRouting: components["schemas"]["SystemRoutingDecision"] | null;
             /** Title */
             title: string;
         };
@@ -4774,6 +4816,29 @@ export interface components {
              * @enum {string}
              */
             status: "new" | "claimed" | "in_progress" | "resolved" | "dismissed";
+        };
+        /** SystemRoutingDecision */
+        SystemRoutingDecision: {
+            /**
+             * Decisionsource
+             * @default system_policy
+             * @constant
+             */
+            decisionSource: "system_policy";
+            /** Policyversion */
+            policyVersion: string;
+            /** Reasons */
+            reasons: string[];
+            /**
+             * Route
+             * @enum {string}
+             */
+            route: "tier1_review" | "tier2_case";
+            /**
+             * Routeclass
+             * @enum {string}
+             */
+            routeClass: "ROUTINE_REVIEW" | "CRITICAL_ESCALATION" | "EXPERT_REVIEW_REQUIRED";
         };
         /** TimeBucket */
         TimeBucket: {

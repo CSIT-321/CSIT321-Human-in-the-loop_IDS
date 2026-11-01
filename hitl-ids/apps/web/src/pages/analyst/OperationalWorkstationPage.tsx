@@ -5,6 +5,7 @@ import { useApi } from "../../api/useApi";
 import { ErrorState, LoadingState } from "../../components/states";
 import { Pill } from "../../components/ui";
 import { OperationalEvidence, operationalDetector } from "../../features/alert/OperationalEvidence";
+import { SystemRouting, attackLabel, currentRouteLabel, routingSummaryLabel } from "../../features/alert/SystemRouting";
 import { RoutingDetail } from "./V2RoutingPage";
 import { AlertMemoryPanel } from "./TriageMemoryPage";
 import { SelectiveReviewPanel } from "./SelectiveReviewPage";
@@ -28,10 +29,10 @@ function Assistance({ view }: { view: View }) {
       {view.reviewReasons.map((reason, index) => <p className="break-words text-muted" key={index}>{reason}</p>)}
     </section>
     <section className="space-y-2 p-4">
-      <h2 className="label-mono">System recommendation</h2>
-      <Pill tone={view.state.tier2Recommended ? "warn" : "muted"}>Tier 2 Recommended: {view.state.tier2Recommended ? "YES" : "NO"}</Pill>
-      <p className="text-muted">A policy recommendation is separate from an authenticated human escalation.</p>
-      {view.state.tier2RecommendationReasons.map((reason, index) => <p key={index}>{reason}</p>)}
+      <h2 className="label-mono">Routing summary</h2>
+      <p>Current Route: <strong>{currentRouteLabel(view.state.handlingRoute)}</strong></p>
+      {view.systemRouting && <p>{routingSummaryLabel(view)}</p>}
+      <p className="text-muted">{view.state.decisionSource === "analyst" ? "Manual analyst override" : view.systemRouting ? "System Policy" : "Historical routing record"}</p>
     </section>
     <section className="space-y-2 p-4" aria-label="Review and trusted context summary">
       <h2 className="label-mono">Review Disposition / Trusted Context</h2>
@@ -83,24 +84,25 @@ function AlertWorkspace({ view, onChanged, refresh }: { view: View; onChanged: (
     </div>
     <div id="ops-alert-panel" role="tabpanel" aria-label={tab} className="min-h-0 flex-1 space-y-4 overflow-auto p-4">
       {(tab === "Overview" || tab === "Evidence") && <>
+        {view.classification && <p className="text-sm capitalize">Attack Category: <strong>{attackLabel(view.classification.attackCategory)}</strong></p>}
         {evidence.status === "loading" && <LoadingState label="Loading canonical evidence…" />}
         {evidence.status === "error" && <ErrorState error={evidence.error} onRetry={evidence.reload} />}
         {evidence.status === "success" && <OperationalEvidence alert={evidence.data} summaryOnly={tab === "Overview"} />}
       </>}
       {/* Keep this mounted across tabs so draft reasons, retry IDs and success remain stable. */}
-      <div hidden={tab !== "Overview"}>
-        <h3 className="label-mono">Human routing decision</h3>
+      <div hidden={tab !== "Overview"} className="space-y-4">
+        <SystemRouting view={view} />
         <RoutingDetail initial={view} refresh={refresh} canRecover compact onChanged={onChanged} />
       </div>
       {tab === "Context & Review" && <SelectiveReviewPanel key={view.stateVersion} alertRef={view.operationalAlertRef} />}
       {tab === "Triage Memory" && <AlertMemoryPanel key={view.stateVersion} view={view} />}
       {tab === "History & Notes" && <section className="space-y-3" aria-label="Operational decision history">
-        <h3 className="label-mono">Latest authenticated routing decision</h3>
+        <h3 className="label-mono">Latest routing decision</h3>
         {view.latestDecision ? <>
-          <p className="capitalize">{view.latestDecision.action.replaceAll("_", " ")} · Actor #{view.latestDecision.actorId}</p>
+          <p className="capitalize">{view.latestDecision.action.replaceAll("_", " ")} · {view.latestDecision.decisionSource === "system_policy" ? "System Policy" : `Actor #${view.latestDecision.actorId}`}</p>
           <p className="whitespace-pre-wrap break-words text-sm">{view.latestDecision.reason}</p>
           <p className="text-xs text-muted">{view.latestDecision.createdAt}</p>
-        </> : <p className="text-sm text-muted">No human routing decision recorded.</p>}
+        </> : <p className="text-sm text-muted">No routing decision recorded.</p>}
         {view.caseRef ? <Link className="text-accent underline" to={"/analyst/tier2-cases/" + view.caseRef}>Open case notes and timeline</Link>
           : <p className="text-sm text-muted">Investigation notes and the full case timeline become available in the Tier 2 Case after escalation.</p>}
         <p className="text-xs text-muted">Legacy scoring/feedback history remains separate in Historical tools.</p>
@@ -178,7 +180,7 @@ export function OperationalWorkstationPage() {
               <span className="block">Priority: {item.state.priorityBand ?? "Unassigned"} / {item.state.operationalPriority ?? "—"}</span>
               <span className="block">Review Required: {item.state.reviewRequired ? "Yes" : "No"}</span>
               <span className="block capitalize text-muted">{routeLabel(item.state.handlingRoute)}</span>
-              {item.state.tier2Recommended && <span className="block text-warn">Tier 2 Recommended</span>}
+              {item.systemRouting && <span className="block text-muted">{routingSummaryLabel(item)}</span>}
             </button>
           </li>)}</ul>
         </div>

@@ -69,8 +69,9 @@ class CaseView(V2Contract):
     case_ref: UUID
     primary_operational_alert_ref: UUID
     title: str
-    owner_actor_id: int
-    created_by_actor_id: int
+    owner_actor_id: int | None
+    created_by_actor_id: int | None
+    decision_source: Literal['analyst', 'system_policy'] = 'analyst'
     created_at: str
     updated_at: str
     status: Literal['open','investigating']
@@ -81,7 +82,8 @@ class CaseView(V2Contract):
 class CaseEvent(V2Contract):
     id: int
     case_ref: UUID
-    actor_id: int
+    actor_id: int | None
+    decision_source: Literal['analyst', 'system_policy'] = 'analyst'
     action: CaseAction
     event_type: str
     reason: str
@@ -126,7 +128,7 @@ def read_case(conn, ref):
     state = conn.execute('SELECT * FROM tier2_case_state WHERE case_id=?', (row['id'],)).fetchone()
     snapshot = CaseSnapshot.model_validate_json(row['snapshot'])
     return CaseView(case_ref=row['case_ref'], primary_operational_alert_ref=snapshot.detector.operational_alert_ref,
-        title=row['title'], owner_actor_id=row['owner_actor_id'], created_by_actor_id=row['created_by_actor_id'],
+        title=row['title'], decision_source=dict(row).get('decision_source', 'analyst'), owner_actor_id=row['owner_actor_id'], created_by_actor_id=row['created_by_actor_id'],
         created_at=row['created_at'], updated_at=state['updated_at'], status=state['status'],
         revision=state['revision'], snapshot=snapshot)
 
@@ -262,7 +264,7 @@ def read_events(conn, ref, limit, offset, action=None):
     rows = conn.execute('SELECT e.*,a.operational_alert_ref FROM tier2_case_events e LEFT JOIN operational_alerts_v2 a '
         'ON a.id=e.linked_alert_id WHERE '+where+' ORDER BY e.id DESC LIMIT ? OFFSET ?',[*values,limit,offset])
     items = [CaseEvent(id=row['id'],case_ref=ref,actor_id=row['actor_id'],action=row['action'],
-        event_type=row['event_type'],reason=row['reason'],finding=row['finding'],linked_alert_ref=row['operational_alert_ref'],
+        decision_source=dict(row).get('decision_source', 'analyst'),event_type=row['event_type'],reason=row['reason'],finding=row['finding'],linked_alert_ref=row['operational_alert_ref'],
         before_state=json.loads(row['before_state']),after_state=json.loads(row['after_state']),created_at=row['created_at'])
         for row in rows]
     return items,total

@@ -16,7 +16,7 @@ from packages.contracts.operational_v2 import OperationalAlertV2, OperationalTri
 from packages.detection.adapters.operational_v2 import (
     materialize_source, preview_source, project_external, project_legacy, read_projection, read_triage,
 )
-from packages.detection.adapters.staging import import_file, stage_file
+from legacy_suricata_fixture import import_file, stage_file
 from packages.detection.feedback.service import submit_feedback
 from packages.detection.pipeline import store
 from packages.evaluation import metrics
@@ -34,7 +34,7 @@ def snapshot(conn):
                                       "'external_eligibility_review', 'external_operational_admission',"
                                       "'tier2_cases','tier2_case_state','tier2_case_events','response_recommendations','response_decisions',"
                                       "'triage_memory_lessons','triage_memory_support_events','triage_memory_decisions','triage_memory_audit','selective_review_events','trusted_context_facts','triage_context_provenance',"
-                                      "'prospective_runs','prospective_run_events','prospective_decisions','prospective_observations')")]
+                                      "'prospective_runs','prospective_run_events','prospective_decisions','prospective_observations','suricata_eve_records','operational_system_routing')")]
     return {name: [tuple(r) for r in conn.execute(f'SELECT * FROM "{name}" ORDER BY 1')]
             for name in names}
 
@@ -194,6 +194,8 @@ def test_concurrent_source_projection_is_idempotent(database):
 
 
 def test_migration_four_preserves_populated_v3_rows_schema_and_foreign_keys(tmp_path, sample, predictions, monkeypatch):
+    # Preserve the original additive migration regression; rebuild 14 has a separate populated test.
+    monkeypatch.setattr(db, "MIGRATIONS", db.MIGRATIONS[:13])
     with monkeypatch.context() as patch:
         patch.setattr(db, "MIGRATIONS", db.MIGRATIONS[:3])
         path = database.__wrapped__(tmp_path, sample, predictions)

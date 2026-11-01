@@ -15,7 +15,7 @@ from pydantic import ValidationError
 from packages.contracts import db, models as m
 from packages.contracts.operational_v2 import OperationalAlertV2
 from packages.detection.adapters.operational_v2 import materialize_source, preview_source, read_triage
-from packages.detection.adapters.staging import stage_file, import_file
+from legacy_suricata_fixture import stage_file, import_file
 from packages.detection.triage_policy import TriageContext, TriagePolicy, evaluate_triage, load_triage_policy
 from packages.detection.triage_policy_service import StaleTriageState, apply_triage_policy
 from packages.detection.pipeline import store
@@ -305,7 +305,7 @@ def test_migration_five_is_additive_and_preserves_existing_band_encoding(tmp_pat
         old_state = dict(conn.execute("SELECT * FROM operational_triage_state_v2").fetchone())
         legacy = snapshot(conn)
         root = conn.execute("SELECT rootpage FROM sqlite_master WHERE name='operational_triage_state_v2'").fetchone()[0]
-        assert db.migrate(conn) == [5, 6, 7, 8, 9, 10, 11, 12, 13] and db.migrate(conn) == []
+        assert db.migrate(conn) == [5, 6, 7, 8, 9, 10, 11, 12, 13, 14] and db.migrate(conn) == []
         state = dict(conn.execute("SELECT * FROM operational_triage_state_v2").fetchone())
         assert state.pop("priority_band_scheme") == "legacy_labels"
         assert state == old_state and read_triage(conn, 1).priority_band == "high"

@@ -8,7 +8,7 @@ from uuid import uuid4
 
 import pytest
 from packages.contracts import db
-from packages.detection.adapters.staging import stage_file
+from legacy_suricata_fixture import stage_file
 from packages.detection.adapters.operational_v2 import read_projection, read_triage, materialize_source
 from packages.detection.external_admission import (
     EligibilityRequest, AdmissionRequest, AdmissionConflict, review_eligibility, admit_external,

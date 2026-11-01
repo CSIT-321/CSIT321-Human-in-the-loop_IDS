@@ -1,0 +1,12 @@
+{
+  "version": "system-routing-v1",
+  "rules": [
+    "unknown_classification_requires_expert",
+    "confirmed_malicious_and_response_required",
+    "high_priority_and_critical_asset",
+    "repeated_campaign_and_independent_alert_threshold",
+    "unresolved_requires_expert"
+  ],
+  "highPriorityThreshold": 80,
+  "campaignAlertThreshold": 3
+}

@@ -3,6 +3,8 @@ import { Card, KeyValues } from "../../components/ui";
 import { formatPercent } from "../../design/format";
 import { DetectorProvenance } from "./DetectorProvenance";
 
+import { SuricataEvidence } from "./SuricataEvidence";
+
 type Canonical = Schemas["CanonicalAlert"];
 type Json = Schemas["JsonValue"];
 const object = (value: Json | undefined): Record<string, Json> => value && typeof value === "object" && !Array.isArray(value) ? value as Record<string, Json> : {};
@@ -49,14 +51,15 @@ export function OperationalEvidence({ alert, summaryOnly = false }: { alert: Sch
   return <div className="space-y-4">
     <DetectorProvenance detector={detector} />
     <KeyValues rows={[
-      ["Category", detector.detectionCategory ?? "Not provided"],
+      ["Native Category", detector.detectionCategory ?? "Not provided"],
       ["Source", endpoint(detector.sourceIp, detector.sourcePort)],
       ["Destination", endpoint(detector.destinationIp, detector.destinationPort)],
       ["Protocol", detector.protocol],
       ["Occurred at", detector.occurredAt],
     ]} />
+    {source === "suricata" && detector.structuredEvidence.suricataBundle != null && <SuricataEvidence detector={detector} summaryOnly={summaryOnly} />}
     {!summaryOnly && <>
-      {source === "suricata" && <Card title="Suricata Rule Evidence"><KeyValues rows={[
+      {source === "suricata" && detector.structuredEvidence.suricataBundle == null && <Card title="Suricata Rule Evidence"><KeyValues rows={[
         ["Signature", detector.detectionTitle],
         ["Rule ID", display(detector.structuredEvidence.signatureId)],
         ["Action", display(detector.structuredEvidence.action)],

@@ -67,7 +67,7 @@ export function Tier2CasesPage() {
             <td className="border-b border-border p-2"><Link className="text-accent underline" title={item.caseRef} to={prefixFor(session?.role) + "/tier2-cases/" + item.caseRef}>{item.caseRef.slice(0, 8)}</Link></td>
             <td className="min-w-48 border-b border-border p-2">{item.title}</td>
             <td className="border-b border-border p-2">{item.snapshot.triage.priorityBand ?? "Unassigned"} / {item.snapshot.triage.operationalPriority ?? "Not assigned"}</td>
-            <td className="border-b border-border p-2">{item.status}</td><td className="border-b border-border p-2">Actor #{item.ownerActorId}</td>
+            <td className="border-b border-border p-2">{item.status}</td><td className="border-b border-border p-2">{item.ownerActorId == null ? "Unassigned" : `Actor #${item.ownerActorId}`}</td>
             <td className="border-b border-border p-2">{item.createdAt}</td>
             <td className="border-b border-border p-2"><Link className="text-accent underline" to={prefixFor(session?.role) + "/v2-triage?alertRef=" + item.primaryOperationalAlertRef}>{item.primaryOperationalAlertRef.slice(0, 8)}</Link></td>
           </tr>)}</tbody>
@@ -135,17 +135,18 @@ export function CaseInvestigation({ initial, refresh }: { initial: Case; refresh
       <p className="break-all font-mono text-xs">{current.caseRef}</p>
       <Pill tone="accent">{current.status}</Pill>
       <dl className="grid grid-cols-1 gap-3 text-sm sm:grid-cols-2">
-        <div><dt className="text-muted">Owner</dt><dd>Actor #{current.ownerActorId}</dd></div>
+        <div><dt className="text-muted">Owner</dt><dd>{current.ownerActorId == null ? "Unassigned" : `Actor #${current.ownerActorId}`}</dd></div>
+        <div><dt className="text-muted">Creation Source</dt><dd>{current.decisionSource === "system_policy" ? "System Policy" : `Analyst #${current.createdByActorId}`}</dd></div>
         <div><dt className="text-muted">Created</dt><dd>{current.createdAt}</dd></div>
         <div><dt className="text-muted">Operational Priority at Creation</dt><dd>{snapshot.triage.priorityBand ?? "Unassigned"} / {snapshot.triage.operationalPriority ?? "Not assigned"}</dd></div>
         <div><dt className="text-muted">Policy at Creation</dt><dd>{snapshot.triage.triagePolicyVersion ?? "Not applied"}</dd></div>
       </dl>
     </section>
     <section className="space-y-2 border-t border-border pt-4" aria-label="Tier 1 handoff">
-      <h2 className="text-base font-semibold">Tier 1 Handoff</h2>
+      <h2 className="text-base font-semibold">{current.decisionSource === "system_policy" ? "System Routing at Creation" : "Tier 1 Handoff"}</h2>
       <p className="whitespace-pre-wrap break-words text-sm">{snapshot.tier1HandoffSummary}</p>
       <p className="break-words text-sm">Escalation: {snapshot.escalationReason}</p>
-      <p className="text-xs text-muted">{snapshot.routingDecision.eventType} by actor #{snapshot.routingDecision.actorId}</p>
+      <p className="text-xs text-muted">{snapshot.routingDecision.eventType} by {snapshot.routingDecision.decisionSource === "system_policy" ? "System Policy" : `actor #${snapshot.routingDecision.actorId}`}</p>
       <ul className="space-y-1 text-sm">{snapshot.triage.tier2RecommendationReasons.map((text,i) => <li key={i}>{text}</li>)}</ul>
     </section>
     <section className="space-y-2 border-t border-border pt-4" aria-label="Detector evidence">
@@ -170,7 +171,7 @@ export function CaseInvestigation({ initial, refresh }: { initial: Case; refresh
       {events.status === "success" && <div role="tabpanel" className="space-y-3">
         {events.data.items.length === 0 && <p className="text-sm">No records yet.</p>}
         {events.data.items.map(event => <article key={event.id} className="space-y-1 border-b border-border py-3">
-          <p className="text-xs text-muted">{event.eventType} / actor #{event.actorId} / {event.createdAt}</p>
+          <p className="text-xs text-muted">{event.eventType} / {event.decisionSource === "system_policy" ? "System Policy" : `actor #${event.actorId}`} / {event.createdAt}</p>
           {event.finding && <Pill tone="warn">{event.finding.replaceAll("_"," ")}</Pill>}
           <p className="whitespace-pre-wrap break-words text-sm">{event.reason}</p>
           {event.linkedAlertRef && <Link className="break-all text-sm text-accent underline" to={prefixFor(session?.role) + "/v2-triage?alertRef=" + event.linkedAlertRef}>{event.linkedAlertRef}</Link>}

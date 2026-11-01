@@ -12,7 +12,7 @@ from typing import Any
 from packages.contracts import db
 from packages.contracts.models import utc_now
 from .admission_policy import AdmissionPolicy, load_admission_policy
-from .suricata import SuricataEveAdapter, SuricataOutput
+from .suricata_bundle import SUPPORTED, parse_record, correlation_key, build_bundle, canonical_json
 
 PENDING = "Operational admission: pending; requires separately reviewed Alert Contract V2."
 
@@ -22,6 +22,8 @@ class ImportReport:
     parsed: int = 0
     staged: int = 0
     duplicate: int = 0
+    preserved: int = 0
+    duplicate_records: int = 0
     skipped: int = 0
     invalid: int = 0
     rejected_by_policy: int = 0
@@ -77,19 +79,74 @@ def _has_inbox(conn: sqlite3.Connection) -> bool:
                         "AND name='external_alert_inbox'").fetchone() is not None
 
 
+def _correlated_batch(conn, path, sensor_id, report, dry_run):
+    """Preserve validated records, then seal complete per-flow snapshots for this offline batch.
+
+    Earlier evidence-only batches can contribute. A late change to a sealed detection fails
+    the whole import explicitly; it cannot mutate admitted evidence or produce a duplicate.
+    """
+    has_records = conn is not None and conn.execute(
+        "SELECT 1 FROM sqlite_master WHERE name='suricata_eve_records'").fetchone() is not None
+    groups, seen = {}, set()
+    for index, raw, error in records(path):
+        if error is not None:
+            report.invalid += 1
+            report.issues.append({'record': index, 'reason': error})
+            continue
+        report.parsed += 1
+        if not isinstance(raw, dict) or not isinstance(raw.get('event_type'), str):
+            report.invalid += 1
+            report.issues.append({'record': index, 'reason': 'event object requires event_type'})
+            continue
+        if raw['event_type'] not in SUPPORTED:
+            report.skipped += 1
+            continue
+        try:
+            record = parse_record(raw, sensor_id)
+        except (ValueError, TypeError):
+            report.invalid += 1
+            report.issues.append({'record': index, 'reason': 'invalid EVE evidence'})
+            continue
+        key = correlation_key(record)
+        if key not in groups:
+            groups[key] = {}
+            if has_records and record.flow_id is not None:
+                for previous in conn.execute('SELECT raw_snapshot FROM suricata_eve_records WHERE sensor_id=? AND flow_id=?',
+                                             (sensor_id, record.flow_id)):
+                    old = parse_record(json.loads(previous[0]), sensor_id)
+                    groups[key][old.source_record_ref] = old
+        groups[key][record.source_record_ref] = record
+        exists = record.source_record_ref in seen or (has_records and conn.execute(
+            'SELECT 1 FROM suricata_eve_records WHERE sensor_id=? AND source_record_ref=?',
+            (sensor_id, record.source_record_ref)).fetchone())
+        if exists:
+            report.duplicate_records += 1
+        else:
+            if not dry_run:
+                conn.execute('INSERT INTO suricata_eve_records (sensor_id,source_record_ref,event_type,flow_id,tx_id,'
+                    'timestamp,raw_snapshot,imported_at) VALUES (?,?,?,?,?,?,?,?)', (sensor_id,record.source_record_ref,
+                    record.event_type,record.flow_id,record.tx_id,record.timestamp,canonical_json(record.raw),
+                    db.format_timestamp(utc_now())))
+            report.preserved += 1
+        seen.add(record.source_record_ref)
+    for index, group in enumerate(groups.values(), 1):
+        if any(record.event_type == 'alert' for record in group.values()):
+            yield index, build_bundle(group.values())
+
+
 def stage_file(conn: sqlite3.Connection | None, path: Path, sensor_id: str, *,
                policy: AdmissionPolicy | None = None, dry_run: bool = False) -> ImportReport:
     """Stage a batch atomically. Caller has migrated; dry-run can use a read-only connection.
 
-    Identity is sensor + canonical JSON content hash. Reformatting/moving/reordering files
-    does not duplicate events. Identical records on the same sensor deliberately collapse.
-    Invalid/policy-rejected records never get a row. Infrastructure failures roll back the batch.
+    Detection identity is sensor + flow_id, or sensor + record hash without flow_id.
+    Raw record hashes ignore JSON formatting and key order. Invalid evidence is never stored.
+    Unsupported native severity may be preserved but cannot enter the alert inbox.
+    Infrastructure or sealed-bundle conflicts roll back the batch.
     """
     if not sensor_id.strip():
         raise ValueError("sensor-id must be nonempty")
     policy = policy or load_admission_policy()
     report = ImportReport(dry_run=dry_run)
-    seen = set()
     has_inbox = conn is not None and _has_inbox(conn)
     if not dry_run and not has_inbox:
         raise ValueError("database must have the external inbox migration")
@@ -98,35 +155,14 @@ def stage_file(conn: sqlite3.Connection | None, path: Path, sensor_id: str, *,
     if conn is not None:
         conn.execute("BEGIN" if dry_run else "BEGIN IMMEDIATE")
     try:
-        for index, event, error in records(path):
-            if error is not None:
-                report.invalid += 1
-                report.issues.append({"record": index, "reason": error})
-                continue
-            report.parsed += 1
-            if not isinstance(event, dict) or not isinstance(event.get("event_type"), str):
-                report.invalid += 1
-                report.issues.append({"record": index, "reason": "event object requires event_type"})
-                continue
-            if event["event_type"] != "alert":
-                report.skipped += 1
-                report.issues.append({"record": index, "reason": "unsupported non-alert EVE event"})
-                continue
-            try:
-                serialized = json.dumps(event, sort_keys=True, separators=(",", ":"),
-                                        ensure_ascii=False, allow_nan=False)
-                reference = "eve-sha256:" + hashlib.sha256(serialized.encode("utf-8")).hexdigest()
-                alert = SuricataEveAdapter().adapt(SuricataOutput(
-                    event, reference, sensor_id=sensor_id))
-            except (ValueError, TypeError) as exc:
-                report.invalid += 1
-                # Validation errors may contain raw input. Do not echo untrusted evidence.
-                report.issues.append({"record": index, "reason": "invalid EVE alert: " + type(exc).__name__})
-                continue
+        for index, alert in _correlated_batch(conn, path, sensor_id, report, dry_run):
             identity = str(alert.canonical_alert_id)
-            exists = identity in seen or (has_inbox and conn.execute(
-                "SELECT 1 FROM external_alert_inbox WHERE canonical_alert_id=?", (identity,)).fetchone())
-            if exists:
+            reference = alert.source_record_reference
+            previous = conn.execute('SELECT canonical_snapshot FROM external_alert_inbox WHERE canonical_alert_id=?',
+                                    (identity,)).fetchone() if has_inbox else None
+            if previous is not None:
+                if previous[0] != alert.model_dump_json(by_alias=True):
+                    raise ValueError('flow bundle is sealed; late evidence requires a future explicit bundle revision')
                 report.duplicate += 1
                 continue
             try:
@@ -135,26 +171,10 @@ def stage_file(conn: sqlite3.Connection | None, path: Path, sensor_id: str, *,
                 report.rejected_by_policy += 1
                 report.issues.append({"record": index, "reason": str(exc)})
                 continue
-            row = dict(
-                canonical_alert_id=identity, detector_source=alert.detector_source,
-                sensor_id=sensor_id, raw_reference=reference, occurred_at=alert.occurred_at,
-                occurred_at_timezone_offset=alert.occurred_at_timezone_offset,
-                native_severity=decision.native_severity, confidence=alert.confidence,
-                detection_title=alert.detection_title, detection_category=alert.detection_category,
-                source_ip=alert.source_ip, destination_ip=alert.destination_ip,
-                source_port=alert.source_port, destination_port=alert.destination_port,
-                protocol=alert.protocol, canonical_snapshot=alert.model_dump_json(by_alias=True),
-                admission_policy_version=decision.policy_version, admission_decision="hold_for_review",
-                admission_reason=PENDING, review_required=decision.requires_review,
-                learning_eligible=decision.learning_eligible, evaluation_eligible=decision.evaluation_included,
-                proposed_operational_priority=decision.initial_operational_priority,
-                proposed_evidence_class=decision.evidence_class,
-                policy_snapshot=json.dumps(decision.policy_snapshot, sort_keys=True, allow_nan=False),
-                import_status="staged", imported_at=db.format_timestamp(utc_now()))
+            row = inbox_row(alert, decision, sensor_id)
             if not dry_run:
                 conn.execute(f"INSERT INTO external_alert_inbox ({', '.join(row)}) "
                              f"VALUES ({', '.join('?' for _ in row)})", list(row.values()))
-            seen.add(identity)
             report.staged += 1
         if conn is not None:
             conn.rollback() if dry_run else conn.commit()
@@ -163,6 +183,26 @@ def stage_file(conn: sqlite3.Connection | None, path: Path, sensor_id: str, *,
             conn.rollback()
         raise
     return report
+
+
+def inbox_row(alert, decision, sensor_id):
+    """Serialize the immutable admission boundary, shared with historical snapshot fixtures."""
+    return dict(
+        canonical_alert_id=str(alert.canonical_alert_id), detector_source=alert.detector_source,
+        sensor_id=sensor_id, raw_reference=alert.source_record_reference, occurred_at=alert.occurred_at,
+        occurred_at_timezone_offset=alert.occurred_at_timezone_offset,
+        native_severity=decision.native_severity, confidence=alert.confidence,
+        detection_title=alert.detection_title, detection_category=alert.detection_category,
+        source_ip=alert.source_ip, destination_ip=alert.destination_ip,
+        source_port=alert.source_port, destination_port=alert.destination_port,
+        protocol=alert.protocol, canonical_snapshot=alert.model_dump_json(by_alias=True),
+        admission_policy_version=decision.policy_version, admission_decision="hold_for_review",
+        admission_reason=PENDING, review_required=decision.requires_review,
+        learning_eligible=decision.learning_eligible, evaluation_eligible=decision.evaluation_included,
+        proposed_operational_priority=decision.initial_operational_priority,
+        proposed_evidence_class=decision.evidence_class,
+        policy_snapshot=json.dumps(decision.policy_snapshot, sort_keys=True, allow_nan=False),
+        import_status="staged", imported_at=db.format_timestamp(utc_now()))
 
 
 def open_readonly(path: Path) -> sqlite3.Connection:

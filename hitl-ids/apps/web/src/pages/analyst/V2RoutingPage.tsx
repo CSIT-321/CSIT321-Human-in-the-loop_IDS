@@ -3,6 +3,7 @@ import { Link, useSearchParams } from "react-router";
 import { api, unwrap, type Schemas } from "../../api/client";
 import { useApi } from "../../api/useApi";
 import { PageHeader, Pill } from "../../components/ui";
+import { SystemRouting } from "../../features/alert/SystemRouting";
 import { useSession } from "../../session/SessionContext";
 import { AlertMemoryPanel } from "./TriageMemoryPage";
 import { SelectiveReviewPanel } from "./SelectiveReviewPage";
@@ -61,6 +62,7 @@ export function RoutingDetail({ initial, refresh, casePrefix = "/analyst", canRe
     } finally { setBusy(false); }
   }
   const state = view.state;
+  const actions = compact || view.systemRouting ? view.allowedActions.filter(action => action !== "approve_tier2" && action !== "reject_tier2") : view.allowedActions;
   const recovery = canRecover && state.handlingRoute === "tier2_candidate" && state.workflowStage === "assessment";
   return <section className="min-w-0 space-y-5 border-t border-border pt-5" aria-label="V2 alert routing">
     {!compact && <>
@@ -69,6 +71,7 @@ export function RoutingDetail({ initial, refresh, casePrefix = "/analyst", canRe
       <p className="text-sm text-muted">{view.detectorName}</p>
       <p className="break-all font-mono text-xs text-dim">{view.operationalAlertRef}</p>
     </header>
+    {view.systemRouting ? <SystemRouting view={view} /> : <>
     <dl className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
       <div><dt className="text-sm text-muted">Operational Priority</dt><dd>{state.operationalPriority ?? "Not assigned"}</dd></div>
       <div><dt className="text-sm text-muted">Priority Band</dt><dd>{state.priorityBand ?? "Not assigned"}</dd></div>
@@ -84,21 +87,23 @@ export function RoutingDetail({ initial, refresh, casePrefix = "/analyst", canRe
       <h3 className="text-sm font-semibold">Review Reasons</h3>
       <ul className="space-y-1 text-sm">{view.reviewReasons.map((text, i) => <li key={i}>{text}</li>)}</ul>
     </section>
+    </>}
     {view.latestDecision && <section className="space-y-1 border-t border-border pt-4" aria-label="Latest routing decision">
-      <h3 className="text-sm font-semibold">Latest Analyst Decision</h3>
-      <p className="text-sm">{labels[view.latestDecision.action]} · Actor #{view.latestDecision.actorId}</p>
+      <h3 className="text-sm font-semibold">Latest Routing Decision</h3>
+      <p className="text-sm">{view.latestDecision.action === "system_route" ? "System routing" : labels[view.latestDecision.action]} · {view.latestDecision.decisionSource === "system_policy" ? "System Policy" : `Actor #${view.latestDecision.actorId}`}</p>
       <p className="break-words whitespace-pre-wrap text-sm">{view.latestDecision.reason}</p>
       <p className="text-xs text-muted">{pretty(view.latestDecision.beforeState.handlingRoute)} → {pretty(view.latestDecision.afterState.handlingRoute)}</p>
       <p className="text-xs text-dim">{view.latestDecision.createdAt}</p>
     </section>}
     </>}
-    {(view.allowedActions.length > 0 || recovery) && <div className="space-y-3 border-t border-border pt-4">
+    {(actions.length > 0 || recovery) && <div className="space-y-3 border-t border-border pt-4">
+      {actions.includes("manual_escalate") && <h3 className="text-sm font-semibold">Manual Escalation / Override</h3>}
       <label className="block text-sm" htmlFor="routing-reason">Decision reason</label>
       <textarea id="routing-reason" rows={3} maxLength={2000} value={reason} disabled={busy}
         onChange={event => setReason(event.target.value)}
         className="w-full rounded-sm border border-border bg-surface p-2 text-sm" />
       {recovery && <p className="text-sm text-muted">An earlier escalation has no formal case. Complete it explicitly; no records are changed on page load.</p>}
-      <div className="flex flex-wrap gap-2">{recovery && <button className={button} disabled={busy || !reason.trim()} onClick={() => void decide("recover_case")}>Complete Earlier Escalation</button>}{view.allowedActions.map(action =>
+      <div className="flex flex-wrap gap-2">{recovery && <button className={button} disabled={busy || !reason.trim()} onClick={() => void decide("recover_case")}>Complete Earlier Escalation</button>}{actions.map(action =>
         <button className={button} key={action} disabled={busy || !reason.trim()} onClick={() => void decide(action)}>{labels[action]}</button>)}</div>
     </div>}
     {error && <p role="alert" className="text-sm text-danger">{error}</p>}

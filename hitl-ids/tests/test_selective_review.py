@@ -11,7 +11,7 @@ from packages.detection import selective_review as service
 from packages.detection.selective_review_policy import evaluate_review,load_policy
 from packages.detection.triage_policy import TriageContext
 from packages.detection.context_store import seed_synthetic_facts
-from packages.detection.adapters.staging import stage_file
+from legacy_suricata_fixture import stage_file
 from packages.detection.adapters.operational_v2 import read_projection
 from packages.detection.external_admission import admit_external
 from packages.detection import triage_memory as memory

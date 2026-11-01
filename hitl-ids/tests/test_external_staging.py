@@ -30,10 +30,12 @@ def table_rows(conn):
                                         "'external_eligibility_review', 'external_operational_admission',"
                                         "'tier2_cases','tier2_case_state','tier2_case_events','response_recommendations','response_decisions',"
                                         "'triage_memory_lessons','triage_memory_support_events','triage_memory_decisions','triage_memory_audit','selective_review_events','trusted_context_facts','triage_context_provenance',"
-                                        "'prospective_runs','prospective_run_events','prospective_decisions','prospective_observations')")}
+                                        "'prospective_runs','prospective_run_events','prospective_decisions','prospective_observations','suricata_eve_records','operational_system_routing')")}
 
 
 def test_populated_migration_does_not_rebuild_or_change_core(tmp_path, sample, predictions, monkeypatch):
+    # Preserve the original additive migration regression; rebuild 14 has a separate populated test.
+    monkeypatch.setattr(db, "MIGRATIONS", db.MIGRATIONS[:13])
     with monkeypatch.context() as patch:
         patch.setattr(db, "MIGRATIONS", db.MIGRATIONS[:2])
         path = database.__wrapped__(tmp_path, sample, predictions)
@@ -126,13 +128,14 @@ def test_invalid_skipped_rejected_and_ground_truth_have_no_rows(database, tmp_pa
     event = json.loads(FIXTURE.read_text())[0]
     bad = {**event, "src_ip": "invalid"}
     truth_event = {**event, "unknown": {"nested": [{"groundTruth": "malicious"}]}}
-    rejected = {**event, "alert": {**event["alert"], "severity": 99}}
+    rejected = {**event, "flow_id": 999, "alert": {**event["alert"], "severity": 99}}
     path = tmp_path / "mixed.jsonl"
     path.write_text("\n".join([json.dumps(e) for e in
                     [event, event, {"event_type": "flow"}, bad, truth_event, rejected, {}]] + ["{bad json"]), encoding="utf-8")
     result = import_file(path, "sensor-a", database)
     assert (result.parsed, result.staged, result.duplicate, result.skipped,
-            result.invalid, result.rejected_by_policy) == (7, 1, 1, 1, 4, 1)
+            result.invalid, result.rejected_by_policy) == (7, 1, 0, 0, 5, 1)
+    assert result.duplicate_records == 1
     assert inspect_inbox(database)["total"] == 1
     assert len(result.issues) == 6
 

@@ -66,6 +66,9 @@ DEVIATION_COLUMNS = {
     "flow_data": {"source_record_id"},
 }
 DEVIATION_TABLES = {
+    # Migration 14, documented in suricata-correlation-auto-routing.md.
+    "suricata_eve_records": {"id","sensor_id","source_record_ref","event_type","flow_id","tx_id","timestamp","raw_snapshot","imported_at"},
+    "operational_system_routing": {"operational_alert_id","classification","classification_policy","routing_decision","routing_policy","context_provenance","routing_audit_id","policy_audit_id","case_ref","created_at"},
     "prospective_runs": {"id","run_ref","actor_id","request_id","request_payload","snapshot","created_at"},
     "prospective_run_events": {"id","run_id","actor_id","request_id","request_payload","action","snapshot","created_at"},
     "prospective_decisions": {"id","run_id","review_event_id","snapshot"},
@@ -82,10 +85,10 @@ DEVIATION_TABLES = {
         "policy_version","evidence_snapshot","request_id","request_payload","event_type","created_at"},
     "response_decisions": {"id","recommendation_id","actor_id","decision","reason","request_id",
         "request_payload","proposal_snapshot","event_type","created_at"},
-    "tier2_cases": {"id","case_ref","primary_operational_alert_id","title","owner_actor_id","created_by_actor_id","snapshot","created_at"},
+    "tier2_cases": {"id","case_ref","primary_operational_alert_id","title","owner_actor_id","created_by_actor_id","snapshot","created_at","decision_source"},
     "tier2_case_state": {"case_id","status","revision","updated_at"},
     "tier2_case_events": {"id","case_id","actor_id","request_id","action","event_type","request_payload",
-                         "reason","finding","linked_alert_id","before_state","after_state","created_at"},
+                         "reason","finding","linked_alert_id","before_state","after_state","created_at","decision_source"},
     "external_eligibility_review": {
         "id", "external_inbox_id", "actor_id", "request_id", "expected_review_id", "decision",
         "reason", "evidence_digest", "created_at",
@@ -98,10 +101,12 @@ DEVIATION_TABLES = {
     "operational_routing_audit": {
         "id", "operational_alert_id", "actor_id", "request_id", "action", "event_type",
         "expected_state_version", "reason", "before_state", "after_state", "created_at",
+        "decision_source",
     },
     "operational_triage_policy_audit": {
         "id", "operational_alert_id", "actor_id", "policy_version", "policy_snapshot",
         "context_snapshot", "result_snapshot", "before_state", "after_state", "created_at",
+        "decision_source",
     },
     "operational_alerts_v2": {
         "id", "operational_alert_ref", "canonical_alert_id", "source_kind", "detector_source",
@@ -310,6 +315,7 @@ def test_columns_are_tdm_names_plus_logged_deviations(conn):
 def test_every_table_model_matches_its_columns(conn):
     # The inbox uses the canonical contract and staging writer, not a legacy operational model.
     assert set(db.TABLE_MODELS) == table_names(conn) - {
+        "suricata_eve_records", "operational_system_routing",
         "prospective_runs", "prospective_run_events", "prospective_decisions", "prospective_observations",
         "external_alert_inbox", "operational_alerts_v2", "operational_triage_state_v2",
         "operational_triage_policy_audit", "operational_routing_audit",
@@ -320,6 +326,10 @@ def test_every_table_model_matches_its_columns(conn):
 
 
 EXPECTED_FOREIGN_KEYS = {
+    ("operational_system_routing","operational_alert_id","operational_alerts_v2","id"),
+    ("operational_system_routing","routing_audit_id","operational_routing_audit","id"),
+    ("operational_system_routing","policy_audit_id","operational_triage_policy_audit","id"),
+    ("operational_system_routing","case_ref","tier2_cases","case_ref"),
     ("prospective_runs","actor_id","users","id"),
     ("prospective_run_events","actor_id","users","id"),
     ("prospective_run_events","run_id","prospective_runs","id"),

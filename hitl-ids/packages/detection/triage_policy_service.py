@@ -58,6 +58,9 @@ def apply_triage_policy(conn: sqlite3.Connection, operational_id: int, *, actor_
         actor = db.get(conn, m.User, actor_id)
         if actor is None or actor.status != "active" or actor.role not in ("security_analyst", "system_admin"):
             raise PermissionError("policy application requires an active analyst or administrator")
+        if (conn.execute("SELECT 1 FROM sqlite_master WHERE name='operational_system_routing'").fetchone()
+                and conn.execute('SELECT 1 FROM operational_system_routing WHERE operational_alert_id=?', (operational_id,)).fetchone()):
+            raise ValueError('initial system routing is immutable; use the explicit manual override')
         alert = read_projection(conn, operational_id)
         before = read_triage(conn, operational_id)
         if _admission_transaction and (

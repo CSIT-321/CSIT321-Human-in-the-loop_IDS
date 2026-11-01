@@ -509,6 +509,62 @@
         "title": "AssignRequest",
         "type": "object"
       },
+      "AttackClassification": {
+        "additionalProperties": false,
+        "properties": {
+          "attackCategory": {
+            "enum": [
+              "brute_force",
+              "botnet_c2",
+              "dos",
+              "ddos",
+              "web_attack",
+              "infiltration",
+              "reconnaissance_port_scan",
+              "malware_exploit",
+              "other_known_attack",
+              "unknown_needs_expert"
+            ],
+            "title": "Attackcategory",
+            "type": "string"
+          },
+          "policyVersion": {
+            "title": "Policyversion",
+            "type": "string"
+          },
+          "reasons": {
+            "items": {
+              "type": "string"
+            },
+            "minItems": 1,
+            "title": "Reasons",
+            "type": "array"
+          },
+          "source": {
+            "const": "deterministic_suricata_mapping",
+            "default": "deterministic_suricata_mapping",
+            "title": "Source",
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "mapped",
+              "unmapped",
+              "conflict"
+            ],
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "attackCategory",
+          "status",
+          "reasons",
+          "policyVersion"
+        ],
+        "title": "AttackClassification",
+        "type": "object"
+      },
       "AuditEntryOut": {
         "additionalProperties": false,
         "description": "One append-only audit record. ``UPDATE`` and ``DELETE`` raise at the database (NFR-02/03).",
@@ -823,8 +879,15 @@
             "type": "string"
           },
           "actorId": {
-            "title": "Actorid",
-            "type": "integer"
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Actorid"
           },
           "afterState": {
             "additionalProperties": true,
@@ -843,6 +906,15 @@
           },
           "createdAt": {
             "title": "Createdat",
+            "type": "string"
+          },
+          "decisionSource": {
+            "default": "analyst",
+            "enum": [
+              "analyst",
+              "system_policy"
+            ],
+            "title": "Decisionsource",
             "type": "string"
           },
           "eventType": {
@@ -975,12 +1047,35 @@
             "type": "string"
           },
           "createdByActorId": {
-            "title": "Createdbyactorid",
-            "type": "integer"
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Createdbyactorid"
+          },
+          "decisionSource": {
+            "default": "analyst",
+            "enum": [
+              "analyst",
+              "system_policy"
+            ],
+            "title": "Decisionsource",
+            "type": "string"
           },
           "ownerActorId": {
-            "title": "Owneractorid",
-            "type": "integer"
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Owneractorid"
           },
           "primaryOperationalAlertRef": {
             "format": "uuid",
@@ -6979,18 +7074,33 @@
         "additionalProperties": false,
         "properties": {
           "action": {
-            "enum": [
-              "admit_tier1",
-              "approve_tier2",
-              "reject_tier2",
-              "manual_escalate"
+            "anyOf": [
+              {
+                "enum": [
+                  "admit_tier1",
+                  "approve_tier2",
+                  "reject_tier2",
+                  "manual_escalate"
+                ],
+                "type": "string"
+              },
+              {
+                "const": "system_route",
+                "type": "string"
+              }
             ],
-            "title": "Action",
-            "type": "string"
+            "title": "Action"
           },
           "actorId": {
-            "title": "Actorid",
-            "type": "integer"
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Actorid"
           },
           "afterState": {
             "$ref": "#/components/schemas/OperationalTriageStateV2"
@@ -7000,6 +7110,15 @@
           },
           "createdAt": {
             "title": "Createdat",
+            "type": "string"
+          },
+          "decisionSource": {
+            "default": "analyst",
+            "enum": [
+              "analyst",
+              "system_policy"
+            ],
+            "title": "Decisionsource",
             "type": "string"
           },
           "eventType": {
@@ -7123,6 +7242,17 @@
             "default": null,
             "title": "Caseref"
           },
+          "classification": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/AttackClassification"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
           "detectorName": {
             "title": "Detectorname",
             "type": "string"
@@ -7167,6 +7297,17 @@
           "stateVersion": {
             "title": "Stateversion",
             "type": "string"
+          },
+          "systemRouting": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/SystemRoutingDecision"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
           },
           "title": {
             "title": "Title",
@@ -8180,6 +8321,54 @@
           "status"
         ],
         "title": "StatusChangeRequest",
+        "type": "object"
+      },
+      "SystemRoutingDecision": {
+        "additionalProperties": false,
+        "properties": {
+          "decisionSource": {
+            "const": "system_policy",
+            "default": "system_policy",
+            "title": "Decisionsource",
+            "type": "string"
+          },
+          "policyVersion": {
+            "title": "Policyversion",
+            "type": "string"
+          },
+          "reasons": {
+            "items": {
+              "type": "string"
+            },
+            "minItems": 1,
+            "title": "Reasons",
+            "type": "array"
+          },
+          "route": {
+            "enum": [
+              "tier1_review",
+              "tier2_case"
+            ],
+            "title": "Route",
+            "type": "string"
+          },
+          "routeClass": {
+            "enum": [
+              "ROUTINE_REVIEW",
+              "CRITICAL_ESCALATION",
+              "EXPERT_REVIEW_REQUIRED"
+            ],
+            "title": "Routeclass",
+            "type": "string"
+          }
+        },
+        "required": [
+          "routeClass",
+          "route",
+          "policyVersion",
+          "reasons"
+        ],
+        "title": "SystemRoutingDecision",
         "type": "object"
       },
       "TimeBucket": {

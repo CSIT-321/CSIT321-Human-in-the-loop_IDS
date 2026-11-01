@@ -4,6 +4,7 @@ from apps.api.contract.common import ApiModel
 from packages.contracts.operational_v2 import OperationalTriageStateV2
 from packages.detection.routing import RoutingAction, RoutingAudit
 from packages.detection.tier2_cases import CaseView
+from packages.contracts.suricata_bundle import AttackClassification, SystemRoutingDecision
 
 
 class RoutingView(ApiModel):
@@ -17,6 +18,8 @@ class RoutingView(ApiModel):
     latest_decision: RoutingAudit | None
     allowed_actions: list[RoutingAction]
     case_ref: UUID | None = None
+    classification: AttackClassification | None = None
+    system_routing: SystemRoutingDecision | None = None
 
 
 class RoutingResponse(ApiModel):

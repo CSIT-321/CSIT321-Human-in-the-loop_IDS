@@ -197,7 +197,7 @@ def test_mutable_login_still_uses_migrating_dependency(tmp_path,monkeypatch):
     path=tmp_path/'mutable.db';old_database(path,monkeypatch)
     with TestClient(create_app(path)) as client:
         assert client.post('/api/auth/login',json={'username':'admin','password':'admin-demo'}).status_code==200
-    with closing(db.connect(path)) as conn: assert conn.execute('PRAGMA user_version').fetchone()[0]==13
+    with closing(db.connect(path)) as conn: assert conn.execute('PRAGMA user_version').fetchone()[0]==db.SCHEMA_VERSION
 
 
 def test_current_schema_export_authentication_is_read_only(collection,client,monkeypatch):

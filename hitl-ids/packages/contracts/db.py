@@ -154,6 +154,8 @@ MIGRATIONS += ((12, "append-only trusted safety facts and triage context provena
                 Path(__file__).with_name("trusted_context.sql").read_text(encoding="utf-8")),)
 MIGRATIONS += ((13, "append-only prospective collection runs and recorded decisions",
                 Path(__file__).with_name("prospective_collection.sql").read_text(encoding="utf-8")),)
+MIGRATIONS += ((14, "immutable correlated EVE and system-attributed routing/cases",
+                Path(__file__).with_name("suricata_system_routing.sql").read_text(encoding="utf-8")),)
 SCHEMA_VERSION = MIGRATIONS[-1][0]
 
 
@@ -167,6 +169,12 @@ def migrate(conn: sqlite3.Connection) -> list[int]:
     for version, _description, sql in MIGRATIONS:
         if version <= current:
             continue
+        rebuild = version == 14
+        foreign_keys = conn.execute("PRAGMA foreign_keys").fetchone()[0]
+        if rebuild:
+            if conn.in_transaction:
+                raise sqlite3.OperationalError("schema rebuild requires no open transaction")
+            conn.execute("PRAGMA foreign_keys=OFF")
         try:
             conn.execute("BEGIN IMMEDIATE")
             # Another API request may have migrated while this connection waited for the lock.
@@ -181,11 +189,16 @@ def migrate(conn: sqlite3.Connection) -> list[int]:
                     statement = ""
             if statement.strip():
                 raise sqlite3.OperationalError("incomplete migration SQL")
+            if rebuild and conn.execute("PRAGMA foreign_key_check").fetchone() is not None:
+                raise sqlite3.IntegrityError("foreign key violation during schema rebuild")
             conn.execute(f"PRAGMA user_version = {int(version)}")
             conn.commit()
         except sqlite3.Error:
             conn.rollback()
             raise
+        finally:
+            if rebuild:
+                conn.execute(f"PRAGMA foreign_keys={int(foreign_keys)}")
         applied.append(version)
     return applied
 

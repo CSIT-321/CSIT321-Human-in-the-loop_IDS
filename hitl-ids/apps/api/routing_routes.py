@@ -2,6 +2,7 @@
 from typing import Annotated
 from uuid import UUID
 import sqlite3
+import json
 
 from fastapi import APIRouter, Depends, Query
 from apps.api import auth
@@ -37,7 +38,9 @@ def _view(conn, alert_id, principal):
     audit = conn.execute('SELECT * FROM operational_routing_audit WHERE operational_alert_id=? '
                          'ORDER BY id DESC LIMIT 1', (alert_id,)).fetchone()
     case = conn.execute('SELECT case_ref FROM tier2_cases WHERE primary_operational_alert_id=?', (alert_id,)).fetchone()
-    return RoutingView(operational_alert_ref=row['operational_alert_ref'], title=row['detection_title'],
+    system = conn.execute('SELECT classification,routing_decision FROM operational_system_routing WHERE operational_alert_id=?', (alert_id,)).fetchone()
+    return RoutingView(classification=json.loads(system['classification']) if system else None,
+        system_routing=json.loads(system['routing_decision']) if system else None, operational_alert_ref=row['operational_alert_ref'], title=row['detection_title'],
         detector_name=row['detector_name'], detector_source=row['detector_source'], state=state, state_version=state_version(state),
         review_reasons=[state.review_reason], latest_decision=decode_audit(audit) if audit else None,
         allowed_actions=list(allowed_actions(state)) if principal.role in ('security_analyst', 'system_admin') else [],

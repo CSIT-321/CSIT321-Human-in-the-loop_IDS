@@ -14,6 +14,8 @@ from packages.detection.adapters.suricata import SuricataEveAdapter, SuricataOut
 from packages.detection.routing import RoutingRequest, route_alert, state_version
 from packages.detection.triage_policy import TriageContext, evaluate_triage
 from packages.detection.triage_policy_service import apply_triage_policy
+from packages.detection.adapters.suricata_bundle import build_bundle, parse_record
+from packages.detection.system_routing import admit_system_route
 
 
 class AdmissionConflict(ValueError):
@@ -65,8 +67,12 @@ def validate_source(row):
         canonical = alert.detector_evidence
         raw = canonical.model_dump(mode='json')['original_detector_fields']
         reference = 'eve-sha256:' + hashlib.sha256(_json(raw).encode()).hexdigest()
-        reconstructed = SuricataEveAdapter().adapt(SuricataOutput(
-            raw, reference, detector_version=canonical.detector_version, sensor_id=row['sensor_id']))
+        if canonical.provenance.get('adapterVersion') == 'suricata-bundle-v1':
+            reconstructed = build_bundle([parse_record(event, row['sensor_id']) for event in raw['events']],
+                                         detector_version=canonical.detector_version)
+        else:
+            reconstructed = SuricataEveAdapter().adapt(SuricataOutput(
+                raw, reference, detector_version=canonical.detector_version, sensor_id=row['sensor_id']))
         if reconstructed != canonical:
             raise ValueError('raw evidence does not match canonical evidence')
         policy = AdmissionPolicy.model_validate_json(row['policy_snapshot'])
@@ -164,21 +170,27 @@ def admit_external(conn: sqlite3.Connection, inbox_id: int, *, actor_id: int,
         if conn.execute('SELECT 1 FROM operational_alerts_v2 WHERE external_inbox_id=?', (inbox_id,)).fetchone():
             raise AdmissionConflict('pre-existing projection is outside this admission workflow; manual reconciliation required')
         alert = materialize_source(conn, 'external_nids_alert', inbox_id, _admission_transaction=True)
-        policy = apply_triage_policy(conn, alert.id, actor_id=actor_id,
-            expected_state=read_triage(conn, alert.id), context=context, _admission_transaction=True)
-        routing, replayed = route_alert(conn, alert.id, actor_id=actor_id, action='admit_tier1',
-            request=RoutingRequest(request_id=uuid5(NAMESPACE_URL, 'external-admission:' + str(request.request_id)),
-                expected_state_version=state_version(policy.state), reason=request.reason),
-            _admission_transaction=True)
-        if replayed:
-            raise AdmissionConflict('unexpected routing identity collision')
+        if alert.detector_evidence.provenance.get('adapterVersion') == 'suricata-bundle-v1':
+            if trusted_context is not None:
+                raise AdmissionConflict('bundled detections require persisted trusted facts, not caller-supplied context')
+            policy_audit_id, routing = admit_system_route(conn, alert, request.request_id)
+        else:
+            policy = apply_triage_policy(conn, alert.id, actor_id=actor_id,
+                expected_state=read_triage(conn, alert.id), context=context, _admission_transaction=True)
+            routing, replayed = route_alert(conn, alert.id, actor_id=actor_id, action='admit_tier1',
+                request=RoutingRequest(request_id=uuid5(NAMESPACE_URL, 'external-admission:' + str(request.request_id)),
+                    expected_state_version=state_version(policy.state), reason=request.reason),
+                _admission_transaction=True)
+            if replayed:
+                raise AdmissionConflict('unexpected routing identity collision')
+            policy_audit_id = policy.audit_id
         state = read_triage(conn, alert.id)
         cursor = conn.execute('INSERT INTO external_operational_admission '
             '(external_inbox_id,operational_alert_id,canonical_alert_id,actor_id,review_id,request_id,reason,'
             'event_type,policy_audit_id,routing_audit_id,context_snapshot,resulting_state,created_at) '
             'VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)', (inbox_id, alert.id, str(alert.canonical_alert_id), actor_id,
             review['id'], str(request.request_id), request.reason, 'V2_EXTERNAL_ALERT_ADMITTED',
-            policy.audit_id, routing.id, context_json, state.model_dump_json(by_alias=True),
+            policy_audit_id, routing.id, context_json, state.model_dump_json(by_alias=True),
             db.format_timestamp(state.updated_at)))
         result = dict(conn.execute('SELECT * FROM external_operational_admission WHERE id=?', (cursor.lastrowid,)).fetchone())
         conn.commit()

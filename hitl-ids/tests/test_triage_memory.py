@@ -9,7 +9,7 @@ import pytest
 from pydantic import ValidationError
 from packages.contracts import db
 from packages.detection import triage_memory as memory
-from packages.detection.adapters.staging import stage_file
+from legacy_suricata_fixture import stage_file
 from packages.detection.adapters.operational_v2 import read_projection,read_triage,materialize_source
 from packages.detection.external_admission import admit_external
 from packages.detection.routing import state_version

@@ -1,0 +1,197 @@
+[
+  {
+    "timestamp": "2026-10-31T12:00:00.123456+0800",
+    "src_ip": "192.0.2.10",
+    "dest_ip": "198.51.100.20",
+    "src_port": 51234,
+    "dest_port": 22,
+    "proto": "TCP",
+    "flow_id": 91001,
+    "event_type": "alert",
+    "alert": {
+      "signature_id": 910001,
+      "signature": "SYNTHETIC Possible SSH brute force",
+      "category": "Attempted Information Leak",
+      "severity": 2,
+      "action": "allowed",
+      "rev": 1
+    }
+  },
+  {
+    "timestamp": "2026-10-31T12:00:00.123456+0800",
+    "src_ip": "192.0.2.10",
+    "dest_ip": "198.51.100.20",
+    "src_port": 51234,
+    "dest_port": 22,
+    "proto": "TCP",
+    "flow_id": 91001,
+    "event_type": "flow",
+    "flow": {
+      "pkts_toserver": 12,
+      "pkts_toclient": 10,
+      "bytes_toserver": 2400,
+      "bytes_toclient": 1600,
+      "state": "closed",
+      "reason": "timeout",
+      "start": "2026-10-31T12:00:00.123456+0800",
+      "end": "2026-10-31T12:00:00.123456+0800"
+    }
+  },
+  {
+    "timestamp": "2026-10-31T12:00:00.123456+0800",
+    "src_ip": "192.0.2.10",
+    "dest_ip": "198.51.100.20",
+    "src_port": 51234,
+    "dest_port": 22,
+    "proto": "TCP",
+    "flow_id": 91001,
+    "event_type": "ssh",
+    "ssh": {
+      "client": {
+        "proto_version": "2.0",
+        "software_version": "OpenSSH_9.6"
+      },
+      "server": {
+        "proto_version": "2.0",
+        "software_version": "OpenSSH_9.3"
+      }
+    }
+  },
+  {
+    "timestamp": "2026-10-31T12:00:00.123456+0800",
+    "src_ip": "192.0.2.10",
+    "dest_ip": "198.51.100.20",
+    "src_port": 51234,
+    "dest_port": 22,
+    "proto": "TCP",
+    "flow_id": 91002,
+    "event_type": "alert",
+    "alert": {
+      "signature_id": 910002,
+      "signature": "SYNTHETIC SSH password guessing",
+      "category": "Attempted Information Leak",
+      "severity": 3,
+      "action": "allowed",
+      "rev": 1
+    }
+  },
+  {
+    "timestamp": "2026-10-31T12:00:00.123456+0800",
+    "src_ip": "192.0.2.10",
+    "dest_ip": "198.51.100.20",
+    "src_port": 51234,
+    "dest_port": 22,
+    "proto": "TCP",
+    "flow_id": 91002,
+    "event_type": "alert",
+    "alert": {
+      "signature_id": 910003,
+      "signature": "SYNTHETIC SSH brute force",
+      "category": "Attempted Information Leak",
+      "severity": 1,
+      "action": "allowed",
+      "rev": 1
+    }
+  },
+  {
+    "timestamp": "2026-10-31T12:00:00.123456+0800",
+    "src_ip": "192.0.2.10",
+    "dest_ip": "198.51.100.20",
+    "src_port": 51234,
+    "dest_port": 22,
+    "proto": "TCP",
+    "flow_id": 91002,
+    "event_type": "ssh",
+    "ssh": {
+      "client": {
+        "software_version": "OpenSSH_9.6"
+      }
+    }
+  },
+  {
+    "timestamp": "2026-10-31T12:00:00.123456+0800",
+    "src_ip": "192.0.2.10",
+    "dest_ip": "198.51.100.20",
+    "src_port": 51234,
+    "dest_port": 22,
+    "proto": "TCP",
+    "flow_id": 91003,
+    "event_type": "alert",
+    "alert": {
+      "signature_id": 910004,
+      "signature": "SYNTHETIC Unresolved encrypted protocol pattern",
+      "category": "Attempted Information Leak",
+      "severity": 2,
+      "action": "allowed",
+      "rev": 1
+    }
+  },
+  {
+    "timestamp": "2026-10-31T12:00:00.123456+0800",
+    "src_ip": "192.0.2.10",
+    "dest_ip": "198.51.100.20",
+    "src_port": 51234,
+    "dest_port": 22,
+    "proto": "TCP",
+    "flow_id": 91003,
+    "event_type": "tls",
+    "tls": {
+      "version": "TLS 1.3",
+      "sni": "example.test"
+    }
+  },
+  {
+    "timestamp": "2026-10-31T12:00:00.123456+0800",
+    "src_ip": "192.0.2.10",
+    "dest_ip": "198.51.100.99",
+    "src_port": 51234,
+    "dest_port": 443,
+    "proto": "TCP",
+    "flow_id": 91004,
+    "event_type": "alert",
+    "alert": {
+      "signature_id": 910005,
+      "signature": "SYNTHETIC SQL injection attempt",
+      "category": "Attempted Information Leak",
+      "severity": 1,
+      "action": "allowed",
+      "rev": 1
+    }
+  },
+  {
+    "timestamp": "2026-10-31T12:00:00.123456+0800",
+    "src_ip": "192.0.2.10",
+    "dest_ip": "198.51.100.99",
+    "src_port": 51234,
+    "dest_port": 443,
+    "proto": "TCP",
+    "flow_id": 91004,
+    "event_type": "http",
+    "http": {
+      "hostname": "example.test",
+      "url": "/search?q=test",
+      "http_method": "GET",
+      "protocol": "HTTP/1.1",
+      "status": 403
+    },
+    "tx_id": 0
+  },
+  {
+    "timestamp": "2026-10-31T12:00:00.123456+0800",
+    "src_ip": "192.0.2.10",
+    "dest_ip": "198.51.100.20",
+    "src_port": 51234,
+    "dest_port": 22,
+    "proto": "TCP",
+    "flow_id": 91005,
+    "event_type": "alert",
+    "alert": {
+      "signature_id": 910006,
+      "signature": "SYNTHETIC Port scan manual override fixture",
+      "category": "Attempted Information Leak",
+      "severity": 3,
+      "action": "allowed",
+      "rev": 1
+    }
+  }
+]

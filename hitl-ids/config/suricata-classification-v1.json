@@ -1,0 +1,15 @@
+{
+  "version": "suricata-classification-v1",
+  "conflictPolicy": "unknown_needs_expert",
+  "rules": [
+    {"id":"brute-force", "category":"brute_force", "pattern":"\\bbrute[ -]?force\\b|\\bpassword guessing\\b"},
+    {"id":"command-control", "category":"botnet_c2", "pattern":"\\bbotnet\\b|\\bcommand[ -]and[ -]control\\b|\\bc2 beacon\\b"},
+    {"id":"distributed-dos", "category":"ddos", "pattern":"\\bddos\\b|\\bdistributed denial of service\\b"},
+    {"id":"dos", "category":"dos", "pattern":"\\bdos\\b|(?<!distributed )\\bdenial of service\\b"},
+    {"id":"web-attack", "category":"web_attack", "pattern":"\\bsql injection\\b|\\bcross[ -]site scripting\\b|\\bweb application attack\\b|\\bdirectory traversal\\b"},
+    {"id":"infiltration", "category":"infiltration", "pattern":"\\bdata exfiltration\\b|\\binfiltration\\b"},
+    {"id":"reconnaissance", "category":"reconnaissance_port_scan", "pattern":"\\bport[ -]?scan\\b|\\bnetwork scan\\b|\\bssh scan\\b|\\breconnaissance\\b"},
+    {"id":"malware-exploit", "category":"malware_exploit", "pattern":"\\bmalware\\b|\\btrojan\\b|\\bexploit\\b|\\bshellcode\\b"},
+    {"id":"other-known", "category":"other_known_attack", "pattern":"\\bcredential theft\\b|\\bprivilege escalation\\b"}
+  ]
+}

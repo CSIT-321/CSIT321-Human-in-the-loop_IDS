@@ -33,9 +33,10 @@ class RoutingRequest(V2Contract):
 class RoutingAudit(V2Contract):
     id: int
     operational_alert_id: int
-    actor_id: int
+    actor_id: int | None
+    decision_source: Literal['analyst', 'system_policy'] = 'analyst'
     request_id: UUID
-    action: RoutingAction
+    action: RoutingAction | Literal['system_route']
     event_type: str
     expected_state_version: str
     reason: str

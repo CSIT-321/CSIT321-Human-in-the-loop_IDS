@@ -7,7 +7,7 @@ const ref="fe130e6f-af86-4fc6-89f2-bc76b6cad68b";
 const session={username:"g.ang",displayName:"Analyst",role:"security_analyst" as const,token:"test"};
 const empty={items:[],page:{total:0,limit:50,offset:0,returned:0}};
 const routing={operationalAlertRef:ref,title:"Selective demo",detectorName:"Suricata",stateVersion:"a".repeat(64),reviewReasons:[],latestDecision:null,allowedActions:[],
-  state:{operationalPriority:85,priorityBand:"P1",reviewRequired:true,handlingRoute:"tier1_review",workflowStage:"triage",tier2Recommended:false,tier2RecommendationReasons:[]}};
+  state:{decisionSource:"system_policy",operationalPriority:85,priorityBand:"P1",reviewRequired:true,handlingRoute:"tier1_review",workflowStage:"triage",tier2Recommended:false,tier2RecommendationReasons:[]}};
 const view={operationalAlertRef:ref,title:"Selective demo",version:"b".repeat(64),disposition:"no_immediate_review",reasonCodes:["VALIDATED_MEMORY_AND_CONTEXT"],explanation:"All safety gates passed",priority:85,route:"tier1_review",humanOverride:false,eligibleAlert:true,recalled:false,lastDecision:null,
   policyEvaluation:{inputs:{matches:[]},result:{policyVersion:"selective-review-v1",matchedLessonRef:null}}};
 function reads(req:Request){

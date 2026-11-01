@@ -196,7 +196,7 @@ def test_migration_thirteen_preserves_populated_prior_schema(tmp_path,monkeypatc
         from apps.api.auth import ensure_demo_accounts
         ensure_demo_accounts(conn)
         before={r[0]:list(map(tuple,conn.execute(f'SELECT * FROM "{r[0]}"'))) for r in conn.execute("SELECT name FROM sqlite_master WHERE type='table' AND name NOT IN ('schema_migrations','sqlite_sequence')").fetchall()}
-        monkeypatch.setattr(db,'MIGRATIONS',migrations)
+        monkeypatch.setattr(db,'MIGRATIONS',migrations[:13])
         trace=[];conn.set_trace_callback(trace.append)
         assert db.migrate(conn)==[13] and db.migrate(conn)==[]
         assert all(list(map(tuple,conn.execute(f'SELECT * FROM "{name}"')))==rows for name,rows in before.items())

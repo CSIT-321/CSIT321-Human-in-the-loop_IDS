@@ -9,7 +9,7 @@ import pytest
 
 from packages.contracts import db
 from packages.detection.adapters.operational_v2 import materialize_source, read_triage
-from packages.detection.adapters.staging import stage_file
+from legacy_suricata_fixture import stage_file
 from packages.detection.routing import RoutingRequest, RoutingConflict, route_alert, state_version
 from packages.detection.triage_policy import TriageContext
 from packages.detection.triage_policy_service import apply_triage_policy
