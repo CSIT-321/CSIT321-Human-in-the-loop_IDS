@@ -55,7 +55,7 @@ describe("correlated Suricata and system routing", () => {
     });
     renderApp("/analyst/operations?alertRef=" + ref, { session: { username: "g.ang", displayName: "Analyst", role: "security_analyst", token: "test" } });
     expect(await screen.findByRole("heading", { name: "System Routing" })).toBeVisible();
-    expect(await screen.findByText("Unknown / Needs Expert")).toBeVisible();
+    expect(await within(screen.getByRole("region", { name: "Operational alert workspace" })).findByText("Unknown / Needs Expert")).toBeVisible();
     expect(screen.getByRole("link", { name: "Open Tier 2 Case" })).toHaveAttribute("href", "/analyst/tier2-cases/" + caseRef);
     expect(screen.queryByRole("button", { name: "Approve Tier 2" })).toBeNull();
     expect(screen.queryByRole("button", { name: "Escalate to Tier 2" })).toBeNull();

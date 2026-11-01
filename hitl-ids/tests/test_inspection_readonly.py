@@ -34,6 +34,7 @@ INSPECTION_ROUTES = (
     '/api/evaluation/runs/{runId}',
     '/api/evaluation/runs/{runId}/detection',
     '/api/v2/alerts',
+    '/api/v2/alerts/summary',
     '/api/v2/alerts/{alertRef}/triage-state',
     '/api/v2/alerts/{alertRef}/evidence',
     '/api/v2/external-alerts',

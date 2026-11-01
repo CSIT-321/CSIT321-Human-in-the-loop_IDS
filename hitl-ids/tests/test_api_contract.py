@@ -82,6 +82,7 @@ REQUIRED_OPERATIONS = {
     ('/api/v2/external-alerts/{inboxId}/eligibility', 'post'),
     ('/api/v2/external-alerts/{inboxId}/admit', 'post'),
     ('/api/v2/alerts', 'get'),
+    ('/api/v2/alerts/summary', 'get'),
     ('/api/v2/alerts/{alertRef}/triage-state', 'get'),
     ('/api/v2/alerts/{alertRef}/admit-tier1', 'post'),
     ('/api/v2/alerts/{alertRef}/tier2/approve', 'post'),

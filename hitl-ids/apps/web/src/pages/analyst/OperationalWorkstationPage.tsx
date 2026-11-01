@@ -9,6 +9,7 @@ import { SystemRouting, attackLabel, currentRouteLabel, routingSummaryLabel } fr
 import { RoutingDetail } from "./V2RoutingPage";
 import { AlertMemoryPanel } from "./TriageMemoryPage";
 import { SelectiveReviewPanel } from "./SelectiveReviewPage";
+import { OperationalKpis, QueueTabs, QueueItem, queueViews, attackCategories, type QueueView } from "../../features/alert/OperationalQueue";
 
 type View = Schemas["RoutingView"];
 const button = "rounded-sm border border-border bg-raised px-2.5 py-1.5 text-xs hover:border-border-strong disabled:opacity-40";
@@ -122,17 +123,28 @@ export function OperationalWorkstationPage() {
   const parsed = Number(search.get("offset") ?? 0);
   const offset = Number.isSafeInteger(parsed) && parsed >= 0 ? parsed : 0;
   const filter = search.get("q") ?? "";
+  const activeView = queueViews.find(view => view.key === search.get("view")) ?? queueViews[0];
+  const attackCategory = attackCategories.find(([key]) => key === search.get("attackCategory"))?.[0];
+  // Only one supported ranking. Missing/unknown URL values safely use this default.
+  const sort = "priority_desc" as const;
   const [overrides, setOverrides] = useState<Record<string, View>>({});
-  const queue = useApi(signal => unwrap(api.GET("/api/v2/alerts", { params: { query: { limit: 50, offset } }, signal })), [offset]);
+  const summary = useApi(signal => unwrap(api.GET("/api/v2/alerts/summary", { signal })), []);
+  const queue = useApi(signal => unwrap(api.GET("/api/v2/alerts", { params: { query: { limit: 50, offset, ...activeView.query, attackCategory, q: filter || undefined, sort } }, signal })), [offset, activeView.key, attackCategory, filter, sort]);
   const linked = useApi(async signal => requested ? unwrap(api.GET("/api/v2/alerts/{alertRef}/triage-state", { params: { path: { alertRef: requested } }, signal })) : null, [requested]);
   const items = queue.status === "success" ? queue.data.items.map(item => overrides[item.operationalAlertRef] ?? item) : [];
-  const visible = items.filter(item => `${item.title} ${item.detectorName} ${item.operationalAlertRef} ${item.state.priorityBand ?? ""}`.toLowerCase().includes(filter.toLowerCase()));
+  const visible = items;
   const selected = requested ?? visible[0]?.operationalAlertRef;
   const current = selected ? overrides[selected] ?? items.find(item => item.operationalAlertRef === selected)
     ?? (linked.status === "success" && linked.data?.operationalAlertRef === selected ? linked.data : undefined) : undefined;
   function select(ref: string) { setSearch(previous => { const next = new URLSearchParams(previous); next.set("alertRef", ref); return next; }, { replace: true }); }
   function page(nextOffset: number) { setSearch(previous => { const next = new URLSearchParams(previous); next.set("offset", String(nextOffset)); next.delete("alertRef"); return next; }); }
-  function refresh() { setOverrides({}); queue.reload(); linked.reload(); }
+  function setFilter(key: string, value: string, replace = false) {
+    setSearch(previous => { const next = new URLSearchParams(previous); if (value) next.set(key, value); else next.delete(key);
+      next.set("sort", sort); next.delete("offset"); next.delete("alertRef"); return next; }, { replace, flushSync: true });
+  }
+  function chooseView(view: QueueView) { setFilter("view", view); }
+  function refresh() { setOverrides({}); queue.reload(); linked.reload(); summary.reload(); }
+  function changed(updated: View) { select(updated.operationalAlertRef); setOverrides(previous => ({ ...previous, [updated.operationalAlertRef]: updated })); queue.reload(); summary.reload(); }
   useEffect(() => {
     function key(event: KeyboardEvent) {
       if (event.ctrlKey || event.metaKey || event.altKey || (event.target instanceof HTMLElement && (event.target.isContentEditable || /INPUT|TEXTAREA|SELECT/.test(event.target.tagName)))) return;
@@ -160,37 +172,40 @@ export function OperationalWorkstationPage() {
         </div></details>
       </div>
     </header>
+    <OperationalKpis data={summary.status === "success" ? summary.data : undefined} onView={chooseView} />
+    {summary.status === "loading" && <p role="status" className="px-3 text-xs text-muted">Loading operational workload…</p>}
+    {summary.status === "error" && <div role="alert" className="flex shrink-0 gap-2 px-3 py-1 text-xs">Workload unavailable: {summary.error.message} <button className={button} onClick={summary.reload}>Retry workload</button></div>}
     <div className="ops-grid grid min-h-0 flex-1">
       <section aria-label="Operational alert queue" className="ops-queue flex min-h-0 flex-col border-r border-border bg-surface">
         <div className="shrink-0 space-y-2 border-b border-border p-3">
           <h2 className="label-mono">Operational Alerts</h2>
-          <label htmlFor="ops-search" className="sr-only">Search operational alerts on this page</label>
-          <input id="ops-search" value={filter} onChange={event => setSearch(previous => { const next = new URLSearchParams(previous); next.set("q", event.target.value); return next; }, { replace: true })} placeholder="Search this page…" className="w-full min-w-0 rounded-sm border border-border bg-bg p-2 text-xs" />
-          <p className="text-[10px] text-muted">Existing server order · search filters this page only</p>
+          <QueueTabs active={activeView.key} data={summary.status === "success" ? summary.data : undefined} onView={chooseView} />
+          <label htmlFor="ops-attack" className="block text-xs text-muted">Attack Type</label>
+          <select id="ops-attack" value={attackCategory ?? ""} onChange={event => setFilter("attackCategory", event.target.value)} className="w-full min-w-0 rounded-sm border border-border bg-bg p-1.5 text-xs">
+            <option value="">All attack categories</option>{attackCategories.map(([key, label]) => <option key={key} value={key}>{label}</option>)}
+          </select>
+          <label htmlFor="ops-search" className="sr-only">Search operational alerts</label>
+          <input id="ops-search" maxLength={200} value={filter} onChange={event => setFilter("q", event.target.value, true)} placeholder="Search operational alerts…" className="w-full min-w-0 rounded-sm border border-border bg-bg p-2 text-xs" />
+          <p className="text-[10px] text-muted">Operational Priority ↓ · newest first on ties</p>
         </div>
-        <div className="min-h-0 flex-1 overflow-y-auto">
+        <div id="operational-queue-panel" role="tabpanel" aria-labelledby={"queue-view-" + activeView.key} className="min-h-0 flex-1 overflow-y-auto">
           {queue.status === "loading" && <p role="status" className="p-3 text-xs">Loading operational alerts…</p>}
           {queue.status === "error" && <ErrorState error={queue.error} onRetry={queue.reload} />}
           {queue.status === "success" && visible.length === 0 && <p className="p-4 text-sm text-muted">No operational alerts match this view.</p>}
           <ul aria-label="Operational alerts">{visible.map(item => <li key={item.operationalAlertRef}>
             <button aria-pressed={selected === item.operationalAlertRef} onClick={() => select(item.operationalAlertRef)}
-              className={`block w-full space-y-2 border-b border-l-2 border-b-border px-3 py-3 text-left text-xs ${selected === item.operationalAlertRef ? "border-l-primary bg-raised" : "border-l-transparent hover:bg-raised"}`}>
-              <span className="block break-words font-semibold">{item.title}</span>
-              <span className="block text-muted">{operationalDetector(item.detectorSource, item.detectorName)} · {item.operationalAlertRef.slice(0, 8)}</span>
-              <span className="block">Priority: {item.state.priorityBand ?? "Unassigned"} / {item.state.operationalPriority ?? "—"}</span>
-              <span className="block">Review Required: {item.state.reviewRequired ? "Yes" : "No"}</span>
-              <span className="block capitalize text-muted">{routeLabel(item.state.handlingRoute)}</span>
-              {item.systemRouting && <span className="block text-muted">{routingSummaryLabel(item)}</span>}
+              className={`relative block w-full space-y-2 border-b border-l-2 border-b-border px-3 py-3 text-left text-xs ${selected === item.operationalAlertRef ? "border-l-primary bg-raised" : "border-l-transparent hover:bg-raised"}`}>
+              <QueueItem item={item} />
             </button>
           </li>)}</ul>
         </div>
         <footer className="flex shrink-0 items-center justify-between gap-1 border-t border-border p-2 text-xs">
           <button className={button} disabled={offset === 0} onClick={() => page(Math.max(0, offset - 50))}>Previous alerts</button>
-          <span>{queue.status === "success" ? queue.data.page.total : "…"} alerts</span>
+          <span aria-live="polite">{queue.status === "success" ? `${queue.data.items.length ? offset + 1 : 0}–${queue.data.items.length ? offset + queue.data.items.length : 0} of ${queue.data.page.total}` : "…"}</span>
           <button className={button} disabled={queue.status !== "success" || offset + 50 >= queue.data.page.total} onClick={() => page(offset + 50)}>Next alerts</button>
         </footer>
       </section>
-      {current ? <AlertWorkspace key={current.operationalAlertRef} view={current} onChanged={updated => setOverrides(previous => ({ ...previous, [updated.operationalAlertRef]: updated }))} refresh={refresh} />
+      {current ? <AlertWorkspace key={current.operationalAlertRef} view={current} onChanged={changed} refresh={refresh} />
         : <section aria-label="Operational alert workspace" className="p-5 text-sm text-muted">{linked.status === "error" ? <ErrorState error={linked.error} onRetry={linked.reload} /> : "Select an operational alert."}</section>}
       {current && <Assistance key={"assistance-" + current.operationalAlertRef} view={current} />}
     </div>

@@ -19,17 +19,18 @@ the contract being out of date.
 
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, get_args
 
 from pydantic import BaseModel
 
 from apps.api.contract import alerts as a
 from apps.api.contract import auth as au
 from apps.api.contract import operations as o
-from apps.api.contract.routing import RoutingView, RoutingResponse, EscalateCaseResponse
+from apps.api.contract.routing import RoutingView, RoutingResponse, EscalateCaseResponse, OperationalSummary
 from packages.detection.tier2_escalation import EscalateCaseRequest
 from packages.detection.routing import RoutingRequest
-from packages.contracts.operational_v2 import OperationalAlertV2
+from packages.contracts.operational_v2 import OperationalAlertV2, HandlingRouteV2, PriorityBandV2
+from packages.contracts.suricata_bundle import AttackCategory
 from apps.api.contract.external_admission import ExternalAdmissionView, ExternalAdmissionResponse
 from packages.detection.external_admission import AdmissionRequest, EligibilityRequest
 from apps.api.contract.responses import ResponsePage
@@ -67,7 +68,7 @@ MODELS: tuple[type[BaseModel], ...] = (
     ResponsePage,ResponseRequest,ManualResponseRequest,ResponseDecisionRequest,ResponseMutation,
     CaseView, CaseEvent, CaseMutation, CreateCaseRequest, CaseCommand, LinkCaseRequest, FindingRequest,
     ExternalAdmissionView, ExternalAdmissionResponse, AdmissionRequest, EligibilityRequest,
-    RoutingView, RoutingResponse, RoutingRequest, EscalateCaseRequest, EscalateCaseResponse,
+    RoutingView, RoutingResponse, RoutingRequest, EscalateCaseRequest, EscalateCaseResponse, OperationalSummary,
     ErrorResponse,
     PageInfo,
     au.LoginRequest,
@@ -581,10 +582,23 @@ def _paths() -> dict[str, Any]:
     # the literal above.
     paths['/api/v2/alerts'] = {'get': {
         'operationId': 'listV2Routing', 'summary': 'List explicitly materialized V2 alerts',
+        'description': 'Whole-dataset composable filters before pagination. Operational Priority DESC (null last), occurredAt instant DESC, operationalAlertRef ASC. No scoring or policy application on GET.',
         'tags': ['V2 routing'], 'parameters': [AUTH_PARAMETER,
             {'name': 'limit', 'in': 'query', 'schema': {'type': 'integer', 'minimum': 1, 'maximum': 200, 'default': 50}},
-            {'name': 'offset', 'in': 'query', 'schema': {'type': 'integer', 'minimum': 0, 'default': 0}}],
-        'responses': {'200': {'description': 'V2 routing page', **_page_of(RoutingView)}, **_errors(400)}}}
+            {'name': 'offset', 'in': 'query', 'schema': {'type': 'integer', 'minimum': 0, 'default': 0}},
+            *[{'name': name, 'in': 'query', 'schema': {'type': 'string', 'enum': list(values)}} for name, values in (
+                ('handlingRoute', get_args(HandlingRouteV2)), ('priorityBand', get_args(PriorityBandV2)),
+                ('routeClass', ['ROUTINE_REVIEW', 'CRITICAL_ESCALATION', 'EXPERT_REVIEW_REQUIRED']),
+                ('attackCategory', get_args(AttackCategory)))],
+            {'name': 'reviewRequired', 'in': 'query', 'schema': {'type': 'boolean'}},
+            {'name': 'q', 'in': 'query', 'schema': {'type': 'string', 'maxLength': 200}},
+            {'name': 'sort', 'in': 'query', 'schema': {'type': 'string', 'enum': ['priority_desc'], 'default': 'priority_desc'}}],
+        'responses': {'200': {'description': 'V2 routing page', **_page_of(RoutingView)}, **_errors(400, 503)}}}
+    paths['/api/v2/alerts/summary'] = {'get': {
+        'operationId': 'getV2AlertsSummary', 'summary': 'Read whole-dataset operational workload',
+        'description': 'Authenticated read-only consistent snapshot of persisted current V2 values. Categories intentionally overlap. No filtering, recomputation, migration or materialization.',
+        'tags': ['V2 routing'], 'parameters': [AUTH_PARAMETER],
+        'responses': {'200': {'description': 'Current operational counts', **_json(OperationalSummary)}, **_errors(503)}}}
     paths['/api/v2/alerts/{alertRef}/triage-state'] = {'get': {
         'operationId': 'getV2Routing', 'summary': 'Read V2 state and latest routing decision',
         'tags': ['V2 routing'], 'parameters': [AUTH_PARAMETER, ALERT_REF],

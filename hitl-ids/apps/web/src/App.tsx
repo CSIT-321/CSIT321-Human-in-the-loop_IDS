@@ -8,6 +8,7 @@
 
 import { useState } from "react";
 import { createBrowserRouter, RouterProvider, type RouteObject } from "react-router";
+import { flushSync } from "react-dom";
 
 import { AppShell } from "./components/layout/AppShell";
 import { AuditPage } from "./pages/admin/AuditPage";
@@ -111,7 +112,7 @@ export function App() {
   const [router] = useState(() => createBrowserRouter(routes));
   return (
     <SessionProvider>
-      <RouterProvider router={router} />
+      <RouterProvider router={router} flushSync={callback => { flushSync(callback); return undefined; }} />
     </SessionProvider>
   );
 }

@@ -459,8 +459,31 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** List explicitly materialized V2 alerts */
+        /**
+         * List explicitly materialized V2 alerts
+         * @description Whole-dataset composable filters before pagination. Operational Priority DESC (null last), occurredAt instant DESC, operationalAlertRef ASC. No scoring or policy application on GET.
+         */
         get: operations["listV2Routing"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/alerts/summary": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Read whole-dataset operational workload
+         * @description Authenticated read-only consistent snapshot of persisted current V2 values. Categories intentionally overlap. No filtering, recomputation, migration or materialization.
+         */
+        get: operations["getV2AlertsSummary"];
         put?: never;
         post?: never;
         delete?: never;
@@ -3722,6 +3745,28 @@ export interface components {
             /** Sourceprovenance */
             sourceProvenance: components["schemas"]["LegacySourceProvenanceV2"] | components["schemas"]["ExternalSourceProvenanceV2"];
         };
+        /**
+         * OperationalSummary
+         * @description Whole persisted V2 dataset; categories overlap, never a sum of queue pages.
+         */
+        OperationalSummary: {
+            /** Criticalalerts */
+            criticalAlerts: number;
+            /** Expertreview */
+            expertReview: number;
+            /** Noimmediatereview */
+            noImmediateReview: number;
+            /** Opentier2Cases */
+            openTier2Cases: number;
+            /** Reviewrequired */
+            reviewRequired: number;
+            /** Tier1Review */
+            tier1Review: number;
+            /** Tier2Cases */
+            tier2Cases: number;
+            /** Totalalerts */
+            totalAlerts: number;
+        };
         /** OperationalTriageStateV2 */
         OperationalTriageStateV2: {
             /**
@@ -3856,6 +3901,27 @@ export interface components {
             queueClass: "tier2_candidate" | "corroborated" | "signature_override" | "ml_only" | "none";
             /** Requiresreview */
             requiresReview: number;
+        };
+        /** QueueDetectionSummary */
+        QueueDetectionSummary: {
+            /** Destinationip */
+            destinationIp: string;
+            /** Destinationport */
+            destinationPort: number | null;
+            /**
+             * Evidencetypes
+             * @default []
+             */
+            evidenceTypes: string[];
+            /** Occurredat */
+            occurredAt: string;
+            /**
+             * Relatedsignaturecount
+             * @default null
+             */
+            relatedSignatureCount: number | null;
+            /** Sourceip */
+            sourceIp: string;
         };
         /** RecordedArchive */
         RecordedArchive: {
@@ -4368,6 +4434,8 @@ export interface components {
             caseRef: string | null;
             /** @default null */
             classification: components["schemas"]["AttackClassification"] | null;
+            /** @default null */
+            detectionSummary: components["schemas"]["QueueDetectionSummary"] | null;
             /** Detectorname */
             detectorName: string;
             /**
@@ -6501,6 +6569,13 @@ export interface operations {
             query?: {
                 limit?: number;
                 offset?: number;
+                handlingRoute?: "unassigned" | "tier1_review" | "tier2_candidate" | "tier2_case" | "no_immediate_review";
+                priorityBand?: "critical" | "high" | "medium" | "low" | "informational" | "P1" | "P2" | "P3" | "P4";
+                routeClass?: "ROUTINE_REVIEW" | "CRITICAL_ESCALATION" | "EXPERT_REVIEW_REQUIRED";
+                attackCategory?: "brute_force" | "botnet_c2" | "dos" | "ddos" | "web_attack" | "infiltration" | "reconnaissance_port_scan" | "malware_exploit" | "other_known_attack" | "unknown_needs_expert";
+                reviewRequired?: boolean;
+                q?: string;
+                sort?: "priority_desc";
             };
             header?: {
                 /** @description `Bearer <token>` from POST /api/auth/login */
@@ -6530,6 +6605,47 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not signed in, or the token expired */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Database unavailable or schema unsupported; read-only requests never migrate */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    getV2AlertsSummary: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description `Bearer <token>` from POST /api/auth/login */
+                Authorization?: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Current operational counts */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OperationalSummary"];
                 };
             };
             /** @description Not signed in, or the token expired */

@@ -6,6 +6,7 @@
 
 import { render } from "@testing-library/react";
 import { createMemoryRouter, RouterProvider } from "react-router";
+import { flushSync } from "react-dom";
 import { vi } from "vitest";
 
 import { routes } from "../App";
@@ -44,7 +45,7 @@ export function renderApp(path: string, options: { session?: Session } = {}) {
   const router = createMemoryRouter(routes, { initialEntries: [path] });
   const utils = render(
     <SessionProvider>
-      <RouterProvider router={router} />
+      <RouterProvider router={router} flushSync={callback => { flushSync(callback); return undefined; }} />
     </SessionProvider>,
   );
   return { ...utils, router };

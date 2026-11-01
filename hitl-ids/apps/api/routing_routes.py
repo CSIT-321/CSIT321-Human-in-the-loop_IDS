@@ -1,5 +1,5 @@
 """Authenticated V2-only routing. No ingestion or policy mutation endpoints."""
-from typing import Annotated
+from typing import Annotated, Literal
 from uuid import UUID
 import sqlite3
 import json
@@ -7,13 +7,15 @@ import json
 from fastapi import APIRouter, Depends, Query
 from apps.api import auth
 from apps.api.contract.common import Page, PageInfo
-from apps.api.contract.routing import RoutingView, RoutingResponse, EscalateCaseResponse
+from apps.api.contract.routing import RoutingView, RoutingResponse, EscalateCaseResponse, OperationalSummary, QueueDetectionSummary
+from apps.api import operational_queue
 from packages.detection.tier2_escalation import EscalateCaseRequest, escalate_case
 from packages.detection.tier2_cases import CaseConflict
 from apps.api.deps import ApiError, get_connection
 from apps.api.read_only import ReadConn, ReadPrincipal
 from packages.detection.adapters.operational_v2 import read_triage, read_projection
-from packages.contracts.operational_v2 import OperationalAlertV2
+from packages.contracts.operational_v2 import OperationalAlertV2, HandlingRouteV2, PriorityBandV2
+from packages.contracts.suricata_bundle import AttackCategory
 from packages.detection.routing import (
     RoutingRequest, RoutingAction, RoutingConflict, allowed_actions, decode_audit,
     route_alert, state_version,
@@ -39,7 +41,12 @@ def _view(conn, alert_id, principal):
                          'ORDER BY id DESC LIMIT 1', (alert_id,)).fetchone()
     case = conn.execute('SELECT case_ref FROM tier2_cases WHERE primary_operational_alert_id=?', (alert_id,)).fetchone()
     system = conn.execute('SELECT classification,routing_decision FROM operational_system_routing WHERE operational_alert_id=?', (alert_id,)).fetchone()
+    bundle = json.loads(row['detector_evidence']).get('structured_evidence', {}).get('suricataBundle')
     return RoutingView(classification=json.loads(system['classification']) if system else None,
+        detection_summary=QueueDetectionSummary(source_ip=row['source_ip'], destination_ip=row['destination_ip'],
+            destination_port=row['destination_port'], occurred_at=row['occurred_at'],
+            related_signature_count=len(bundle['relatedSignatures']) if bundle else None,
+            evidence_types=bundle['evidenceTypes'] if bundle else []),
         system_routing=json.loads(system['routing_decision']) if system else None, operational_alert_ref=row['operational_alert_ref'], title=row['detection_title'],
         detector_name=row['detector_name'], detector_source=row['detector_source'], state=state, state_version=state_version(state),
         review_reasons=[state.review_reason], latest_decision=decode_audit(audit) if audit else None,
@@ -49,13 +56,30 @@ def _view(conn, alert_id, principal):
 
 @router.get('', response_model=Page[RoutingView], operation_id='listV2Routing')
 def list_routing(conn: ReadConn, principal: ReadPrincipal, limit: int = Query(50, ge=1, le=200),
-                 offset: int = Query(0, ge=0)):
+                 offset: int = Query(0, ge=0),
+                 handlingRoute: HandlingRouteV2 | None = None, reviewRequired: bool | None = None,
+                 priorityBand: PriorityBandV2 | None = None,
+                 routeClass: Literal['ROUTINE_REVIEW', 'CRITICAL_ESCALATION', 'EXPERT_REVIEW_REQUIRED'] | None = None,
+                 attackCategory: AttackCategory | None = None, q: str | None = Query(None, max_length=200),
+                 sort: Literal['priority_desc'] = 'priority_desc'):
+    """Filter the full V2 dataset before paging. Order: Operational Priority DESC (null last),
+    occurredAt instant DESC, operationalAlertRef ASC. No policy is applied on read."""
     with conn:
         conn.execute('BEGIN')
-        total = conn.execute('SELECT count(*) FROM operational_alerts_v2').fetchone()[0]
-        ids = conn.execute('SELECT id FROM operational_alerts_v2 ORDER BY id LIMIT ? OFFSET ?', (limit, offset))
-        items = [_view(conn, row[0], principal) for row in ids.fetchall()]
+        total, ids = operational_queue.queue_page(conn, limit=limit, offset=offset,
+            handling_route=handlingRoute, review_required=reviewRequired, priority_band=priorityBand,
+            route_class=routeClass, attack_category=attackCategory, q=q)
+        items = [_view(conn, alert_id, principal) for alert_id in ids]
         return Page(items=items, page=PageInfo(total=total, limit=limit, offset=offset, returned=len(items)))
+
+
+@router.get('/summary', response_model=OperationalSummary, operation_id='getV2AlertsSummary')
+def get_summary(conn: ReadConn, principal: ReadPrincipal):
+    """Whole-dataset current operational counts; categories intentionally overlap.
+    Read-only connection and one snapshot, with no migration/materialization/recomputation."""
+    with conn:
+        conn.execute('BEGIN')
+        return operational_queue.summary(conn)
 
 
 @router.get('/{alertRef}/triage-state', response_model=RoutingView, operation_id='getV2Routing')

@@ -1,4 +1,4 @@
-import {screen,waitFor} from "@testing-library/react";
+import {screen,waitFor,within} from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import {describe,expect,it} from "vitest";
 import {renderApp,stubFetch,jsonResponse} from "../../test/renderApp";
@@ -22,7 +22,7 @@ describe("Selective Human Review",()=>{
   it("separates automation from verdict and preserves displayed priority",async()=>{
     stubFetch(reads);renderApp("/analyst/v2-triage?alertRef="+ref,{session});
     await userEvent.click(await screen.findByRole("tab",{name:"Context & Review"}));
-    expect(await screen.findByText("No Immediate Review",{exact:true})).toBeInTheDocument();
+    expect(await within(screen.getByRole("tabpanel",{name:"Context & Review"})).findByText("No Immediate Review",{exact:true})).toBeInTheDocument();
     expect(screen.getAllByText("No Immediate Review is an automation decision, not a human verdict.")[0]).toBeInTheDocument();
     expect(screen.getByText("Operational priority: 85")).toBeInTheDocument();
     expect(screen.getByRole("button",{name:"Require Human Review"})).toBeDisabled();
@@ -64,7 +64,7 @@ describe("Selective Human Review",()=>{
     });
     renderApp("/analyst/v2-triage?alertRef="+ref,{session});
     await userEvent.click(await screen.findByRole("tab",{name:"Context & Review"}));
-    await screen.findByText("No Immediate Review",{exact:true});
+    await within(screen.getByRole("tabpanel",{name:"Context & Review"})).findByText("No Immediate Review",{exact:true});
     await userEvent.click(screen.getByText("Advanced / Research & Evaluation"));
     await userEvent.click(screen.getByRole("button",{name:"Prospective Collection"}));
     await screen.findByRole("option",{name:/closed-demo/});
@@ -102,6 +102,6 @@ describe("Selective Human Review",()=>{
     renderApp("/analyst/v2-triage?alertRef="+ref,{session});
     await userEvent.click(await screen.findByRole("tab",{name:"Context & Review"}));
     await waitFor(()=>expect(screen.getAllByRole("alert").some(node=>node.textContent?.includes("Review policy unavailable"))).toBe(true));
-    expect(screen.queryByText("No Immediate Review",{exact:true})).not.toBeInTheDocument();
+    expect(within(screen.getByRole("tabpanel",{name:"Context & Review"})).queryByText("No Immediate Review",{exact:true})).not.toBeInTheDocument();
   });
 });

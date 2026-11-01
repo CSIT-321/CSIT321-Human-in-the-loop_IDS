@@ -41,6 +41,7 @@ FastAPI route/dependency graph, so an added GET cannot silently escape coverage.
 | `/api/evaluation/runs/{runId}` | prior |
 | `/api/evaluation/runs/{runId}/detection` | prior |
 | `/api/v2/alerts` | new |
+| `/api/v2/alerts/summary` | operational queue increment: read-only whole-dataset counts |
 | `/api/v2/alerts/{alertRef}/triage-state` | new |
 | `/api/v2/external-alerts` | new |
 | `/api/v2/external-alerts/{inboxId}` | new |

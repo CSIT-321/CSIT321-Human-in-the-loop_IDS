@@ -5647,6 +5647,56 @@
         "title": "OperationalAlertV2",
         "type": "object"
       },
+      "OperationalSummary": {
+        "additionalProperties": false,
+        "description": "Whole persisted V2 dataset; categories overlap, never a sum of queue pages.",
+        "properties": {
+          "criticalAlerts": {
+            "title": "Criticalalerts",
+            "type": "integer"
+          },
+          "expertReview": {
+            "title": "Expertreview",
+            "type": "integer"
+          },
+          "noImmediateReview": {
+            "title": "Noimmediatereview",
+            "type": "integer"
+          },
+          "openTier2Cases": {
+            "title": "Opentier2Cases",
+            "type": "integer"
+          },
+          "reviewRequired": {
+            "title": "Reviewrequired",
+            "type": "integer"
+          },
+          "tier1Review": {
+            "title": "Tier1Review",
+            "type": "integer"
+          },
+          "tier2Cases": {
+            "title": "Tier2Cases",
+            "type": "integer"
+          },
+          "totalAlerts": {
+            "title": "Totalalerts",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "totalAlerts",
+          "criticalAlerts",
+          "tier1Review",
+          "tier2Cases",
+          "expertReview",
+          "reviewRequired",
+          "noImmediateReview",
+          "openTier2Cases"
+        ],
+        "title": "OperationalSummary",
+        "type": "object"
+      },
       "OperationalTriageStateV2": {
         "additionalProperties": false,
         "properties": {
@@ -5922,6 +5972,62 @@
           "requiresReview"
         ],
         "title": "QueueBandCount",
+        "type": "object"
+      },
+      "QueueDetectionSummary": {
+        "additionalProperties": false,
+        "properties": {
+          "destinationIp": {
+            "title": "Destinationip",
+            "type": "string"
+          },
+          "destinationPort": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Destinationport"
+          },
+          "evidenceTypes": {
+            "default": [],
+            "items": {
+              "type": "string"
+            },
+            "title": "Evidencetypes",
+            "type": "array"
+          },
+          "occurredAt": {
+            "title": "Occurredat",
+            "type": "string"
+          },
+          "relatedSignatureCount": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Relatedsignaturecount"
+          },
+          "sourceIp": {
+            "title": "Sourceip",
+            "type": "string"
+          }
+        },
+        "required": [
+          "sourceIp",
+          "destinationIp",
+          "destinationPort",
+          "occurredAt"
+        ],
+        "title": "QueueDetectionSummary",
         "type": "object"
       },
       "RecordedArchive": {
@@ -7246,6 +7352,17 @@
             "anyOf": [
               {
                 "$ref": "#/components/schemas/AttackClassification"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
+          "detectionSummary": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/QueueDetectionSummary"
               },
               {
                 "type": "null"
@@ -11841,6 +11958,7 @@
     },
     "/api/v2/alerts": {
       "get": {
+        "description": "Whole-dataset composable filters before pagination. Operational Priority DESC (null last), occurredAt instant DESC, operationalAlertRef ASC. No scoring or policy application on GET.",
         "operationId": "listV2Routing",
         "parameters": [
           {
@@ -11870,6 +11988,95 @@
               "default": 0,
               "minimum": 0,
               "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "handlingRoute",
+            "schema": {
+              "enum": [
+                "unassigned",
+                "tier1_review",
+                "tier2_candidate",
+                "tier2_case",
+                "no_immediate_review"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "priorityBand",
+            "schema": {
+              "enum": [
+                "critical",
+                "high",
+                "medium",
+                "low",
+                "informational",
+                "P1",
+                "P2",
+                "P3",
+                "P4"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "routeClass",
+            "schema": {
+              "enum": [
+                "ROUTINE_REVIEW",
+                "CRITICAL_ESCALATION",
+                "EXPERT_REVIEW_REQUIRED"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "attackCategory",
+            "schema": {
+              "enum": [
+                "brute_force",
+                "botnet_c2",
+                "dos",
+                "ddos",
+                "web_attack",
+                "infiltration",
+                "reconnaissance_port_scan",
+                "malware_exploit",
+                "other_known_attack",
+                "unknown_needs_expert"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "reviewRequired",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "in": "query",
+            "name": "q",
+            "schema": {
+              "maxLength": 200,
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "sort",
+            "schema": {
+              "default": "priority_desc",
+              "enum": [
+                "priority_desc"
+              ],
+              "type": "string"
             }
           }
         ],
@@ -11931,6 +12138,60 @@
           }
         },
         "summary": "List explicitly materialized V2 alerts",
+        "tags": [
+          "V2 routing"
+        ]
+      }
+    },
+    "/api/v2/alerts/summary": {
+      "get": {
+        "description": "Authenticated read-only consistent snapshot of persisted current V2 values. Categories intentionally overlap. No filtering, recomputation, migration or materialization.",
+        "operationId": "getV2AlertsSummary",
+        "parameters": [
+          {
+            "description": "`Bearer <token>` from POST /api/auth/login",
+            "in": "header",
+            "name": "Authorization",
+            "required": false,
+            "schema": {
+              "example": "Bearer eyJhbGciOiJIUzI1NiJ9...",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OperationalSummary"
+                }
+              }
+            },
+            "description": "Current operational counts"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not signed in, or the token expired"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Database unavailable or schema unsupported; read-only requests never migrate"
+          }
+        },
+        "summary": "Read whole-dataset operational workload",
         "tags": [
           "V2 routing"
         ]

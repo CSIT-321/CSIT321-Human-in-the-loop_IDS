@@ -12,6 +12,7 @@ const view = { operationalAlertRef: ref, title: "SYNTHETIC Suricata detection", 
   stateVersion: "a".repeat(64), reviewReasons: ["Human review required"], latestDecision: null, caseRef: null, allowedActions: ["manual_escalate"],
   state: { decisionSource: "system_policy", operationalPriority: 85, priorityBand: "P1", reviewRequired: true, handlingRoute: "tier1_review", workflowStage: "triage", tier2Recommended: false, tier2RecommendationReasons: [] } };
 const empty = { items: [], page: { total: 0, offset: 0, limit: 50, returned: 0 } };
+const summary = { totalAlerts: 5000, criticalAlerts: 16, tier1Review: 312, tier2Cases: 24, expertReview: 8, reviewRequired: 336, noImmediateReview: 4664, openTier2Cases: 24 };
 const review = { disposition: "must_review", policyEvaluation: { contextProvenance: { fields: [{ status: "trusted" }] } } };
 function evidence(source = "suricata") {
   return { detectorEvidence: { detectorSource: source, detectorName: source === "suricata" ? "Suricata" : "XGBoost", detectorVersion: "synthetic-v1",
@@ -22,6 +23,7 @@ function evidence(source = "suricata") {
 }
 function reads(request: Request) {
   const url = new URL(request.url);
+  if (url.pathname === "/api/v2/alerts/summary") return jsonResponse(summary);
   if (url.pathname === "/api/v2/alerts") return jsonResponse({ ...empty, items: [view, { ...view, operationalAlertRef: other, title: "Second alert" }], page: { ...empty.page, total: 51 } });
   if (url.pathname.endsWith("/triage-state")) return jsonResponse({ ...view, operationalAlertRef: url.pathname.includes(other) ? other : ref });
   if (url.pathname.endsWith("/evidence")) return jsonResponse(evidence());
@@ -47,7 +49,7 @@ describe("unified operational workstation", () => {
     mounted.unmount();
     stubFetch(() => jsonResponse({ error: { code: "OFFLINE", message: "Queue unavailable" } }, 503));
     renderApp("/analyst/operations", { session });
-    expect(await screen.findByRole("alert")).toHaveTextContent("Queue unavailable");
+    expect((await screen.findAllByRole("alert")).some(alert => alert.textContent?.includes("Queue unavailable"))).toBe(true);
     expect(screen.getByRole("button", { name: "Try again" })).toBeEnabled();
   });
 
@@ -93,6 +95,71 @@ describe("unified operational workstation", () => {
     expect(router.state.location.pathname).toBe("/analyst/operations");
     await userEvent.click(within(screen.getByRole("list", { name: "Operational alerts" })).getAllByRole("button")[1]!);
     expect(router.state.location.search).toContain(other);
+  });
+
+  it("renders whole-dataset KPIs and tabs, exposes priority, and excludes historical categories", async () => {
+    stubFetch(reads);
+    renderApp("/analyst/operations", { session });
+    const workload = screen.getByRole("region", { name: "Operational workload" });
+    expect(await within(workload).findByRole("button", { name: "Total Alerts 5,000" })).toBeVisible();
+    expect(within(workload).getByRole("button", { name: "Needs Review 336" })).toBeVisible();
+    expect(within(workload).getByRole("button", { name: "No Immediate Review 4,664" })).toBeVisible();
+    expect(within(workload).getByRole("link", { name: "Open Tier 2 Cases 24" })).toHaveAttribute("href", "/analyst/tier2-cases");
+    const tabs = screen.getByRole("tablist", { name: "Operational queue views" });
+    expect(within(tabs).getAllByRole("tab")).toHaveLength(7);
+    expect(within(tabs).getByRole("tab", { name: "Tier 2 24" })).toBeVisible();
+    const queue = screen.getByRole("list", { name: "Operational alerts" });
+    expect((await within(queue).findAllByLabelText("Operational Priority: 85"))[0]).toHaveTextContent("85");
+    expect(within(queue).getAllByText("85")[0]).toHaveClass("text-3xl");
+    expect(within(queue).getAllByText("Critical · Tier 1")[0]).toBeVisible();
+    expect(within(tabs).queryByText(/Rule \+ Model|Model Only|Rule Only|Not Flagged|Tier 2 Candidate/)).toBeNull();
+    expect(within(workload).queryByText(/Verdicts|False Positives/i)).toBeNull();
+  });
+
+  it("composes server filters, resets pagination, and restores URL state on navigation", async () => {
+    const requests = stubFetch(req => {
+      const url = new URL(req.url);
+      if (url.pathname === "/api/v2/alerts" && url.searchParams.has("routeClass")) return jsonResponse({ ...empty, items: [{ ...view, title: "Expert result", classification: { attackCategory: "unknown_needs_expert", reasons: ["Unmapped signature"], source: "deterministic_suricata_mapping", status: "unmapped", policyVersion: "synthetic-v1" }, systemRouting: { routeClass: "EXPERT_REVIEW_REQUIRED", reasons: ["Expert needed"], route: "tier2_case", policyVersion: "synthetic-v1", decisionSource: "system_policy" }, state: { ...view.state, handlingRoute: "tier2_case" } }], page: { ...empty.page, total: 1, returned: 1 } });
+      return reads(req);
+    });
+    const { router } = renderApp("/analyst/operations?offset=50&alertRef=" + ref, { session });
+    await userEvent.click(await screen.findByRole("tab", { name: "Expert Review 8" }));
+    expect(router.state.location.search).toContain("view=expert");
+    expect(router.state.location.search).not.toMatch(/offset|alertRef/);
+    expect(await within(screen.getByRole("list", { name: "Operational alerts" })).findByText("EXPERT")).toBeVisible();
+    expect(within(screen.getByRole("list", { name: "Operational alerts" })).getByText("Critical · Tier 2")).toBeVisible();
+    await userEvent.selectOptions(screen.getByLabelText("Attack Type"), "unknown_needs_expert");
+    await waitFor(() => expect(requests.some(req => {
+      const query = new URL(req.url).searchParams;
+      return query.get("routeClass") === "EXPERT_REVIEW_REQUIRED" && query.get("attackCategory") === "unknown_needs_expert" && query.get("sort") === "priority_desc" && query.get("offset") === "0";
+    })).toBe(true));
+    const saved = router.state.location.search;
+    await userEvent.click(screen.getByRole("tab", { name: "All 5,000" }));
+    await router.navigate(-1);
+    await waitFor(() => expect(router.state.location.search).toBe(saved));
+    await waitFor(() => expect(screen.getByRole("tab", { name: "Expert Review 8" })).toHaveAttribute("aria-selected", "true"));
+    expect(screen.getByLabelText("Attack Type")).toHaveValue("unknown_needs_expert");
+    // Deep-link initialization uses the same URL source of truth.
+    await router.navigate("/analyst/operations?view=tier2&attackCategory=web_attack&sort=priority_desc&q=scan");
+    await waitFor(() => expect(requests.some(req => new URL(req.url).searchParams.get("handlingRoute") === "tier2_case" && new URL(req.url).searchParams.get("q") === "scan")).toBe(true));
+    expect(screen.getByRole("tab", { name: "Tier 2 24" })).toHaveAttribute("aria-selected", "true");
+    expect(screen.getByLabelText("Search operational alerts")).toHaveValue("scan");
+  });
+
+  it("KPI shortcuts, queue tab keyboard navigation, and slash search use the same URL filters", async () => {
+    const requests = stubFetch(reads);
+    const { router } = renderApp("/analyst/operations", { session });
+    await userEvent.click(await screen.findByRole("button", { name: "Critical 16" }));
+    expect(router.state.location.search).toContain("view=critical");
+    await waitFor(() => expect(requests.some(req => req.url.includes("priorityBand=P1"))).toBe(true));
+    screen.getByRole("tab", { name: "Critical 16" }).focus();
+    await userEvent.keyboard("{ArrowRight}");
+    expect(screen.getByRole("tab", { name: "Needs Review 336" })).toHaveFocus();
+    expect(router.state.location.search).toContain("view=needs-review");
+    await userEvent.keyboard("/");
+    expect(screen.getByLabelText("Search operational alerts")).toHaveFocus();
+    await userEvent.type(screen.getByLabelText("Search operational alerts"), "outside page");
+    await waitFor(() => expect(requests.some(req => new URL(req.url).searchParams.get("q") === "outside page")).toBe(true));
   });
 });
 

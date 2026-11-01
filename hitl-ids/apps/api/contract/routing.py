@@ -7,6 +7,27 @@ from packages.detection.tier2_cases import CaseView
 from packages.contracts.suricata_bundle import AttackClassification, SystemRoutingDecision
 
 
+class OperationalSummary(ApiModel):
+    """Whole persisted V2 dataset; categories overlap, never a sum of queue pages."""
+    total_alerts: int
+    critical_alerts: int
+    tier1_review: int
+    tier2_cases: int
+    expert_review: int
+    review_required: int
+    no_immediate_review: int
+    open_tier2_cases: int
+
+
+class QueueDetectionSummary(ApiModel):
+    source_ip: str
+    destination_ip: str
+    destination_port: int | None
+    occurred_at: str
+    related_signature_count: int | None = None
+    evidence_types: list[str] = []
+
+
 class RoutingView(ApiModel):
     operational_alert_ref: UUID
     title: str
@@ -20,6 +41,7 @@ class RoutingView(ApiModel):
     case_ref: UUID | None = None
     classification: AttackClassification | None = None
     system_routing: SystemRoutingDecision | None = None
+    detection_summary: QueueDetectionSummary | None = None
 
 
 class RoutingResponse(ApiModel):
