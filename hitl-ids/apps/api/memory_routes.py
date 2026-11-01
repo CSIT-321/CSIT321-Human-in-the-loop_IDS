@@ -7,6 +7,7 @@ from apps.api.routing_routes import Conn,Principal,MutationRole
 from apps.api.read_only import ReadConn, ReadPrincipal
 from packages.detection.triage_memory import (
     MemoryReviewRequest,MemoryDecisionRequest,MemoryMutation,MemoryView,MemoryAudit,MemoryMatch,
+    VerdictMemoryRequest,VerdictMemoryState,contribute_verdict,verdict_memory_state,
     MemoryConflict,record_review,decide_memory,read_memory,list_memory,memory_history,lookup_memory,
 )
 
@@ -79,3 +80,16 @@ def reject(lessonRef:UUID,body:MemoryDecisionRequest,conn:Conn,principal:Princip
 @router.get('/alerts/{alertRef}/triage-memory/matches',response_model=Page[MemoryMatch],operation_id='matchTriageMemory')
 def matches(alertRef:UUID,conn:ReadConn,principal:ReadPrincipal,limit:int=Query(50,ge=1,le=200),offset:int=Query(0,ge=0)):
     return _page(conn,lookup_memory,(alertRef,),limit,offset)
+
+
+@router.post('/alerts/{alertRef}/triage-memory/from-verdict',response_model=MemoryMutation,dependencies=[MutationRole],operation_id='contributeVerdictMemory')
+def from_verdict(alertRef:UUID,body:VerdictMemoryRequest,conn:Conn,principal:Principal):
+    try: return contribute_verdict(conn,alertRef,actor_id=principal.user_id,request=body)
+    except (MemoryConflict,LookupError,PermissionError) as exc: raise _error(exc) from exc
+
+@router.get('/alerts/{alertRef}/triage-memory/verdict-state',response_model=VerdictMemoryState,operation_id='getVerdictMemoryState')
+def contribution_state(alertRef:UUID,conn:ReadConn,principal:ReadPrincipal):
+    try:
+        with conn:
+            conn.execute('BEGIN');return verdict_memory_state(conn,alertRef)
+    except LookupError as exc: raise _error(exc) from exc

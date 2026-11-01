@@ -156,6 +156,8 @@ def current_snapshot(conn,ref):
         if offset>=total or not page:break
     override=conn.execute("SELECT 1 FROM selective_review_events WHERE operational_alert_id=? AND action='require_review' LIMIT 1",(aid,)).fetchone() is not None
     reviewed=conn.execute('SELECT 1 FROM triage_memory_support_events WHERE source_alert_id=? LIMIT 1',(aid,)).fetchone() is not None
+    if conn.execute("SELECT 1 FROM sqlite_master WHERE name='verdict_memory_contributions'").fetchone():
+        reviewed=reviewed or conn.execute('SELECT 1 FROM verdict_memory_contributions WHERE source_alert_id=? LIMIT 1',(aid,)).fetchone() is not None
     reviewed=reviewed or conn.execute("SELECT 1 FROM tier2_cases c JOIN tier2_case_events e ON e.case_id=c.id WHERE c.primary_operational_alert_id=? AND e.action='finding' LIMIT 1",(aid,)).fetchone() is not None
     inputs=ReviewInputs(alert=alert,triage=triage,context=context,context_audit_id=max(context_ids,default=None),
         context_recorded_at=min((field.available_at for field in trusted),default=None),matches=matches,human_override=override,human_verdict_present=reviewed)

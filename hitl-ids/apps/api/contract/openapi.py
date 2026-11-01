@@ -35,7 +35,7 @@ from packages.contracts.suricata_bundle import AttackCategory
 from apps.api.contract.external_admission import ExternalAdmissionView, ExternalAdmissionResponse
 from packages.detection.external_admission import AdmissionRequest, EligibilityRequest
 from apps.api.contract.responses import ResponsePage
-from packages.detection.triage_memory import MemoryReviewRequest,MemoryDecisionRequest,MemoryMutation,MemoryView,MemoryAudit,MemoryMatch
+from packages.detection.triage_memory import VerdictMemoryRequest,VerdictMemoryState,MemoryReviewRequest,MemoryDecisionRequest,MemoryMutation,MemoryView,MemoryAudit,MemoryMatch
 from packages.detection.selective_review import ReviewCommand,ReviewView,ReviewMutation,ReviewEvent,ReviewMetrics
 from packages.detection.context_store import FactRequest,FactPage,FactMutation
 from packages.detection.trusted_context import ResolvedTrustedContext
@@ -62,6 +62,7 @@ SCHEMA_REF = "#/components/schemas/{model}"
 #: Every model that appears on the wire. Listed explicitly rather than discovered, so adding a
 #: model to the API is a deliberate act.
 MODELS: tuple[type[BaseModel], ...] = (
+    VerdictMemoryRequest,VerdictMemoryState,
     VerdictCommand,VerdictView,VerdictHistory,VerdictMutation,
     RunCreate,RunView,RunPage,RunCommand,ObservationRequest,RecordedArchive,CollectionDocument,
     FactRequest,FactPage,FactMutation,ResolvedTrustedContext,
@@ -765,6 +766,13 @@ def _paths() -> dict[str, Any]:
             {'name':'limit','in':'query','schema':{'type':'integer','minimum':1,'maximum':200,'default':50}},
             {'name':'offset','in':'query','schema':{'type':'integer','minimum':0,'default':0}}],
         'responses':{'200':{'description':'Verdict history',**_json(VerdictHistory)},**_errors(404,503)}}}
+    paths['/api/v2/alerts/{alertRef}/triage-memory/from-verdict']={'post':{
+        'operationId':'contributeVerdictMemory','summary':'Contribute latest canonical human Verdict with explicit reuse scope','tags':['Triage memory'],
+        'parameters':[AUTH_PARAMETER,alert_ref],'requestBody':{'required':True,**_json(VerdictMemoryRequest)},
+        'responses':{'200':{'description':'Verdict-linked memory evidence',**_json(MemoryMutation)},**_errors(400,403,404,409)}}}
+    paths['/api/v2/alerts/{alertRef}/triage-memory/verdict-state']={'get':{
+        'operationId':'getVerdictMemoryState','summary':'Read current or superseded contribution state','tags':['Triage memory'],
+        'parameters':[AUTH_PARAMETER,alert_ref], 'responses':{'200':{'description':'Read-only contribution projection',**_json(VerdictMemoryState)},**_errors(404,503)}}}
     return paths
 
 

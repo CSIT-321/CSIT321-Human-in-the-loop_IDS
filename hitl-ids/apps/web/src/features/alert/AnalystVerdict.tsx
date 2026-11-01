@@ -14,7 +14,7 @@ function VerdictRecord({ verdict }: { verdict: Schemas["AnalystVerdict"] }) {
   </article>;
 }
 
-export function AnalystVerdictPanel({ alertRef, stateVersion }: { alertRef: string; stateVersion: string }) {
+export function AnalystVerdictPanel({ alertRef, stateVersion,onUseMemory,onRecorded }: { alertRef: string; stateVersion: string;onUseMemory?:()=>void;onRecorded?:()=>void }) {
   const resource=useApi(signal=>unwrap(api.GET("/api/v2/alerts/{alertRef}/verdict",{params:{path:{alertRef}},signal})),[alertRef,stateVersion]);
   const [outcome,setOutcome]=useState<keyof typeof verdictLabels>("suspicious");
   const [reason,setReason]=useState("");const [busy,setBusy]=useState(false);const [error,setError]=useState("");
@@ -25,7 +25,7 @@ export function AnalystVerdictPanel({ alertRef, stateVersion }: { alertRef: stri
     const key=JSON.stringify(fields);if(pending.current?.key!==key)pending.current={key,id:crypto.randomUUID()};
     setBusy(true);setError("");
     try {await unwrap(api.POST("/api/v2/alerts/{alertRef}/verdict",{params:{path:{alertRef}},body:{...fields,requestId:pending.current.id}}));
-      pending.current=null;setReason("");resource.reload();
+      pending.current=null;setReason("");resource.reload();onRecorded?.();
     }catch(cause){setError(cause instanceof Error?cause.message:"Verdict could not be confirmed.");}finally{setBusy(false);}
   }
   return <section aria-label="Analyst Verdict" className="min-w-0 space-y-3 border-t border-border pt-4">
@@ -36,6 +36,7 @@ export function AnalystVerdictPanel({ alertRef, stateVersion }: { alertRef: stri
     {resource.status==="success"&&<>
       <p className="text-sm">Current Verdict: <strong>{resource.data.latest?verdictLabels[resource.data.latest.outcome]:"Not recorded"}</strong></p>
       {resource.data.latest&&<VerdictRecord verdict={resource.data.latest}/>}
+      {resource.data.latest&&resource.data.canRecord&&onUseMemory&&<button className={button} onClick={onUseMemory}>Use in Triage Memory</button>}
       {!resource.data.canRecord&&<p className="text-xs text-muted">Tier 1 Verdict is available to authorized analysts in Tier 1 review. Tier 2 uses Investigation Finding; no Tier 1 Verdict is required.</p>}
       {resource.data.canRecord&&<fieldset disabled={busy} className="min-w-0 space-y-3">
         <legend className="text-sm">{resource.data.latest?"Correct Verdict":"Record Verdict"}</legend>

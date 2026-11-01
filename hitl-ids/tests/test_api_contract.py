@@ -39,6 +39,8 @@ from scripts.build_openapi import TARGET, rendered
 #: Every endpoint the plan's S10a task list names. `GET /api/evaluation/*` is expanded to the
 #: three concrete endpoints S14 needs.
 REQUIRED_OPERATIONS = {
+    ('/api/v2/alerts/{alertRef}/triage-memory/from-verdict','post'),
+    ('/api/v2/alerts/{alertRef}/triage-memory/verdict-state','get'),
     ('/api/v2/alerts/{alertRef}/verdict','get'),
     ('/api/v2/alerts/{alertRef}/verdict','post'),
     ('/api/v2/alerts/{alertRef}/verdict-history','get'),

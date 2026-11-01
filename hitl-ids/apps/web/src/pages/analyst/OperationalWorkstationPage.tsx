@@ -22,8 +22,8 @@ const routeLabel = (value: string) => value === "tier2_candidate" ? "Tier 2 · r
 
 function Assistance({ view, onReview }: { view: View; onReview: (review: Schemas["ReviewView"]) => void }) {
   const ref = view.operationalAlertRef;
-  const review = useApi(signal => unwrap(api.GET("/api/v2/alerts/{alertRef}/selective-review", { params: { path: { alertRef: ref } }, signal })), [ref, view.stateVersion]);
-  const memory = useApi(signal => unwrap(api.GET("/api/v2/alerts/{alertRef}/triage-memory/matches", { params: { path: { alertRef: ref }, query: { limit: 5, offset: 0 } }, signal })), [ref, view.stateVersion]);
+  const review = useApi(signal => unwrap(api.GET("/api/v2/alerts/{alertRef}/selective-review", { params: { path: { alertRef: ref } }, signal })), [ref, view.stateVersion, view.effectiveReview?.version]);
+  const memory = useApi(signal => unwrap(api.GET("/api/v2/alerts/{alertRef}/triage-memory/matches", { params: { path: { alertRef: ref }, query: { limit: 5, offset: 0 } }, signal })), [ref, view.stateVersion, view.effectiveReview?.version]);
   const onReviewRef = useRef(onReview); onReviewRef.current = onReview;
   useEffect(() => { if (review.status === "success") onReviewRef.current(review.data); }, [review.status === "success" ? review.data.version : ""]);
   const refreshReview = review.reload; const refreshMemory = memory.reload;
@@ -96,7 +96,7 @@ function AlertWorkspace({ view, onChanged, refresh, onReview }: { view: View; on
         {evidence.status === "success" && <OperationalEvidence alert={evidence.data} summaryOnly={tab === "Overview"} />}
       </>}
       <div hidden={tab !== "Overview" && tab !== "Analyst Verdict"}>
-        <AnalystVerdictPanel alertRef={view.operationalAlertRef} stateVersion={view.stateVersion}/>
+        <AnalystVerdictPanel alertRef={view.operationalAlertRef} stateVersion={view.stateVersion} onUseMemory={()=>setTab("Triage Memory")} onRecorded={refresh}/>
       </div>
       {/* Keep this mounted across tabs so draft reasons, retry IDs and success remain stable. */}
       <div hidden={tab !== "Overview"} className="space-y-4">
@@ -104,7 +104,7 @@ function AlertWorkspace({ view, onChanged, refresh, onReview }: { view: View; on
         <RoutingDetail initial={view} refresh={refresh} canRecover compact onChanged={onChanged} />
       </div>
       {tab === "Context & Review" && <SelectiveReviewPanel key={view.stateVersion} alertRef={view.operationalAlertRef} onReview={onReview} />}
-      {tab === "Triage Memory" && <AlertMemoryPanel key={view.stateVersion} view={view} />}
+      {tab === "Triage Memory" && <AlertMemoryPanel key={view.stateVersion} view={view} onVerdict={()=>setTab("Analyst Verdict")} onContributed={refresh} />}
       {tab === "History & Notes" && <section className="space-y-3" aria-label="Operational decision history">
         <AnalystVerdictHistory alertRef={view.operationalAlertRef}/>
         <h3 className="label-mono">Latest routing decision</h3>

@@ -9,7 +9,7 @@ import json
 from pathlib import Path
 from uuid import uuid4
 from hashlib import sha256
-from pre_freeze_fixture import safe_context, review_request, defer
+from pre_freeze_fixture import safe_context, review_request, defer, contribute_review
 from packages.detection import triage_memory as memory
 from packages.detection.adapters.operational_v2 import read_projection
 from packages.detection.adapters.suricata_bundle import build_bundle, parse_record
@@ -63,7 +63,7 @@ def build_queue_fixture(path):
         routine=[read_projection(conn,row[0]) for row in conn.execute("SELECT id FROM operational_alerts_v2 WHERE detection_title='SYNTHETIC Routine port scan' ORDER BY id")]
         for alert in routine: seed_synthetic_facts(conn,alert,safe_context(),m.utc_now())
         for alert in routine[:3]:
-            lesson=memory.record_review(conn,alert.operational_alert_ref,actor_id=actor,request=review_request(conn,alert)).memory
+            lesson=contribute_review(conn,alert,actor_id=actor,request=review_request(conn,alert)).memory
         memory.decide_memory(conn,lesson.lesson.lesson_ref,actor_id=actor,action='activate',request=memory.MemoryDecisionRequest(
             request_id=uuid4(),expected_revision=lesson.revision,reason='SYNTHETIC scoped scanner lesson'))
         for alert in routine[-2:]: assert defer(conn,alert,actor).disposition=='no_immediate_review'

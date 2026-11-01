@@ -713,6 +713,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v2/alerts/{alertRef}/triage-memory/from-verdict": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Contribute latest canonical human Verdict with explicit reuse scope */
+        post: operations["contributeVerdictMemory"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v2/alerts/{alertRef}/triage-memory/matches": {
         parameters: {
             query?: never;
@@ -722,6 +739,23 @@ export interface paths {
         };
         /** matchTriageMemory */
         get: operations["matchTriageMemory"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/alerts/{alertRef}/triage-memory/verdict-state": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Read current or superseded contribution state */
+        get: operations["getVerdictMemoryState"];
         put?: never;
         post?: never;
         delete?: never;
@@ -3359,6 +3393,11 @@ export interface components {
             /** Eventtype */
             eventType: string;
             evidence: components["schemas"]["MemoryEvidence"] | null;
+            /**
+             * Evidencecurrent
+             * @default null
+             */
+            evidenceCurrent: boolean | null;
             /** Id */
             id: number;
             /**
@@ -3494,6 +3533,26 @@ export interface components {
             sourceOperationalAlertRef: string;
             /** Sourcestateversion */
             sourceStateVersion: string;
+            /**
+             * Sourceverdictref
+             * @default null
+             */
+            sourceVerdictRef: string | null;
+            /**
+             * Sourceverdictrevision
+             * @default null
+             */
+            sourceVerdictRevision: number | null;
+            /**
+             * Verdictauthorid
+             * @default null
+             */
+            verdictAuthorId: number | null;
+            /**
+             * Verdictauthorname
+             * @default null
+             */
+            verdictAuthorName: string | null;
         };
         /** MemoryLesson */
         MemoryLesson: {
@@ -5219,6 +5278,43 @@ export interface components {
             offset: number;
             /** Total */
             total: number;
+        };
+        /** VerdictMemoryRequest */
+        VerdictMemoryRequest: {
+            /** Expectedstateversion */
+            expectedStateVersion: string;
+            /**
+             * Requestid
+             * Format: uuid
+             */
+            requestId: string;
+            /**
+             * Scope
+             * @default exact
+             * @enum {string}
+             */
+            scope: "exact" | "narrow";
+            /**
+             * Verdictref
+             * Format: uuid
+             */
+            verdictRef: string;
+        };
+        /** VerdictMemoryState */
+        VerdictMemoryState: {
+            /**
+             * Contributionstatus
+             * @enum {string}
+             */
+            contributionStatus: "not_contributed" | "contributed" | "superseded";
+            /** Latestverdictref */
+            latestVerdictRef: string | null;
+            /** Latestverdictrevision */
+            latestVerdictRevision: number | null;
+            /** Lessonref */
+            lessonRef: string | null;
+            /** Scope */
+            scope: ("exact" | "narrow") | null;
         };
         /** VerdictMutation */
         VerdictMutation: {
@@ -7765,6 +7861,71 @@ export interface operations {
             };
         };
     };
+    contributeVerdictMemory: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description `Bearer <token>` from POST /api/auth/login */
+                Authorization?: string;
+            };
+            path: {
+                alertRef: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["VerdictMemoryRequest"];
+            };
+        };
+        responses: {
+            /** @description Verdict-linked memory evidence */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MemoryMutation"];
+                };
+            };
+            /** @description Validation failed */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Role not permitted */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
     matchTriageMemory: {
         parameters: {
             query?: {
@@ -7810,6 +7971,49 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Database unavailable or schema unsupported; read-only requests never migrate */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    getVerdictMemoryState: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description `Bearer <token>` from POST /api/auth/login */
+                Authorization?: string;
+            };
+            path: {
+                alertRef: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Read-only contribution projection */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VerdictMemoryState"];
                 };
             };
             /** @description Not found */

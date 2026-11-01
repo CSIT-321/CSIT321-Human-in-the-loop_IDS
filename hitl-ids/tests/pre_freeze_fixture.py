@@ -73,8 +73,18 @@ def review_scenario(conn, actor=1, scope='effective-review'):
     alerts = admit_all(conn, actor)
     for alert in alerts: seed_synthetic_facts(conn, alert, safe_context(), m.utc_now())
     for alert in alerts[:3]:
-        lesson = memory.record_review(conn, alert.operational_alert_ref, actor_id=actor, request=review_request(conn, alert)).memory
+        lesson = contribute_review(conn,alert,actor_id=actor,request=review_request(conn,alert)).memory
     memory.decide_memory(conn, lesson.lesson.lesson_ref, actor_id=actor, action='activate', request=memory.MemoryDecisionRequest(
         request_id=uuid4(), expected_revision=lesson.revision, reason='SYNTHETIC evidence activation'))
     for alert in alerts[3:]: assert defer(conn, alert, actor).disposition == 'no_immediate_review'
     return alerts
+
+
+def contribute_review(conn,alert,actor_id,request):
+    from packages.detection.analyst_verdict import read_verdict,record_verdict,VerdictCommand
+    view=read_verdict(conn,alert.operational_alert_ref,actor_id)
+    verdict=record_verdict(conn,alert.operational_alert_ref,actor_id=actor_id,request=VerdictCommand(
+        request_id=uuid4(),expected_revision=view.revision,expected_state_version=view.source_state_version,
+        outcome=request.outcome,reason=request.reason)).verdict
+    return memory.contribute_verdict(conn,alert.operational_alert_ref,actor_id=actor_id,request=memory.VerdictMemoryRequest(
+        request_id=request.request_id,expected_state_version=request.expected_state_version,verdict_ref=verdict.verdict_ref,scope=request.scope))

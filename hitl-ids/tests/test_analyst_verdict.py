@@ -105,7 +105,7 @@ def test_invalid_actor_stale_workflow_missing_and_inactive(conn):
     with pytest.raises(PermissionError):record_verdict(conn,a.operational_alert_ref,actor_id=1,request=req)
 
 def test_migration_sixteen_preserves_previous_data_and_rolls_back(tmp_path,monkeypatch):
-    migrations=db.MIGRATIONS
+    migrations=db.MIGRATIONS[:16]
     c=db.connect(tmp_path/'migration.db')
     try:
         monkeypatch.setattr(db,'MIGRATIONS',migrations[:15]);db.create_schema(c)

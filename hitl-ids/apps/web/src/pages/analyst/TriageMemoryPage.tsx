@@ -1,3 +1,4 @@
+import { VerdictLearning } from "../../features/alert/VerdictLearning";
 import { useRef,useState } from "react";
 import { Link,useSearchParams } from "react-router";
 import { api,unwrap,type Schemas } from "../../api/client";
@@ -87,13 +88,21 @@ function MemoryDetail({view,canWrite,onChange}:{view:View;canWrite:boolean;onCha
     </div>}
     {error&&<p role="alert" className="text-danger">{error}</p>}
     <section className="space-y-3 border-t border-border pt-4" aria-label="Memory evidence and audit">
-      <h2 className="text-base font-semibold">Human Evidence and Audit</h2>
+      <h2 className="text-base font-semibold">Memory Evidence and Activation History</h2>
       {history.status==="loading"&&<p role="status">Loading memory history...</p>}
       {history.status==="error"&&<p role="alert">{history.error.message}</p>}
       {history.status==="success"&&<>
         {history.data.items.map(event=><article key={event.id} className="min-w-0 space-y-2 border-b border-border py-3 text-sm">
           <p className="break-all text-xs text-muted">{event.eventType} / Actor #{event.actorId} / {event.createdAt}</p>
           <p className="whitespace-pre-wrap break-words">{event.reason}</p>
+          {event.evidence?.sourceVerdictRef&&<div className="space-y-1 border-l-2 border-primary pl-3 text-xs">
+            <p className="capitalize">Source Human Verdict: {pretty(event.evidence.outcome)}</p>
+            <p className="break-all">Verdict Reference: {event.evidence.sourceVerdictRef} · Revision {event.evidence.sourceVerdictRevision}</p>
+            <p>Verdict Author: {event.evidence.verdictAuthorName} / #{event.evidence.verdictAuthorId}</p>
+            <p>Memory Contribution Actor: #{event.evidence.actorId} · Scope: {event.lessonSnapshot.lesson.scope}</p>
+            <p>{event.evidenceCurrent?"Current human evidence":"Superseded human evidence — excluded from effective support"}</p>
+          </div>}
+          <p className="text-xs text-muted">{event.evidence?"Memory Evidence History":"Memory Activation History"}</p>
           {event.evidence&&<><p>{pretty(event.evidence.outcome)} / {event.evidence.relation}</p>
             <Link className="text-accent underline" to={prefix(session?.role)+"/v2-triage?alertRef="+event.evidence.sourceOperationalAlertRef}>Evidence alert</Link></>}
           <details><summary className="cursor-pointer">Immutable event snapshot</summary><pre className="max-h-80 overflow-auto whitespace-pre-wrap break-all text-xs">{JSON.stringify(event,null,2)}</pre></details>
@@ -132,7 +141,11 @@ export function TriageMemoryPage() {
   </div>;
 }
 
-export function AlertMemoryPanel({view}:{view:Schemas["RoutingView"]}) {
+export function AlertMemoryPanel({view,onVerdict,onContributed}:{view:Schemas["RoutingView"];onVerdict?:()=>void;onContributed?:()=>void}) {
+  return view.systemRouting ? <VerdictLearning view={view} onVerdict={onVerdict} onContributed={onContributed}/> : <LegacyAlertMemoryPanel view={view}/>;
+}
+
+function LegacyAlertMemoryPanel({view}:{view:Schemas["RoutingView"]}) {
   const {session}=useSession();
   const [outcome,setOutcome]=useState<Schemas["MemoryReviewRequest"]["outcome"]>("suspicious");
   const [scope,setScope]=useState<"exact"|"narrow">("exact");
@@ -178,7 +191,7 @@ export function AlertMemoryPanel({view}:{view:Schemas["RoutingView"]}) {
       <Pagination offset={offset} total={resource.data.page.total} onChange={setOffset}/>
     </>}
     {canWrite&&<div className="space-y-3 border-t border-border pt-4">
-      <h3 className="text-sm font-semibold">Human Memory Review</h3>
+      <h3 className="text-sm font-semibold">Historical / Legacy Human Memory Review</h3>
       <label htmlFor="memory-outcome" className="block text-sm">Human memory outcome</label>
       <select id="memory-outcome" className={input} disabled={busy} value={outcome} onChange={e=>setOutcome(e.target.value as typeof outcome)}>
         <option value="suspicious">Suspicious</option><option value="expected_activity">Expected Activity</option><option value="false_positive">False Positive</option><option value="confirmed_malicious">Confirmed Malicious</option>

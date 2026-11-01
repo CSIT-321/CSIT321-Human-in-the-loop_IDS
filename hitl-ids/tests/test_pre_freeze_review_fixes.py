@@ -15,7 +15,7 @@ from packages.detection.attack_classification import classify, ClassificationPol
 from packages.detection.context_store import collect_fact, FactRequest, revision
 from packages.detection import selective_review as review, triage_memory as memory
 from packages.detection.routing import state_version
-from pre_freeze_fixture import event, stage, admit_all, review_scenario, review_request
+from pre_freeze_fixture import event, stage, admit_all, review_scenario, review_request, contribute_review
 
 
 @pytest.fixture
@@ -167,7 +167,7 @@ def test_effective_attention_real_services_and_readonly(conn,api,monkeypatch,wit
             valid_from=now-timedelta(minutes=1),expires_at=now+timedelta(hours=1),reason='SYNTHETIC conflicting context',source_reference='review:conflict'))
         expected=2
     elif withdrawal=='memory_conflict':
-        memory.record_review(conn,target.operational_alert_ref,actor_id=1,request=review_request(conn,target,'confirmed_malicious'));expected=0
+        contribute_review(conn,target,actor_id=1,request=review_request(conn,target,'confirmed_malicious'));expected=0
     else:
         monkeypatch.setattr(m,'utc_now',lambda:now+timedelta(hours=5) if withdrawal=='context_expiry' else now+timedelta(days=31));expected=0
     before='\n'.join(conn.iterdump());assert_attention(conn,api,alerts,expected)

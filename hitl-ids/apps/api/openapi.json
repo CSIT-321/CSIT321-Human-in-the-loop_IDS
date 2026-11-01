@@ -4559,6 +4559,18 @@
               }
             ]
           },
+          "evidenceCurrent": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Evidencecurrent"
+          },
           "id": {
             "title": "Id",
             "type": "integer"
@@ -4908,6 +4920,55 @@
           "sourceStateVersion": {
             "title": "Sourcestateversion",
             "type": "string"
+          },
+          "sourceVerdictRef": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Sourceverdictref"
+          },
+          "sourceVerdictRevision": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Sourceverdictrevision"
+          },
+          "verdictAuthorId": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Verdictauthorid"
+          },
+          "verdictAuthorName": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Verdictauthorname"
           }
         },
         "required": [
@@ -9187,6 +9248,115 @@
           "offset"
         ],
         "title": "VerdictHistory",
+        "type": "object"
+      },
+      "VerdictMemoryRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "expectedStateVersion": {
+            "pattern": "^[a-f0-9]{64}$",
+            "title": "Expectedstateversion",
+            "type": "string"
+          },
+          "requestId": {
+            "format": "uuid",
+            "title": "Requestid",
+            "type": "string"
+          },
+          "scope": {
+            "default": "exact",
+            "enum": [
+              "exact",
+              "narrow"
+            ],
+            "title": "Scope",
+            "type": "string"
+          },
+          "verdictRef": {
+            "format": "uuid",
+            "title": "Verdictref",
+            "type": "string"
+          }
+        },
+        "required": [
+          "requestId",
+          "verdictRef",
+          "expectedStateVersion"
+        ],
+        "title": "VerdictMemoryRequest",
+        "type": "object"
+      },
+      "VerdictMemoryState": {
+        "additionalProperties": false,
+        "properties": {
+          "contributionStatus": {
+            "enum": [
+              "not_contributed",
+              "contributed",
+              "superseded"
+            ],
+            "title": "Contributionstatus",
+            "type": "string"
+          },
+          "latestVerdictRef": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Latestverdictref"
+          },
+          "latestVerdictRevision": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Latestverdictrevision"
+          },
+          "lessonRef": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Lessonref"
+          },
+          "scope": {
+            "anyOf": [
+              {
+                "enum": [
+                  "exact",
+                  "narrow"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Scope"
+          }
+        },
+        "required": [
+          "latestVerdictRef",
+          "latestVerdictRevision",
+          "contributionStatus",
+          "scope",
+          "lessonRef"
+        ],
+        "title": "VerdictMemoryState",
         "type": "object"
       },
       "VerdictMutation": {
@@ -13908,6 +14078,98 @@
         ]
       }
     },
+    "/api/v2/alerts/{alertRef}/triage-memory/from-verdict": {
+      "post": {
+        "operationId": "contributeVerdictMemory",
+        "parameters": [
+          {
+            "description": "`Bearer <token>` from POST /api/auth/login",
+            "in": "header",
+            "name": "Authorization",
+            "required": false,
+            "schema": {
+              "example": "Bearer eyJhbGciOiJIUzI1NiJ9...",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "alertRef",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VerdictMemoryRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MemoryMutation"
+                }
+              }
+            },
+            "description": "Verdict-linked memory evidence"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Validation failed"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Role not permitted"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          }
+        },
+        "summary": "Contribute latest canonical human Verdict with explicit reuse scope",
+        "tags": [
+          "Triage memory"
+        ]
+      }
+    },
     "/api/v2/alerts/{alertRef}/triage-memory/matches": {
       "get": {
         "operationId": "matchTriageMemory",
@@ -14019,6 +14281,68 @@
           }
         },
         "summary": "matchTriageMemory",
+        "tags": [
+          "Triage memory"
+        ]
+      }
+    },
+    "/api/v2/alerts/{alertRef}/triage-memory/verdict-state": {
+      "get": {
+        "operationId": "getVerdictMemoryState",
+        "parameters": [
+          {
+            "description": "`Bearer <token>` from POST /api/auth/login",
+            "in": "header",
+            "name": "Authorization",
+            "required": false,
+            "schema": {
+              "example": "Bearer eyJhbGciOiJIUzI1NiJ9...",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "alertRef",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VerdictMemoryState"
+                }
+              }
+            },
+            "description": "Read-only contribution projection"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not found"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Database unavailable or schema unsupported; read-only requests never migrate"
+          }
+        },
+        "summary": "Read current or superseded contribution state",
         "tags": [
           "Triage memory"
         ]
