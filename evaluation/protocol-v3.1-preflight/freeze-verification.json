@@ -1,0 +1,31 @@
+{
+  "status": "PASS",
+  "verifiedAt": "2026-11-02T09:21:49.438325+00:00",
+  "protocolVersion": "final-evaluation-protocol-v3.1",
+  "freezeTimestamp": "2026-11-02T09:21:00.783650+00:00",
+  "manifestHash": "5b0d7bc725ddc04b2e2edecf1db04f4c9af58f5288b6ee6d069d59c0be11138d",
+  "actualPython": "3.11.18 (main, Oct 26 2026, 14:08:50) [MSC v.1944 64 bit (AMD64)]",
+  "executable": "C:\\Users\\cheek\\OneDrive\\Documents\\fyp_website\\final-evaluation-protocol-v3-1\\hitl-ids\\.venv311\\Scripts\\python.exe",
+  "postFreezePreflight": {
+    "alerts": 200,
+    "learning": 40,
+    "holdout": 160,
+    "primary": 140,
+    "exactFields": [
+      "detectorSource",
+      "detectionTitle",
+      "sourceIp",
+      "destinationIp",
+      "protocol"
+    ],
+    "patterns": 90
+  },
+  "postFreezeGuardTests": 11,
+  "pipCheck": "No broken requirements found",
+  "v30Preserved": true,
+  "formalOpeningExists": false,
+  "finalExperimentRun": false,
+  "statusAfterIncrement": "FROZEN / UNOPENED",
+  "postFreezeGuardTestsPassed": 11,
+  "postFreezeSandboxAttempt": "9 passed, 2 fixture setup errors: sandbox pytest temp directory unavailable. Unchanged tests rerun on host: 11 passed."
+}

@@ -1,0 +1,122 @@
+{
+  "unchanged": {
+    "inputs": {
+      "workload/operational-workload.jsonl": "63d8f2d3e5c9dc300acbce54cd6ad3cb1395ddb7267bb67fbd743e45bee9ff6e",
+      "workload/trusted-context.json": "f0556a3ec7f816dd7da94584d95578e21a6ee9184c948e29c598c55c842159c0",
+      "oracle/external-outcomes.json": "a5d882a8f9f7331ba0195f32851b53f35892e59c13a6eda86a1405dbab24d056",
+      "expected/workload-structure.json": "9255c187270325e5c5ed38eb0f3d6ce40951b2fd24955981596ac61a64ead33c"
+    },
+    "runtimeSha": "c00c556405198f60adc42f8bb2a7cee03689a60c",
+    "runtimeTrees": {
+      "hitl-ids/apps": "bc77d1de4e4f192b98bab22d93df36a101979c3d",
+      "hitl-ids/packages": "3469b3bae66deb14c28667a55ef4065c05dbd06e",
+      "hitl-ids/config": "58b1cd4ae723cbef57ab25977119a94bb25b6982"
+    },
+    "policies": {
+      "analyst-work-claim-v1.json": {
+        "version": "analyst-work-claim-v1",
+        "sha256": "a0855d479deaaea3c12685d5318234fc734ac51a3fbc017d433172be59159bd8"
+      },
+      "context-provenance-v1.json": {
+        "version": "context-provenance-v1",
+        "sha256": "b54c3fa27970246b5796d2a35079431916bf7b14cfd87862e93e631fd6be868d"
+      },
+      "external-admission.json": {
+        "version": "suricata-offline-v1",
+        "sha256": "53975fb6f197c364479579ea403ff11256de3b724a0d128557651c0da343ec9a"
+      },
+      "operational-triage-v1.json": {
+        "version": "operational-triage-v1",
+        "sha256": "02f832e774468d73c81cf659cd7195417388ac15f1558cbab987eaedd38c4868"
+      },
+      "prospective-context-protocol-v1.json": {
+        "version": "prospective-context-protocol-v1",
+        "sha256": "931e91df5ec4bc723b8332e1f7c2324c7d83497d1fd17af0bdcff5e63c8356de"
+      },
+      "prospective-context-protocol-v2-draft.json": {
+        "version": "prospective-context-protocol-v2-draft",
+        "sha256": "8e5c7db8238c6f0fa26d59a9cb1a7bbbf71a64ced15c0fa146f3463bb75f8319"
+      },
+      "prospective-context-protocol-v2.json": {
+        "version": "prospective-context-protocol-v2",
+        "sha256": "cfc9539c0b325919a60eb8a5722826affa53e1c253e3b96c15e3a6db41dd2541"
+      },
+      "prospective-protocol-v2-manifest.json": {
+        "version": null,
+        "sha256": "0c41c2d45e846b408cbe50a0f6166ced39fa98a58f33bb61003eddf4d2143225"
+      },
+      "safe-memory-auto-activation-v1.json": {
+        "version": "safe-memory-auto-activation-v1",
+        "sha256": "0d559efd1b0bd91954621916226ee33336b29dadf2fbeef50b1e3f6c82141066"
+      },
+      "selective-review-v1.json": {
+        "version": "selective-review-v1",
+        "sha256": "cb2129bfce81926d47dcd4c46302ccd3959cbc90420e4fe4a57e59f16d258295"
+      },
+      "severity-chart.json": {
+        "version": "sev-1",
+        "sha256": "83f6eddffbbe475713d1cf95027ced36e9bc6420f40a9a4d53f1a4aeffd05fc7"
+      },
+      "suricata-classification-v1.json": {
+        "version": "suricata-classification-v1",
+        "sha256": "010e0280ef97852d0661e490ca730cf85c7bd61a989b0dcaf58bb5c4fb988dca"
+      },
+      "suricata-classification-v2.json": {
+        "version": "suricata-classification-v2",
+        "sha256": "b9aa354b699e51a54bf1d3c2efc92bca56040fe84d29a66977d3a462b505d659"
+      },
+      "suricata-classification-v3.json": {
+        "version": "suricata-classification-v3",
+        "sha256": "a5f3914c360cb76941d3d7e217896fd5929739739646de0f738c37ef676cda32"
+      },
+      "system-routing-v1.json": {
+        "version": "system-routing-v1",
+        "sha256": "d2cb4581084be711fe8f71d5fa9301cc90073c1921f7f2323bede431ffa432d5"
+      },
+      "tier2-assistance-v1.json": {
+        "version": "tier2-assistance-v1",
+        "sha256": "c7535142ad52ae69da576511c620f2d174e93522d5734d8e4d32b50700a18597"
+      },
+      "triage-memory-v1.json": {
+        "version": "triage-memory-v1",
+        "sha256": "a925ea50a1bf82c8932a1bf97b7aeabec335851e84e6298401d90e79ea8bad37"
+      }
+    },
+    "protocolFields": [
+      "arms",
+      "chronology",
+      "context",
+      "counts",
+      "criticalSafetyTargets",
+      "evaluationType",
+      "evaluatorVersion",
+      "exactRequiredFields",
+      "finalExperimentRun",
+      "generatorVersion",
+      "holdoutFeedback",
+      "humanSubjectStudy",
+      "limitations",
+      "methodologicalAcceptance",
+      "metrics",
+      "policies",
+      "positiveReductionThreshold",
+      "researchQuestion",
+      "runnerVersion",
+      "runtimeCollectionOpened",
+      "runtimeSha",
+      "secondaryQuestion",
+      "status"
+    ],
+    "worker": "identical",
+    "evaluatorArithmetic": "identical",
+    "v30FailureEvidence": "verified"
+  },
+  "changed": [
+    "protocol identity and bundle/tool paths",
+    "validator Python guard",
+    "independent opener guard",
+    "runner and evaluator Python guard",
+    "opening environment receipt",
+    "amendment documentation"
+  ]
+}
