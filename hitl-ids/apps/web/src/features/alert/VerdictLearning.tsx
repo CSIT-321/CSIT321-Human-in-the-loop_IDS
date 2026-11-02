@@ -31,7 +31,7 @@ export function VerdictLearning({view,onVerdict,onContributed}:{view:Schemas["Ro
     {(verdict.status==="loading"||contribution.status==="loading")&&<p role="status">Loading Verdict learning state…</p>}
     {verdict.status==="error"&&<p role="alert">{verdict.error.message}</p>}
     {contribution.status==="error"&&<p role="alert">{contribution.error.message}</p>}
-    {view.state.handlingRoute==="tier2_case"?<p>Tier 2 learning uses Investigation Finding. No Tier 1 Verdict is required.</p>:
+    {view.state.handlingRoute==="tier2_case"?<p>Tier 2 learning uses Investigation Conclusion. No Tier 1 Verdict is required.</p>:
       verdict.status==="success"&&!current?<><p>Record an Analyst Verdict to automatically capture Exact learning evidence.</p><button className={button} onClick={onVerdict}>Open Analyst Verdict</button></>:null}
     {current&&<>
       <p>Analyst Verdict: <strong>{verdictLabels[current.outcome]}</strong></p>

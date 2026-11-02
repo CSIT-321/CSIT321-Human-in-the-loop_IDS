@@ -39,7 +39,7 @@ describe("correlated Suricata and system routing", () => {
     expect(screen.getByText(/OpenSSH_9.6/)).toBeVisible();
     expect(screen.getByText(record.flowId)).toBeVisible();
     expect(screen.queryByRole("heading", { name: "Anomaly Evidence" })).toBeNull();
-    expect(screen.getByText("Unavailable — no validated feature bridge")).toBeVisible();
+    expect(screen.queryByText(/XGBoost supporting evidence/)).toBeNull();
     expect(screen.queryByText(/\d+%/)).toBeNull();
   });
 

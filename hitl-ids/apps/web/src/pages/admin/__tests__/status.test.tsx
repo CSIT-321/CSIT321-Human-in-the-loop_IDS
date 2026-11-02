@@ -78,19 +78,19 @@ describe("admin status: the latest run", () => {
     renderApp("/admin/status", { session: ADMIN });
 
     await screen.findByText("xgb-8class-20260911");
-    expect(screen.getByText(/Detection is an offline batch/)).toBeInTheDocument();
+    expect(screen.getByText(/Historical flow detection was an offline batch/)).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Check again" })).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /run detection/i })).toBeNull();
   });
 
-  it("reads a 409 as an empty database, and names the command that fills it", async () => {
+  it("reads a 409 as missing historical data and points to current Suricata intake", async () => {
     stubApi(() => jsonResponse(CONFLICT, 409));
     renderApp("/admin/status", { session: ADMIN });
 
     expect(await screen.findByText("No detection run yet")).toBeInTheDocument();
-    expect(screen.getByText(/Build one with/)).toBeInTheDocument();
-    // Named twice on purpose: once as the way out of the empty state, once in the note below it.
-    expect(screen.getAllByText(RUN_COMMAND)).toHaveLength(2);
+    expect(screen.getByText(/Current Suricata intake is available in Incoming Alerts/)).toBeInTheDocument();
+    // The historical batch command is documentary, not required for current intake.
+    expect(screen.getAllByText(RUN_COMMAND)).toHaveLength(1);
     expect(screen.queryByText("Something went wrong")).toBeNull();
   });
 

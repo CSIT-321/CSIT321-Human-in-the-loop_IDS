@@ -129,7 +129,7 @@ export function ScenariosPage() {
     <div className="space-y-6">
       <PageHeader
         title="Evaluation scenarios"
-        subtitle="Each run compares three arms over the same data, model, rules and seed; only analyst feedback and the guardrails differ."
+        subtitle="Historical research replay: three arms share data, model, rules and seed. Current operational review is available in Alert Triage, Tier 2 Cases and Selective Review."
       />
 
       <Card title="Evaluation runs">

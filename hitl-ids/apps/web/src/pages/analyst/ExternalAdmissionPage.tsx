@@ -64,7 +64,7 @@ export function ExternalAdmissionDetail({ initial, refresh, prefix, onUpdate }: 
     </dl>
     {view.reviewReason && <p className="break-words text-sm">Review #{view.reviewId}, actor #{view.reviewActorId}: {view.reviewReason}</p>}
     {view.operationalAlertRef && <section className="space-y-2 border-t border-border pt-4">
-      <h3 className="text-sm font-semibold">Operational V2 Reference</h3>
+      <h3 className="text-sm font-semibold">Operational Alert Reference</h3>
       <p className="break-all font-mono text-xs">{view.operationalAlertRef}</p>
       {view.admittedAt && <p className="text-sm">Admitted by actor #{view.admissionActorId} at {view.admittedAt}</p>}
       <Link className="inline-block text-sm text-accent underline" to={(prefix === "/analyst" ? "/analyst/operations" : prefix + "/v2-triage") + "?alertRef=" + view.operationalAlertRef}>{prefix === "/analyst" ? "Open Analyst Workstation" : "Open Alert Triage"}</Link>

@@ -340,7 +340,7 @@ export function GuardrailsPage() {
     <div className="space-y-6">
       <PageHeader
         title="Guardrails"
-        subtitle="The limits on what analyst feedback may do. Only an administrator can change them, and every change records why."
+        subtitle="Historical feedback scoring guardrails and audit. These settings do not configure current Verdict learning, Suricata routing or safe Memory auto activation."
       />
       {settings === null ? (
         config.status === "error" ? (

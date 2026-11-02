@@ -1,3 +1,5 @@
+> **Historical demonstration record.** The flow-feedback screens below have been retired. For the current setup and demonstration sequence, use [Current Product User Manual](preliminary-user-manual.md). Preserve this record as earlier project evidence.
+
 # Setting up the demo on a different machine
 
 **Every step below was run end to end on 2026-09-18**, from a bare clone of

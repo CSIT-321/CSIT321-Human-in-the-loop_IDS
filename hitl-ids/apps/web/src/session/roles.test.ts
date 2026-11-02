@@ -21,7 +21,7 @@ describe("roles", () => {
   });
 
   it("send analysts to operational triage and preserve the other role homes", () => {
-    // Historical flow analysis remains a deep link, separate from the operational home.
+    // Only current operational analyst destinations remain.
     expect(ROLE_META.security_analyst.home).toBe("/analyst/operations");
     expect(ROLE_META.system_admin.home).toBe("/admin/status");
     expect(ROLE_META.evaluator.home).toBe("/evaluator/scenarios");
@@ -29,7 +29,7 @@ describe("roles", () => {
 
   it("shows one primary analyst workspace and secondary intake", () => {
     expect(ROLE_META.security_analyst.nav.map(item => item.label)).toEqual([
-      "Analyst Workstation", "Tier 2 Cases", "Triage Memory", "Selective Review", "Dashboard", "Incoming Alerts",
+      "Analyst Workstation", "Tier 2 Cases", "Triage Memory", "Selective Review", "Incoming Alerts",
     ]);
     expect(ROLE_META.security_analyst.nav.at(-1)?.to).toBe("/analyst/external-admission");
     expect(ROLE_META.security_analyst.nav.some(item => item.to.endsWith("/workstation") || item.to.endsWith("/v2-triage"))).toBe(false);

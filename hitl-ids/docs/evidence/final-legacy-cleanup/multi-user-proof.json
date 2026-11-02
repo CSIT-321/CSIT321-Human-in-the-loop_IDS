@@ -1,0 +1,548 @@
+{
+  "refs": {
+    "1": "3cadb8c5-42b7-51ab-82f7-41ed1d20a656",
+    "2": "dd95c2f3-12bb-5be4-9678-9d8e2a1800a3",
+    "3": "25b08b54-86ee-5163-a7c0-8fc204bbe1a6",
+    "4": "860f4c07-e64b-5a67-99c1-a8b4251bc6d0",
+    "5": "f04ed8e8-6f9c-541b-87d2-256c3d6623b9",
+    "6": "6d928e59-49d6-5d19-9e88-c14ee3694804"
+  },
+  "raceBodies": [
+    {
+      "error": {
+        "code": "CLAIM_CONTENTION",
+        "message": "Another analyst attempted to claim this alert at the same time. No ownership was assigned. Please select an alert again.",
+        "detail": {
+          "roundRef": "a276f775-b416-4a3e-b3e6-f896d0b02986",
+          "outcome": "contended",
+          "replayed": false,
+          "work": {
+            "status": "available",
+            "revision": 1,
+            "ownerActorId": null,
+            "ownerName": null,
+            "claimedAt": null,
+            "roundRef": null,
+            "finishedAt": null,
+            "finishedByActorId": null,
+            "finishedByName": null,
+            "verdictRef": null,
+            "verdictOutcome": null,
+            "isOwner": false,
+            "canClaim": true,
+            "canMutate": false,
+            "explanation": "Available — select Start Review to request ownership."
+          }
+        }
+      }
+    },
+    {
+      "error": {
+        "code": "CLAIM_CONTENTION",
+        "message": "Another analyst attempted to claim this alert at the same time. No ownership was assigned. Please select an alert again.",
+        "detail": {
+          "roundRef": "a276f775-b416-4a3e-b3e6-f896d0b02986",
+          "outcome": "contended",
+          "replayed": false,
+          "work": {
+            "status": "available",
+            "revision": 1,
+            "ownerActorId": null,
+            "ownerName": null,
+            "claimedAt": null,
+            "roundRef": null,
+            "finishedAt": null,
+            "finishedByActorId": null,
+            "finishedByName": null,
+            "verdictRef": null,
+            "verdictOutcome": null,
+            "isOwner": false,
+            "canClaim": true,
+            "canMutate": false,
+            "explanation": "Available — select Start Review to request ownership."
+          }
+        }
+      }
+    }
+  ],
+  "contested": {
+    "digest": "ffd2d2535271cec3b21398a19692ab2b70cec8097a9d150c324ef39382d50a3c",
+    "work": [
+      {
+        "operational_alert_id": 1,
+        "status": "in_review",
+        "revision": 1,
+        "owner_actor_id": 1,
+        "owner_name": "Alice",
+        "claimed_at": "2026-11-02T07:56:00.564961Z",
+        "round_ref": "8bce1dda-2d28-41e8-8991-73473e22b1f4",
+        "finished_at": null,
+        "finished_by_actor_id": null,
+        "finished_by_name": null,
+        "verdict_ref": null
+      },
+      {
+        "operational_alert_id": 2,
+        "status": "available",
+        "revision": 1,
+        "owner_actor_id": null,
+        "owner_name": null,
+        "claimed_at": null,
+        "round_ref": null,
+        "finished_at": null,
+        "finished_by_actor_id": null,
+        "finished_by_name": null,
+        "verdict_ref": null
+      }
+    ],
+    "rounds": [
+      {
+        "round_ref": "8bce1dda-2d28-41e8-8991-73473e22b1f4",
+        "operational_alert_id": 1,
+        "work_revision": 0,
+        "policy_version": "analyst-work-claim-v1",
+        "window_ms": 750,
+        "started_at": "2026-11-02T07:55:59.812005Z",
+        "closes_at": "2026-11-02T07:56:00.562005Z",
+        "status": "claimed",
+        "finalized_at": "2026-11-02T07:56:00.564961Z",
+        "owner_actor_id": 1
+      },
+      {
+        "round_ref": "a276f775-b416-4a3e-b3e6-f896d0b02986",
+        "operational_alert_id": 2,
+        "work_revision": 0,
+        "policy_version": "analyst-work-claim-v1",
+        "window_ms": 750,
+        "started_at": "2026-11-02T07:56:02.281725Z",
+        "closes_at": "2026-11-02T07:56:03.031725Z",
+        "status": "contended",
+        "finalized_at": "2026-11-02T07:56:03.032735Z",
+        "owner_actor_id": null
+      }
+    ],
+    "intents": [
+      {
+        "actor_id": 1,
+        "round_ref": "8bce1dda-2d28-41e8-8991-73473e22b1f4"
+      },
+      {
+        "actor_id": 1,
+        "round_ref": "a276f775-b416-4a3e-b3e6-f896d0b02986"
+      },
+      {
+        "actor_id": 2,
+        "round_ref": "a276f775-b416-4a3e-b3e6-f896d0b02986"
+      }
+    ],
+    "events": [
+      {
+        "id": 1,
+        "operational_alert_id": 1,
+        "event_type": "CLAIM_ROUND_STARTED",
+        "actor_id": null,
+        "decision_source": "system_policy",
+        "round_ref": "8bce1dda-2d28-41e8-8991-73473e22b1f4",
+        "created_at": "2026-11-02T07:55:59.812005Z",
+        "detail": "{\"policyVersion\": \"analyst-work-claim-v1\", \"windowMs\": 750}"
+      },
+      {
+        "id": 2,
+        "operational_alert_id": 1,
+        "event_type": "CLAIM_INTENT",
+        "actor_id": 1,
+        "decision_source": "analyst",
+        "round_ref": "8bce1dda-2d28-41e8-8991-73473e22b1f4",
+        "created_at": "2026-11-02T07:55:59.812005Z",
+        "detail": "{\"actorName\": \"Alice\", \"requestId\": \"7a06861c-9909-4eb9-9eec-70060e42b0ef\"}"
+      },
+      {
+        "id": 3,
+        "operational_alert_id": 1,
+        "event_type": "CLAIM_FINALIZED",
+        "actor_id": null,
+        "decision_source": "system_policy",
+        "round_ref": "8bce1dda-2d28-41e8-8991-73473e22b1f4",
+        "created_at": "2026-11-02T07:56:00.564961Z",
+        "detail": "{\"contenderActorIds\": [1], \"ownerActorId\": 1, \"policyVersion\": \"analyst-work-claim-v1\"}"
+      },
+      {
+        "id": 4,
+        "operational_alert_id": 2,
+        "event_type": "CLAIM_ROUND_STARTED",
+        "actor_id": null,
+        "decision_source": "system_policy",
+        "round_ref": "a276f775-b416-4a3e-b3e6-f896d0b02986",
+        "created_at": "2026-11-02T07:56:02.282338Z",
+        "detail": "{\"policyVersion\": \"analyst-work-claim-v1\", \"windowMs\": 750}"
+      },
+      {
+        "id": 5,
+        "operational_alert_id": 2,
+        "event_type": "CLAIM_INTENT",
+        "actor_id": 1,
+        "decision_source": "analyst",
+        "round_ref": "a276f775-b416-4a3e-b3e6-f896d0b02986",
+        "created_at": "2026-11-02T07:56:02.282338Z",
+        "detail": "{\"actorName\": \"Alice\", \"requestId\": \"aae79e1c-3e1f-4387-b13c-d385a1f50b6d\"}"
+      },
+      {
+        "id": 6,
+        "operational_alert_id": 2,
+        "event_type": "CLAIM_INTENT",
+        "actor_id": 2,
+        "decision_source": "analyst",
+        "round_ref": "a276f775-b416-4a3e-b3e6-f896d0b02986",
+        "created_at": "2026-11-02T07:56:02.300490Z",
+        "detail": "{\"actorName\": \"Bob\", \"requestId\": \"15c4ccbc-faf4-426e-9409-fac6388f392b\"}"
+      },
+      {
+        "id": 7,
+        "operational_alert_id": 2,
+        "event_type": "CLAIM_CONTENTION",
+        "actor_id": null,
+        "decision_source": "system_policy",
+        "round_ref": "a276f775-b416-4a3e-b3e6-f896d0b02986",
+        "created_at": "2026-11-02T07:56:03.035516Z",
+        "detail": "{\"contenderActorIds\": [1, 2], \"ownerActorId\": null, \"policyVersion\": \"analyst-work-claim-v1\"}"
+      }
+    ],
+    "verdicts": 0,
+    "memoryEvidence": 0,
+    "cases": 1,
+    "collectionRuns": 0,
+    "foreignKeys": 0
+  },
+  "final": {
+    "digest": "14799729b1bd03c7be22fc52f7e16c9775304de5e882dc2a2339c982d0313d6d",
+    "work": [
+      {
+        "operational_alert_id": 1,
+        "status": "in_review",
+        "revision": 1,
+        "owner_actor_id": 1,
+        "owner_name": "Alice",
+        "claimed_at": "2026-11-02T07:56:00.564961Z",
+        "round_ref": "8bce1dda-2d28-41e8-8991-73473e22b1f4",
+        "finished_at": null,
+        "finished_by_actor_id": null,
+        "finished_by_name": null,
+        "verdict_ref": null
+      },
+      {
+        "operational_alert_id": 2,
+        "status": "in_review",
+        "revision": 2,
+        "owner_actor_id": 2,
+        "owner_name": "Bob",
+        "claimed_at": "2026-11-02T07:56:04.808939Z",
+        "round_ref": "fa1f13b7-5c17-46ba-985d-7c45223b31bc",
+        "finished_at": null,
+        "finished_by_actor_id": null,
+        "finished_by_name": null,
+        "verdict_ref": null
+      },
+      {
+        "operational_alert_id": 3,
+        "status": "completed",
+        "revision": 2,
+        "owner_actor_id": null,
+        "owner_name": "Carol",
+        "claimed_at": "2026-11-02T07:56:05.977768Z",
+        "round_ref": "30e2cbed-fe34-406a-ab8b-65608f95e6d7",
+        "finished_at": "2026-11-02T07:56:06.641200Z",
+        "finished_by_actor_id": 3,
+        "finished_by_name": "Carol",
+        "verdict_ref": "e2132daf-86ce-447f-b496-9d817274f5b5"
+      },
+      {
+        "operational_alert_id": 4,
+        "status": "escalated",
+        "revision": 2,
+        "owner_actor_id": null,
+        "owner_name": "Alice",
+        "claimed_at": "2026-11-02T07:56:09.152376Z",
+        "round_ref": "3fed3181-4708-4dfb-a1d3-c1ef4c81afcc",
+        "finished_at": "2026-11-02T07:56:09.743450Z",
+        "finished_by_actor_id": 1,
+        "finished_by_name": "Alice",
+        "verdict_ref": null
+      }
+    ],
+    "rounds": [
+      {
+        "round_ref": "8bce1dda-2d28-41e8-8991-73473e22b1f4",
+        "operational_alert_id": 1,
+        "work_revision": 0,
+        "policy_version": "analyst-work-claim-v1",
+        "window_ms": 750,
+        "started_at": "2026-11-02T07:55:59.812005Z",
+        "closes_at": "2026-11-02T07:56:00.562005Z",
+        "status": "claimed",
+        "finalized_at": "2026-11-02T07:56:00.564961Z",
+        "owner_actor_id": 1
+      },
+      {
+        "round_ref": "a276f775-b416-4a3e-b3e6-f896d0b02986",
+        "operational_alert_id": 2,
+        "work_revision": 0,
+        "policy_version": "analyst-work-claim-v1",
+        "window_ms": 750,
+        "started_at": "2026-11-02T07:56:02.281725Z",
+        "closes_at": "2026-11-02T07:56:03.031725Z",
+        "status": "contended",
+        "finalized_at": "2026-11-02T07:56:03.032735Z",
+        "owner_actor_id": null
+      },
+      {
+        "round_ref": "fa1f13b7-5c17-46ba-985d-7c45223b31bc",
+        "operational_alert_id": 2,
+        "work_revision": 1,
+        "policy_version": "analyst-work-claim-v1",
+        "window_ms": 750,
+        "started_at": "2026-11-02T07:56:04.055925Z",
+        "closes_at": "2026-11-02T07:56:04.805925Z",
+        "status": "claimed",
+        "finalized_at": "2026-11-02T07:56:04.808939Z",
+        "owner_actor_id": 2
+      },
+      {
+        "round_ref": "30e2cbed-fe34-406a-ab8b-65608f95e6d7",
+        "operational_alert_id": 3,
+        "work_revision": 0,
+        "policy_version": "analyst-work-claim-v1",
+        "window_ms": 750,
+        "started_at": "2026-11-02T07:56:05.225161Z",
+        "closes_at": "2026-11-02T07:56:05.975161Z",
+        "status": "claimed",
+        "finalized_at": "2026-11-02T07:56:05.977768Z",
+        "owner_actor_id": 3
+      },
+      {
+        "round_ref": "3fed3181-4708-4dfb-a1d3-c1ef4c81afcc",
+        "operational_alert_id": 4,
+        "work_revision": 0,
+        "policy_version": "analyst-work-claim-v1",
+        "window_ms": 750,
+        "started_at": "2026-11-02T07:56:08.396008Z",
+        "closes_at": "2026-11-02T07:56:09.146008Z",
+        "status": "claimed",
+        "finalized_at": "2026-11-02T07:56:09.152376Z",
+        "owner_actor_id": 1
+      }
+    ],
+    "intents": [
+      {
+        "actor_id": 1,
+        "round_ref": "8bce1dda-2d28-41e8-8991-73473e22b1f4"
+      },
+      {
+        "actor_id": 1,
+        "round_ref": "a276f775-b416-4a3e-b3e6-f896d0b02986"
+      },
+      {
+        "actor_id": 2,
+        "round_ref": "a276f775-b416-4a3e-b3e6-f896d0b02986"
+      },
+      {
+        "actor_id": 2,
+        "round_ref": "fa1f13b7-5c17-46ba-985d-7c45223b31bc"
+      },
+      {
+        "actor_id": 3,
+        "round_ref": "30e2cbed-fe34-406a-ab8b-65608f95e6d7"
+      },
+      {
+        "actor_id": 1,
+        "round_ref": "3fed3181-4708-4dfb-a1d3-c1ef4c81afcc"
+      }
+    ],
+    "events": [
+      {
+        "id": 1,
+        "operational_alert_id": 1,
+        "event_type": "CLAIM_ROUND_STARTED",
+        "actor_id": null,
+        "decision_source": "system_policy",
+        "round_ref": "8bce1dda-2d28-41e8-8991-73473e22b1f4",
+        "created_at": "2026-11-02T07:55:59.812005Z",
+        "detail": "{\"policyVersion\": \"analyst-work-claim-v1\", \"windowMs\": 750}"
+      },
+      {
+        "id": 2,
+        "operational_alert_id": 1,
+        "event_type": "CLAIM_INTENT",
+        "actor_id": 1,
+        "decision_source": "analyst",
+        "round_ref": "8bce1dda-2d28-41e8-8991-73473e22b1f4",
+        "created_at": "2026-11-02T07:55:59.812005Z",
+        "detail": "{\"actorName\": \"Alice\", \"requestId\": \"7a06861c-9909-4eb9-9eec-70060e42b0ef\"}"
+      },
+      {
+        "id": 3,
+        "operational_alert_id": 1,
+        "event_type": "CLAIM_FINALIZED",
+        "actor_id": null,
+        "decision_source": "system_policy",
+        "round_ref": "8bce1dda-2d28-41e8-8991-73473e22b1f4",
+        "created_at": "2026-11-02T07:56:00.564961Z",
+        "detail": "{\"contenderActorIds\": [1], \"ownerActorId\": 1, \"policyVersion\": \"analyst-work-claim-v1\"}"
+      },
+      {
+        "id": 4,
+        "operational_alert_id": 2,
+        "event_type": "CLAIM_ROUND_STARTED",
+        "actor_id": null,
+        "decision_source": "system_policy",
+        "round_ref": "a276f775-b416-4a3e-b3e6-f896d0b02986",
+        "created_at": "2026-11-02T07:56:02.282338Z",
+        "detail": "{\"policyVersion\": \"analyst-work-claim-v1\", \"windowMs\": 750}"
+      },
+      {
+        "id": 5,
+        "operational_alert_id": 2,
+        "event_type": "CLAIM_INTENT",
+        "actor_id": 1,
+        "decision_source": "analyst",
+        "round_ref": "a276f775-b416-4a3e-b3e6-f896d0b02986",
+        "created_at": "2026-11-02T07:56:02.282338Z",
+        "detail": "{\"actorName\": \"Alice\", \"requestId\": \"aae79e1c-3e1f-4387-b13c-d385a1f50b6d\"}"
+      },
+      {
+        "id": 6,
+        "operational_alert_id": 2,
+        "event_type": "CLAIM_INTENT",
+        "actor_id": 2,
+        "decision_source": "analyst",
+        "round_ref": "a276f775-b416-4a3e-b3e6-f896d0b02986",
+        "created_at": "2026-11-02T07:56:02.300490Z",
+        "detail": "{\"actorName\": \"Bob\", \"requestId\": \"15c4ccbc-faf4-426e-9409-fac6388f392b\"}"
+      },
+      {
+        "id": 7,
+        "operational_alert_id": 2,
+        "event_type": "CLAIM_CONTENTION",
+        "actor_id": null,
+        "decision_source": "system_policy",
+        "round_ref": "a276f775-b416-4a3e-b3e6-f896d0b02986",
+        "created_at": "2026-11-02T07:56:03.035516Z",
+        "detail": "{\"contenderActorIds\": [1, 2], \"ownerActorId\": null, \"policyVersion\": \"analyst-work-claim-v1\"}"
+      },
+      {
+        "id": 8,
+        "operational_alert_id": 2,
+        "event_type": "CLAIM_ROUND_STARTED",
+        "actor_id": null,
+        "decision_source": "system_policy",
+        "round_ref": "fa1f13b7-5c17-46ba-985d-7c45223b31bc",
+        "created_at": "2026-11-02T07:56:04.057930Z",
+        "detail": "{\"policyVersion\": \"analyst-work-claim-v1\", \"windowMs\": 750}"
+      },
+      {
+        "id": 9,
+        "operational_alert_id": 2,
+        "event_type": "CLAIM_INTENT",
+        "actor_id": 2,
+        "decision_source": "analyst",
+        "round_ref": "fa1f13b7-5c17-46ba-985d-7c45223b31bc",
+        "created_at": "2026-11-02T07:56:04.058930Z",
+        "detail": "{\"actorName\": \"Bob\", \"requestId\": \"8fbd404c-b1eb-42e8-8a30-8058fa454dc2\"}"
+      },
+      {
+        "id": 10,
+        "operational_alert_id": 2,
+        "event_type": "CLAIM_FINALIZED",
+        "actor_id": null,
+        "decision_source": "system_policy",
+        "round_ref": "fa1f13b7-5c17-46ba-985d-7c45223b31bc",
+        "created_at": "2026-11-02T07:56:04.813497Z",
+        "detail": "{\"contenderActorIds\": [2], \"ownerActorId\": 2, \"policyVersion\": \"analyst-work-claim-v1\"}"
+      },
+      {
+        "id": 11,
+        "operational_alert_id": 3,
+        "event_type": "CLAIM_ROUND_STARTED",
+        "actor_id": null,
+        "decision_source": "system_policy",
+        "round_ref": "30e2cbed-fe34-406a-ab8b-65608f95e6d7",
+        "created_at": "2026-11-02T07:56:05.225161Z",
+        "detail": "{\"policyVersion\": \"analyst-work-claim-v1\", \"windowMs\": 750}"
+      },
+      {
+        "id": 12,
+        "operational_alert_id": 3,
+        "event_type": "CLAIM_INTENT",
+        "actor_id": 3,
+        "decision_source": "analyst",
+        "round_ref": "30e2cbed-fe34-406a-ab8b-65608f95e6d7",
+        "created_at": "2026-11-02T07:56:05.225161Z",
+        "detail": "{\"actorName\": \"Carol\", \"requestId\": \"d8d01b83-738d-4891-a079-46be4626f96c\"}"
+      },
+      {
+        "id": 13,
+        "operational_alert_id": 3,
+        "event_type": "CLAIM_FINALIZED",
+        "actor_id": null,
+        "decision_source": "system_policy",
+        "round_ref": "30e2cbed-fe34-406a-ab8b-65608f95e6d7",
+        "created_at": "2026-11-02T07:56:06.015117Z",
+        "detail": "{\"contenderActorIds\": [3], \"ownerActorId\": 3, \"policyVersion\": \"analyst-work-claim-v1\"}"
+      },
+      {
+        "id": 14,
+        "operational_alert_id": 3,
+        "event_type": "WORK_COMPLETED",
+        "actor_id": 3,
+        "decision_source": "analyst",
+        "round_ref": "30e2cbed-fe34-406a-ab8b-65608f95e6d7",
+        "created_at": "2026-11-02T07:56:06.685146Z",
+        "detail": "{\"outcome\": \"expected_activity\", \"verdictRef\": \"e2132daf-86ce-447f-b496-9d817274f5b5\"}"
+      },
+      {
+        "id": 15,
+        "operational_alert_id": 4,
+        "event_type": "CLAIM_ROUND_STARTED",
+        "actor_id": null,
+        "decision_source": "system_policy",
+        "round_ref": "3fed3181-4708-4dfb-a1d3-c1ef4c81afcc",
+        "created_at": "2026-11-02T07:56:08.396008Z",
+        "detail": "{\"policyVersion\": \"analyst-work-claim-v1\", \"windowMs\": 750}"
+      },
+      {
+        "id": 16,
+        "operational_alert_id": 4,
+        "event_type": "CLAIM_INTENT",
+        "actor_id": 1,
+        "decision_source": "analyst",
+        "round_ref": "3fed3181-4708-4dfb-a1d3-c1ef4c81afcc",
+        "created_at": "2026-11-02T07:56:08.396008Z",
+        "detail": "{\"actorName\": \"Alice\", \"requestId\": \"5f203820-4443-49cf-8e30-55bc0627066f\"}"
+      },
+      {
+        "id": 17,
+        "operational_alert_id": 4,
+        "event_type": "CLAIM_FINALIZED",
+        "actor_id": null,
+        "decision_source": "system_policy",
+        "round_ref": "3fed3181-4708-4dfb-a1d3-c1ef4c81afcc",
+        "created_at": "2026-11-02T07:56:09.153922Z",
+        "detail": "{\"contenderActorIds\": [1], \"ownerActorId\": 1, \"policyVersion\": \"analyst-work-claim-v1\"}"
+      },
+      {
+        "id": 18,
+        "operational_alert_id": 4,
+        "event_type": "WORK_ESCALATED",
+        "actor_id": 1,
+        "decision_source": "analyst",
+        "round_ref": "3fed3181-4708-4dfb-a1d3-c1ef4c81afcc",
+        "created_at": "2026-11-02T07:56:09.743450Z",
+        "detail": "{\"caseRef\": \"fc33a068-2d24-457e-9c72-57cd1133d0f3\"}"
+      }
+    ],
+    "verdicts": 2,
+    "memoryEvidence": 2,
+    "cases": 2,
+    "collectionRuns": 0,
+    "foreignKeys": 0
+  }
+}

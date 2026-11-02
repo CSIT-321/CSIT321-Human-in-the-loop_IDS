@@ -8,7 +8,7 @@ import { jsonResponse, renderApp, stubFetch } from "../../test/renderApp";
 const session = { username: "g.ang", displayName: "Analyst", role: "security_analyst" as const, token: "test" };
 const ref = "fe130e6f-af86-4fc6-89f2-bc76b6cad68b";
 const other = "fe130e6f-af86-4fc6-89f2-bc76b6cad68c";
-const view = { operationalAlertRef: ref, title: "SYNTHETIC Suricata detection", detectorSource: "suricata", detectorName: "Suricata",
+const view = { systemRouting: {routeClass:"ROUTINE_REVIEW",route:"tier1_review",decisionSource:"system_policy",policyVersion:"system-routing-v1",reasons:["Normal review"]}, operationalAlertRef: ref, title: "SYNTHETIC Suricata detection", detectorSource: "suricata", detectorName: "Suricata",
   stateVersion: "a".repeat(64), reviewReasons: ["Human review required"], latestDecision: null, caseRef: null, allowedActions: ["manual_escalate"],
   state: { decisionSource: "system_policy", operationalPriority: 85, priorityBand: "P1", reviewRequired: true, handlingRoute: "tier1_review", workflowStage: "triage", tier2Recommended: false, tier2RecommendationReasons: [] } };
 const empty = { items: [], page: { total: 0, offset: 0, limit: 50, returned: 0 } };

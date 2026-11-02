@@ -329,7 +329,7 @@ export function MetricsPage() {
     <div className="space-y-6">
       <PageHeader
         title="Detection Metrics"
-        subtitle="Measured against ground truth the system itself never sees."
+        subtitle="Historical research metrics, measured against held-out ground truth. These flow experiments are not current Suricata workload metrics."
       />
 
       <ApiView

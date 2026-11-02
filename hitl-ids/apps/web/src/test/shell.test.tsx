@@ -163,7 +163,7 @@ describe("shell: route guards", () => {
   });
   it("sends a signed-out visitor from a role route to /login", async () => {
     stubApi();
-    const { router } = renderApp("/analyst/queue");
+    const { router } = renderApp("/analyst/operations");
 
     await waitFor(() => expect(router.state.location.pathname).toBe("/login"));
     expect(screen.getByRole("heading", { level: 1, name: "IDS Console" })).toBeInTheDocument();
@@ -206,7 +206,7 @@ describe("shell: route guards", () => {
       "hitl-ids.session.v1",
       JSON.stringify({ username: "g.ang", role: "system_admin" }),
     );
-    const { router } = renderApp("/analyst/queue");
+    const { router } = renderApp("/analyst/operations");
 
     await waitFor(() => expect(router.state.location.pathname).toBe("/login"));
   });
@@ -217,7 +217,7 @@ describe("shell: navigation", () => {
     localStorage.clear();
     stubApi();
     const user = userEvent.setup();
-    const mounted = renderApp("/analyst/dashboard", { session: ANALYST });
+    const mounted = renderApp("/analyst/operations", { session: ANALYST });
     const collapse = screen.getByRole("button", { name: "Collapse sidebar" });
     collapse.focus();
     await user.keyboard("{Enter}");
@@ -228,7 +228,7 @@ describe("shell: navigation", () => {
     await user.keyboard(" ");
     expect(document.documentElement).toHaveAttribute("data-theme", "light");
     mounted.unmount();
-    renderApp("/analyst/dashboard", { session: ANALYST });
+    renderApp("/analyst/operations", { session: ANALYST });
     expect(screen.getByRole("button", { name: "Expand sidebar" })).toBeVisible();
     expect(screen.getByRole("button", { name: "Light theme" })).toHaveAttribute("aria-pressed", "true");
     await user.click(screen.getByRole("button", { name: "Expand sidebar" }));
@@ -238,7 +238,7 @@ describe("shell: navigation", () => {
   });
   it("shows the current account's nav items and no other role's", async () => {
     stubApi();
-    renderApp("/analyst/queue", { session: ANALYST });
+    renderApp("/analyst/operations", { session: ANALYST });
 
     const nav = await screen.findByRole("navigation", { name: "Main" });
     for (const item of ROLE_META.security_analyst.nav) {
@@ -254,7 +254,7 @@ describe("shell: navigation", () => {
   it("signs out and signs in as another account: the only way to another view", async () => {
     const user = userEvent.setup();
     const seen = stubApi();
-    const { router } = renderApp("/analyst/queue", { session: ANALYST });
+    const { router } = renderApp("/analyst/operations", { session: ANALYST });
 
     await user.click(await screen.findByRole("button", { name: "Sign out" }));
     await waitFor(() => expect(router.state.location.pathname).toBe("/login"));
@@ -275,13 +275,13 @@ describe("shell: navigation", () => {
   it("signs out to /login and clears the stored session", async () => {
     const user = userEvent.setup();
     stubApi();
-    const { router, unmount } = renderApp("/analyst/queue", { session: ANALYST });
+    const { router, unmount } = renderApp("/analyst/operations", { session: ANALYST });
 
     await user.click(await screen.findByRole("button", { name: "Sign out" }));
     await waitFor(() => expect(router.state.location.pathname).toBe("/login"));
 
     unmount();
-    const reloaded = renderApp("/analyst/queue");
+    const reloaded = renderApp("/analyst/operations");
     await waitFor(() => expect(reloaded.router.state.location.pathname).toBe("/login"));
   });
 });

@@ -62,7 +62,7 @@ export function InvestigationAssistance({ caseRef, revision, prefix, onSelect }:
       <p className="text-xs text-muted">Within ±{correlationWindowHours} hours of the primary event; at most {maximumRelated}. Relationships suggest review and do not confirm an incident or campaign.</p>
       {relatedAlerts.length === 0 && <p>No eligible related alerts in this window.</p>}
       {relatedAlerts.map(alert => <article key={alert.operationalAlertRef} className="min-w-0 space-y-2 border-b border-border pb-3">
-        <Link className="text-accent underline" to={`${prefix}/v2-triage?alertRef=${alert.operationalAlertRef}`}>{alert.title}</Link>
+        <Link className="text-accent underline" to={`${prefix === "/analyst" ? "/analyst/operations" : prefix + "/v2-triage"}?alertRef=${alert.operationalAlertRef}`}>{alert.title}</Link>
         <p>{alert.sourceIp} → {alert.destinationIp} · {alert.occurredAt}</p>
         <p>{alert.attackCategory ?? "Informational / policy signal"} · {alert.priorityBand ?? "Unassigned"} / {alert.operationalPriority ?? "Unassigned"} · {alert.handlingRoute}</p>
         <ul className="list-inside list-disc">{alert.relationshipReasons.map(reason => <li key={reason}>{reason}</li>)}</ul>

@@ -10,7 +10,7 @@ import { SessionProvider } from "../../session/SessionContext";
 const view: Schemas["RoutingView"] = {
   work: null,
   effectiveReview: null, detectionSummary: null,
-  classification: null, systemRouting: null, caseRef: null, operationalAlertRef: "fe130e6f-af86-4fc6-89f2-bc76b6cad68b", title: "External NIDS alert", detectorName: "Suricata", detectorSource: "suricata",
+  classification: null, systemRouting: {routeClass:"ROUTINE_REVIEW",route:"tier1_review",decisionSource:"system_policy",policyVersion:"system-routing-v1",reasons:["Normal review"]}, caseRef: null, operationalAlertRef: "fe130e6f-af86-4fc6-89f2-bc76b6cad68b", title: "External NIDS alert", detectorName: "Suricata", detectorSource: "suricata",
   stateVersion: "a".repeat(64), reviewReasons: ["Critical asset requires review"], latestDecision: null,
   allowedActions: ["approve_tier2", "reject_tier2", "manual_escalate"],
   state: { operationalAlertId: 1, operationalPriority: 85, priorityBand: "P1", priorityBandScheme: "p1_p4",
@@ -20,7 +20,7 @@ const view: Schemas["RoutingView"] = {
 };
 
 describe("V2 routing", () => {
-  it.each(["manual_escalate", "approve_tier2"] as const)("%s creates a case in one request and stays on the alert", async action => {
+  it.each(["manual_escalate"] as const)("%s creates a case in one request and stays on the alert", async action => {
     const bodies: unknown[] = [];
     const caseRef = "00000000-0000-4000-8000-000000000123";
     const completed = { ...view, caseRef, allowedActions: [], state: { ...view.state,
@@ -31,7 +31,7 @@ describe("V2 routing", () => {
     });
     render(<MemoryRouter><RoutingDetail initial={view} refresh={vi.fn()} /></MemoryRouter>);
     await userEvent.type(screen.getByLabelText("Decision reason"), "Needs deeper investigation");
-    await userEvent.click(screen.getByRole("button", { name: action === "manual_escalate" ? "Escalate to Tier 2" : "Approve Tier 2" }));
+    await userEvent.click(screen.getByRole("button", { name: "Escalate to Tier 2" }));
     expect(await screen.findByRole("heading", { name: "Escalated to Tier 2" })).toBeVisible();
     expect(screen.getByText("Tier 2 Case created successfully.")).toBeVisible();
     expect(screen.getByText("Case: " + caseRef)).toBeVisible();
@@ -50,33 +50,25 @@ describe("V2 routing", () => {
     expect(seen).toHaveLength(1);
   });
 
-  it("only offers explicit historical recovery to operational roles, with no writes on mount", async () => {
+  it("keeps historical candidate state read-only without recovery or admission controls", () => {
     const seen = stubFetch(() => { throw new Error("No writes expected"); });
-    const old = { ...view, allowedActions: [], state: { ...view.state,
-      handlingRoute: "tier2_candidate" as const, workflowStage: "assessment" as const } };
-    const rendered = render(<RoutingDetail initial={old} refresh={vi.fn()} canRecover />);
-    expect(screen.getByRole("button", { name: "Complete Earlier Escalation" })).toBeDisabled();
-    expect(screen.queryByText(/candidate|assessment/i)).toBeNull();
-    expect(screen.queryByLabelText("Case title")).toBeNull();
-    expect(seen).toHaveLength(0);
-    rendered.rerender(<RoutingDetail initial={old} refresh={vi.fn()} canRecover={false} />);
-    expect(screen.queryByRole("button", { name: "Complete Earlier Escalation" })).toBeNull();
+    render(<RoutingDetail initial={{...view, systemRouting:null, state:{...view.state, handlingRoute:"tier2_candidate",workflowStage:"assessment"}}} refresh={vi.fn()} />);
+    expect(screen.queryByRole("button", {name:/Complete Earlier|Approve Tier 2|Create.*Case|Admit|Escalate/})).toBeNull();
     expect(screen.queryByLabelText("Decision reason")).toBeNull();
+    expect(seen).toHaveLength(0);
   });
-  it("distinguishes recommendation from route and requires a reason", async () => {
+  it("shows system routing and requires a reason", async () => {
     render(<RoutingDetail initial={view} refresh={vi.fn()} />);
-    expect(screen.getByText("tier1 review")).toBeInTheDocument();
-    expect(screen.getByText("YES")).toBeInTheDocument();
-    expect(screen.getByText("Unresolved by Tier 1")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Approve Tier 2" })).toBeDisabled();
+    expect(screen.getByRole("heading", {name:"System Routing"})).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Escalate to Tier 2" })).toBeDisabled();
     await userEvent.type(screen.getByLabelText("Decision reason"), "Needs deeper investigation");
-    expect(screen.getByRole("button", { name: "Approve Tier 2" })).toBeEnabled();
+    expect(screen.getByRole("button", { name: "Escalate to Tier 2" })).toBeEnabled();
   });
 
   it("evaluator has no mutation controls", () => {
     render(<RoutingDetail initial={{ ...view, allowedActions: [] }} refresh={vi.fn()} />);
     expect(screen.queryByLabelText("Decision reason")).not.toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: "Approve Tier 2" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Escalate to Tier 2" })).not.toBeInTheDocument();
   });
 
   it("retains idempotency identity on transport failure and refreshes explicitly", async () => {
@@ -85,9 +77,9 @@ describe("V2 routing", () => {
     const refresh = vi.fn();
     render(<RoutingDetail initial={view} refresh={refresh} />);
     await userEvent.type(screen.getByLabelText("Decision reason"), "Reviewed");
-    await userEvent.click(screen.getByRole("button", { name: "Approve Tier 2" }));
+    await userEvent.click(screen.getByRole("button", { name: "Escalate to Tier 2" }));
     await screen.findByRole("alert");
-    await userEvent.click(screen.getByRole("button", { name: "Approve Tier 2" }));
+    await userEvent.click(screen.getByRole("button", { name: "Escalate to Tier 2" }));
     await waitFor(() => expect(bodies).toHaveLength(2));
     expect(bodies[1]).toEqual(bodies[0]);
     await waitFor(() => expect(screen.getByRole("button", { name: "Refresh state" })).toBeEnabled());
@@ -99,15 +91,15 @@ describe("V2 routing", () => {
     stubFetch(() => jsonResponse({ error: { code: "ROUTING_CONFLICT", message: "State changed; refresh" } }, 409));
     render(<RoutingDetail initial={view} refresh={vi.fn()} />);
     await userEvent.type(screen.getByLabelText("Decision reason"), "Reviewed");
-    await userEvent.click(screen.getByRole("button", { name: "Approve Tier 2" }));
+    await userEvent.click(screen.getByRole("button", { name: "Escalate to Tier 2" }));
     expect(await screen.findByRole("alert")).toHaveTextContent("State changed");
-    expect(screen.getByText("tier1 review")).toBeInTheDocument();
+    expect(screen.getByRole("heading", {name:"System Routing"})).toBeInTheDocument();
   });
 
   it("renders empty and API failure states", async () => {
     stubFetch(() => jsonResponse({ items: [], page: { total: 0, limit: 50, offset: 0, returned: 0 } }));
     const result = render(<SessionProvider><MemoryRouter><V2RoutingPage /></MemoryRouter></SessionProvider>);
-    expect(await screen.findByText("No materialized V2 alerts.")).toBeInTheDocument();
+    expect(await screen.findByText("No operational alerts.")).toBeInTheDocument();
     result.unmount();
     stubFetch(() => jsonResponse({ error: { code: "OFFLINE", message: "Database unavailable" } }, 503));
     render(<SessionProvider><MemoryRouter><V2RoutingPage /></MemoryRouter></SessionProvider>);
@@ -115,7 +107,7 @@ describe("V2 routing", () => {
   });
 
   it("does not invent priority before policy application", () => {
-    render(<RoutingDetail initial={{ ...view, state: { ...view.state, operationalPriority: null, priorityBand: null } }} refresh={vi.fn()} />);
+    render(<RoutingDetail initial={{ ...view, systemRouting:null, state: { ...view.state, operationalPriority: null, priorityBand: null } }} refresh={vi.fn()} />);
     expect(screen.getAllByText("Not assigned")).toHaveLength(2);
   });
 

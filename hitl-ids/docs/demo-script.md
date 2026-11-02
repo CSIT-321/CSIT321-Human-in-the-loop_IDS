@@ -1,3 +1,5 @@
+> **Historical demonstration record.** The flow-feedback screens below have been retired. For the current setup and demonstration sequence, use [Current Product User Manual](preliminary-user-manual.md). Preserve this record as earlier project evidence.
+
 # Demo script — Human-in-the-Loop IDS (plan step S16)
 
 **What this is.** The narrative the demo performs, click by click, with what the screen will show and

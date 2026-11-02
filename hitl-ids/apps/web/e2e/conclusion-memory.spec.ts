@@ -35,7 +35,7 @@ test("expert learning: automatic Unknown, Tier 1 replacement, Inconclusive, corr
   await verdict.getByLabel("Verdict outcome").selectOption("expected_activity");
   await verdict.getByLabel("Verdict reason").fill(`SYNTHETIC Tier 1 expected activity ${index}`);
   await verdict.getByRole("button",{name:"Record Verdict",exact:true}).click();
-  await verdict.getByRole("button",{name:"Use in Triage Memory",exact:true}).click();
+  await verdict.getByRole("button",{name:"View Human Learning",exact:true}).click();
   const human=workspace.getByRole("region",{name:"Human Learning",exact:true});
   await expect(human).toContainText("Automatically recorded as Exact evidence");await escalate();
  }

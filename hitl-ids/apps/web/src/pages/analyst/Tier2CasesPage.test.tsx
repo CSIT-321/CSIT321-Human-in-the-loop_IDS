@@ -122,7 +122,7 @@ describe("Tier 2 cases", () => {
     expect(screen.getByText("At Case Creation")).toBeVisible();
     expect(screen.getByText("Not recorded / not required for automatic Tier 2 routing.")).toBeVisible();
     expect(screen.getByText("Optional evidence not recorded: http, dns, tls, ssh.")).toBeVisible();
-    expect(screen.getByRole("link", { name: "Potential related authentication" })).toHaveAttribute("href", "/analyst/v2-triage?alertRef=" + relatedRef);
+    expect(screen.getByRole("link", { name: "Potential related authentication" })).toHaveAttribute("href", "/analyst/operations?alertRef=" + relatedRef);
     expect(screen.getByText("Same source IP")).toBeVisible();
     expect(screen.getByText("Inspect primary signatures; assistance does not execute actions.")).toBeVisible();
     expect(bodies).toHaveLength(0);

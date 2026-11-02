@@ -1,0 +1,56 @@
+{
+  "baseSha": "24d43c5bd6d95131978bfbb77aba21efb0fdaab8",
+  "branch": "feat/final-legacy-cleanup",
+  "frontend": {
+    "files": 27,
+    "passed": 209
+  },
+  "backend": {
+    "passed": 308
+  },
+  "goldenPath": {
+    "passed": 1
+  },
+  "sharedClaimAndRoleSurface": {
+    "passed": 2
+  },
+  "responsive": {
+    "widths": [
+      1440,
+      1024,
+      390
+    ],
+    "themes": [
+      "light",
+      "dark"
+    ],
+    "surfaceAndSharedScreenshots": 54,
+    "goldenPathScreenshots": 30
+  },
+  "typescript": "PASS",
+  "productionBuild": "PASS; existing >500 kB chunk warning",
+  "protocolV2Opened": false,
+  "protocolV2CanonicalSha256": "cfc9539c0b325919a60eb8a5722826affa53e1c253e3b96c15e3a6db41dd2541",
+  "protectedPathsUnchangedFromBase": [
+    "hitl-ids/apps/api",
+    "hitl-ids/packages",
+    "hitl-ids/config",
+    "hitl-ids/tests",
+    "hitl-ids/scripts/validate_real_suricata.py",
+    "hitl-ids/docs/evidence",
+    "hitl-ids/docs/final-golden-path-e2e.md",
+    "hitl-ids/docs/real-suricata-pcap-validation.md",
+    "hitl-ids/docs/shared-analyst-workstation-claim.md",
+    "hitl-ids/docs/img"
+  ],
+  "realSuricataToolingAndEvidence": "unchanged; no external PCAP download rerun",
+  "artifacts": {
+    "external-admission-light-390.png": "fa28c7c3ea1a90523e359939fe0f7ec4a505539853a64d1155e8e2482ce50538",
+    "golden-path-evidence.json": "cc279d704aab515b332caec4854ea2093d30ac407e5d180f1f7d5618d10778a4",
+    "multi-user-proof.json": "69235f7c281026a9db3faddbcf7a3baaa773399a3c99c26eb734f1f0ea1a5d52",
+    "operations-dark-390.png": "57588f4d4ab996d379f4ff848667fa9d606dbfd272221160ded5906680c4241a",
+    "tier2-cases-dark-1440.png": "7b2814f6e8ef01c0de206391ff8e1bc943eefb31fcf0bea537246c884ec02d81",
+    "triage-memory-light-1024.png": "c5a7e92a06f35c94fba6fcc8baff817d71face9ff99681491181492186558810"
+  },
+  "artifactHashEncoding": "JSON: sorted keys, compact UTF-8 canonical JSON; images: raw bytes"
+}

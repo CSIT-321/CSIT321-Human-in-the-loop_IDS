@@ -36,7 +36,7 @@ const metrics = [
   ["no-review", "No Immediate Review", "noImmediateReview", "Effective attention is No Immediate Review; not a human verdict"],
   ["cases", "Open Tier 2 Cases", "openTier2Cases", "Cases with status open or investigating"],
   ["tier1", "Active Tier 1", "tier1Review", "Tier 1 route with unfinished human work"],
-  ["all", "Total Alerts", "totalAlerts", "All persisted operational V2 alerts"],
+  ["all", "Total Alerts", "totalAlerts", "All persisted operational alerts"],
 ] as const;
 
 export function OperationalKpis({ data, onView }: { data?: Summary; onView: (view: QueueView) => void }) {
@@ -77,7 +77,7 @@ export function QueueItem({ item }: { item: Schemas["RoutingView"] }) {
   const bandLabel = band === "P1" || band === "critical" ? "Critical" : band === "P2" ? "High" : band === "P3" ? "Medium" : band === "P4" ? "Low" : band ?? "Unassigned";
   const route = state.handlingRoute;
   const expert = item.systemRouting?.routeClass === "EXPERT_REVIEW_REQUIRED" || item.classification?.attackCategory === "unknown_needs_expert";
-  const routeLabel = route === "tier2_case" ? "Tier 2" : route === "tier1_review" ? "Tier 1" : route === "no_immediate_review" ? "No Immediate Review" : route === "tier2_candidate" ? "Recovery pending" : "Unassigned";
+  const routeLabel = route === "tier2_case" ? "Tier 2" : route === "tier1_review" ? "Tier 1" : route === "no_immediate_review" ? "No Immediate Review" : route === "tier2_candidate" ? "Historical routing record" : "Unassigned";
   const detail = item.detectionSummary;
   return <>
     <span className="flex items-start justify-between gap-2">

@@ -1,3 +1,5 @@
+> **Historical demonstration record.** The flow-feedback screens below have been retired. For the current setup and demonstration sequence, use [Current Product User Manual](preliminary-user-manual.md). Preserve this record as earlier project evidence.
+
 # Demo Runbook — for the presenter
 
 **What to click, what you should see, and where it goes wrong.**

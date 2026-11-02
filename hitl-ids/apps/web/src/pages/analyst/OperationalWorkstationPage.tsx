@@ -19,7 +19,7 @@ type View = Schemas["RoutingView"];
 const button = "rounded-sm border border-border bg-raised px-2.5 py-1.5 text-xs hover:border-border-strong disabled:opacity-40";
 const tabs = ["Overview", "Evidence", "Context & Review", "Analyst Verdict", "Triage Memory", "History & Notes", "Technical"] as const;
 type Tab = typeof tabs[number];
-const routeLabel = (value: string) => value === "tier2_candidate" ? "Tier 2 · recovery pending" : value.replaceAll("_", " ");
+const routeLabel = (value: string) => value === "tier2_candidate" ? "Historical routing record" : value.replaceAll("_", " ");
 
 function Assistance({ view, onReview }: { view: View; onReview: (review: Schemas["ReviewView"]) => void }) {
   const ref = view.operationalAlertRef;
@@ -103,7 +103,7 @@ function AlertWorkspace({ view, onChanged, refresh, onReview, onConflict }: { vi
       {/* Keep this mounted across tabs so draft reasons, retry IDs and success remain stable. */}
       <div hidden={tab !== "Overview"} className="space-y-4">
         <SystemRouting view={view} />
-        <RoutingDetail initial={view} refresh={refresh} canRecover compact onChanged={onChanged} />
+        <RoutingDetail initial={view} refresh={refresh} compact onChanged={onChanged} />
       </div>
       {tab === "Context & Review" && <SelectiveReviewPanel key={view.stateVersion} alertRef={view.operationalAlertRef} readOnly={view.work?.status==='in_review'&&!view.work.isOwner} onReview={onReview} />}
       {tab === "Triage Memory" && <AlertMemoryPanel key={view.stateVersion} view={view} onVerdict={()=>setTab("Analyst Verdict")} onContributed={refresh} />}
@@ -117,7 +117,6 @@ function AlertWorkspace({ view, onChanged, refresh, onReview, onConflict }: { vi
         </> : <p className="text-sm text-muted">No routing decision recorded.</p>}
         {view.caseRef ? <Link className="text-accent underline" to={"/analyst/tier2-cases/" + view.caseRef}>Open case notes and timeline</Link>
           : <p className="text-sm text-muted">Investigation notes and the full case timeline become available in the Tier 2 Case after escalation.</p>}
-        <p className="text-xs text-muted">Legacy scoring/feedback history remains separate in Historical tools.</p>
       </section>}
       {tab === "Technical" && <section className="space-y-3" aria-label="Operational technical snapshots">
         <h3 className="label-mono">Read-only snapshots</h3>
@@ -188,13 +187,7 @@ export function OperationalWorkstationPage() {
       <div className="flex flex-wrap items-center gap-3 text-xs">
         <span className="hidden text-dim md:inline">j / k select · / search</span>
         <button className={button} onClick={refresh}>Refresh operational queue</button>
-        <details className="relative"><summary className="cursor-pointer text-muted">Advanced / Historical</summary><div className="absolute right-0 z-20 mt-2 w-56 space-y-2 rounded-sm border border-border bg-surface p-3">
-          <Link className="block text-accent underline" to="/analyst/workstation">Legacy Flow Workstation</Link>
-          <Link className="block text-accent underline" to="/analyst/queue">Historical Alert Queue</Link>
-          <Link className="block text-accent underline" to="/analyst/feedback-impact">Historical Feedback Impact</Link>
-          <Link className="block text-accent underline" to="/analyst/investigations">Historical Investigations</Link>
-          <Link className="block text-accent underline" to="/analyst/overview">Historical Overview</Link>
-        </div></details>
+
       </div>
     </header>
     <OperationalKpis data={summary.status === "success" ? summary.data : undefined} onView={chooseView} />

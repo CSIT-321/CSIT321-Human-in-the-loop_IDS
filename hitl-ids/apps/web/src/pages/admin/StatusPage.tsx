@@ -290,7 +290,7 @@ function LatestRunCard({ run }: { run: ApiResource<Run> }) {
           title="No detection run yet"
           hint={
             <>
-              Build one with <RunCommand />, then check again.
+              No historical flow run is recorded. Current Suricata intake is available in Incoming Alerts.
             </>
           }
         />
@@ -300,7 +300,7 @@ function LatestRunCard({ run }: { run: ApiResource<Run> }) {
       )}
       {run.status === "success" && <RunDetail run={run.data} />}
       <p className="mt-5 text-[13px] text-muted">
-        Detection is an offline batch. This view reports the most recent run; a new run is built from
+        Historical flow detection was an offline batch. This view reports the most recent run; a new run is built from
         the command line with <RunCommand />, never inside a web request.
       </p>
     </Card>
@@ -328,10 +328,10 @@ export function StatusPage() {
     <div className="space-y-4">
       <PageHeader
         title="System Status"
-        subtitle="What has run, what it produced, and whether the service is answering."
+        subtitle="Service availability and retained research run diagnostics. Current Suricata alerts are in Alert Triage and Incoming Alerts."
       />
 
-      <StatStrip label="Operations" stats={operationStats(summary, breakdowns)} />
+      <StatStrip label="Historical run diagnostics" stats={operationStats(summary, breakdowns)} />
 
       <div className="grid gap-4 xl:grid-cols-[minmax(0,2fr)_minmax(0,3fr)]">
         <div className="space-y-4">

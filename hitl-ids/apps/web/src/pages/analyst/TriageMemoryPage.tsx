@@ -69,7 +69,7 @@ function MemoryDetail({view,canWrite,onChange}:{view:View;canWrite:boolean;onCha
   return <section className="min-w-0 space-y-5" aria-label="Triage lesson detail">
     <MemorySummary view={view}/>
     <div className="flex flex-wrap gap-4 text-sm">
-      <Link className="text-accent underline" to={prefix(session?.role)+"/v2-triage?alertRef="+view.lesson.sourceOperationalAlertRef}>Source alert</Link>
+      <Link className="text-accent underline" to={(session?.role==="security_analyst"?"/analyst/operations":prefix(session?.role)+"/v2-triage")+"?alertRef="+view.lesson.sourceOperationalAlertRef}>Source alert</Link>
       {view.lesson.sourceCaseRef&&<Link className="text-accent underline" to={prefix(session?.role)+"/tier2-cases/"+view.lesson.sourceCaseRef}>Source case</Link>}
     </div>
     <p className="break-words text-sm">Scope fields: {view.lesson.scopeFields.join(", ")}</p>
@@ -80,10 +80,10 @@ function MemoryDetail({view,canWrite,onChange}:{view:View;canWrite:boolean;onCha
       <p className="break-all">{view.decision.createdAt}</p><p className="whitespace-pre-wrap break-words">{view.decision.reason}</p>
     </div>}
     {canWrite&&!view.decision&&view.status!=="expired"&&<div className="space-y-2 border-t border-border pt-3">
-      <label htmlFor="memory-approval-reason" className="block text-sm">Memory activation or rejection reason</label>
+      <label htmlFor="memory-approval-reason" className="block text-sm">Memory governance reason</label>
       <textarea id="memory-approval-reason" className={input} rows={3} maxLength={4000} value={reason} disabled={busy} onChange={e=>setReason(e.target.value)}/>
       <div className="flex flex-wrap gap-2">
-        <button className={button} disabled={busy||!reason.trim()||view.status!=="eligible_for_activation"} onClick={()=>void decide("activate")}>Activate Lesson</button>
+        {(view.lesson.scope==="narrow"||view.lesson.decisionSource!=="system_policy")&&<button className={button} disabled={busy||!reason.trim()||view.status!=="eligible_for_activation"} onClick={()=>void decide("activate")}>Activate historical / manual lesson</button>}
         <button className={button} disabled={busy||!reason.trim()} onClick={()=>void decide("reject")}>Reject Lesson</button>
       </div>
     </div>}
@@ -118,7 +118,7 @@ function MemoryDetail({view,canWrite,onChange}:{view:View;canWrite:boolean;onCha
           </div>}
           <p className="text-xs text-muted">{event.evidence?"Memory Evidence History":"Memory Activation History"}</p>
           {event.evidence&&<><p>{pretty(event.evidence.outcome)} / {event.evidence.relation}</p>
-            <Link className="text-accent underline" to={prefix(session?.role)+"/v2-triage?alertRef="+event.evidence.sourceOperationalAlertRef}>{event.evidence.sourceConclusion?"Source Alert":"Evidence alert"}</Link></>}
+            <Link className="text-accent underline" to={(session?.role==="security_analyst"?"/analyst/operations":prefix(session?.role)+"/v2-triage")+"?alertRef="+event.evidence.sourceOperationalAlertRef}>{event.evidence.sourceConclusion?"Source Alert":"Evidence alert"}</Link></>}
           <details><summary className="cursor-pointer">Immutable event snapshot</summary><pre className="max-h-80 overflow-auto whitespace-pre-wrap break-all text-xs">{JSON.stringify(event,null,2)}</pre></details>
         </article>)}
         <Pagination offset={offset} total={history.data.page.total} onChange={setOffset}/>
@@ -140,6 +140,7 @@ export function TriageMemoryPage() {
   const canWrite=session?.role==="security_analyst"||session?.role==="system_admin";
   return <div className="min-w-0 space-y-5 p-4 sm:p-6">
     <PageHeader title="Triage Memory"/>
+    <p className="text-sm text-muted">Canonical Verdicts and Investigation Conclusions automatically record Exact evidence. Eligible benign Exact lessons are auto-activated by System Policy; Narrow scope is an explicit human extension.</p>
     <p className="text-sm font-semibold text-warn">{warning}</p>
     {ref&&<button className={button} onClick={()=>setSearch({})}>All memory lessons</button>}
     {resource.status==="loading"&&<p role="status">Loading triage memory...</p>}
@@ -156,68 +157,5 @@ export function TriageMemoryPage() {
 }
 
 export function AlertMemoryPanel({view,onVerdict,onContributed}:{view:Schemas["RoutingView"];onVerdict?:()=>void;onContributed?:()=>void}) {
-  return view.systemRouting ? <VerdictLearning view={view} onVerdict={onVerdict} onContributed={onContributed}/> : <LegacyAlertMemoryPanel view={view}/>;
-}
-
-function LegacyAlertMemoryPanel({view}:{view:Schemas["RoutingView"]}) {
-  const {session}=useSession();
-  const [outcome,setOutcome]=useState<Schemas["MemoryReviewRequest"]["outcome"]>("suspicious");
-  const [scope,setScope]=useState<"exact"|"narrow">("exact");
-  const [reason,setReason]=useState("");
-  const [busy,setBusy]=useState(false);
-  const [error,setError]=useState("");
-  const [lessonRef,setLessonRef]=useState("");
-  const [offset,setOffset]=useState(0);
-  const pending=useRef<{key:string;id:string}|null>(null);
-  const canWrite=(session?.role==="security_analyst"||session?.role==="system_admin")&&["tier1_review","tier2_candidate","tier2_case"].includes(view.state.handlingRoute);
-  const resource=useApi(signal=>unwrap(api.GET("/api/v2/alerts/{alertRef}/triage-memory/matches",{
-    params:{path:{alertRef:view.operationalAlertRef},query:{limit:50,offset}},signal,
-  })),[view.operationalAlertRef,offset]);
-  async function review(){
-    if(busy||!reason.trim())return;
-    const key=JSON.stringify([outcome,scope,reason.trim(),view.stateVersion]);
-    if(pending.current?.key!==key)pending.current={key,id:crypto.randomUUID()};
-    setBusy(true);setError("");
-    try{
-      const result=await unwrap(api.POST("/api/v2/alerts/{alertRef}/triage-memory/candidate",{
-        params:{path:{alertRef:view.operationalAlertRef}},body:{requestId:pending.current.id,expectedStateVersion:view.stateVersion,outcome,scope,reason:reason.trim()},
-      }));
-      setLessonRef(result.memory.lesson.lessonRef);setReason("");pending.current=null;resource.reload();
-    }catch(cause){setError(cause instanceof Error?cause.message:"Human memory review could not be confirmed.");}
-    finally{setBusy(false);}
-  }
-  return <section aria-label="Historical Triage Memory" className="min-w-0 space-y-4 border-t border-border pt-5">
-    <h2 className="text-base font-semibold">Historical Triage Memory Match</h2>
-    <p className="text-sm font-semibold text-warn">{warning}</p>
-    {resource.status==="loading"&&<p role="status">Looking up historical lessons...</p>}
-    {resource.status==="error"&&<p role="alert">{resource.error.message}</p>}
-    {resource.status==="success"&&<>
-      {resource.data.items.length===0&&<p className="text-sm">No related triage memory.</p>}
-      {resource.data.items.map(match=><article key={match.memory.lesson.lessonRef} className="min-w-0 space-y-3 border-b border-border pb-4">
-        <MemorySummary view={match.memory}/>
-        <p className="text-sm">Match: {match.strength==="high"?"High":"Partial"}</p>
-        <p className="text-sm">Active guidance: {match.guidanceActive?"Yes":"No"}</p>
-        <p className="break-words text-xs">Matched: {match.matchedFields.join(", ")||"None"}</p>
-        <p className="break-words text-xs">Mismatched: {match.mismatchedFields.join(", ")||"None"}</p>
-        <p className="break-words text-xs">Unavailable: {match.unavailableFields.join(", ")||"None"}</p>
-        <Link className="text-sm text-accent underline" to={prefix(session?.role)+"/triage-memory?lessonRef="+match.memory.lesson.lessonRef}>Review lesson</Link>
-      </article>)}
-      <Pagination offset={offset} total={resource.data.page.total} onChange={setOffset}/>
-    </>}
-    {canWrite&&<div className="space-y-3 border-t border-border pt-4">
-      <h3 className="text-sm font-semibold">Historical / Legacy Human Memory Review</h3>
-      <label htmlFor="memory-outcome" className="block text-sm">Human memory outcome</label>
-      <select id="memory-outcome" className={input} disabled={busy} value={outcome} onChange={e=>setOutcome(e.target.value as typeof outcome)}>
-        <option value="suspicious">Suspicious</option><option value="expected_activity">Expected Activity</option><option value="false_positive">False Positive</option><option value="confirmed_malicious">Confirmed Malicious</option>
-      </select>
-      <label htmlFor="memory-scope" className="block text-sm">Memory scope</label>
-      <select id="memory-scope" className={input} disabled={busy} value={scope} onChange={e=>setScope(e.target.value as typeof scope)}><option value="exact">Exact</option><option value="narrow">Narrow</option></select>
-      <label htmlFor="memory-human-reason" className="block text-sm">Human memory reason</label>
-      <textarea id="memory-human-reason" className={input} rows={3} maxLength={4000} disabled={busy} value={reason} onChange={e=>setReason(e.target.value)}/>
-      <button className={button} disabled={busy||!reason.trim()} onClick={()=>void review()}>Record Human Memory Review</button>
-    </div>}
-    {error&&<p role="alert" className="text-danger">{error}</p>}
-    {lessonRef&&<p role="status" className="text-sm">Human review recorded. <Link className="text-accent underline" to={prefix(session?.role)+"/triage-memory?lessonRef="+lessonRef}>Open recorded lesson</Link></p>}
-    <button className={button} onClick={resource.reload}>Refresh historical memory</button>
-  </section>;
+  return view.systemRouting ? <VerdictLearning view={view} onVerdict={onVerdict} onContributed={onContributed}/> : <p className="text-sm text-muted">Retained evidence is available in Memory history. Current learning uses a canonical Analyst Verdict or Investigation Conclusion.</p>;
 }

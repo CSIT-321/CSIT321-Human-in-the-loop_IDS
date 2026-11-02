@@ -1,3 +1,5 @@
+> Historical technology-planning record. Stage 6 dashboard/ has been retired; use ../README.md and ../hitl-ids/docs/preliminary-user-manual.md for the current runtime.
+
 # Tech Stack Notes
 
 ## Frontend Options

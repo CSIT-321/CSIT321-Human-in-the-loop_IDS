@@ -7,7 +7,7 @@
  */
 
 import { useState } from "react";
-import { createBrowserRouter, RouterProvider, type RouteObject } from "react-router";
+import { createBrowserRouter, RouterProvider, type RouteObject, Navigate, useLocation, Link } from "react-router";
 import { flushSync } from "react-dom";
 
 import { AppShell } from "./components/layout/AppShell";
@@ -15,14 +15,6 @@ import { AuditPage } from "./pages/admin/AuditPage";
 import { GuardrailsPage } from "./pages/admin/GuardrailsPage";
 import { IpSecurityReportPage } from "./pages/admin/IpSecurityReportPage";
 import { StatusPage } from "./pages/admin/StatusPage";
-import { AlertDetailPage } from "./pages/analyst/AlertDetailPage";
-import { DashboardPage } from "./pages/analyst/DashboardPage";
-import { FeedbackImpactPage } from "./pages/analyst/FeedbackImpactPage";
-import { InvestigationsPage } from "./pages/analyst/InvestigationsPage";
-import { IpEntityPage } from "./pages/analyst/IpEntityPage";
-import { OverviewPage } from "./pages/analyst/OverviewPage";
-import { QueuePage } from "./pages/analyst/QueuePage";
-import { WorkstationPage } from "./pages/analyst/WorkstationPage";
 import { MetricsPage } from "./pages/evaluator/MetricsPage";
 import { RunPage } from "./pages/evaluator/RunPage";
 import { ScenariosPage } from "./pages/evaluator/ScenariosPage";
@@ -36,6 +28,18 @@ import { Tier2CasesPage, Tier2CaseDetailPage } from "./pages/analyst/Tier2CasesP
 import { HomeRedirect, RequireRole } from "./session/guards";
 import { SessionProvider } from "./session/SessionContext";
 
+function WorkstationRedirect() {
+  const location=useLocation();
+  const previous=new URLSearchParams(location.search);
+  const query=new URLSearchParams();
+  // Only the supported current alert identity survives the compatibility URL.
+  if(previous.has('alertRef'))query.set('alertRef',previous.get('alertRef')!);
+  return <Navigate replace to={'/analyst/operations'+(query.size?'?'+query.toString():'')}/>;
+}
+function AnalystNotFound() {
+  return <div className="p-6"><h1>Page not found</h1><Link to="/analyst/operations">Open Analyst Workstation</Link></div>;
+}
+
 export const routes: RouteObject[] = [
   { path: "/login", element: <LoginPage /> },
   {
@@ -47,21 +51,15 @@ export const routes: RouteObject[] = [
     ),
     children: [
       { index: true, element: <HomeRedirect /> },
-      { path: "workstation", element: <WorkstationPage /> },
+      { path: "workstation", element: <WorkstationRedirect /> },
       { path: "operations", element: <OperationalWorkstationPage /> },
       { path: "selective-review", element: <SelectiveReviewPage /> },
       { path: "triage-memory", element: <TriageMemoryPage /> },
       { path: "tier2-cases", element: <Tier2CasesPage /> },
       { path: "tier2-cases/:caseRef", element: <Tier2CaseDetailPage /> },
       { path: "external-admission", element: <ExternalAdmissionPage /> },
-      { path: "v2-triage", element: <OperationalWorkstationPage /> },
-      { path: "overview", element: <OverviewPage /> },
-      { path: "entities/ip/:ip", element: <IpEntityPage /> },
-      { path: "dashboard", element: <DashboardPage /> },
-      { path: "queue", element: <QueuePage /> },
-      { path: "alerts/:alertRef", element: <AlertDetailPage /> },
-      { path: "investigations", element: <InvestigationsPage /> },
-      { path: "feedback-impact", element: <FeedbackImpactPage /> },
+      { path: "v2-triage", element: <WorkstationRedirect /> },
+      { path: "*", element: <AnalystNotFound /> },
     ],
   },
   {

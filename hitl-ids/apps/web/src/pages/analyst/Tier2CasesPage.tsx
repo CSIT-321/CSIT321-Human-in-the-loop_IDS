@@ -73,7 +73,7 @@ export function Tier2CasesPage() {
             <td className="border-b border-border p-2">{item.snapshot.triage.priorityBand ?? "Unassigned"} / {item.snapshot.triage.operationalPriority ?? "Not assigned"}</td>
             <td className="border-b border-border p-2">{item.status === "resolved" ? "Resolved" : item.status}</td><td className="border-b border-border p-2">{item.ownerActorId == null ? "Unassigned" : `Actor #${item.ownerActorId}`}</td>
             <td className="border-b border-border p-2">{item.createdAt}</td>
-            <td className="border-b border-border p-2"><Link className="text-accent underline" to={prefixFor(session?.role) + "/v2-triage?alertRef=" + item.primaryOperationalAlertRef}>{item.primaryOperationalAlertRef.slice(0, 8)}</Link></td>
+            <td className="border-b border-border p-2"><Link className="text-accent underline" to={(session?.role === "security_analyst" ? "/analyst/operations" : prefixFor(session?.role) + "/v2-triage") + "?alertRef=" + item.primaryOperationalAlertRef}>{item.primaryOperationalAlertRef.slice(0, 8)}</Link></td>
           </tr>)}</tbody>
         </table>
       </div>}
@@ -174,7 +174,7 @@ export function CaseInvestigation({ initial, refresh }: { initial: Case; refresh
       <p className="break-words text-sm">{detector.detectionTitle} / {detector.detectionCategory ?? "Not provided"}</p>
       <p className="break-all text-sm">Source: {detector.sourceIp} / Port: {detector.sourcePort ?? "Not provided"}</p>
       <p className="break-all text-sm">Destination: {detector.destinationIp} / Port: {detector.destinationPort ?? "Not provided"}</p>
-      <Link className="inline-block text-sm text-accent underline" to={prefixFor(session?.role) + "/v2-triage?alertRef=" + current.primaryOperationalAlertRef}>Primary alert</Link>
+      <Link className="inline-block text-sm text-accent underline" to={(session?.role === "security_analyst" ? "/analyst/operations" : prefixFor(session?.role) + "/v2-triage") + "?alertRef=" + current.primaryOperationalAlertRef}>Primary alert</Link>
       <details><summary className="cursor-pointer text-sm">Immutable detector snapshot</summary><pre className="max-h-80 overflow-auto whitespace-pre-wrap break-all p-2 text-xs">{JSON.stringify(detector.detectorEvidence,null,2)}</pre></details>
     </section>
     <section className="space-y-4 border-t border-border pt-4">
@@ -195,7 +195,7 @@ export function CaseInvestigation({ initial, refresh }: { initial: Case; refresh
             <p className="text-xs text-muted">System classification recorded with conclusion: {systemCategoryLabel(event.conclusion.systemClassification)}</p></> : <>
             {event.finding && <Pill tone="warn">{event.finding.replaceAll("_"," ")}</Pill>}
             <p className="whitespace-pre-wrap break-words text-sm">{event.reason}</p></>}
-          {event.linkedAlertRef && <Link className="break-all text-sm text-accent underline" to={prefixFor(session?.role) + "/v2-triage?alertRef=" + event.linkedAlertRef}>{event.linkedAlertRef}</Link>}
+          {event.linkedAlertRef && <Link className="break-all text-sm text-accent underline" to={(session?.role === "security_analyst" ? "/analyst/operations" : prefixFor(session?.role) + "/v2-triage") + "?alertRef=" + event.linkedAlertRef}>{event.linkedAlertRef}</Link>}
           {tab === "timeline" && <details><summary className="cursor-pointer text-xs">State change</summary><pre className="max-h-64 overflow-auto whitespace-pre-wrap break-all text-xs">{JSON.stringify({ before: event.beforeState, after: event.afterState },null,2)}</pre></details>}
         </article>)}
         <div className="flex flex-wrap items-center gap-2 text-sm">

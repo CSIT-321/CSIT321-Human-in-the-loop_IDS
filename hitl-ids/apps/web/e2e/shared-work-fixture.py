@@ -2,6 +2,7 @@
 from contextlib import closing
 from hashlib import sha256
 from pathlib import Path
+import os
 import sys
 import sqlite3
 import tempfile
@@ -57,7 +58,7 @@ def serve(path):
                 'cases':c.execute('SELECT count(*) FROM tier2_cases').fetchone()[0],
                 'collectionRuns':c.execute('SELECT count(*) FROM prospective_runs').fetchone()[0],
                 'foreignKeys':len(c.execute('PRAGMA foreign_key_check').fetchall())}
-    uvicorn.run(app,host='127.0.0.1',port=8032,log_level='warning')
+    uvicorn.run(app,host='127.0.0.1',port=int(os.environ.get("HITL_WORK_API_PORT", "8032")),log_level='warning')
 
 if __name__=='__main__':
     with tempfile.TemporaryDirectory(prefix='hitl-shared-work-') as directory:

@@ -152,7 +152,7 @@ export function SelectiveReviewPage() {
       {resource.data.items.length===0?<p>No alerts in this review view.</p>:<div className="overflow-x-auto"><table className="w-full text-left text-sm">
         <thead><tr>{["Alert","Review disposition","Priority","Workflow route"].map(name=><th key={name} className="border-b border-border p-2">{name}</th>)}</tr></thead>
         <tbody>{resource.data.items.map(view=><tr key={view.operationalAlertRef}>
-          <td className="min-w-48 border-b border-border p-2"><Link className="text-accent underline" to={prefix(session?.role)+"/v2-triage?alertRef="+view.operationalAlertRef}>{view.title}</Link></td>
+          <td className="min-w-48 border-b border-border p-2"><Link className="text-accent underline" to={(session?.role==="security_analyst"?"/analyst/operations":prefix(session?.role)+"/v2-triage")+"?alertRef="+view.operationalAlertRef}>{view.title}</Link></td>
           <td className="border-b border-border p-2">{labels[view.disposition]}</td><td className="border-b border-border p-2">{view.priority??"Not assigned"}</td><td className="border-b border-border p-2">{view.route.replaceAll("_"," ")}</td>
         </tr>)}</tbody>
       </table></div>}

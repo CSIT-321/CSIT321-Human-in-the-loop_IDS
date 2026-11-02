@@ -16,7 +16,7 @@ test("canonical learning: automatic Exact contribution, independent support, cor
     await learning.getByRole("button",{name:"Open Analyst Verdict",exact:true}).click();
     await panel.getByLabel("Verdict outcome").selectOption("expected_activity");await panel.getByLabel("Verdict reason").fill(`SYNTHETIC authorized scan assessment ${index+1}`);
     await panel.getByRole("button",{name:"Record Verdict",exact:true}).click();
-    await panel.getByRole("button",{name:"Use in Triage Memory",exact:true}).click();
+    await panel.getByRole("button",{name:"View Human Learning",exact:true}).click();
     await expect(learning.getByLabel("Human memory outcome")).toHaveCount(0);await expect(learning.getByLabel("Human memory reason")).toHaveCount(0);
     await expect(learning).toContainText("Automatically recorded as Exact evidence");await expect(learning).toContainText(`Support: ${index+1} · Conflicts: 0`);
   }
@@ -26,7 +26,7 @@ test("canonical learning: automatic Exact contribution, independent support, cor
   await page.goto(firstUrls[0]!);await detail.getByRole("tab",{name:"Analyst Verdict",exact:true}).click();
   await panel.getByLabel("Verdict outcome").selectOption("confirmed_malicious");await panel.getByLabel("Verdict reason").fill("SYNTHETIC corrected human conclusion");
   await panel.getByRole("button",{name:"Correct Verdict",exact:true}).click();
-  await panel.getByRole("button",{name:"Use in Triage Memory",exact:true}).click();
+  await panel.getByRole("button",{name:"View Human Learning",exact:true}).click();
   await expect(learning).toContainText("Automatically recorded as Exact evidence");
   await expect(learning).toContainText("Support: 2 · Conflicts: 1");await expect(learning).toContainText("Active guidance: No");
   const rail=page.getByRole("complementary",{name:"Context and assistance"});
@@ -47,7 +47,7 @@ test("canonical learning: automatic Exact contribution, independent support, cor
   await page.getByRole("list",{name:"Operational alerts"}).getByRole("button").nth(3).click();
   await detail.getByRole("tab",{name:"Analyst Verdict",exact:true}).click();
   await panel.getByLabel("Verdict outcome").selectOption("confirmed_malicious");await panel.getByLabel("Verdict reason").fill("SYNTHETIC independent conflicting alert");
-  await panel.getByRole("button",{name:"Record Verdict",exact:true}).click();await panel.getByRole("button",{name:"Use in Triage Memory",exact:true}).click();
+  await panel.getByRole("button",{name:"Record Verdict",exact:true}).click();await panel.getByRole("button",{name:"View Human Learning",exact:true}).click();
   await expect(learning).toContainText("Support: 2 · Conflicts: 2");
   await page.getByLabel("Search operational alerts",{exact:true}).fill("DDoS conflicting evidence");
   const unknown=page.getByRole("list",{name:"Operational alerts"}).getByRole("button").first();await expect(unknown).toContainText("DDoS conflicting evidence");await unknown.click();

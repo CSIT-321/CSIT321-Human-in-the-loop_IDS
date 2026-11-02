@@ -3,7 +3,7 @@ import {writeFileSync} from 'node:fs';
 
 test('three analysts share work, arbitrate contention, complete and escalate through the real API',async({browser},info)=>{
  test.setTimeout(240000);
- const contexts=await Promise.all([1,2,3,4].map(()=>browser.newContext({baseURL:'http://127.0.0.1:5202',viewport:{width:1440,height:900}})));
+ const contexts=await Promise.all([1,2,3,4].map(()=>browser.newContext({baseURL:`http://127.0.0.1:${process.env.HITL_WORK_WEB_PORT??'5202'}`,viewport:{width:1440,height:900}})));
  const [a,b,c,e]=await Promise.all(contexts.map(context=>context.newPage()));
  const tokens=new Map<Page,string>(),errors:string[]=[];
  for(const p of [a,b,c,e]){
@@ -11,7 +11,7 @@ test('three analysts share work, arbitrate contention, complete and escalate thr
   p.on('request',r=>{if(r.headers().authorization)tokens.set(p,r.headers().authorization);});
  }
  const get=async(p:Page,path:string)=>{const r=await p.request.get(path,{headers:{Authorization:tokens.get(p)??''}});expect(r.ok(),await r.text()).toBe(true);return r.json();};
- const harness='http://127.0.0.1:8032/__work';
+ const harness=`http://127.0.0.1:${process.env.HITL_WORK_API_PORT??'8032'}/__work`;
  const refs=await get(a,harness+'/manifest');
  const panel=(p:Page)=>p.getByRole('region',{name:'Human work status',exact:true});
  const workspace=(p:Page)=>p.getByRole('region',{name:'Operational alert workspace',exact:true});

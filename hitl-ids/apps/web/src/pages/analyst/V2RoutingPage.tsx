@@ -14,23 +14,18 @@ const labels: Record<Action, string> = {
   admit_tier1: "Admit to Tier 1", approve_tier2: "Approve Tier 2",
   reject_tier2: "Keep in Tier 1", manual_escalate: "Escalate to Tier 2",
 };
-const paths = {
-  admit_tier1: "/api/v2/alerts/{alertRef}/admit-tier1",
-  reject_tier2: "/api/v2/alerts/{alertRef}/tier2/reject",
-} as const;
 const button = "rounded-sm border border-border px-3 py-2 text-sm hover:bg-raised disabled:opacity-50";
-const pretty = (value: string) => value === "tier2_candidate" ? "Tier 2" : value === "assessment" ? "Awaiting case recovery" : value.replaceAll("_", " ");
-type CommandAction = Action | "recover_case";
+const pretty = (value: string) => value === "tier2_candidate" ? "Historical routing record" : value === "assessment" ? "Historical workflow state" : value.replaceAll("_", " ");
+type CommandAction = "manual_escalate";
 
-export function RoutingDetail({ initial, refresh, casePrefix = "/analyst", canRecover = false, compact = false, onChanged }: {
-  initial: View; refresh: () => void; casePrefix?: string; canRecover?: boolean; compact?: boolean; onChanged?: (view: View) => void;
+export function RoutingDetail({ initial, refresh, casePrefix = "/analyst", compact = false, onChanged }: {
+  initial: View; refresh: () => void; casePrefix?: string; compact?: boolean; onChanged?: (view: View) => void;
 }) {
   const [view, setView] = useState(initial);
   useEffect(() => { setView(initial); }, [initial]);
   const [reason, setReason] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
-  const [done, setDone] = useState("");
   const [caseCreated, setCaseCreated] = useState(false);
   const pending = useRef<{ action: CommandAction; body: Schemas["RoutingRequest"] } | null>(null);
   async function decide(action: CommandAction) {
@@ -40,21 +35,16 @@ export function RoutingDetail({ initial, refresh, casePrefix = "/analyst", canRe
       pending.current = { action, body: { requestId: crypto.randomUUID(),
         expectedStateVersion: view.stateVersion, reason: reason.trim() } };
     }
-    setBusy(true); setError(""); setDone("");
+    setBusy(true); setError("");
     try {
       const params = { path: { alertRef: view.operationalAlertRef } };
-      if (action === "manual_escalate" || action === "approve_tier2" || action === "recover_case") {
+      if (action === "manual_escalate") {
         const result = await unwrap(api.POST("/api/v2/alerts/{alertRef}/tier2/escalate-case", {
           params, body: { ...pending.current!.body, action },
         }));
         setView({ ...result.view, caseRef: result.case.caseRef });
         onChanged?.({ ...result.view, caseRef: result.case.caseRef });
         setCaseCreated(true);
-      } else {
-        const result = await unwrap(api.POST(paths[action], { params, body: pending.current!.body }));
-        setView(result.view);
-        onChanged?.(result.view);
-        setDone(`${labels[action]} recorded. Audit #${result.audit.id}`);
       }
       setReason(""); pending.current = null;
     } catch (cause) {
@@ -62,9 +52,8 @@ export function RoutingDetail({ initial, refresh, casePrefix = "/analyst", canRe
     } finally { setBusy(false); }
   }
   const state = view.state;
-  const actions = compact || view.systemRouting ? view.allowedActions.filter(action => action !== "approve_tier2" && action !== "reject_tier2") : view.allowedActions;
-  const recovery = canRecover && state.handlingRoute === "tier2_candidate" && state.workflowStage === "assessment";
-  return <section className="min-w-0 space-y-5 border-t border-border pt-5" aria-label="V2 alert routing">
+  const actions = view.systemRouting && state.handlingRoute==='tier1_review' ? view.allowedActions.filter((action): action is CommandAction => action==='manual_escalate') : [];
+  return <section className="min-w-0 space-y-5 border-t border-border pt-5" aria-label="Operational alert routing">
     {!compact && <>
     <header className="space-y-1 break-words">
       <h2 className="text-lg font-semibold">{view.title}</h2>
@@ -96,18 +85,16 @@ export function RoutingDetail({ initial, refresh, casePrefix = "/analyst", canRe
       <p className="text-xs text-dim">{view.latestDecision.createdAt}</p>
     </section>}
     </>}
-    {(actions.length > 0 || recovery) && <div className="space-y-3 border-t border-border pt-4">
+    {actions.length > 0 && <div className="space-y-3 border-t border-border pt-4">
       {actions.includes("manual_escalate") && <h3 className="text-sm font-semibold">Manual Escalation / Override</h3>}
       <label className="block text-sm" htmlFor="routing-reason">Decision reason</label>
       <textarea id="routing-reason" rows={3} maxLength={2000} value={reason} disabled={busy}
         onChange={event => setReason(event.target.value)}
         className="w-full rounded-sm border border-border bg-surface p-2 text-sm" />
-      {recovery && <p className="text-sm text-muted">An earlier escalation has no formal case. Complete it explicitly; no records are changed on page load.</p>}
-      <div className="flex flex-wrap gap-2">{recovery && <button className={button} disabled={busy || !reason.trim()} onClick={() => void decide("recover_case")}>Complete Earlier Escalation</button>}{actions.map(action =>
+      <div className="flex flex-wrap gap-2">{actions.map(action =>
         <button className={button} key={action} disabled={busy || !reason.trim()} onClick={() => void decide(action)}>{labels[action]}</button>)}</div>
     </div>}
     {error && <p role="alert" className="text-sm text-danger">{error}</p>}
-    {done && <p role="status" className="text-sm text-ok">{done}</p>}
     {caseCreated && view.caseRef && <div role="status" aria-label="Tier 2 escalation result" className="space-y-2 rounded-sm border border-ok/50 bg-ok-dim p-4">
       <h3 className="font-semibold">Escalated to Tier 2</h3>
       <p className="text-sm">Tier 2 Case created successfully.</p>
@@ -142,11 +129,11 @@ export function V2RoutingPage() {
     ? resource.data.items.find(item => item.operationalAlertRef === selected) ?? resource.data.items[0] : undefined;
   return <div className="min-w-0 space-y-5 p-4 sm:p-6">
     <PageHeader title="Alert Triage" />
-    {requestedRef && <button className={button} onClick={() => { setOffset(0); setSearch({}); }}>All V2 alerts</button>}
-    {resource.status === "loading" && <p role="status">Loading V2 alerts...</p>}
+    {requestedRef && <button className={button} onClick={() => { setOffset(0); setSearch({}); }}>All operational alerts</button>}
+    {resource.status === "loading" && <p role="status">Loading operational alerts...</p>}
     {resource.status === "error" && <div><p role="alert">{resource.error.message}</p><button className={button} onClick={resource.reload}>Retry</button></div>}
     {resource.status === "success" && <>
-      {resource.data.items.length === 0 ? <p>No materialized V2 alerts.</p> : <>
+      {resource.data.items.length === 0 ? <p>No operational alerts.</p> : <>
         <label className="block text-sm" htmlFor="v2-alert">Operational alert</label>
         <select id="v2-alert" className="w-full min-w-0 rounded-sm border border-border bg-surface p-2 text-sm"
           value={current?.operationalAlertRef ?? ""} onChange={event => setSelected(event.target.value)}>
@@ -158,7 +145,7 @@ export function V2RoutingPage() {
         <span>{resource.data.page.total} alerts</span>
         <button className={button} disabled={offset + 50 >= resource.data.page.total} onClick={() => setOffset(offset + 50)}>Next</button>
       </div>
-      {current && <RoutingDetail key={current.operationalAlertRef + current.stateVersion} initial={current} refresh={resource.reload} casePrefix={casePrefix} canRecover={session?.role === "security_analyst" || session?.role === "system_admin"} />}
+      {current && <RoutingDetail key={current.operationalAlertRef + current.stateVersion} initial={current} refresh={resource.reload} casePrefix={casePrefix} />}
       {current && <AlertMemoryPanel key={"memory:"+current.operationalAlertRef+current.stateVersion} view={current}/>}
       {current && <SelectiveReviewPanel key={"selective:"+current.operationalAlertRef+current.stateVersion} alertRef={current.operationalAlertRef}/>}
     </>}

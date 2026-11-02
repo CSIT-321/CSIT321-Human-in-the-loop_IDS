@@ -1,3 +1,5 @@
+> Current product surface: feat/final-legacy-cleanup, based on 24d43c5bd6d95131978bfbb77aba21efb0fdaab8. See ../../docs/final-legacy-cleanup.md and preliminary-user-manual.md. The chronological implementation notes below are historical; Candidate/manual Exact/old route instructions are superseded. Protocol V2 is frozen and unopened.
+
 # HANDOVER — read this first in a new session
 
 **Purpose.** Carry the full state of this project into a fresh session with zero loss of context

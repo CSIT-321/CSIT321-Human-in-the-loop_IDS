@@ -3,7 +3,7 @@ import { KeyValues } from "../../components/ui";
 
 export const attackLabel = (category: string | null) => category === "unknown_needs_expert" ? "Unknown / Needs Expert" : category?.replaceAll("_", " ") ?? "Informational / Policy Signal";
 export const routeClassLabel = (value: string) => ({ ROUTINE_REVIEW: "Routine Review", CRITICAL_ESCALATION: "Critical Escalation", EXPERT_REVIEW_REQUIRED: "Expert Review Required" }[value] ?? value);
-export const currentRouteLabel = (value: string) => value === "tier1_review" ? "Tier 1" : value === "tier2_case" ? "Tier 2" : value.replaceAll("_", " ");
+export const currentRouteLabel = (value: string) => value === "tier1_review" ? "Tier 1" : value === "tier2_case" ? "Tier 2" : value === "tier2_candidate" ? "Historical routing record" : value.replaceAll("_", " ");
 
 export const routingSummaryLabel = (view: Schemas["RoutingView"]) =>
   view.state.decisionSource === "analyst" && view.state.handlingRoute === "tier2_case" ? "Manual Escalation / Override"

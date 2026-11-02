@@ -25,7 +25,6 @@ export function SuricataEvidence({ detector, summaryOnly }: { detector: Schemas[
       ["Evidence Types", Array.isArray(bundle.evidenceTypes) ? bundle.evidenceTypes.map(text).join(" · ") : "Not provided"],
       ["Native Severity", `${text(bundle.nativeSeverity)} (highest-priority matching rule)`],
       ["Suricata confidence", "Not provided"],
-      ["XGBoost supporting evidence", "Unavailable — no validated feature bridge"],
     ]} /></Card>
     {!summaryOnly && <>
       <Card title="Related Signatures"><div className="overflow-x-auto"><table aria-label="Related Suricata signatures" className="w-full text-left text-xs">

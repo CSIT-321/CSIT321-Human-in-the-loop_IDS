@@ -53,34 +53,35 @@
   <header>
     <div class="eyebrow">FYP-26-S3-13 · CSIT321 · School of Computing and Information Technology</div>
     <h1>Human-in-the-Loop Intrusion Detection Dashboard</h1>
-    <p class="lede">A network IDS that fuses signature rules with a machine-learning classifier, then
-    lets an analyst's verdict reorder the alerts that follow — inside guardrails, with every decision
-    audited. These are the project's published pages.</p>
+    <p class="lede">Current product: Suricata evidence, shared Analyst Workstation, canonical human Verdicts,
+    automatic safe Memory learning, Selective Review and Tier 2 Case resolution.
+    Follow the <a href="user-manual.html">current user manual</a>. The older walkthrough and pipeline
+    map below are historical research evidence, not current product instructions.</p>
   </header>
 
   <section>
     <h2>Pages</h2>
     <div class="cards">
       <a class="card" href="showcase.html">
-        <h3>Console Showcase <span>→</span></h3>
+        <h3>Historical Console Showcase <span>→</span></h3>
         <p>The guided walkthrough: how the system works, every screen, the demo narrative, and the
         evidence behind each decision — including the results that went against us.</p>
       </a>
       <a class="card" href="pipeline-map.html">
-        <h3>Pipeline Map <span>→</span></h3>
+        <h3>Historical Pipeline Map <span>→</span></h3>
         <p>The detection pipeline as it actually runs: how a signature and the model combine, the
         score arithmetic, the queue order, and the feedback loop that reorders future alerts.</p>
       </a>
       <a class="card" href="user-manual.html">
-        <h3>Preliminary User Manual <span>→</span></h3>
+        <h3>Current User Manual <span>→</span></h3>
         <p>Installation, sign-in, and every console screen with its procedures — for a tester
         working through the system for the first time.</p>
       </a>
     </div>
     <dl class="facts">
-      <div><dt>Detection</dt><dd>8-class XGBoost</dd></div>
-      <div><dt>Explainability</dt><dd>Native TreeSHAP</dd></div>
-      <div><dt>Guardrails</dt><dd>Caps &amp; floors</dd></div>
+      <div><dt>Detection</dt><dd>Suricata EVE</dd></div>
+      <div><dt>Evidence</dt><dd>Correlated records</dd></div>
+      <div><dt>Learning</dt><dd>Safe Exact Memory</dd></div>
       <div><dt>Audit</dt><dd>Append-only</dd></div>
     </dl>
   </section>
@@ -88,12 +89,11 @@
   <section>
     <h2>What this is</h2>
     <p style="margin:0;color:var(--muted);max-width:70ch">
-    Detection is an offline batch over recorded CIC flow data. Every flow becomes an alert —
-    including the ones no detector flagged, which form the queue's bottom band and the evaluation's
-    denominator. An analyst works the queue, records a verdict, and the verdict does not merely
-    re-score that one alert: it updates the alert's <em>family</em>, and the family's learned
-    adjustment is read by alerts that arrive later. The safety claim is the guardrails — a bounded
-    score change, floors that protect critical findings, and an append-only trail of who decided what.</p>
+    The operational system correlates Suricata EVE records, assigns a system attack classification
+    and priority, and routes to Tier 1 review or a formal Tier 2 Case. Analysts share an exclusive
+    work queue. Canonical Verdicts and Investigation Conclusions feed automatic Exact Memory;
+    safe policy controls reuse in Selective Review. Response decisions remain human-authorized
+    and are never executed by this product. All decisions retain an append-only audit trail.</p>
   </section>
 
   <footer>

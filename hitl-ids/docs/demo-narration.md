@@ -1,3 +1,5 @@
+> **Historical demonstration record.** The flow-feedback screens below have been retired. For the current setup and demonstration sequence, use [Current Product User Manual](preliminary-user-manual.md). Preserve this record as earlier project evidence.
+
 # Demo narration — the words to say
 
 **Read this out loud. Everything in a plain paragraph is yours to say.**

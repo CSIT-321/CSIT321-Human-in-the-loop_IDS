@@ -26,7 +26,7 @@ describe("Triage memory",()=>{
     expect(screen.getByText("Memory Contributor: Contributor / #2")).toBeVisible();
     expect(screen.getByText("Human Final Attack Classification: Web Attack")).toBeVisible();
     expect(screen.getByText("Investigation reason: Canonical expert reason")).toBeVisible();
-    expect(screen.getByRole("link",{name:"Source Alert"})).toHaveAttribute("href","/analyst/v2-triage?alertRef="+ref);
+    expect(screen.getByRole("link",{name:"Source Alert"})).toHaveAttribute("href","/analyst/operations?alertRef="+ref);
     expect(screen.getByText("Superseded human evidence — excluded from effective support")).toBeVisible();
     expect(screen.getByRole("link",{name:"Source Case"})).toHaveAttribute("href","/analyst/tier2-cases/"+ref);
   });
@@ -46,9 +46,9 @@ describe("Triage memory",()=>{
       return jsonResponse(req.url.includes("/events")?empty:view);
     });
     renderApp("/analyst/triage-memory?lessonRef="+ref,{session});
-    const activate=await screen.findByRole("button",{name:"Activate Lesson"});
+    const activate=await screen.findByRole("button",{name:"Activate historical / manual lesson"});
     expect(activate).toBeDisabled();
-    await userEvent.type(screen.getByLabelText("Memory activation or rejection reason"),"Reviewed three source alerts");
+    await userEvent.type(screen.getByLabelText("Memory governance reason"),"Reviewed three source alerts");
     await userEvent.click(activate);
     expect(await screen.findByRole("alert")).toHaveTextContent("Lesson changed");
     await userEvent.click(activate);
@@ -61,24 +61,34 @@ describe("Triage memory",()=>{
   it("does not offer activation below the threshold",async()=>{
     stubFetch(req=>jsonResponse(req.url.includes("/events")?empty:{...view,status:"candidate",supportCount:1,revision:1}));
     renderApp("/analyst/triage-memory?lessonRef="+ref,{session});
-    await userEvent.type(await screen.findByLabelText("Memory activation or rejection reason"),"Too few supporting alerts");
-    expect(screen.getByRole("button",{name:"Activate Lesson"})).toBeDisabled();
+    await userEvent.type(await screen.findByLabelText("Memory governance reason"),"Too few supporting alerts");
+    expect(screen.getByRole("button",{name:"Activate historical / manual lesson"})).toBeDisabled();
     expect(screen.getByRole("button",{name:"Reject Lesson"})).toBeEnabled();
+  });
+
+  it("does not offer manual activation for current automatic Exact lessons",async()=>{
+    stubFetch(req=>jsonResponse(req.url.includes("/events")?empty:{...view,lesson:{...view.lesson,decisionSource:"system_policy",policyVersion:"safe-memory-auto-activation-v1"}}));
+    renderApp("/analyst/triage-memory?lessonRef="+ref,{session});
+    await screen.findByText("Authorised internal vulnerability scanner");
+    expect(screen.queryByRole("button",{name:/Activate/i})).toBeNull();
+    expect(screen.queryByLabelText("Memory outcome")).toBeNull();
+    expect(screen.queryByLabelText("Memory reason")).toBeNull();
+    expect(screen.queryByRole("button",{name:/Use.*Memory Evidence/})).toBeNull();
   });
 
   it("keeps evaluator history read-only",async()=>{
     stubFetch(req=>jsonResponse(req.url.includes("/events")?empty:view));
     renderApp("/evaluator/triage-memory?lessonRef="+ref,{session:{...session,role:"evaluator"}});
     await screen.findByText("Authorised internal vulnerability scanner");
-    expect(screen.queryByLabelText("Memory activation or rejection reason")).not.toBeInTheDocument();
-    expect(screen.queryByRole("button",{name:"Activate Lesson"})).not.toBeInTheDocument();
+    expect(screen.queryByLabelText("Memory governance reason")).not.toBeInTheDocument();
+    expect(screen.queryByRole("button",{name:"Activate historical / manual lesson"})).not.toBeInTheDocument();
   });
 
   it.each(["active","conflict_review","expired","rejected"] as const)("preserves immutable %s history without activation controls",async status=>{
     stubFetch(req=>jsonResponse(req.url.includes("/events")?empty:{...view,status,decision:status==="expired"?null:{action:"activate",actorId:1,reason:"Recorded human approval",createdAt:"2026-10-31T00:00:00Z"}}));
     renderApp("/analyst/triage-memory?lessonRef="+ref,{session});
     expect(await screen.findByText(status.replaceAll("_"," "),{exact:true})).toBeInTheDocument();
-    expect(screen.queryByRole("button",{name:"Activate Lesson"})).not.toBeInTheDocument();
+    expect(screen.queryByRole("button",{name:"Activate historical / manual lesson"})).not.toBeInTheDocument();
   });
 
   it("handles empty and failure states distinctly",async()=>{

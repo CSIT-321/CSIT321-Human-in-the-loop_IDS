@@ -37,7 +37,6 @@ export const ROLE_META: Readonly<Record<Role, RoleMeta>> = {
       { to: "/analyst/tier2-cases", label: "Tier 2 Cases" },
       { to: "/analyst/triage-memory", label: "Triage Memory" },
       { to: "/analyst/selective-review", label: "Selective Review" },
-      { to: "/analyst/dashboard", label: "Dashboard" },
       { to: "/analyst/external-admission", label: "Incoming Alerts" },
     ],
   },
