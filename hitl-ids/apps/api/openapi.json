@@ -3810,6 +3810,518 @@
         "title": "FeedbackResponse",
         "type": "object"
       },
+      "FinalRecord": {
+        "properties": {
+          "adaptiveDisposition": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Adaptivedisposition"
+          },
+          "adaptiveReasonCodes": {
+            "default": [],
+            "items": {
+              "type": "string"
+            },
+            "title": "Adaptivereasoncodes",
+            "type": "array"
+          },
+          "adaptiveReviewRequired": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Adaptivereviewrequired"
+          },
+          "alertRef": {
+            "title": "Alertref",
+            "type": "string"
+          },
+          "analyst": {
+            "title": "Analyst",
+            "type": "string"
+          },
+          "attackCategory": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Attackcategory"
+          },
+          "baselineDisposition": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Baselinedisposition"
+          },
+          "baselineReasonCodes": {
+            "default": [],
+            "items": {
+              "type": "string"
+            },
+            "title": "Baselinereasoncodes",
+            "type": "array"
+          },
+          "baselineReviewRequired": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Baselinereviewrequired"
+          },
+          "caseRef": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Caseref"
+          },
+          "deferralClassification": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Deferralclassification"
+          },
+          "destinationIp": {
+            "title": "Destinationip",
+            "type": "string"
+          },
+          "destinationPort": {
+            "title": "Destinationport",
+            "type": "integer"
+          },
+          "drift": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Drift"
+          },
+          "flowId": {
+            "title": "Flowid",
+            "type": "integer"
+          },
+          "humanOutcome": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Humanoutcome"
+          },
+          "index": {
+            "title": "Index",
+            "type": "integer"
+          },
+          "learningConflicts": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Learningconflicts"
+          },
+          "learningLessonRef": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Learninglessonref"
+          },
+          "learningLessonStatus": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Learninglessonstatus"
+          },
+          "learningSupport": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Learningsupport"
+          },
+          "matchedMemoryLessonRef": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Matchedmemorylessonref"
+          },
+          "memoryMatches": {
+            "default": [],
+            "items": {
+              "$ref": "#/components/schemas/FrozenMemoryMatch"
+            },
+            "title": "Memorymatches",
+            "type": "array"
+          },
+          "nativeCategory": {
+            "title": "Nativecategory",
+            "type": "string"
+          },
+          "nativeSeverity": {
+            "title": "Nativeseverity",
+            "type": "integer"
+          },
+          "oracleOutcome": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Oracleoutcome"
+          },
+          "pattern": {
+            "title": "Pattern",
+            "type": "string"
+          },
+          "phase": {
+            "title": "Phase",
+            "type": "string"
+          },
+          "plannedRoute": {
+            "title": "Plannedroute",
+            "type": "string"
+          },
+          "population": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Population"
+          },
+          "priority": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Priority"
+          },
+          "protocol": {
+            "title": "Protocol",
+            "type": "string"
+          },
+          "route": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Route"
+          },
+          "signature": {
+            "title": "Signature",
+            "type": "string"
+          },
+          "signatureId": {
+            "title": "Signatureid",
+            "type": "integer"
+          },
+          "sourceIp": {
+            "title": "Sourceip",
+            "type": "string"
+          },
+          "sourcePort": {
+            "title": "Sourceport",
+            "type": "integer"
+          },
+          "stratum": {
+            "title": "Stratum",
+            "type": "string"
+          },
+          "timestamp": {
+            "title": "Timestamp",
+            "type": "string"
+          },
+          "verdictRef": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Verdictref"
+          }
+        },
+        "required": [
+          "index",
+          "alertRef",
+          "phase",
+          "population",
+          "stratum",
+          "pattern",
+          "analyst",
+          "plannedRoute",
+          "timestamp",
+          "signature",
+          "signatureId",
+          "nativeCategory",
+          "nativeSeverity",
+          "sourceIp",
+          "sourcePort",
+          "destinationIp",
+          "destinationPort",
+          "protocol",
+          "flowId"
+        ],
+        "title": "FinalRecord",
+        "type": "object"
+      },
+      "FinalRecordPage": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/FinalRecord"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "limit": {
+            "title": "Limit",
+            "type": "integer"
+          },
+          "offset": {
+            "title": "Offset",
+            "type": "integer"
+          },
+          "total": {
+            "title": "Total",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "items",
+          "total",
+          "limit",
+          "offset"
+        ],
+        "title": "FinalRecordPage",
+        "type": "object"
+      },
+      "FinalSummary": {
+        "properties": {
+          "allHoldoutInitialDeferrals": {
+            "title": "Allholdoutinitialdeferrals",
+            "type": "integer"
+          },
+          "allHoldoutUnsafeDeferrals": {
+            "title": "Allholdoutunsafedeferrals",
+            "type": "integer"
+          },
+          "drift": {
+            "title": "Drift",
+            "type": "integer"
+          },
+          "driftTimeline": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "title": "Drifttimeline",
+            "type": "array"
+          },
+          "holdout": {
+            "title": "Holdout",
+            "type": "integer"
+          },
+          "learning": {
+            "title": "Learning",
+            "type": "integer"
+          },
+          "postContradictionPopulation": {
+            "title": "Postcontradictionpopulation",
+            "type": "integer"
+          },
+          "postContradictionUnsafeDeferrals": {
+            "title": "Postcontradictionunsafedeferrals",
+            "type": "integer"
+          },
+          "primary": {
+            "title": "Primary",
+            "type": "integer"
+          },
+          "primaryAdaptiveImmediateReview": {
+            "title": "Primaryadaptiveimmediatereview",
+            "type": "integer"
+          },
+          "primaryBaselineImmediateReview": {
+            "title": "Primarybaselineimmediatereview",
+            "type": "integer"
+          },
+          "primaryReviewReduction": {
+            "title": "Primaryreviewreduction",
+            "type": "integer"
+          },
+          "primaryReviewReductionRate": {
+            "title": "Primaryreviewreductionrate",
+            "type": "number"
+          },
+          "primarySafeDeferrals": {
+            "title": "Primarysafedeferrals",
+            "type": "integer"
+          },
+          "primaryUnsafeDeferrals": {
+            "title": "Primaryunsafedeferrals",
+            "type": "integer"
+          },
+          "run": {
+            "title": "Run",
+            "type": "string"
+          },
+          "runtimeSha": {
+            "title": "Runtimesha",
+            "type": "string"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "strata": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "title": "Strata",
+            "type": "object"
+          },
+          "supplementary": {
+            "title": "Supplementary",
+            "type": "integer"
+          },
+          "total": {
+            "title": "Total",
+            "type": "integer"
+          },
+          "unknown": {
+            "title": "Unknown",
+            "type": "integer"
+          },
+          "unknownFormalTier2Cases": {
+            "title": "Unknownformaltier2Cases",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "run",
+          "status",
+          "runtimeSha",
+          "total",
+          "learning",
+          "holdout",
+          "primary",
+          "supplementary",
+          "unknown",
+          "drift",
+          "strata",
+          "primaryBaselineImmediateReview",
+          "primaryAdaptiveImmediateReview",
+          "primaryReviewReduction",
+          "primaryReviewReductionRate",
+          "primarySafeDeferrals",
+          "primaryUnsafeDeferrals",
+          "allHoldoutInitialDeferrals",
+          "allHoldoutUnsafeDeferrals",
+          "postContradictionUnsafeDeferrals",
+          "postContradictionPopulation",
+          "unknownFormalTier2Cases",
+          "driftTimeline"
+        ],
+        "title": "FinalSummary",
+        "type": "object"
+      },
       "FindingRequest": {
         "additionalProperties": false,
         "properties": {
@@ -3931,6 +4443,73 @@
           "sourceRecordId"
         ],
         "title": "FlowPanel",
+        "type": "object"
+      },
+      "FrozenMemoryMatch": {
+        "properties": {
+          "agreement": {
+            "title": "Agreement",
+            "type": "number"
+          },
+          "conflicts": {
+            "title": "Conflicts",
+            "type": "integer"
+          },
+          "guidanceActive": {
+            "title": "Guidanceactive",
+            "type": "boolean"
+          },
+          "lessonRef": {
+            "title": "Lessonref",
+            "type": "string"
+          },
+          "matchedFields": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Matchedfields",
+            "type": "array"
+          },
+          "mismatchedFields": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Mismatchedfields",
+            "type": "array"
+          },
+          "outcome": {
+            "title": "Outcome",
+            "type": "string"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "support": {
+            "title": "Support",
+            "type": "integer"
+          },
+          "unavailableFields": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Unavailablefields",
+            "type": "array"
+          }
+        },
+        "required": [
+          "lessonRef",
+          "outcome",
+          "status",
+          "support",
+          "conflicts",
+          "agreement",
+          "guidanceActive",
+          "matchedFields",
+          "mismatchedFields",
+          "unavailableFields"
+        ],
+        "title": "FrozenMemoryMatch",
         "type": "object"
       },
       "FrozenProtocol": {
@@ -5763,6 +6342,108 @@
           "createdAt"
         ],
         "title": "MemoryEvidence",
+        "type": "object"
+      },
+      "MemoryImpact": {
+        "properties": {
+          "affectedIndices": {
+            "items": {
+              "type": "integer"
+            },
+            "title": "Affectedindices",
+            "type": "array"
+          },
+          "agreement": {
+            "title": "Agreement",
+            "type": "number"
+          },
+          "auditSampled": {
+            "title": "Auditsampled",
+            "type": "integer"
+          },
+          "blocked": {
+            "title": "Blocked",
+            "type": "integer"
+          },
+          "conflictWithdrawn": {
+            "title": "Conflictwithdrawn",
+            "type": "boolean"
+          },
+          "conflicts": {
+            "title": "Conflicts",
+            "type": "integer"
+          },
+          "deferred": {
+            "title": "Deferred",
+            "type": "integer"
+          },
+          "holdoutExactMatches": {
+            "title": "Holdoutexactmatches",
+            "type": "integer"
+          },
+          "lessonRef": {
+            "title": "Lessonref",
+            "type": "string"
+          },
+          "matched": {
+            "title": "Matched",
+            "type": "integer"
+          },
+          "outcome": {
+            "title": "Outcome",
+            "type": "string"
+          },
+          "pattern": {
+            "title": "Pattern",
+            "type": "string"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "support": {
+            "title": "Support",
+            "type": "integer"
+          },
+          "used": {
+            "title": "Used",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "lessonRef",
+          "pattern",
+          "outcome",
+          "support",
+          "conflicts",
+          "agreement",
+          "status",
+          "holdoutExactMatches",
+          "matched",
+          "used",
+          "deferred",
+          "blocked",
+          "auditSampled",
+          "affectedIndices",
+          "conflictWithdrawn"
+        ],
+        "title": "MemoryImpact",
+        "type": "object"
+      },
+      "MemoryImpactPage": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/MemoryImpact"
+            },
+            "title": "Items",
+            "type": "array"
+          }
+        },
+        "required": [
+          "items"
+        ],
+        "title": "MemoryImpactPage",
         "type": "object"
       },
       "MemoryLesson": {
@@ -10944,6 +11625,194 @@
         ],
         "title": "WorkView",
         "type": "object"
+      },
+      "WorkspaceAction": {
+        "properties": {
+          "action": {
+            "title": "Action",
+            "type": "string"
+          },
+          "actor": {
+            "title": "Actor",
+            "type": "string"
+          },
+          "created_at": {
+            "title": "Created At",
+            "type": "string"
+          },
+          "reason": {
+            "title": "Reason",
+            "type": "string"
+          },
+          "workspace": {
+            "title": "Workspace",
+            "type": "string"
+          }
+        },
+        "required": [
+          "actor",
+          "action",
+          "workspace",
+          "reason",
+          "created_at"
+        ],
+        "title": "WorkspaceAction",
+        "type": "object"
+      },
+      "WorkspaceCommand": {
+        "properties": {
+          "reason": {
+            "maxLength": 500,
+            "minLength": 3,
+            "title": "Reason",
+            "type": "string"
+          }
+        },
+        "required": [
+          "reason"
+        ],
+        "title": "WorkspaceCommand",
+        "type": "object"
+      },
+      "WorkspaceCurrent": {
+        "properties": {
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name"
+        ],
+        "title": "WorkspaceCurrent",
+        "type": "object"
+      },
+      "WorkspaceInfo": {
+        "properties": {
+          "active": {
+            "title": "Active",
+            "type": "boolean"
+          },
+          "alertCount": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Alertcount"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "lastPreparedAt": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Lastpreparedat"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "rawRecords": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rawrecords"
+          },
+          "ready": {
+            "title": "Ready",
+            "type": "boolean"
+          },
+          "stagedAlerts": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Stagedalerts"
+          },
+          "workloadSha256": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Workloadsha256"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "active",
+          "ready",
+          "alertCount",
+          "lastPreparedAt",
+          "rawRecords",
+          "stagedAlerts",
+          "workloadSha256"
+        ],
+        "title": "WorkspaceInfo",
+        "type": "object"
+      },
+      "WorkspaceState": {
+        "properties": {
+          "actions": {
+            "items": {
+              "$ref": "#/components/schemas/WorkspaceAction"
+            },
+            "title": "Actions",
+            "type": "array"
+          },
+          "activeWorkspaceId": {
+            "title": "Activeworkspaceid",
+            "type": "string"
+          },
+          "activeWorkspaceName": {
+            "title": "Activeworkspacename",
+            "type": "string"
+          },
+          "workspaces": {
+            "items": {
+              "$ref": "#/components/schemas/WorkspaceInfo"
+            },
+            "title": "Workspaces",
+            "type": "array"
+          }
+        },
+        "required": [
+          "activeWorkspaceId",
+          "activeWorkspaceName",
+          "workspaces",
+          "actions"
+        ],
+        "title": "WorkspaceState",
+        "type": "object"
       }
     }
   },
@@ -11259,6 +12128,428 @@
           "reports"
         ],
         "x-required-role": "system_admin"
+      }
+    },
+    "/api/admin/workspaces": {
+      "get": {
+        "operationId": "listOperationalWorkspaces",
+        "parameters": [
+          {
+            "description": "`Bearer <token>` from POST /api/auth/login",
+            "in": "header",
+            "name": "Authorization",
+            "required": false,
+            "schema": {
+              "example": "Bearer eyJhbGciOiJIUzI1NiJ9...",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorkspaceState"
+                }
+              }
+            },
+            "description": "Allowlisted operational workspace state"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Validation failed"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not signed in, or the token expired"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Role not permitted"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Database unavailable or schema unsupported; read-only requests never migrate"
+          }
+        },
+        "summary": "listOperationalWorkspaces",
+        "tags": [
+          "Operational workspaces"
+        ],
+        "x-required-roles": [
+          "system_admin"
+        ]
+      }
+    },
+    "/api/admin/workspaces/v3-1-replay/prepare": {
+      "post": {
+        "operationId": "prepareV31Replay",
+        "parameters": [
+          {
+            "description": "`Bearer <token>` from POST /api/auth/login",
+            "in": "header",
+            "name": "Authorization",
+            "required": false,
+            "schema": {
+              "example": "Bearer eyJhbGciOiJIUzI1NiJ9...",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WorkspaceCommand"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorkspaceState"
+                }
+              }
+            },
+            "description": "Allowlisted operational workspace state"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Validation failed"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not signed in, or the token expired"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Role not permitted"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Database unavailable or schema unsupported; read-only requests never migrate"
+          }
+        },
+        "summary": "prepareV31Replay",
+        "tags": [
+          "Operational workspaces"
+        ],
+        "x-required-roles": [
+          "system_admin"
+        ]
+      }
+    },
+    "/api/admin/workspaces/v3-1-replay/reset": {
+      "post": {
+        "operationId": "resetV31Replay",
+        "parameters": [
+          {
+            "description": "`Bearer <token>` from POST /api/auth/login",
+            "in": "header",
+            "name": "Authorization",
+            "required": false,
+            "schema": {
+              "example": "Bearer eyJhbGciOiJIUzI1NiJ9...",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WorkspaceCommand"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorkspaceState"
+                }
+              }
+            },
+            "description": "Allowlisted operational workspace state"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Validation failed"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not signed in, or the token expired"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Role not permitted"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Database unavailable or schema unsupported; read-only requests never migrate"
+          }
+        },
+        "summary": "resetV31Replay",
+        "tags": [
+          "Operational workspaces"
+        ],
+        "x-required-roles": [
+          "system_admin"
+        ]
+      }
+    },
+    "/api/admin/workspaces/{workspaceId}/activate": {
+      "post": {
+        "operationId": "activateOperationalWorkspace",
+        "parameters": [
+          {
+            "description": "`Bearer <token>` from POST /api/auth/login",
+            "in": "header",
+            "name": "Authorization",
+            "required": false,
+            "schema": {
+              "example": "Bearer eyJhbGciOiJIUzI1NiJ9...",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "workspaceId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WorkspaceCommand"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorkspaceState"
+                }
+              }
+            },
+            "description": "Allowlisted operational workspace state"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Validation failed"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not signed in, or the token expired"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Role not permitted"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Database unavailable or schema unsupported; read-only requests never migrate"
+          }
+        },
+        "summary": "activateOperationalWorkspace",
+        "tags": [
+          "Operational workspaces"
+        ],
+        "x-required-roles": [
+          "system_admin"
+        ]
       }
     },
     "/api/alerts": {
@@ -13743,6 +15034,484 @@
         "summary": "Everything the recorded flows say about one IP address",
         "tags": [
           "entities"
+        ]
+      }
+    },
+    "/api/evaluation/final-v3-1": {
+      "get": {
+        "operationId": "getFinalV31Summary",
+        "parameters": [
+          {
+            "description": "`Bearer <token>` from POST /api/auth/login",
+            "in": "header",
+            "name": "Authorization",
+            "required": false,
+            "schema": {
+              "example": "Bearer eyJhbGciOiJIUzI1NiJ9...",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FinalSummary"
+                }
+              }
+            },
+            "description": "Official frozen V3.1 evidence"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Validation failed"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not signed in, or the token expired"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Role not permitted"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not found"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Database unavailable or schema unsupported; read-only requests never migrate"
+          }
+        },
+        "summary": "getFinalV31Summary",
+        "tags": [
+          "evaluation"
+        ],
+        "x-required-roles": [
+          "system_admin",
+          "evaluator"
+        ]
+      }
+    },
+    "/api/evaluation/final-v3-1/memory-impact": {
+      "get": {
+        "operationId": "getFinalV31MemoryImpact",
+        "parameters": [
+          {
+            "description": "`Bearer <token>` from POST /api/auth/login",
+            "in": "header",
+            "name": "Authorization",
+            "required": false,
+            "schema": {
+              "example": "Bearer eyJhbGciOiJIUzI1NiJ9...",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MemoryImpactPage"
+                }
+              }
+            },
+            "description": "Official frozen V3.1 evidence"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Validation failed"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not signed in, or the token expired"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Role not permitted"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not found"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Database unavailable or schema unsupported; read-only requests never migrate"
+          }
+        },
+        "summary": "getFinalV31MemoryImpact",
+        "tags": [
+          "evaluation"
+        ],
+        "x-required-roles": [
+          "system_admin",
+          "evaluator"
+        ]
+      }
+    },
+    "/api/evaluation/final-v3-1/records": {
+      "get": {
+        "operationId": "listFinalV31Records",
+        "parameters": [
+          {
+            "description": "`Bearer <token>` from POST /api/auth/login",
+            "in": "header",
+            "name": "Authorization",
+            "required": false,
+            "schema": {
+              "example": "Bearer eyJhbGciOiJIUzI1NiJ9...",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 25,
+              "maximum": 200,
+              "minimum": 1,
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "offset",
+            "required": false,
+            "schema": {
+              "default": 0,
+              "minimum": 0,
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "phase",
+            "required": false,
+            "schema": {
+              "enum": [
+                "learning",
+                "holdout"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "population",
+            "required": false,
+            "schema": {
+              "enum": [
+                "primary",
+                "supplementary"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "stratum",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "pattern",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "baselineDisposition",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "adaptiveDisposition",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "deferral",
+            "required": false,
+            "schema": {
+              "enum": [
+                "safe",
+                "unsafe",
+                "not-deferred"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "memory",
+            "required": false,
+            "schema": {
+              "enum": [
+                "matched",
+                "unmatched"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "case",
+            "required": false,
+            "schema": {
+              "enum": [
+                "has",
+                "none"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "search",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FinalRecordPage"
+                }
+              }
+            },
+            "description": "Official frozen V3.1 evidence"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Validation failed"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not signed in, or the token expired"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Role not permitted"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not found"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Database unavailable or schema unsupported; read-only requests never migrate"
+          }
+        },
+        "summary": "listFinalV31Records",
+        "tags": [
+          "evaluation"
+        ],
+        "x-required-roles": [
+          "system_admin",
+          "evaluator"
+        ]
+      }
+    },
+    "/api/evaluation/final-v3-1/records/{index}": {
+      "get": {
+        "operationId": "getFinalV31Record",
+        "parameters": [
+          {
+            "description": "`Bearer <token>` from POST /api/auth/login",
+            "in": "header",
+            "name": "Authorization",
+            "required": false,
+            "schema": {
+              "example": "Bearer eyJhbGciOiJIUzI1NiJ9...",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "index",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FinalRecord"
+                }
+              }
+            },
+            "description": "Official frozen V3.1 evidence"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Validation failed"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not signed in, or the token expired"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Role not permitted"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not found"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Database unavailable or schema unsupported; read-only requests never migrate"
+          }
+        },
+        "summary": "getFinalV31Record",
+        "tags": [
+          "evaluation"
+        ],
+        "x-required-roles": [
+          "system_admin",
+          "evaluator"
         ]
       }
     },
@@ -20261,6 +22030,99 @@
         "x-required-roles": [
           "security_analyst",
           "system_admin"
+        ]
+      }
+    },
+    "/api/workspace/current": {
+      "get": {
+        "operationId": "getCurrentWorkspace",
+        "parameters": [
+          {
+            "description": "`Bearer <token>` from POST /api/auth/login",
+            "in": "header",
+            "name": "Authorization",
+            "required": false,
+            "schema": {
+              "example": "Bearer eyJhbGciOiJIUzI1NiJ9...",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorkspaceCurrent"
+                }
+              }
+            },
+            "description": "Allowlisted operational workspace state"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Validation failed"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not signed in, or the token expired"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Role not permitted"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Database unavailable or schema unsupported; read-only requests never migrate"
+          }
+        },
+        "summary": "getCurrentWorkspace",
+        "tags": [
+          "Operational workspaces"
         ]
       }
     }

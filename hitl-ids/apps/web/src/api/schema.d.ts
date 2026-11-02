@@ -44,6 +44,74 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/admin/workspaces": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** listOperationalWorkspaces */
+        get: operations["listOperationalWorkspaces"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/workspaces/v3-1-replay/prepare": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** prepareV31Replay */
+        post: operations["prepareV31Replay"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/workspaces/v3-1-replay/reset": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** resetV31Replay */
+        post: operations["resetV31Replay"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/workspaces/{workspaceId}/activate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** activateOperationalWorkspace */
+        post: operations["activateOperationalWorkspace"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/alerts": {
         parameters: {
             query?: never;
@@ -367,6 +435,74 @@ export interface paths {
         };
         /** Everything the recorded flows say about one IP address */
         get: operations["getIpEntity"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/evaluation/final-v3-1": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** getFinalV31Summary */
+        get: operations["getFinalV31Summary"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/evaluation/final-v3-1/memory-impact": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** getFinalV31MemoryImpact */
+        get: operations["getFinalV31MemoryImpact"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/evaluation/final-v3-1/records": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** listFinalV31Records */
+        get: operations["listFinalV31Records"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/evaluation/final-v3-1/records/{index}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** getFinalV31Record */
+        get: operations["getFinalV31Record"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1492,6 +1628,23 @@ export interface paths {
         put?: never;
         /** rejectTriageMemory */
         post: operations["rejectTriageMemory"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/workspace/current": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** getCurrentWorkspace */
+        get: operations["getCurrentWorkspace"];
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -3187,6 +3340,218 @@ export interface components {
             family: components["schemas"]["FamilyEffect"];
             feedback: components["schemas"]["FeedbackRecord"];
         };
+        /** FinalRecord */
+        FinalRecord: {
+            /**
+             * Adaptivedisposition
+             * @default null
+             */
+            adaptiveDisposition: string | null;
+            /**
+             * Adaptivereasoncodes
+             * @default []
+             */
+            adaptiveReasonCodes: string[];
+            /**
+             * Adaptivereviewrequired
+             * @default null
+             */
+            adaptiveReviewRequired: boolean | null;
+            /** Alertref */
+            alertRef: string;
+            /** Analyst */
+            analyst: string;
+            /**
+             * Attackcategory
+             * @default null
+             */
+            attackCategory: string | null;
+            /**
+             * Baselinedisposition
+             * @default null
+             */
+            baselineDisposition: string | null;
+            /**
+             * Baselinereasoncodes
+             * @default []
+             */
+            baselineReasonCodes: string[];
+            /**
+             * Baselinereviewrequired
+             * @default null
+             */
+            baselineReviewRequired: boolean | null;
+            /**
+             * Caseref
+             * @default null
+             */
+            caseRef: string | null;
+            /**
+             * Deferralclassification
+             * @default null
+             */
+            deferralClassification: string | null;
+            /** Destinationip */
+            destinationIp: string;
+            /** Destinationport */
+            destinationPort: number;
+            /**
+             * Drift
+             * @default null
+             */
+            drift: {
+                [key: string]: unknown;
+            } | null;
+            /** Flowid */
+            flowId: number;
+            /**
+             * Humanoutcome
+             * @default null
+             */
+            humanOutcome: string | null;
+            /** Index */
+            index: number;
+            /**
+             * Learningconflicts
+             * @default null
+             */
+            learningConflicts: number | null;
+            /**
+             * Learninglessonref
+             * @default null
+             */
+            learningLessonRef: string | null;
+            /**
+             * Learninglessonstatus
+             * @default null
+             */
+            learningLessonStatus: string | null;
+            /**
+             * Learningsupport
+             * @default null
+             */
+            learningSupport: number | null;
+            /**
+             * Matchedmemorylessonref
+             * @default null
+             */
+            matchedMemoryLessonRef: string | null;
+            /**
+             * Memorymatches
+             * @default []
+             */
+            memoryMatches: components["schemas"]["FrozenMemoryMatch"][];
+            /** Nativecategory */
+            nativeCategory: string;
+            /** Nativeseverity */
+            nativeSeverity: number;
+            /**
+             * Oracleoutcome
+             * @default null
+             */
+            oracleOutcome: string | null;
+            /** Pattern */
+            pattern: string;
+            /** Phase */
+            phase: string;
+            /** Plannedroute */
+            plannedRoute: string;
+            /** Population */
+            population: string | null;
+            /**
+             * Priority
+             * @default null
+             */
+            priority: number | null;
+            /** Protocol */
+            protocol: string;
+            /**
+             * Route
+             * @default null
+             */
+            route: string | null;
+            /** Signature */
+            signature: string;
+            /** Signatureid */
+            signatureId: number;
+            /** Sourceip */
+            sourceIp: string;
+            /** Sourceport */
+            sourcePort: number;
+            /** Stratum */
+            stratum: string;
+            /** Timestamp */
+            timestamp: string;
+            /**
+             * Verdictref
+             * @default null
+             */
+            verdictRef: string | null;
+        };
+        /** FinalRecordPage */
+        FinalRecordPage: {
+            /** Items */
+            items: components["schemas"]["FinalRecord"][];
+            /** Limit */
+            limit: number;
+            /** Offset */
+            offset: number;
+            /** Total */
+            total: number;
+        };
+        /** FinalSummary */
+        FinalSummary: {
+            /** Allholdoutinitialdeferrals */
+            allHoldoutInitialDeferrals: number;
+            /** Allholdoutunsafedeferrals */
+            allHoldoutUnsafeDeferrals: number;
+            /** Drift */
+            drift: number;
+            /** Drifttimeline */
+            driftTimeline: {
+                [key: string]: unknown;
+            }[];
+            /** Holdout */
+            holdout: number;
+            /** Learning */
+            learning: number;
+            /** Postcontradictionpopulation */
+            postContradictionPopulation: number;
+            /** Postcontradictionunsafedeferrals */
+            postContradictionUnsafeDeferrals: number;
+            /** Primary */
+            primary: number;
+            /** Primaryadaptiveimmediatereview */
+            primaryAdaptiveImmediateReview: number;
+            /** Primarybaselineimmediatereview */
+            primaryBaselineImmediateReview: number;
+            /** Primaryreviewreduction */
+            primaryReviewReduction: number;
+            /** Primaryreviewreductionrate */
+            primaryReviewReductionRate: number;
+            /** Primarysafedeferrals */
+            primarySafeDeferrals: number;
+            /** Primaryunsafedeferrals */
+            primaryUnsafeDeferrals: number;
+            /** Run */
+            run: string;
+            /** Runtimesha */
+            runtimeSha: string;
+            /** Status */
+            status: string;
+            /** Strata */
+            strata: {
+                [key: string]: number;
+            };
+            /** Supplementary */
+            supplementary: number;
+            /** Total */
+            total: number;
+            /** Unknown */
+            unknown: number;
+            /** Unknownformaltier2Cases */
+            unknownFormalTier2Cases: number;
+        };
         /** FindingRequest */
         FindingRequest: {
             /** Expectedrevision */
@@ -3237,6 +3602,29 @@ export interface components {
             srcIp: string;
             /** Srcport */
             srcPort: number;
+        };
+        /** FrozenMemoryMatch */
+        FrozenMemoryMatch: {
+            /** Agreement */
+            agreement: number;
+            /** Conflicts */
+            conflicts: number;
+            /** Guidanceactive */
+            guidanceActive: boolean;
+            /** Lessonref */
+            lessonRef: string;
+            /** Matchedfields */
+            matchedFields: string[];
+            /** Mismatchedfields */
+            mismatchedFields: string[];
+            /** Outcome */
+            outcome: string;
+            /** Status */
+            status: string;
+            /** Support */
+            support: number;
+            /** Unavailablefields */
+            unavailableFields: string[];
         };
         /** FrozenProtocol */
         FrozenProtocol: {
@@ -3956,6 +4344,44 @@ export interface components {
              * @default null
              */
             verdictAuthorName: string | null;
+        };
+        /** MemoryImpact */
+        MemoryImpact: {
+            /** Affectedindices */
+            affectedIndices: number[];
+            /** Agreement */
+            agreement: number;
+            /** Auditsampled */
+            auditSampled: number;
+            /** Blocked */
+            blocked: number;
+            /** Conflictwithdrawn */
+            conflictWithdrawn: boolean;
+            /** Conflicts */
+            conflicts: number;
+            /** Deferred */
+            deferred: number;
+            /** Holdoutexactmatches */
+            holdoutExactMatches: number;
+            /** Lessonref */
+            lessonRef: string;
+            /** Matched */
+            matched: number;
+            /** Outcome */
+            outcome: string;
+            /** Pattern */
+            pattern: string;
+            /** Status */
+            status: string;
+            /** Support */
+            support: number;
+            /** Used */
+            used: number;
+        };
+        /** MemoryImpactPage */
+        MemoryImpactPage: {
+            /** Items */
+            items: components["schemas"]["MemoryImpact"][];
         };
         /** MemoryLesson */
         MemoryLesson: {
@@ -6034,6 +6460,63 @@ export interface components {
              */
             verdictRef: string | null;
         };
+        /** WorkspaceAction */
+        WorkspaceAction: {
+            /** Action */
+            action: string;
+            /** Actor */
+            actor: string;
+            /** Created At */
+            created_at: string;
+            /** Reason */
+            reason: string;
+            /** Workspace */
+            workspace: string;
+        };
+        /** WorkspaceCommand */
+        WorkspaceCommand: {
+            /** Reason */
+            reason: string;
+        };
+        /** WorkspaceCurrent */
+        WorkspaceCurrent: {
+            /** Id */
+            id: string;
+            /** Name */
+            name: string;
+        };
+        /** WorkspaceInfo */
+        WorkspaceInfo: {
+            /** Active */
+            active: boolean;
+            /** Alertcount */
+            alertCount: number | null;
+            /** Id */
+            id: string;
+            /** Lastpreparedat */
+            lastPreparedAt: string | null;
+            /** Name */
+            name: string;
+            /** Rawrecords */
+            rawRecords: number | null;
+            /** Ready */
+            ready: boolean;
+            /** Stagedalerts */
+            stagedAlerts: number | null;
+            /** Workloadsha256 */
+            workloadSha256: string | null;
+        };
+        /** WorkspaceState */
+        WorkspaceState: {
+            /** Actions */
+            actions: components["schemas"]["WorkspaceAction"][];
+            /** Activeworkspaceid */
+            activeWorkspaceId: string;
+            /** Activeworkspacename */
+            activeWorkspaceName: string;
+            /** Workspaces */
+            workspaces: components["schemas"]["WorkspaceInfo"][];
+        };
     };
     responses: never;
     parameters: never;
@@ -6168,6 +6651,328 @@ export interface operations {
             };
             /** @description Role not permitted */
             403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Database unavailable or schema unsupported; read-only requests never migrate */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    listOperationalWorkspaces: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description `Bearer <token>` from POST /api/auth/login */
+                Authorization?: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Allowlisted operational workspace state */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WorkspaceState"];
+                };
+            };
+            /** @description Validation failed */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not signed in, or the token expired */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Role not permitted */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Database unavailable or schema unsupported; read-only requests never migrate */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    prepareV31Replay: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description `Bearer <token>` from POST /api/auth/login */
+                Authorization?: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["WorkspaceCommand"];
+            };
+        };
+        responses: {
+            /** @description Allowlisted operational workspace state */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WorkspaceState"];
+                };
+            };
+            /** @description Validation failed */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not signed in, or the token expired */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Role not permitted */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Database unavailable or schema unsupported; read-only requests never migrate */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    resetV31Replay: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description `Bearer <token>` from POST /api/auth/login */
+                Authorization?: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["WorkspaceCommand"];
+            };
+        };
+        responses: {
+            /** @description Allowlisted operational workspace state */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WorkspaceState"];
+                };
+            };
+            /** @description Validation failed */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not signed in, or the token expired */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Role not permitted */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Database unavailable or schema unsupported; read-only requests never migrate */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    activateOperationalWorkspace: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description `Bearer <token>` from POST /api/auth/login */
+                Authorization?: string;
+            };
+            path: {
+                workspaceId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["WorkspaceCommand"];
+            };
+        };
+        responses: {
+            /** @description Allowlisted operational workspace state */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WorkspaceState"];
+                };
+            };
+            /** @description Validation failed */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not signed in, or the token expired */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Role not permitted */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -7309,6 +8114,293 @@ export interface operations {
             };
             /** @description Not signed in, or the token expired */
             401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Database unavailable or schema unsupported; read-only requests never migrate */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    getFinalV31Summary: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description `Bearer <token>` from POST /api/auth/login */
+                Authorization?: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Official frozen V3.1 evidence */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FinalSummary"];
+                };
+            };
+            /** @description Validation failed */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not signed in, or the token expired */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Role not permitted */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Database unavailable or schema unsupported; read-only requests never migrate */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    getFinalV31MemoryImpact: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description `Bearer <token>` from POST /api/auth/login */
+                Authorization?: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Official frozen V3.1 evidence */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MemoryImpactPage"];
+                };
+            };
+            /** @description Validation failed */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not signed in, or the token expired */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Role not permitted */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Database unavailable or schema unsupported; read-only requests never migrate */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    listFinalV31Records: {
+        parameters: {
+            query?: {
+                limit?: number;
+                offset?: number;
+                phase?: "learning" | "holdout";
+                population?: "primary" | "supplementary";
+                stratum?: string;
+                pattern?: string;
+                baselineDisposition?: string;
+                adaptiveDisposition?: string;
+                deferral?: "safe" | "unsafe" | "not-deferred";
+                memory?: "matched" | "unmatched";
+                case?: "has" | "none";
+                search?: string;
+            };
+            header?: {
+                /** @description `Bearer <token>` from POST /api/auth/login */
+                Authorization?: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Official frozen V3.1 evidence */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FinalRecordPage"];
+                };
+            };
+            /** @description Validation failed */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not signed in, or the token expired */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Role not permitted */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Database unavailable or schema unsupported; read-only requests never migrate */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    getFinalV31Record: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description `Bearer <token>` from POST /api/auth/login */
+                Authorization?: string;
+            };
+            path: {
+                index: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Official frozen V3.1 evidence */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FinalRecord"];
+                };
+            };
+            /** @description Validation failed */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not signed in, or the token expired */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Role not permitted */
+            403: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -11703,6 +12795,83 @@ export interface operations {
             };
             /** @description Conflict */
             409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    getCurrentWorkspace: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description `Bearer <token>` from POST /api/auth/login */
+                Authorization?: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Allowlisted operational workspace state */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WorkspaceCurrent"];
+                };
+            };
+            /** @description Validation failed */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not signed in, or the token expired */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Role not permitted */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Database unavailable or schema unsupported; read-only requests never migrate */
+            503: {
                 headers: {
                     [name: string]: unknown;
                 };

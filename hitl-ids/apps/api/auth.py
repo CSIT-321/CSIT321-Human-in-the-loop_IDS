@@ -174,7 +174,10 @@ def _authenticated_user(credentials, conn) -> Principal:
         raise _unauthorized("The sign-in expired. Sign in again.") from error
     except jwt.InvalidTokenError as error:
         raise _unauthorized("That token is not valid.") from error
-    row = conn.execute("SELECT * FROM users WHERE id = ?", (int(payload["sub"]),)).fetchone()
+    # Tokens name an account; numeric user IDs are local to each isolated workspace.
+    # Resolve the signed username and role in the request's already-selected database.
+    row = conn.execute("SELECT * FROM users WHERE username = ? AND role = ?",
+                       (payload.get("username"), payload.get("role"))).fetchone()
     if row is None:
         raise _unauthorized("That account no longer exists.")
     user = db.from_row(m.User, row)

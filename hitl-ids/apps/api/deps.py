@@ -59,7 +59,8 @@ def get_connection(request: Request) -> Iterator[sqlite3.Connection]:
     checkout the demo database is gitignored and has to be built, which is much the most likely
     reason for this to fail.
     """
-    path = getattr(request.app.state, "database_path", None) or database_path()
+    from apps.api.workspaces import active_database
+    path = active_database(request)
     if not Path(path).exists():
         raise ApiError(
             503, "DATABASE_MISSING",
@@ -81,7 +82,8 @@ def get_connection(request: Request) -> Iterator[sqlite3.Connection]:
 
 def get_readonly_connection(request: Request) -> Iterator[sqlite3.Connection]:
     """Read from connection open; schema upgrades belong to an explicit writable path."""
-    path = Path(getattr(request.app.state, "database_path", None) or database_path()).resolve()
+    from apps.api.workspaces import active_database
+    path = active_database(request)
     try:
         connection = sqlite3.connect(path.as_uri() + "?mode=ro", uri=True, check_same_thread=False)
     except sqlite3.OperationalError as exc:

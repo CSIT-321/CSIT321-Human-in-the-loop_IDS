@@ -15,6 +15,8 @@ import { AuditPage } from "./pages/admin/AuditPage";
 import { GuardrailsPage } from "./pages/admin/GuardrailsPage";
 import { IpSecurityReportPage } from "./pages/admin/IpSecurityReportPage";
 import { StatusPage } from "./pages/admin/StatusPage";
+import { WorkspacesPage } from "./pages/admin/WorkspacesPage";
+import { FinalV31Page, FinalV31DetailPage } from "./pages/evaluator/FinalV31Page";
 import { MetricsPage } from "./pages/evaluator/MetricsPage";
 import { RunPage } from "./pages/evaluator/RunPage";
 import { ScenariosPage } from "./pages/evaluator/ScenariosPage";
@@ -72,6 +74,9 @@ export const routes: RouteObject[] = [
     children: [
       { index: true, element: <HomeRedirect /> },
       { path: "status", element: <StatusPage /> },
+      { path: "workspaces", element: <WorkspacesPage /> },
+      { path: "evaluation/final-v3-1", element: <FinalV31Page /> },
+      { path: "evaluation/final-v3-1/records/:index", element: <FinalV31DetailPage /> },
       { path: "selective-review", element: <SelectiveReviewPage /> },
       { path: "triage-memory", element: <TriageMemoryPage /> },
       { path: "tier2-cases", element: <Tier2CasesPage /> },
@@ -93,6 +98,8 @@ export const routes: RouteObject[] = [
     children: [
       { index: true, element: <HomeRedirect /> },
       { path: "scenarios", element: <ScenariosPage /> },
+      { path: "final-v3-1", element: <FinalV31Page /> },
+      { path: "final-v3-1/records/:index", element: <FinalV31DetailPage /> },
       { path: "selective-review", element: <SelectiveReviewPage /> },
       { path: "triage-memory", element: <TriageMemoryPage /> },
       { path: "tier2-cases", element: <Tier2CasesPage /> },

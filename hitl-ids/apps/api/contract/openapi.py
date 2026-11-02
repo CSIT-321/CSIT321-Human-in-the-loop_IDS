@@ -44,6 +44,8 @@ from packages.detection.trusted_context import ResolvedTrustedContext
 from packages.detection.prospective_collection import RunCreate,RunView,RunPage,RunCommand,ObservationRequest
 from packages.evaluation.prospective_recorded import RecordedArchive
 from apps.api.collection_routes import CollectionDocument
+from apps.api.workspace_routes import WorkspaceCommand, WorkspaceCurrent, WorkspaceState
+from apps.api.final_v3_records import FinalSummary, FinalRecord, FinalRecordPage, MemoryImpactPage
 from packages.detection.response_approval import ResponseRequest,ManualResponseRequest,ResponseDecisionRequest,ResponseMutation
 from packages.detection.tier2_cases import (
     CaseView, CaseEvent, CaseMutation, CreateCaseRequest, CaseCommand, LinkCaseRequest, FindingRequest, InvestigationConclusionRequest,
@@ -64,6 +66,8 @@ SCHEMA_REF = "#/components/schemas/{model}"
 #: Every model that appears on the wire. Listed explicitly rather than discovered, so adding a
 #: model to the API is a deliberate act.
 MODELS: tuple[type[BaseModel], ...] = (
+    WorkspaceCommand, WorkspaceCurrent, WorkspaceState,
+    FinalSummary, FinalRecord, FinalRecordPage, MemoryImpactPage,
     InvestigationAssistance,
     VerdictMemoryRequest,VerdictMemoryState,ConclusionMemoryRequest,ConclusionMemoryState,
     VerdictCommand,VerdictView,VerdictHistory,VerdictMutation,
@@ -804,6 +808,46 @@ def _paths() -> dict[str, Any]:
     paths['/api/v2/tier2/cases/{caseRef}/triage-memory/conclusion-state']={'get':{
         'operationId':'getConclusionMemoryState','summary':'Read expert learning eligibility and supersession','tags':['Triage memory'],
         'parameters':[AUTH_PARAMETER,case_ref],'responses':{'200':{'description':'Read-only expert learning state',**_json(ConclusionMemoryState)},**_errors(404,503)}}}
+    workspace_root = '/api/admin/workspaces'
+    for path, operation, method, model, parameters, command in [
+        ('/api/workspace/current', 'getCurrentWorkspace', 'get', WorkspaceCurrent, [AUTH_PARAMETER], False),
+        (workspace_root, 'listOperationalWorkspaces', 'get', WorkspaceState, [AUTH_PARAMETER], False),
+        (workspace_root + '/{workspaceId}/activate', 'activateOperationalWorkspace', 'post', WorkspaceState,
+         [AUTH_PARAMETER, {'name':'workspaceId','in':'path','required':True,'schema':{'type':'string'}}], True),
+        (workspace_root + '/v3-1-replay/prepare', 'prepareV31Replay', 'post', WorkspaceState, [AUTH_PARAMETER], True),
+        (workspace_root + '/v3-1-replay/reset', 'resetV31Replay', 'post', WorkspaceState, [AUTH_PARAMETER], True),
+    ]:
+        operation_doc = {'operationId': operation, 'summary': operation,
+                         'tags': ['Operational workspaces'], 'parameters': parameters,
+                         'responses': {'200': {'description': 'Allowlisted operational workspace state', **_json(model)},
+                                       **_errors(400,401,403,404,409,503)}}
+        if path != '/api/workspace/current':
+            operation_doc['x-required-roles'] = ['system_admin']
+        if command:
+            operation_doc['requestBody'] = {'required': True, **_json(WorkspaceCommand)}
+        paths[path] = {method: operation_doc}
+    final_root = '/api/evaluation/final-v3-1'
+    filters = [('limit',{'type':'integer','minimum':1,'maximum':200,'default':25}),
+               ('offset',{'type':'integer','minimum':0,'default':0}),
+               ('phase',{'type':'string','enum':['learning','holdout']}),
+               ('population',{'type':'string','enum':['primary','supplementary']}),
+               ('stratum',{'type':'string'}),('pattern',{'type':'string'}),
+               ('baselineDisposition',{'type':'string'}),('adaptiveDisposition',{'type':'string'}),
+               ('deferral',{'type':'string','enum':['safe','unsafe','not-deferred']}),
+               ('memory',{'type':'string','enum':['matched','unmatched']}),
+               ('case',{'type':'string','enum':['has','none']}),('search',{'type':'string'})]
+    for path, operation, model, parameters in [
+        (final_root, 'getFinalV31Summary', FinalSummary, [AUTH_PARAMETER]),
+        (final_root + '/records', 'listFinalV31Records', FinalRecordPage,
+         [AUTH_PARAMETER, *[{'name':name,'in':'query','required':False,'schema':schema} for name,schema in filters]]),
+        (final_root + '/records/{index}', 'getFinalV31Record', FinalRecord,
+         [AUTH_PARAMETER, {'name':'index','in':'path','required':True,'schema':{'type':'integer'}}]),
+        (final_root + '/memory-impact', 'getFinalV31MemoryImpact', MemoryImpactPage, [AUTH_PARAMETER]),
+    ]:
+        paths[path] = {'get': {'operationId': operation, 'summary': operation, 'tags':['evaluation'],
+                              'x-required-roles':['system_admin','evaluator'], 'parameters':parameters,
+                              'responses': {'200': {'description':'Official frozen V3.1 evidence', **_json(model)},
+                                            **_errors(400,401,403,404,503)}}}
     return paths
 
 

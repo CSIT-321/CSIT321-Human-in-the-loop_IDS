@@ -8,10 +8,30 @@
  * view, sign out and sign in as that account.
  */
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router";
 
 import { useSession } from "../../session/SessionContext";
+import { api, unwrap } from "../../api/client";
+import { useApi } from "../../api/useApi";
+
+function WorkspaceBadge() {
+  const workspace = useApi(signal => unwrap(api.GET("/api/workspace/current", { signal })), []);
+  const previous = useRef<string | null>(null);
+  useEffect(() => {
+    if (workspace.status !== "success") return;
+    if (previous.current !== null && previous.current !== workspace.data.id) window.location.reload();
+    previous.current = workspace.data.id;
+  }, [workspace.status, workspace.status === "success" ? workspace.data.id : null]);
+  useEffect(() => {
+    const timer = window.setInterval(workspace.reload, 10000);
+    return () => window.clearInterval(timer);
+  }, [workspace.reload]);
+  return <span className="inline-block max-w-32 whitespace-normal rounded-sm border border-border bg-surface px-2 py-0.5 text-[10px] leading-tight text-muted sm:max-w-44 sm:text-[11px]"
+    title={`Current backend-selected workspace: ${workspace.status === "success" ? workspace.data.name : "Unavailable"}`}>
+    Workspace: {workspace.status === "success" ? workspace.data.name : workspace.status === "error" ? "Unavailable" : "Loading"}
+  </span>;
+}
 
 /** "g.ang" -> "GA": the initials an avatar shows, ignoring anything that is not a letter or digit. */
 function initials(username: string): string {
@@ -54,8 +74,8 @@ export function TopBar() {
         <span aria-hidden className="grid h-6 w-6 place-items-center rounded-sm border border-primary/60 bg-accent-dim">
           <span className="h-2 w-2 rounded-full bg-primary" />
         </span>
-        <span className="font-mono text-[13px] font-semibold tracking-wider text-text">IDS CONSOLE</span>
-        <span aria-hidden className="h-4 w-px bg-border" />
+        <span className="hidden font-mono text-[13px] font-semibold tracking-wider text-text sm:inline">IDS CONSOLE</span>
+        <span aria-hidden className="hidden h-4 w-px bg-border sm:inline" />
         <span className="hidden truncate text-xs text-muted md:inline">Human-in-the-loop triage</span>
         <span
           className="hidden items-center gap-1.5 rounded-sm border border-border bg-surface px-2 py-0.5 font-mono text-[11px] uppercase tracking-wider text-muted lg:inline-flex"
@@ -66,6 +86,7 @@ export function TopBar() {
         </span>
       </div>
       <div className="flex items-center gap-2 sm:gap-3">
+        {session.role === "security_analyst" && <WorkspaceBadge />}
         <Clock />
         <button type="button" aria-label="Light theme" aria-pressed={theme === "light"}
           title={`Switch to ${theme === "dark" ? "Light" : "Dark"} theme`}

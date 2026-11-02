@@ -30,6 +30,8 @@ from apps.api import memory_routes
 from apps.api import selective_review_routes
 from apps.api import context_routes
 from apps.api import collection_routes
+from apps.api import workspace_routes
+from apps.api import final_v3_routes
 from apps.api.contract.common import ErrorBody, ErrorResponse
 from apps.api.contract.openapi import API_VERSION, DESCRIPTION, openapi_document
 from apps.api.deps import ApiError, database_path
@@ -89,12 +91,14 @@ def create_app(database: str | Path | None = None) -> FastAPI:
     app.include_router(selective_review_routes.router)
     app.include_router(context_routes.router)
     app.include_router(collection_routes.router)
+    app.include_router(workspace_routes.router)
+    app.include_router(final_v3_routes.router)
 
     @app.get("/api/health", tags=["dashboard"], include_in_schema=False)
-    def health() -> dict[str, object]:
+    def health(request: Request) -> dict[str, object]:
         """Liveness, plus which database is being served — the first thing to check in a demo."""
-        configured = getattr(app.state, "database_path", None)
-        resolved = Path(configured) if configured else database_path()
+        from apps.api.workspaces import active_database
+        resolved = active_database(request)
         return {"status": "ok", "database": str(resolved), "exists": resolved.exists(),
                 "version": API_VERSION}
 

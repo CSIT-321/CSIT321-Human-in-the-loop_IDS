@@ -16,7 +16,7 @@ describe("final current product surface", () => {
     renderApp("/analyst/" + path, { session });
     expect(await screen.findByRole("heading", { name: "Page not found" })).toBeVisible();
     expect(screen.getByRole("link", { name: "Open Analyst Workstation" })).toHaveAttribute("href", "/analyst/operations");
-    expect(seen).toHaveLength(0);
+    expect(seen.map(request => new URL(request.url).pathname)).toEqual(["/api/workspace/current"]);
   });
   it.each(["workstation", "v2-triage"])("redirects %s and preserves only the operational alert identity", async path => {
     stubFetch(() => jsonResponse({ error: { code: "NOT_FOUND", message: "Alert no longer available" } }, 404));

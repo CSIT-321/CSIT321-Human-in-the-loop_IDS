@@ -46,6 +46,8 @@ export const ROLE_META: Readonly<Record<Role, RoleMeta>> = {
     home: "/admin/status",
     nav: [
       { to: "/admin/status", label: "System Status" },
+      { to: "/admin/workspaces", label: "Operational Workspace" },
+      { to: "/admin/evaluation/final-v3-1", label: "Final V3.1 Evaluation" },
       { to: "/admin/tier2-cases", label: "Tier 2 Cases" },
       { to: "/admin/triage-memory", label: "Triage Memory" },
       { to: "/admin/selective-review", label: "Selective Review" },
@@ -62,6 +64,7 @@ export const ROLE_META: Readonly<Record<Role, RoleMeta>> = {
     home: "/evaluator/scenarios",
     nav: [
       { to: "/evaluator/scenarios", label: "Scenarios" },
+      { to: "/evaluator/final-v3-1", label: "Final V3.1 Evaluation" },
       { to: "/evaluator/tier2-cases", label: "Tier 2 Cases" },
       { to: "/evaluator/triage-memory", label: "Triage Memory" },
       { to: "/evaluator/selective-review", label: "Selective Review" },
