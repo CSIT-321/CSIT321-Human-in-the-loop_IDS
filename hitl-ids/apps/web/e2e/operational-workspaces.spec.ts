@@ -42,7 +42,7 @@ async function noPageOverflow(page: Page) {
   await page.setViewportSize({ width: 1440, height: 900 });
 }
 
-test("Admin workspace selection, isolated Analyst replay, and shared frozen Evaluation", async ({ browser }) => {
+test("current Admin navigation, isolated Analyst replay, and shared frozen Evaluation", async ({ browser }) => {
   const adminContext = await browser.newContext();
   const analystContext = await browser.newContext();
   const bobContext = await browser.newContext();
@@ -55,6 +55,27 @@ test("Admin workspace selection, isolated Analyst replay, and shared frozen Eval
   for (const page of [admin, analyst, bob, evaluator]) page.on("pageerror", error => errors.push(error.message));
 
   await login(admin, "admin", "admin-demo");
+  await expect(admin).toHaveURL(/\/admin\/overview$/);
+  const adminNav = admin.getByRole("navigation", { name: "Main" });
+  expect((await adminNav.getByRole("link").allTextContents()).map(value => value.trim())).toEqual([
+    "Overview", "Operational Workspace", "HITL Governance", "Users & Access", "Evaluation & Audit",
+  ]);
+  await expect(admin.getByRole("heading", { name: "Overview", exact: true })).toBeVisible();
+  await noPageOverflow(admin);
+  await adminNav.getByRole("link", { name: "HITL Governance" }).click();
+  await expect(admin.getByRole("heading", { name: "HITL Governance" })).toBeVisible();
+  await expect(admin.getByText("suricata-classification-v3")).toBeVisible();
+  await expect(admin.getByText(/Unknown \/ Needs Expert → automatic Tier 2 Expert Review/)).toBeVisible();
+  await expect(admin.getByText("750 ms")).toBeVisible();
+  await noPageOverflow(admin);
+  await adminNav.getByRole("link", { name: "Users & Access" }).click();
+  await expect(admin.getByRole("heading", { name: "Users & Access" })).toBeVisible();
+  await expect(admin.getByText("Glenn Ang")).toBeVisible();
+  await noPageOverflow(admin);
+  await adminNav.getByRole("link", { name: "Evaluation & Audit" }).click();
+  await expect(admin.getByRole("link", { name: "Open Final V3.1 Evaluation" })).toBeVisible();
+  await expect(admin.getByRole("link", { name: "Open Audit Trail" })).toBeVisible();
+  await noPageOverflow(admin);
   await admin.getByRole("navigation", { name: "Main" }).getByRole("link", { name: "Operational Workspace" }).click();
   await expect(admin.getByRole("heading", { name: "Operational Workspace" })).toBeVisible();
   await expect(admin.getByRole("heading", { name: /V3.1 Demo Replay/ })).toBeVisible();
@@ -79,6 +100,11 @@ test("Admin workspace selection, isolated Analyst replay, and shared frozen Eval
   const replayCard = admin.getByText("Raw frozen workload records: 200").locator("xpath=ancestor::section[1]");
   await replayCard.getByRole("button", { name: "Activate" }).click();
   await expect(admin.getByText("V3.1 Demo Replay", { selector: "p" })).toBeVisible();
+  await adminNav.getByRole("link", { name: "Overview" }).click();
+  await expect(admin.getByText("Workspace alert count").locator("..")).toContainText("200");
+  await expect(admin.getByText("Available Work").locator("..")).toContainText("190");
+  await noPageOverflow(admin);
+  await adminNav.getByRole("link", { name: "Operational Workspace" }).click();
 
   await login(analyst, "g.ang", "analyst-demo");
   await expect(analyst.getByText("Workspace: V3.1 Demo Replay")).toBeVisible();
@@ -118,7 +144,8 @@ test("Admin workspace selection, isolated Analyst replay, and shared frozen Eval
   await expect(analyst.getByRole("button", { name: /^Total Alerts 0$/ })).toBeVisible();
   // Analyst sign-in updates last_login; operational alert state remains empty.
 
-  await admin.getByRole("navigation", { name: "Main" }).getByRole("link", { name: "Final V3.1 Evaluation" }).click();
+  await adminNav.getByRole("link", { name: "Evaluation & Audit" }).click();
+  await admin.getByRole("link", { name: "Open Final V3.1 Evaluation" }).click();
   await expect(admin.getByRole("heading", { name: "Final Evaluation V3.1" })).toBeVisible();
   await expect(admin.getByLabel("Frozen workload composition")).toContainText("200");
   await expect(admin.getByLabel("Official primary effectiveness, denominator 140")).toContainText("37 / 26.43%");

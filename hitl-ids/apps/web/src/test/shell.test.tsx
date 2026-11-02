@@ -49,6 +49,16 @@ const SUMMARY: Schemas["DashboardSummary"] = {
   bySeverity: {},
   byAttackCategory: {},
 };
+const CURRENT: Schemas["AdminOverview"] = {
+  detectorSource: "Suricata", activeWorkspaceId: "operational", activeWorkspaceName: "Operational",
+  workspaceReady: true, databaseReady: true, workspaceAlertCount: 0,
+  operational: { totalAlerts: 0, criticalAlerts: 0, tier1Review: 0, tier2Cases: 0,
+    expertReview: 0, reviewRequired: 0, noImmediateReview: 0, openTier2Cases: 0,
+    activeAlerts: 0, completedWork: 0, escalatedWork: 0, availableWork: 0, inReviewWork: 0 },
+  memory: { total: 0, active: 0, conflictReview: 0 },
+  classificationPolicyVersion: "suricata-classification-v3", routingPolicyVersion: "system-routing-v1",
+  memoryPolicyVersion: "triage-memory-v1", selectiveReviewPolicyVersion: "selective-review-v1",
+};
 
 /** Route by pathname, so a test never depends on request order. */
 function stubApi(): Request[] {
@@ -68,6 +78,7 @@ function stubApi(): Request[] {
           );
     }
     if (pathname === "/api/v2/alerts") return jsonResponse({ items: [], page: { limit: 50, offset: 0, returned: 0, total: 0 } });
+    if (pathname === "/api/admin/overview") return jsonResponse(CURRENT);
     if (pathname === "/api/dashboard/summary") return jsonResponse(SUMMARY);
     if (pathname === "/api/evaluation/runs") {
       return jsonResponse({ items: [], page: { limit: 1, offset: 0, returned: 0, total: 0 } });
@@ -87,7 +98,7 @@ async function signInAs(user: ReturnType<typeof userEvent.setup>, username: keyo
 }
 const SIGN_IN_CASES = [
   { username: "g.ang", heading: "Analyst Workstation" },
-  { username: "admin", heading: "System Status" },
+  { username: "admin", heading: "Overview" },
   { username: "evaluator", heading: "Evaluation scenarios" },
 ] as const;
 
@@ -185,9 +196,9 @@ describe("shell: route guards", () => {
       session: { username: "a.admin", displayName: "System Administrator", role: "system_admin", token: "t" },
     });
 
-    await waitFor(() => expect(router.state.location.pathname).toBe("/admin/status"));
+    await waitFor(() => expect(router.state.location.pathname).toBe("/admin/overview"));
     expect(
-      await screen.findByRole("heading", { level: 1, name: "System Status" }),
+      await screen.findByRole("heading", { level: 1, name: "Overview" }),
     ).toBeInTheDocument();
   });
 
@@ -197,7 +208,7 @@ describe("shell: route guards", () => {
       session: { username: "g.ang", displayName: "Glenn Ang", role: "system_admin", token: "t" },
     });
 
-    await waitFor(() => expect(router.state.location.pathname).toBe("/admin/status"));
+    await waitFor(() => expect(router.state.location.pathname).toBe("/admin/overview"));
   });
 
   it("treats a pre-S18a session in storage as signed out", async () => {
@@ -261,12 +272,12 @@ describe("shell: navigation", () => {
 
     await signInAs(user, "admin");
 
-    await waitFor(() => expect(router.state.location.pathname).toBe("/admin/status"));
-    await screen.findByRole("heading", { level: 1, name: "System Status" });
+    await waitFor(() => expect(router.state.location.pathname).toBe("/admin/overview"));
+    await screen.findByRole("heading", { level: 1, name: "Overview" });
 
     await waitFor(() => {
       const summaryRequest = seen.filter((request) =>
-        new URL(request.url).pathname.endsWith("/api/dashboard/summary"),
+        new URL(request.url).pathname.endsWith("/api/admin/overview"),
       ).at(-1);
       expect(summaryRequest?.headers.get("Authorization")).toBe("Bearer admin-token");
     });

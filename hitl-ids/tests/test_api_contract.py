@@ -39,6 +39,9 @@ from scripts.build_openapi import TARGET, rendered
 #: Every endpoint the plan's S10a task list names. `GET /api/evaluation/*` is expanded to the
 #: three concrete endpoints S14 needs.
 REQUIRED_OPERATIONS = {
+    ('/api/admin/overview','get'),
+    ('/api/admin/governance','get'),
+    ('/api/admin/users','get'),
     ('/api/workspace/current','get'),
     ('/api/admin/workspaces','get'),
     ('/api/admin/workspaces/{workspaceId}/activate','post'),

@@ -4,6 +4,40 @@
  */
 
 export interface paths {
+    "/api/admin/governance": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** getCurrentHitlGovernance */
+        get: operations["getCurrentHitlGovernance"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/overview": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** getCurrentAdminOverview */
+        get: operations["getCurrentAdminOverview"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/admin/reports/ip/{ip}": {
         parameters: {
             query?: never;
@@ -36,6 +70,23 @@ export interface paths {
          * @description Source-only aggregation over recorded flow capture time and the latest effective analyst verdict. Destination-only appearances and hidden ground truth are excluded.
          */
         get: operations["getAdminSourceIpOverview"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/users": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** listCurrentAdminUsers */
+        get: operations["listCurrentAdminUsers"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1677,6 +1728,73 @@ export interface components {
              */
             userId: number | null;
         };
+        /** AdminGovernance */
+        AdminGovernance: {
+            analystWork: components["schemas"]["ClaimPolicyView"];
+            autoLearning: components["schemas"]["AutoLearningPolicy"];
+            /**
+             * Automaticlearningenabled
+             * @default true
+             */
+            automaticLearningEnabled: boolean;
+            classification: components["schemas"]["ClassificationPolicy"];
+            memory: components["schemas"]["MemoryConfig"];
+            /**
+             * Responseexecution
+             * @default disabled
+             * @constant
+             */
+            responseExecution: "disabled";
+            routing: components["schemas"]["SystemRoutingPolicy"];
+            selectiveReview: components["schemas"]["SelectivePolicy"];
+        };
+        /** AdminOverview */
+        AdminOverview: {
+            /** Activeworkspaceid */
+            activeWorkspaceId: string;
+            /** Activeworkspacename */
+            activeWorkspaceName: string;
+            /** Classificationpolicyversion */
+            classificationPolicyVersion: string;
+            /** Databaseready */
+            databaseReady: boolean;
+            /**
+             * Detectorsource
+             * @default Suricata
+             * @constant
+             */
+            detectorSource: "Suricata";
+            memory: components["schemas"]["MemoryCounts"];
+            /** Memorypolicyversion */
+            memoryPolicyVersion: string;
+            operational: components["schemas"]["OperationalSummary"];
+            /** Routingpolicyversion */
+            routingPolicyVersion: string;
+            /** Selectivereviewpolicyversion */
+            selectiveReviewPolicyVersion: string;
+            /** Workspacealertcount */
+            workspaceAlertCount: number;
+            /** Workspaceready */
+            workspaceReady: boolean;
+        };
+        /** AdminUser */
+        AdminUser: {
+            /** Displayname */
+            displayName: string;
+            /** Lastlogin */
+            lastLogin: string | null;
+            /** Role */
+            role: string;
+            /** Status */
+            status: string;
+            /** Username */
+            username: string;
+        };
+        /** AdminUsers */
+        AdminUsers: {
+            /** Items */
+            items: components["schemas"]["AdminUser"][];
+        };
         /** AdmissionRequest */
         AdmissionRequest: {
             /** Expectedreviewid */
@@ -1992,6 +2110,38 @@ export interface components {
              */
             rationale: string | null;
         };
+        /** AutoLearningPolicy */
+        AutoLearningPolicy: {
+            /**
+             * Activationscope
+             * @constant
+             */
+            activationScope: "exact";
+            /** Eligibleoutcomes */
+            eligibleOutcomes: ("expected_activity" | "false_positive")[];
+            /**
+             * Evidencescope
+             * @constant
+             */
+            evidenceScope: "exact";
+            /** Memoryconfigurationversion */
+            memoryConfigurationVersion: string;
+            /**
+             * Postexpiryreactivation
+             * @constant
+             */
+            postExpiryReactivation: false;
+            /**
+             * Slidingrenewal
+             * @constant
+             */
+            slidingRenewal: false;
+            /**
+             * Version
+             * @constant
+             */
+            version: "safe-memory-auto-activation-v1";
+        };
         /**
          * CanonicalAlert
          * @description Immutable detector facts, never a ranking score or an analyst verdict.
@@ -2241,6 +2391,13 @@ export interface components {
              */
             requestId: string;
         };
+        /** ClaimPolicyView */
+        ClaimPolicyView: {
+            /** Claimarbitrationwindowms */
+            claimArbitrationWindowMs: number;
+            /** Version */
+            version: string;
+        };
         /** ClaimResult */
         ClaimResult: {
             /**
@@ -2285,6 +2442,45 @@ export interface components {
             sourceRecordRef: string;
             /** Value */
             value: string;
+        };
+        /** ClassificationPolicy */
+        ClassificationPolicy: {
+            /**
+             * Compatibility
+             * @default []
+             */
+            compatibility: components["schemas"]["Specificity"][];
+            /**
+             * Conflictpolicy
+             * @constant
+             */
+            conflictPolicy: "unknown_needs_expert";
+            /**
+             * Informationalattackveto
+             * @default null
+             */
+            informationalAttackVeto: string | null;
+            /**
+             * Informationalrules
+             * @default []
+             */
+            informationalRules: components["schemas"]["InformationalRule"][];
+            /** Rules */
+            rules: components["schemas"]["ClassificationRule"][];
+            /** Version */
+            version: string;
+        };
+        /** ClassificationRule */
+        ClassificationRule: {
+            /**
+             * Category
+             * @enum {string}
+             */
+            category: "brute_force" | "botnet_c2" | "dos" | "ddos" | "web_attack" | "infiltration" | "reconnaissance_port_scan" | "malware_exploit" | "other_known_attack" | "unknown_needs_expert";
+            /** Id */
+            id: string;
+            /** Pattern */
+            pattern: string;
         };
         /** CollectionDocument */
         CollectionDocument: {
@@ -3763,6 +3959,15 @@ export interface components {
              */
             updatedAt: string | null;
         };
+        /** InformationalRule */
+        InformationalRule: {
+            /** Id */
+            id: string;
+            /** Nativecategorypattern */
+            nativeCategoryPattern: string;
+            /** Signaturepattern */
+            signaturePattern: string;
+        };
         /** InvestigationAssistance */
         InvestigationAssistance: {
             /** Assistancepolicyversion */
@@ -4223,6 +4428,15 @@ export interface components {
             sourceIp: string;
             /** Sourceport */
             sourcePort: number | null;
+        };
+        /** MemoryCounts */
+        MemoryCounts: {
+            /** Active */
+            active: number;
+            /** Conflictreview */
+            conflictReview: number;
+            /** Total */
+            total: number;
         };
         /** MemoryDecision */
         MemoryDecision: {
@@ -6004,6 +6218,19 @@ export interface components {
             /** Unjudged */
             unjudged: number;
         };
+        /** Specificity */
+        Specificity: {
+            /**
+             * Broader
+             * @enum {string}
+             */
+            broader: "brute_force" | "botnet_c2" | "dos" | "ddos" | "web_attack" | "infiltration" | "reconnaissance_port_scan" | "malware_exploit" | "other_known_attack" | "unknown_needs_expert";
+            /**
+             * Specific
+             * @enum {string}
+             */
+            specific: "brute_force" | "botnet_c2" | "dos" | "ddos" | "web_attack" | "infiltration" | "reconnaissance_port_scan" | "malware_exploit" | "other_known_attack" | "unknown_needs_expert";
+        };
         /**
          * StatusChangeRequest
          * @description ``POST /api/alerts/{alertRef}/status``.
@@ -6116,6 +6343,17 @@ export interface components {
              * @enum {string}
              */
             routeClass: "ROUTINE_REVIEW" | "CRITICAL_ESCALATION" | "EXPERT_REVIEW_REQUIRED";
+        };
+        /** SystemRoutingPolicy */
+        SystemRoutingPolicy: {
+            /** Campaignalertthreshold */
+            campaignAlertThreshold: number;
+            /** Highprioritythreshold */
+            highPriorityThreshold: number;
+            /** Rules */
+            rules: ("unknown_classification_requires_expert" | "confirmed_malicious_and_response_required" | "high_priority_and_critical_asset" | "repeated_campaign_and_independent_alert_threshold" | "unresolved_requires_expert")[];
+            /** Version */
+            version: string;
         };
         /** TimeBucket */
         TimeBucket: {
@@ -6526,6 +6764,106 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+    getCurrentHitlGovernance: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description `Bearer <token>` from POST /api/auth/login */
+                Authorization?: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Read-only current HITL Admin projection */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminGovernance"];
+                };
+            };
+            /** @description Not signed in, or the token expired */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Role not permitted */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Database unavailable or schema unsupported; read-only requests never migrate */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    getCurrentAdminOverview: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description `Bearer <token>` from POST /api/auth/login */
+                Authorization?: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Read-only current HITL Admin projection */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminOverview"];
+                };
+            };
+            /** @description Not signed in, or the token expired */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Role not permitted */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Database unavailable or schema unsupported; read-only requests never migrate */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
     getAdminIpSecurityReport: {
         parameters: {
             query?: {
@@ -6638,6 +6976,56 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not signed in, or the token expired */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Role not permitted */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Database unavailable or schema unsupported; read-only requests never migrate */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    listCurrentAdminUsers: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description `Bearer <token>` from POST /api/auth/login */
+                Authorization?: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Read-only current HITL Admin projection */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminUsers"];
                 };
             };
             /** @description Not signed in, or the token expired */

@@ -23,7 +23,7 @@ describe("roles", () => {
   it("send analysts to operational triage and preserve the other role homes", () => {
     // Only current operational analyst destinations remain.
     expect(ROLE_META.security_analyst.home).toBe("/analyst/operations");
-    expect(ROLE_META.system_admin.home).toBe("/admin/status");
+    expect(ROLE_META.system_admin.home).toBe("/admin/overview");
     expect(ROLE_META.evaluator.home).toBe("/evaluator/scenarios");
   });
 
@@ -33,9 +33,10 @@ describe("roles", () => {
     ]);
     expect(ROLE_META.security_analyst.nav.at(-1)?.to).toBe("/analyst/external-admission");
     expect(ROLE_META.security_analyst.nav.some(item => item.to.endsWith("/workstation") || item.to.endsWith("/v2-triage"))).toBe(false);
-    for (const role of ["system_admin", "evaluator"] as const) {
-      expect(ROLE_META[role].nav.find(item => item.to.endsWith("/v2-triage"))?.label).toBe("Alert Triage");
-      expect(ROLE_META[role].nav.some(item => item.label === "Analyst Workspace")).toBe(false);
-    }
+    expect(ROLE_META.system_admin.nav.map(item => item.label)).toEqual([
+      "Overview", "Operational Workspace", "HITL Governance", "Users & Access", "Evaluation & Audit",
+    ]);
+    expect(ROLE_META.system_admin.nav.some(item => item.to.endsWith("/v2-triage"))).toBe(false);
+    expect(ROLE_META.evaluator.nav.find(item => item.to.endsWith("/v2-triage"))?.label).toBe("Alert Triage");
   });
 });

@@ -31,6 +31,7 @@ from apps.api import selective_review_routes
 from apps.api import context_routes
 from apps.api import collection_routes
 from apps.api import workspace_routes
+from apps.api import admin_current_routes
 from apps.api import final_v3_routes
 from apps.api.contract.common import ErrorBody, ErrorResponse
 from apps.api.contract.openapi import API_VERSION, DESCRIPTION, openapi_document
@@ -92,6 +93,7 @@ def create_app(database: str | Path | None = None) -> FastAPI:
     app.include_router(context_routes.router)
     app.include_router(collection_routes.router)
     app.include_router(workspace_routes.router)
+    app.include_router(admin_current_routes.router)
     app.include_router(final_v3_routes.router)
 
     @app.get("/api/health", tags=["dashboard"], include_in_schema=False)

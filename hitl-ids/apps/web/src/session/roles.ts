@@ -3,7 +3,7 @@
  *
  * The role literals mirror `packages/contracts/models.py::Role`; `roles.test.ts` fails if the
  * generated API schema stops accepting one of them. Each role's `home` is where its account lands
- * after sign-in: analyst -> operational alert triage, admin -> system status,
+ * after sign-in: analyst -> operational alert triage, admin -> current system overview,
  * evaluator -> scenario list. Since S18a the role is a property of the signed-in account, not a
  * header a client sends.
  */
@@ -43,19 +43,13 @@ export const ROLE_META: Readonly<Record<Role, RoleMeta>> = {
   system_admin: {
     label: "System Administrator",
     short: "Administrator",
-    home: "/admin/status",
+    home: "/admin/overview",
     nav: [
-      { to: "/admin/status", label: "System Status" },
+      { to: "/admin/overview", label: "Overview" },
       { to: "/admin/workspaces", label: "Operational Workspace" },
-      { to: "/admin/evaluation/final-v3-1", label: "Final V3.1 Evaluation" },
-      { to: "/admin/tier2-cases", label: "Tier 2 Cases" },
-      { to: "/admin/triage-memory", label: "Triage Memory" },
-      { to: "/admin/selective-review", label: "Selective Review" },
-      { to: "/admin/external-admission", label: "Incoming Alerts" },
-      { to: "/admin/v2-triage", label: "Alert Triage" },
-      { to: "/admin/guardrails", label: "Guardrails" },
-      { to: "/admin/audit", label: "Audit Trail" },
-      { to: "/admin/reports/ip", label: "IP Security Report" },
+      { to: "/admin/governance", label: "HITL Governance" },
+      { to: "/admin/users", label: "Users & Access" },
+      { to: "/admin/evaluation", label: "Evaluation & Audit" },
     ],
   },
   evaluator: {

@@ -16,6 +16,10 @@ import { GuardrailsPage } from "./pages/admin/GuardrailsPage";
 import { IpSecurityReportPage } from "./pages/admin/IpSecurityReportPage";
 import { StatusPage } from "./pages/admin/StatusPage";
 import { WorkspacesPage } from "./pages/admin/WorkspacesPage";
+import { OverviewPage } from "./pages/admin/OverviewPage";
+import { GovernancePage } from "./pages/admin/GovernancePage";
+import { UsersPage } from "./pages/admin/UsersPage";
+import { EvaluationAuditPage } from "./pages/admin/EvaluationAuditPage";
 import { FinalV31Page, FinalV31DetailPage } from "./pages/evaluator/FinalV31Page";
 import { MetricsPage } from "./pages/evaluator/MetricsPage";
 import { RunPage } from "./pages/evaluator/RunPage";
@@ -73,8 +77,12 @@ export const routes: RouteObject[] = [
     ),
     children: [
       { index: true, element: <HomeRedirect /> },
+      { path: "overview", element: <OverviewPage /> },
       { path: "status", element: <StatusPage /> },
       { path: "workspaces", element: <WorkspacesPage /> },
+      { path: "governance", element: <GovernancePage /> },
+      { path: "users", element: <UsersPage /> },
+      { path: "evaluation", element: <EvaluationAuditPage /> },
       { path: "evaluation/final-v3-1", element: <FinalV31Page /> },
       { path: "evaluation/final-v3-1/records/:index", element: <FinalV31DetailPage /> },
       { path: "selective-review", element: <SelectiveReviewPage /> },

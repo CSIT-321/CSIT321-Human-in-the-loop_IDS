@@ -195,7 +195,7 @@ export function AuditPage() {
     <div className="space-y-4">
       <PageHeader
         title="Audit Trail"
-        subtitle="Every run, verdict, guardrail action, family-learning event and configuration change, newest first. The database refuses UPDATE and DELETE on this table."
+        subtitle="Retained historical audit events, newest first. This is not yet a unified audit of every current V2/HITL subsystem."
       />
 
       <div className="rounded-sm border border-border bg-surface px-4 py-3">

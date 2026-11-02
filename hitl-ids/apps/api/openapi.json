@@ -51,6 +51,176 @@
         "title": "Actor",
         "type": "object"
       },
+      "AdminGovernance": {
+        "additionalProperties": false,
+        "properties": {
+          "analystWork": {
+            "$ref": "#/components/schemas/ClaimPolicyView"
+          },
+          "autoLearning": {
+            "$ref": "#/components/schemas/AutoLearningPolicy"
+          },
+          "automaticLearningEnabled": {
+            "default": true,
+            "title": "Automaticlearningenabled",
+            "type": "boolean"
+          },
+          "classification": {
+            "$ref": "#/components/schemas/ClassificationPolicy"
+          },
+          "memory": {
+            "$ref": "#/components/schemas/MemoryConfig"
+          },
+          "responseExecution": {
+            "const": "disabled",
+            "default": "disabled",
+            "title": "Responseexecution",
+            "type": "string"
+          },
+          "routing": {
+            "$ref": "#/components/schemas/SystemRoutingPolicy"
+          },
+          "selectiveReview": {
+            "$ref": "#/components/schemas/SelectivePolicy"
+          }
+        },
+        "required": [
+          "classification",
+          "routing",
+          "memory",
+          "autoLearning",
+          "selectiveReview",
+          "analystWork"
+        ],
+        "title": "AdminGovernance",
+        "type": "object"
+      },
+      "AdminOverview": {
+        "additionalProperties": false,
+        "properties": {
+          "activeWorkspaceId": {
+            "title": "Activeworkspaceid",
+            "type": "string"
+          },
+          "activeWorkspaceName": {
+            "title": "Activeworkspacename",
+            "type": "string"
+          },
+          "classificationPolicyVersion": {
+            "title": "Classificationpolicyversion",
+            "type": "string"
+          },
+          "databaseReady": {
+            "title": "Databaseready",
+            "type": "boolean"
+          },
+          "detectorSource": {
+            "const": "Suricata",
+            "default": "Suricata",
+            "title": "Detectorsource",
+            "type": "string"
+          },
+          "memory": {
+            "$ref": "#/components/schemas/MemoryCounts"
+          },
+          "memoryPolicyVersion": {
+            "title": "Memorypolicyversion",
+            "type": "string"
+          },
+          "operational": {
+            "$ref": "#/components/schemas/OperationalSummary"
+          },
+          "routingPolicyVersion": {
+            "title": "Routingpolicyversion",
+            "type": "string"
+          },
+          "selectiveReviewPolicyVersion": {
+            "title": "Selectivereviewpolicyversion",
+            "type": "string"
+          },
+          "workspaceAlertCount": {
+            "title": "Workspacealertcount",
+            "type": "integer"
+          },
+          "workspaceReady": {
+            "title": "Workspaceready",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "activeWorkspaceId",
+          "activeWorkspaceName",
+          "workspaceReady",
+          "databaseReady",
+          "workspaceAlertCount",
+          "operational",
+          "memory",
+          "classificationPolicyVersion",
+          "routingPolicyVersion",
+          "memoryPolicyVersion",
+          "selectiveReviewPolicyVersion"
+        ],
+        "title": "AdminOverview",
+        "type": "object"
+      },
+      "AdminUser": {
+        "additionalProperties": false,
+        "properties": {
+          "displayName": {
+            "title": "Displayname",
+            "type": "string"
+          },
+          "lastLogin": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Lastlogin"
+          },
+          "role": {
+            "title": "Role",
+            "type": "string"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "username": {
+            "title": "Username",
+            "type": "string"
+          }
+        },
+        "required": [
+          "username",
+          "displayName",
+          "role",
+          "status",
+          "lastLogin"
+        ],
+        "title": "AdminUser",
+        "type": "object"
+      },
+      "AdminUsers": {
+        "additionalProperties": false,
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/AdminUser"
+            },
+            "title": "Items",
+            "type": "array"
+          }
+        },
+        "required": [
+          "items"
+        ],
+        "title": "AdminUsers",
+        "type": "object"
+      },
       "AdmissionRequest": {
         "additionalProperties": false,
         "properties": {
@@ -772,6 +942,62 @@
         "title": "AuditEntryOut",
         "type": "object"
       },
+      "AutoLearningPolicy": {
+        "additionalProperties": false,
+        "properties": {
+          "activationScope": {
+            "const": "exact",
+            "title": "Activationscope",
+            "type": "string"
+          },
+          "eligibleOutcomes": {
+            "items": {
+              "enum": [
+                "expected_activity",
+                "false_positive"
+              ],
+              "type": "string"
+            },
+            "title": "Eligibleoutcomes",
+            "type": "array"
+          },
+          "evidenceScope": {
+            "const": "exact",
+            "title": "Evidencescope",
+            "type": "string"
+          },
+          "memoryConfigurationVersion": {
+            "title": "Memoryconfigurationversion",
+            "type": "string"
+          },
+          "postExpiryReactivation": {
+            "const": false,
+            "title": "Postexpiryreactivation",
+            "type": "boolean"
+          },
+          "slidingRenewal": {
+            "const": false,
+            "title": "Slidingrenewal",
+            "type": "boolean"
+          },
+          "version": {
+            "const": "safe-memory-auto-activation-v1",
+            "title": "Version",
+            "type": "string"
+          }
+        },
+        "required": [
+          "version",
+          "memoryConfigurationVersion",
+          "evidenceScope",
+          "activationScope",
+          "eligibleOutcomes",
+          "slidingRenewal",
+          "postExpiryReactivation"
+        ],
+        "title": "AutoLearningPolicy",
+        "type": "object"
+      },
       "CanonicalAlert": {
         "additionalProperties": false,
         "description": "Immutable detector facts, never a ranking score or an analyst verdict.\n\noccurredAt preserves validated source text; a null offset means the timezone is unknown.\nSeverity keeps the detector's native scale. No cross-detector severity conversion is implied.",
@@ -1400,6 +1626,25 @@
         "title": "ClaimCommand",
         "type": "object"
       },
+      "ClaimPolicyView": {
+        "additionalProperties": false,
+        "properties": {
+          "claimArbitrationWindowMs": {
+            "title": "Claimarbitrationwindowms",
+            "type": "integer"
+          },
+          "version": {
+            "title": "Version",
+            "type": "string"
+          }
+        },
+        "required": [
+          "version",
+          "claimArbitrationWindowMs"
+        ],
+        "title": "ClaimPolicyView",
+        "type": "object"
+      },
       "ClaimResult": {
         "additionalProperties": false,
         "properties": {
@@ -1535,6 +1780,102 @@
           "category"
         ],
         "title": "ClassificationMatch",
+        "type": "object"
+      },
+      "ClassificationPolicy": {
+        "additionalProperties": false,
+        "properties": {
+          "compatibility": {
+            "default": [],
+            "items": {
+              "$ref": "#/components/schemas/Specificity"
+            },
+            "title": "Compatibility",
+            "type": "array"
+          },
+          "conflictPolicy": {
+            "const": "unknown_needs_expert",
+            "title": "Conflictpolicy",
+            "type": "string"
+          },
+          "informationalAttackVeto": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Informationalattackveto"
+          },
+          "informationalRules": {
+            "default": [],
+            "items": {
+              "$ref": "#/components/schemas/InformationalRule"
+            },
+            "title": "Informationalrules",
+            "type": "array"
+          },
+          "rules": {
+            "items": {
+              "$ref": "#/components/schemas/ClassificationRule"
+            },
+            "minItems": 1,
+            "title": "Rules",
+            "type": "array"
+          },
+          "version": {
+            "minLength": 1,
+            "title": "Version",
+            "type": "string"
+          }
+        },
+        "required": [
+          "version",
+          "conflictPolicy",
+          "rules"
+        ],
+        "title": "ClassificationPolicy",
+        "type": "object"
+      },
+      "ClassificationRule": {
+        "additionalProperties": false,
+        "properties": {
+          "category": {
+            "enum": [
+              "brute_force",
+              "botnet_c2",
+              "dos",
+              "ddos",
+              "web_attack",
+              "infiltration",
+              "reconnaissance_port_scan",
+              "malware_exploit",
+              "other_known_attack",
+              "unknown_needs_expert"
+            ],
+            "title": "Category",
+            "type": "string"
+          },
+          "id": {
+            "minLength": 1,
+            "title": "Id",
+            "type": "string"
+          },
+          "pattern": {
+            "minLength": 1,
+            "title": "Pattern",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "category",
+          "pattern"
+        ],
+        "title": "ClassificationRule",
         "type": "object"
       },
       "CollectionDocument": {
@@ -4800,6 +5141,33 @@
         "title": "GuardrailSetting",
         "type": "object"
       },
+      "InformationalRule": {
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "minLength": 1,
+            "title": "Id",
+            "type": "string"
+          },
+          "nativeCategoryPattern": {
+            "minLength": 1,
+            "title": "Nativecategorypattern",
+            "type": "string"
+          },
+          "signaturePattern": {
+            "minLength": 1,
+            "title": "Signaturepattern",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "signaturePattern",
+          "nativeCategoryPattern"
+        ],
+        "title": "InformationalRule",
+        "type": "object"
+      },
       "InvestigationAssistance": {
         "additionalProperties": false,
         "properties": {
@@ -6039,6 +6407,30 @@
           "protocol"
         ],
         "title": "MemoryContext",
+        "type": "object"
+      },
+      "MemoryCounts": {
+        "additionalProperties": false,
+        "properties": {
+          "active": {
+            "title": "Active",
+            "type": "integer"
+          },
+          "conflictReview": {
+            "title": "Conflictreview",
+            "type": "integer"
+          },
+          "total": {
+            "title": "Total",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "total",
+          "active",
+          "conflictReview"
+        ],
+        "title": "MemoryCounts",
         "type": "object"
       },
       "MemoryDecision": {
@@ -10463,6 +10855,49 @@
         "title": "SourceIpOverviewRow",
         "type": "object"
       },
+      "Specificity": {
+        "additionalProperties": false,
+        "properties": {
+          "broader": {
+            "enum": [
+              "brute_force",
+              "botnet_c2",
+              "dos",
+              "ddos",
+              "web_attack",
+              "infiltration",
+              "reconnaissance_port_scan",
+              "malware_exploit",
+              "other_known_attack",
+              "unknown_needs_expert"
+            ],
+            "title": "Broader",
+            "type": "string"
+          },
+          "specific": {
+            "enum": [
+              "brute_force",
+              "botnet_c2",
+              "dos",
+              "ddos",
+              "web_attack",
+              "infiltration",
+              "reconnaissance_port_scan",
+              "malware_exploit",
+              "other_known_attack",
+              "unknown_needs_expert"
+            ],
+            "title": "Specific",
+            "type": "string"
+          }
+        },
+        "required": [
+          "specific",
+          "broader"
+        ],
+        "title": "Specificity",
+        "type": "object"
+      },
       "StatusChangeRequest": {
         "additionalProperties": false,
         "description": "``POST /api/alerts/{alertRef}/status``.\n\nWorking an alert (`claimed`, `in_progress`) makes the caller its owner when it has none;\nreturning it to `new` releases it; a closed alert (`resolved`, `dismissed`) can only be reopened\nto `in_progress`. A refused transition is a 409.",
@@ -10749,6 +11184,49 @@
           "reasons"
         ],
         "title": "SystemRoutingDecision",
+        "type": "object"
+      },
+      "SystemRoutingPolicy": {
+        "additionalProperties": false,
+        "properties": {
+          "campaignAlertThreshold": {
+            "minimum": 2,
+            "title": "Campaignalertthreshold",
+            "type": "integer"
+          },
+          "highPriorityThreshold": {
+            "maximum": 100,
+            "minimum": 0,
+            "title": "Highprioritythreshold",
+            "type": "number"
+          },
+          "rules": {
+            "items": {
+              "enum": [
+                "unknown_classification_requires_expert",
+                "confirmed_malicious_and_response_required",
+                "high_priority_and_critical_asset",
+                "repeated_campaign_and_independent_alert_threshold",
+                "unresolved_requires_expert"
+              ],
+              "type": "string"
+            },
+            "title": "Rules",
+            "type": "array"
+          },
+          "version": {
+            "minLength": 1,
+            "title": "Version",
+            "type": "string"
+          }
+        },
+        "required": [
+          "version",
+          "rules",
+          "highPriorityThreshold",
+          "campaignAlertThreshold"
+        ],
+        "title": "SystemRoutingPolicy",
         "type": "object"
       },
       "TimeBucket": {
@@ -11823,6 +12301,138 @@
   },
   "openapi": "3.1.0",
   "paths": {
+    "/api/admin/governance": {
+      "get": {
+        "operationId": "getCurrentHitlGovernance",
+        "parameters": [
+          {
+            "description": "`Bearer <token>` from POST /api/auth/login",
+            "in": "header",
+            "name": "Authorization",
+            "required": false,
+            "schema": {
+              "example": "Bearer eyJhbGciOiJIUzI1NiJ9...",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminGovernance"
+                }
+              }
+            },
+            "description": "Read-only current HITL Admin projection"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not signed in, or the token expired"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Role not permitted"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Database unavailable or schema unsupported; read-only requests never migrate"
+          }
+        },
+        "summary": "getCurrentHitlGovernance",
+        "tags": [
+          "Current Admin"
+        ],
+        "x-required-roles": [
+          "system_admin"
+        ]
+      }
+    },
+    "/api/admin/overview": {
+      "get": {
+        "operationId": "getCurrentAdminOverview",
+        "parameters": [
+          {
+            "description": "`Bearer <token>` from POST /api/auth/login",
+            "in": "header",
+            "name": "Authorization",
+            "required": false,
+            "schema": {
+              "example": "Bearer eyJhbGciOiJIUzI1NiJ9...",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminOverview"
+                }
+              }
+            },
+            "description": "Read-only current HITL Admin projection"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not signed in, or the token expired"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Role not permitted"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Database unavailable or schema unsupported; read-only requests never migrate"
+          }
+        },
+        "summary": "getCurrentAdminOverview",
+        "tags": [
+          "Current Admin"
+        ],
+        "x-required-roles": [
+          "system_admin"
+        ]
+      }
+    },
     "/api/admin/reports/ip/{ip}": {
       "get": {
         "description": "Uses recorded flow capture time and the latest effective analyst verdict per alert. It never uses hidden ground truth and performs no blocking action.",
@@ -12128,6 +12738,72 @@
           "reports"
         ],
         "x-required-role": "system_admin"
+      }
+    },
+    "/api/admin/users": {
+      "get": {
+        "operationId": "listCurrentAdminUsers",
+        "parameters": [
+          {
+            "description": "`Bearer <token>` from POST /api/auth/login",
+            "in": "header",
+            "name": "Authorization",
+            "required": false,
+            "schema": {
+              "example": "Bearer eyJhbGciOiJIUzI1NiJ9...",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminUsers"
+                }
+              }
+            },
+            "description": "Read-only current HITL Admin projection"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not signed in, or the token expired"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Role not permitted"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Database unavailable or schema unsupported; read-only requests never migrate"
+          }
+        },
+        "summary": "listCurrentAdminUsers",
+        "tags": [
+          "Current Admin"
+        ],
+        "x-required-roles": [
+          "system_admin"
+        ]
       }
     },
     "/api/admin/workspaces": {
@@ -22154,6 +22830,10 @@
     {
       "description": "Prospective scoped facts; no external enrichment",
       "name": "Trusted context"
+    },
+    {
+      "description": "Current HITL governance and operational visibility",
+      "name": "Current Admin"
     },
     {
       "description": "Separate review disposition, never a human verdict or closure",

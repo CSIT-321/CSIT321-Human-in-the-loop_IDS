@@ -45,6 +45,7 @@ from packages.detection.prospective_collection import RunCreate,RunView,RunPage,
 from packages.evaluation.prospective_recorded import RecordedArchive
 from apps.api.collection_routes import CollectionDocument
 from apps.api.workspace_routes import WorkspaceCommand, WorkspaceCurrent, WorkspaceState
+from apps.api.contract.admin_current import AdminOverview, AdminGovernance, AdminUsers
 from apps.api.final_v3_records import FinalSummary, FinalRecord, FinalRecordPage, MemoryImpactPage
 from packages.detection.response_approval import ResponseRequest,ManualResponseRequest,ResponseDecisionRequest,ResponseMutation
 from packages.detection.tier2_cases import (
@@ -67,6 +68,7 @@ SCHEMA_REF = "#/components/schemas/{model}"
 #: model to the API is a deliberate act.
 MODELS: tuple[type[BaseModel], ...] = (
     WorkspaceCommand, WorkspaceCurrent, WorkspaceState,
+    AdminOverview, AdminGovernance, AdminUsers,
     FinalSummary, FinalRecord, FinalRecordPage, MemoryImpactPage,
     InvestigationAssistance,
     VerdictMemoryRequest,VerdictMemoryState,ConclusionMemoryRequest,ConclusionMemoryState,
@@ -829,6 +831,16 @@ def _paths() -> dict[str, Any]:
         if command:
             operation_doc['requestBody'] = {'required': True, **_json(WorkspaceCommand)}
         paths[path] = {method: operation_doc}
+    for path, operation, model in [
+        ('/api/admin/overview', 'getCurrentAdminOverview', AdminOverview),
+        ('/api/admin/governance', 'getCurrentHitlGovernance', AdminGovernance),
+        ('/api/admin/users', 'listCurrentAdminUsers', AdminUsers),
+    ]:
+        paths[path] = {'get': {'operationId': operation, 'summary': operation,
+            'tags': ['Current Admin'], 'x-required-roles': ['system_admin'],
+            'parameters': [AUTH_PARAMETER],
+            'responses': {'200': {'description': 'Read-only current HITL Admin projection', **_json(model)},
+                          **_errors(401,403,503)}}}
     final_root = '/api/evaluation/final-v3-1'
     filters = [('limit',{'type':'integer','minimum':1,'maximum':200,'default':25}),
                ('offset',{'type':'integer','minimum':0,'default':0}),
@@ -867,6 +879,7 @@ def openapi_document() -> dict[str, Any]:
         "tags": [
             {"name":"Prospective collection","description":"Opt-in recorded decisions; no automatic collection"},
             {"name":"Trusted context","description":"Prospective scoped facts; no external enrichment"},
+            {"name":"Current Admin","description":"Current HITL governance and operational visibility"},
             {"name":"Selective review","description":"Separate review disposition, never a human verdict or closure"},
             {"name":"Triage memory","description":"Human lessons and advisory contextual matching"},
             {"name":"Response plans","description":"Recommendations and human authorization; no execution"},

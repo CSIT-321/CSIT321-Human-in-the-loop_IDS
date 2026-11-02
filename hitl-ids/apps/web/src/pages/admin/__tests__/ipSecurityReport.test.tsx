@@ -154,11 +154,11 @@ function overviewRow(index: number): Schemas["SourceIpOverviewRow"] {
 }
 
 describe("admin IP security report: access and scope", () => {
-  it("is present only in administrator navigation and its route rejects an analyst", async () => {
+  it("remains a direct Admin compatibility route but leaves primary navigation", async () => {
     stubReport();
     renderApp("/admin/reports/ip", { session: ADMIN });
     const adminNav = await screen.findByRole("navigation", { name: "Main" });
-    expect(within(adminNav).getByRole("link", { name: "IP Security Report" })).toBeInTheDocument();
+    expect(within(adminNav).queryByRole("link", { name: "IP Security Report" })).toBeNull();
     expect(ROLE_META.security_analyst.nav.some((item) => item.to === "/admin/reports/ip")).toBe(false);
 
     const second = renderApp("/admin/reports/ip", { session: ANALYST });

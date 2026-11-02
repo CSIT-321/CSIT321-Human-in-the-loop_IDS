@@ -328,8 +328,9 @@ export function StatusPage() {
     <div className="space-y-4">
       <PageHeader
         title="System Status"
-        subtitle="Service availability and retained research run diagnostics. Current Suricata alerts are in Alert Triage and Incoming Alerts."
+        subtitle="Historical Signature/XGBoost research diagnostics. This compatibility page does not describe current Suricata/HITL operational health."
       />
+      <p role="note" className="rounded-sm border border-warn/40 bg-warn-dim/30 p-3 text-sm text-muted">Historical research view. Legacy feedback scoring and Guardrails do not control current Suricata routing, Verdict learning, or Memory auto activation. Use Admin Overview and HITL Governance for the current system.</p>
 
       <StatStrip label="Historical run diagnostics" stats={operationStats(summary, breakdowns)} />
 
