@@ -1,0 +1,20 @@
+Working directory: final-evaluation-protocol-v3/hitl-ids
+Interpreter: C:/Users/cheek/OneDrive/Documents/fyp_website/analyst-ui-modernization/hitl-ids/.venv/Scripts/python.exe
+Environment: PYTHONUTF8=1
+
+Before opening:
+python scripts/validate_protocol_v3.py
+git switch -c feat/final-evaluation-v3-run
+python scripts/open_protocol_v3.py --runtime-root ../../final-legacy-cleanup --out ../evaluation/protocol-v3-run-001 --ack OPEN-FINAL-V3
+python scripts/run_protocol_v3_baseline.py --runtime-root ../../final-legacy-cleanup --opening ../evaluation/protocol-v3-run-001/opening.json --out ../evaluation/protocol-v3-run-001/baseline
+
+The initial sandbox attempt stalled before first admission. Minimal independent FastAPI TestClient probe timed out in Windows socketpair; same probe outside sandbox passed. Identified process tree stopped; evidence retained.
+
+Host execution, same frozen runner/opening, fresh DB:
+python scripts/run_protocol_v3_baseline.py --runtime-root ../../final-legacy-cleanup --opening ../evaluation/protocol-v3-run-001/opening.json --out ../evaluation/protocol-v3-run-001/baseline-execution-2
+python scripts/run_protocol_v3_adaptive.py --runtime-root ../../final-legacy-cleanup --opening ../evaluation/protocol-v3-run-001/opening.json --out ../evaluation/protocol-v3-run-001/adaptive
+
+Adaptive stopped when interpreter discrepancy was discovered. No final evaluator or repeatability run executed.
+After stopping: python scripts/validate_protocol_v3.py
+Read-only evidence validation: unique decision identities, snapshot hashes, durable outcome links, baseline receipt hashes, SQLite row counts, frozen artifact hashes.
+No broad product test suites rerun.

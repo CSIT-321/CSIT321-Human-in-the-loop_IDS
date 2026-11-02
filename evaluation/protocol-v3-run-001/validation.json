@@ -1,0 +1,116 @@
+{
+  "frozenPreflight": {
+    "alerts": 200,
+    "learning": 40,
+    "holdout": 160,
+    "primary": 140,
+    "exactFields": [
+      "detectorSource",
+      "detectionTitle",
+      "sourceIp",
+      "destinationIp",
+      "protocol"
+    ],
+    "patterns": 90
+  },
+  "manifestHash": "08d83a43eaa6fa0cbd1ca8ff049c7cea52f9979cb8038d490e0ea0b6a435db37",
+  "frozenArtifactsUnchanged": true,
+  "officialResultValid": false,
+  "reason": "Execution used Python 3.12.14; frozen methodology explicitly requires Python 3.11. Frozen validator does not enforce interpreter version. Stopped without patch/restart.",
+  "arms": {
+    "baseline": {
+      "completedReceipt": false,
+      "decisions": 0,
+      "learningDecisions": 0,
+      "holdoutDecisions": 0,
+      "decisionHashesValid": true,
+      "outcomes": 0,
+      "durableDecisionOutcomeLinksValid": true,
+      "feedback": 0,
+      "databaseRows": {
+        "external_alert_inbox": 0,
+        "analyst_verdict_events": 0,
+        "triage_memory_lessons": 0,
+        "prospective_runs": 0,
+        "response_recommendations": 0,
+        "response_decisions": 0
+      },
+      "localDisposableEvidence": {
+        "run.db": {
+          "sha256": "05430d1f39aed4752f1c48784579f80e034fd8de27b58630d2b94eb5bfd666f1",
+          "bytes": 675840,
+          "committed": false
+        }
+      }
+    },
+    "baseline-execution-2": {
+      "completedReceipt": true,
+      "decisions": 160,
+      "learningDecisions": 0,
+      "holdoutDecisions": 160,
+      "decisionHashesValid": true,
+      "outcomes": 160,
+      "durableDecisionOutcomeLinksValid": true,
+      "feedback": 0,
+      "databaseRows": {
+        "external_alert_inbox": 160,
+        "analyst_verdict_events": 0,
+        "triage_memory_lessons": 0,
+        "prospective_runs": 0,
+        "response_recommendations": 0,
+        "response_decisions": 0
+      },
+      "localDisposableEvidence": {
+        "run.db": {
+          "sha256": "773fc9a1416f116b274584ce3f26ec7a71efdab3636af8d735c3bd0347924871",
+          "bytes": 9539584,
+          "committed": false
+        }
+      }
+    },
+    "adaptive": {
+      "completedReceipt": false,
+      "decisions": 98,
+      "learningDecisions": 40,
+      "holdoutDecisions": 58,
+      "decisionHashesValid": true,
+      "outcomes": 98,
+      "durableDecisionOutcomeLinksValid": true,
+      "feedback": 40,
+      "databaseRows": {
+        "external_alert_inbox": 99,
+        "analyst_verdict_events": 40,
+        "triage_memory_lessons": 20,
+        "prospective_runs": 0,
+        "response_recommendations": 0,
+        "response_decisions": 0
+      },
+      "localDisposableEvidence": {
+        "run.db": {
+          "sha256": "84d3f8c6939f0d62c7dd710ca6344238b22dc4791bad27ca3730b4de86979150",
+          "bytes": 7323648,
+          "committed": false
+        },
+        "run.db-journal": {
+          "sha256": "53ce584d18444af38e472a79980aeeb3fb7af09faee452791787faf10c0de62d",
+          "bytes": 33344,
+          "committed": false
+        }
+      }
+    }
+  },
+  "baselineReceiptHashesValid": true,
+  "partialLearningSnapshot": {
+    "lessons": 20,
+    "statuses": {
+      "active": 10,
+      "candidate": 10
+    },
+    "supportDistribution": {
+      "3": 10,
+      "1": 10
+    },
+    "oneAlertOneVoteViolations": [],
+    "notOfficialResult": true
+  }
+}

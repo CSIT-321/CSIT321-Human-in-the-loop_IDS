@@ -1,0 +1,12 @@
+{
+  "status": "preserved_pre_admission_attempt",
+  "directory": "baseline",
+  "users": 3,
+  "externalAlertInbox": 0,
+  "verdictEvents": 0,
+  "decisionJournalExists": false,
+  "cause": "Windows sandbox socketpair restriction: independent minimal FastAPI TestClient blocked in socket.accept -> _fallback_socketpair -> asyncio Proactor loop; identical probe outside sandbox returned HTTP 200 with ok=true.",
+  "recovery": "Stopped only identified stalled process tree. Same opening and unchanged runner; new clean baseline-execution-2 DB, permitted host execution. No operational alert or outcome decision repeated.",
+  "frozenArtifactsChanged": false,
+  "preservedDatabaseSha256": "05430d1f39aed4752f1c48784579f80e034fd8de27b58630d2b94eb5bfd666f1"
+}

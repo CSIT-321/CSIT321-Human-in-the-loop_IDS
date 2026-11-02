@@ -1,0 +1,20 @@
+{
+  "python": "3.12.14 (main, Aug 25 2026, 14:01:42) [MSC v.1944 64 bit (AMD64)]",
+  "executable": "C:\\Users\\cheek\\OneDrive\\Documents\\fyp_website\\analyst-ui-modernization\\hitl-ids\\.venv\\Scripts\\python.exe",
+  "platform": "Windows-11-10.0.26200-SP0",
+  "protocolCommit": "398fd99a5c83d50ea51f521b74c328fe57185a36",
+  "runtimeSha": "c00c556405198f60adc42f8bb2a7cee03689a60c",
+  "protocolVersion": "final-evaluation-protocol-v3.0",
+  "actor": "cheek",
+  "recordedAt": "2026-11-02T08:56:00.697606+00:00",
+  "packages": {
+    "fastapi": "0.136.0",
+    "starlette": "1.6.0",
+    "httpx": "0.28.1",
+    "anyio": "4.15.1",
+    "pydantic": "2.11.9",
+    "bcrypt": "5.0.0",
+    "PyJWT": "2.15.1"
+  },
+  "repeatability": "No second completed formal run: frozen methodology has no explicit formal rerun authorization."
+}
