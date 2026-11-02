@@ -42,6 +42,7 @@ REQUIRED_OPERATIONS = {
     ('/api/admin/overview','get'),
     ('/api/admin/governance','get'),
     ('/api/admin/users','get'),
+    ('/api/admin/audit/current','get'),
     ('/api/workspace/current','get'),
     ('/api/admin/workspaces','get'),
     ('/api/admin/workspaces/{workspaceId}/activate','post'),

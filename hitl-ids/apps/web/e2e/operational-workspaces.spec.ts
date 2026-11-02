@@ -74,7 +74,8 @@ test("current Admin navigation, isolated Analyst replay, and shared frozen Evalu
   await noPageOverflow(admin);
   await adminNav.getByRole("link", { name: "Evaluation & Audit" }).click();
   await expect(admin.getByRole("link", { name: "Open Final V3.1 Evaluation" })).toBeVisible();
-  await expect(admin.getByRole("link", { name: "Open Audit Trail" })).toBeVisible();
+  await expect(admin.getByRole("link", { name: "Open Current HITL Audit" })).toBeVisible();
+  await expect(admin.getByRole("link", { name: "Open Historical Audit" })).toBeVisible();
   await noPageOverflow(admin);
   await admin.getByRole("navigation", { name: "Main" }).getByRole("link", { name: "Operational Workspace" }).click();
   await expect(admin.getByRole("heading", { name: "Operational Workspace" })).toBeVisible();
@@ -136,6 +137,40 @@ test("current Admin navigation, isolated Analyst replay, and shared frozen Evalu
   expect(countClaims(replayDatabase())).toBe(1);
   expect(fingerprint()).toBe(before);
 
+  // Real domain commands on disposable Replay produce the safe learning and Case chain.
+  // The browser's first Verdict above remains a separate real UI action.
+  const auditRefs = JSON.parse(python("import json,sys; sys.path.insert(0,'tests'); from current_audit_browser_fixture import prepare; print(json.dumps(prepare(sys.argv[1])))", replayDatabase())) as {
+    alertRef: string; futureRef: string; lessonRef: string; caseRef: string; unknownRef: string;
+  };
+  await adminNav.getByRole("link", { name: "Evaluation & Audit" }).click();
+  await admin.getByRole("link", { name: "Open Current HITL Audit" }).click();
+  await expect(admin.getByRole("heading", { name: "Current HITL Audit" })).toBeVisible();
+  await noPageOverflow(admin);
+  async function auditFilter(category: string, ref: string) {
+    await admin.getByRole("combobox", { name: "Category" }).selectOption(category);
+    await admin.getByRole("textbox", { name: "Reference search" }).fill(ref);
+    await admin.getByRole("button", { name: "Apply text filters" }).click();
+  }
+  await auditFilter("WORK", auditRefs.alertRef);
+  await expect(admin.getByRole("row").filter({ hasText: "Review requested" }).first()).toBeVisible();
+  await auditFilter("VERDICT", auditRefs.alertRef);
+  await expect(admin.getByRole("row").filter({ hasText: "Verdict recorded" }).first()).toBeVisible();
+  await auditFilter("MEMORY", auditRefs.lessonRef);
+  await expect(admin.getByRole("row").filter({ hasText: "Lesson auto-activated" })).toBeVisible();
+  await expect(admin.getByRole("row").filter({ hasText: "Exact evidence recorded" }).first()).toBeVisible();
+  await expect(admin.getByTestId("audit-event").first()).toContainText("v3-1-replay");
+  await auditFilter("REVIEW", auditRefs.futureRef);
+  await expect(admin.getByRole("row").filter({ hasText: "No Immediate Review" })).toBeVisible();
+  await auditFilter("TIER2", auditRefs.caseRef);
+  await expect(admin.getByRole("row").filter({ hasText: "Tier 2 Case created" })).toBeVisible();
+  await expect(admin.getByRole("row").filter({ hasText: "Investigation Conclusion" })).toBeVisible();
+  await auditFilter("RESPONSE", auditRefs.caseRef);
+  await expect(admin.getByText("Approved — Not Executed")).toBeVisible();
+  await auditFilter("RESOLUTION", auditRefs.caseRef);
+  await expect(admin.getByRole("row").filter({ hasText: "Case resolved" })).toBeVisible();
+  await noPageOverflow(admin);
+
+  await adminNav.getByRole("link", { name: "Operational Workspace" }).click();
   const opCard = admin.getByText("Operational alerts: 0").locator("xpath=ancestor::section[1]");
   await opCard.getByRole("button", { name: "Activate" }).click();
   await expect(admin.getByText("Operational", { selector: "p", exact: true })).toBeVisible();
@@ -145,6 +180,10 @@ test("current Admin navigation, isolated Analyst replay, and shared frozen Evalu
   // Analyst sign-in updates last_login; operational alert state remains empty.
 
   await adminNav.getByRole("link", { name: "Evaluation & Audit" }).click();
+  await admin.getByRole("link", { name: "Open Current HITL Audit" }).click();
+  await auditFilter("VERDICT", auditRefs.alertRef);
+  await expect(admin.getByText("No durable events match these filters.")).toBeVisible();
+  await admin.getByRole("link", { name: "Back to Evaluation & Audit" }).click();
   await admin.getByRole("link", { name: "Open Final V3.1 Evaluation" }).click();
   await expect(admin.getByRole("heading", { name: "Final Evaluation V3.1" })).toBeVisible();
   await expect(admin.getByLabel("Frozen workload composition")).toContainText("200");
@@ -180,6 +219,12 @@ test("current Admin navigation, isolated Analyst replay, and shared frozen Evalu
   });
   expect(deniedEvidence.status()).toBe(403);
   await analyst.goto("/admin/evaluation/final-v3-1");
+  await expect(analyst).toHaveURL(/\/analyst\/operations$/);
+  const deniedAudit = await analyst.request.get("/api/admin/audit/current", {
+    headers: { Authorization: `Bearer ${await token(analyst)}` },
+  });
+  expect(deniedAudit.status()).toBe(403);
+  await analyst.goto("/admin/evaluation/audit");
   await expect(analyst).toHaveURL(/\/analyst\/operations$/);
   expect(errors).toEqual([]);
   await Promise.all([adminContext.close(), analystContext.close(), bobContext.close(), evaluatorContext.close()]);

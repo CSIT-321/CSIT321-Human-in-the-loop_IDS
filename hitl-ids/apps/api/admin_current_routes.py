@@ -1,12 +1,14 @@
 """Current HITL governance and operational health, with no policy editing."""
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, Request
+from fastapi import APIRouter, Depends, Query, Request
 
 from apps.api import auth, operational_queue, workspaces
 from apps.api.contract.admin_current import (
     AdminGovernance, AdminOverview, AdminUser, AdminUsers, ClaimPolicyView, MemoryCounts,
 )
+from apps.api.contract.current_audit import AuditCategory, CurrentAuditPage
+from apps.api.current_audit import list_current
 from apps.api.read_only import ReadConn
 from packages.detection.analyst_work import policy as claim_policy
 from packages.detection.attack_classification import load_classification_policy
@@ -54,3 +56,20 @@ def users(conn: ReadConn, principal: Admin) -> AdminUsers:
         conn.execute('BEGIN')
         rows = conn.execute('SELECT username,display_name,role,status,last_login FROM users ORDER BY username').fetchall()
     return AdminUsers(items=[AdminUser(**dict(row)) for row in rows])
+
+
+@router.get('/audit/current', response_model=CurrentAuditPage, operation_id='listCurrentHitlAudit')
+def current_audit(request: Request, conn: ReadConn, principal: Admin,
+                  limit: int = Query(25, ge=1, le=200), offset: int = Query(0, ge=0),
+                  category: AuditCategory | None = None, actor: str | None = Query(None, max_length=100),
+                  decision_source: str | None = Query(None, pattern='^(analyst|system_policy|historical_migration|admin)$'),
+                  object_type: str | None = Query(None, pattern='^(workspace|alert|case|lesson|recommendation)$'),
+                  search: str | None = Query(None, max_length=120),
+                  workspace: str | None = Query(None, pattern='^(operational|v3-1-replay|global)$')) -> CurrentAuditPage:
+    selected = workspaces.selected_id(request)
+    _, control, _ = workspaces.paths(request)
+    with conn:
+        conn.execute('BEGIN')
+        return list_current(conn, control, selected, limit=limit, offset=offset,
+            category=category, actor=actor, decision_source=decision_source,
+            object_type=object_type, search=search, event_workspace=workspace)

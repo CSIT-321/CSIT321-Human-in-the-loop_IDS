@@ -4,6 +4,23 @@
  */
 
 export interface paths {
+    "/api/admin/audit/current": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Read-only current HITL audit */
+        get: operations["listCurrentHitlAudit"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/admin/governance": {
         parameters: {
             query?: never;
@@ -2579,6 +2596,92 @@ export interface components {
             tier1HandoffSummary: string;
             /** Title */
             title: string;
+        };
+        /** CurrentAuditEvent */
+        CurrentAuditEvent: {
+            /** Action */
+            action: string;
+            /**
+             * Actorid
+             * @default null
+             */
+            actorId: number | null;
+            /**
+             * Actorname
+             * @default null
+             */
+            actorName: string | null;
+            /**
+             * Actortype
+             * @enum {string}
+             */
+            actorType: "human" | "system";
+            /**
+             * Alertref
+             * @default null
+             */
+            alertRef: string | null;
+            /**
+             * Caseref
+             * @default null
+             */
+            caseRef: string | null;
+            /**
+             * Decisionsource
+             * @enum {string}
+             */
+            decisionSource: "analyst" | "system_policy" | "historical_migration" | "admin";
+            /** Detail */
+            detail?: {
+                [key: string]: unknown;
+            };
+            /**
+             * Eventcategory
+             * @enum {string}
+             */
+            eventCategory: "WORKSPACE" | "WORK" | "VERDICT" | "MEMORY" | "REVIEW" | "TIER2" | "RESPONSE" | "RESOLUTION";
+            /** Eventref */
+            eventRef: string;
+            /** Eventtype */
+            eventType: string;
+            /**
+             * Lessonref
+             * @default null
+             */
+            lessonRef: string | null;
+            /** Objectref */
+            objectRef: string;
+            /**
+             * Objecttype
+             * @enum {string}
+             */
+            objectType: "workspace" | "alert" | "case" | "lesson" | "recommendation";
+            /**
+             * Result
+             * @default null
+             */
+            result: string | null;
+            /** Sourcesubsystem */
+            sourceSubsystem: string;
+            /** Summary */
+            summary: string;
+            /** Timestamp */
+            timestamp: string;
+            /** Workspace */
+            workspace: string;
+        };
+        /** CurrentAuditPage */
+        CurrentAuditPage: {
+            /** Activeworkspace */
+            activeWorkspace: string;
+            /** Items */
+            items: components["schemas"]["CurrentAuditEvent"][];
+            /** Limit */
+            limit: number;
+            /** Offset */
+            offset: number;
+            /** Total */
+            total: number;
         };
         /**
          * DashboardBreakdowns
@@ -6764,6 +6867,74 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+    listCurrentHitlAudit: {
+        parameters: {
+            query?: {
+                limit?: number;
+                offset?: number;
+                category?: "WORKSPACE" | "WORK" | "VERDICT" | "MEMORY" | "REVIEW" | "TIER2" | "RESPONSE" | "RESOLUTION";
+                actor?: string;
+                decisionSource?: "analyst" | "system_policy" | "historical_migration" | "admin";
+                objectType?: "workspace" | "alert" | "case" | "lesson" | "recommendation";
+                search?: string;
+                workspace?: "operational" | "v3-1-replay" | "global";
+            };
+            header?: {
+                /** @description `Bearer <token>` from POST /api/auth/login */
+                Authorization?: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Filtered current HITL audit page */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CurrentAuditPage"];
+                };
+            };
+            /** @description Validation failed */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not signed in, or the token expired */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Role not permitted */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Database unavailable or schema unsupported; read-only requests never migrate */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
     getCurrentHitlGovernance: {
         parameters: {
             query?: never;

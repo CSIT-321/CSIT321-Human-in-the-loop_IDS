@@ -20,6 +20,7 @@ import { OverviewPage } from "./pages/admin/OverviewPage";
 import { GovernancePage } from "./pages/admin/GovernancePage";
 import { UsersPage } from "./pages/admin/UsersPage";
 import { EvaluationAuditPage } from "./pages/admin/EvaluationAuditPage";
+import { CurrentAuditPage } from "./pages/admin/CurrentAuditPage";
 import { FinalV31Page, FinalV31DetailPage } from "./pages/evaluator/FinalV31Page";
 import { MetricsPage } from "./pages/evaluator/MetricsPage";
 import { RunPage } from "./pages/evaluator/RunPage";
@@ -83,6 +84,7 @@ export const routes: RouteObject[] = [
       { path: "governance", element: <GovernancePage /> },
       { path: "users", element: <UsersPage /> },
       { path: "evaluation", element: <EvaluationAuditPage /> },
+      { path: "evaluation/audit", element: <CurrentAuditPage /> },
       { path: "evaluation/final-v3-1", element: <FinalV31Page /> },
       { path: "evaluation/final-v3-1/records/:index", element: <FinalV31DetailPage /> },
       { path: "selective-review", element: <SelectiveReviewPage /> },

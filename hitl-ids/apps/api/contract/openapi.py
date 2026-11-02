@@ -46,6 +46,7 @@ from packages.evaluation.prospective_recorded import RecordedArchive
 from apps.api.collection_routes import CollectionDocument
 from apps.api.workspace_routes import WorkspaceCommand, WorkspaceCurrent, WorkspaceState
 from apps.api.contract.admin_current import AdminOverview, AdminGovernance, AdminUsers
+from apps.api.contract.current_audit import CurrentAuditEvent, CurrentAuditPage
 from apps.api.final_v3_records import FinalSummary, FinalRecord, FinalRecordPage, MemoryImpactPage
 from packages.detection.response_approval import ResponseRequest,ManualResponseRequest,ResponseDecisionRequest,ResponseMutation
 from packages.detection.tier2_cases import (
@@ -68,7 +69,7 @@ SCHEMA_REF = "#/components/schemas/{model}"
 #: model to the API is a deliberate act.
 MODELS: tuple[type[BaseModel], ...] = (
     WorkspaceCommand, WorkspaceCurrent, WorkspaceState,
-    AdminOverview, AdminGovernance, AdminUsers,
+    AdminOverview, AdminGovernance, AdminUsers, CurrentAuditEvent, CurrentAuditPage,
     FinalSummary, FinalRecord, FinalRecordPage, MemoryImpactPage,
     InvestigationAssistance,
     VerdictMemoryRequest,VerdictMemoryState,ConclusionMemoryRequest,ConclusionMemoryState,
@@ -841,6 +842,26 @@ def _paths() -> dict[str, Any]:
             'parameters': [AUTH_PARAMETER],
             'responses': {'200': {'description': 'Read-only current HITL Admin projection', **_json(model)},
                           **_errors(401,403,503)}}}
+    paths['/api/admin/audit/current'] = {'get': {
+        'operationId': 'listCurrentHitlAudit', 'summary': 'Read-only current HITL audit',
+        'tags': ['Current Admin'], 'x-required-roles': ['system_admin'],
+        'parameters': [AUTH_PARAMETER] + [
+            {'name': name, 'in': 'query', 'required': False, 'schema': schema}
+            for name, schema in [
+                ('limit', {'type': 'integer', 'minimum': 1, 'maximum': 200, 'default': 25}),
+                ('offset', {'type': 'integer', 'minimum': 0, 'default': 0}),
+                ('category', {'type': 'string', 'enum': ['WORKSPACE', 'WORK', 'VERDICT', 'MEMORY',
+                    'REVIEW', 'TIER2', 'RESPONSE', 'RESOLUTION']}),
+                ('actor', {'type': 'string', 'maxLength': 100}),
+                ('decisionSource', {'type': 'string', 'enum': ['analyst', 'system_policy',
+                    'historical_migration', 'admin']}),
+                ('objectType', {'type': 'string', 'enum': ['workspace', 'alert', 'case',
+                    'lesson', 'recommendation']}),
+                ('search', {'type': 'string', 'maxLength': 120}),
+                ('workspace', {'type': 'string', 'enum': ['operational', 'v3-1-replay', 'global']}),
+            ]],
+        'responses': {'200': {'description': 'Filtered current HITL audit page', **_json(CurrentAuditPage)},
+                      **_errors(400,401,403,503)}}}
     final_root = '/api/evaluation/final-v3-1'
     filters = [('limit',{'type':'integer','minimum':1,'maximum':200,'default':25}),
                ('offset',{'type':'integer','minimum':0,'default':0}),

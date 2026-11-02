@@ -195,7 +195,7 @@ export function AuditPage() {
     <div className="space-y-4">
       <PageHeader
         title="Audit Trail"
-        subtitle="Retained historical audit events, newest first. This is not yet a unified audit of every current V2/HITL subsystem."
+        subtitle="Historical Feedback / Legacy Audit: retained Signature/XGBoost feedback and legacy events. Current HITL Audit is under Evaluation & Audit."
       />
 
       <div className="rounded-sm border border-border bg-surface px-4 py-3">

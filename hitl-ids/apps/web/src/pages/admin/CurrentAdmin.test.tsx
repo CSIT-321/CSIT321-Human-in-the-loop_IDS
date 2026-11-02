@@ -1,4 +1,4 @@
-import { screen, waitFor, within } from "@testing-library/react";
+import { fireEvent, screen, waitFor, within } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 
 import { ROLE_META } from "../../session/roles";
@@ -30,6 +30,23 @@ const governance = {
     minimumAgreementRatio: 0.67, contextMaximumAgeHours: 24, campaignAlertThreshold: 5, auditSamplePercent: 10 },
   analystWork: { version: "analyst-work-claim-v1", claimArbitrationWindowMs: 750 },
 };
+const auditEvents = [
+  { eventRef: "work-1", timestamp: "2026-11-03T02:01:12Z", actorType: "human", actorId: 1,
+    actorName: "Alice", decisionSource: "analyst", eventCategory: "WORK", eventType: "CLAIM_INTENT",
+    action: "Review requested", objectType: "alert", objectRef: "alert-630b68", alertRef: "alert-630b68",
+    caseRef: null, lessonRef: null, workspace: "v3-1-replay", summary: "Alice requested review of alert-630b68.",
+    result: null, sourceSubsystem: "analyst_work_events", detail: { policyVersion: "analyst-work-claim-v1" } },
+  { eventRef: "memory-1", timestamp: "2026-11-03T02:03:08Z", actorType: "system", actorId: null,
+    actorName: null, decisionSource: "system_policy", eventCategory: "MEMORY", eventType: "V2_TRIAGE_MEMORY_AUTO_ACTIVATED",
+    action: "Lesson auto-activated", objectType: "lesson", objectRef: "lesson-31a9cd", alertRef: "alert-630b68",
+    caseRef: null, lessonRef: "lesson-31a9cd", workspace: "v3-1-replay", summary: "Lesson auto-activated.",
+    result: "active", sourceSubsystem: "triage_memory_audit", detail: { supportCount: 3 } },
+  { eventRef: "response-1", timestamp: "2026-11-03T02:10:42Z", actorType: "human", actorId: 1,
+    actorName: "Alice", decisionSource: "analyst", eventCategory: "RESPONSE", eventType: "V2_RESPONSE_APPROVED",
+    action: "Response approved", objectType: "recommendation", objectRef: "recommendation-1", alertRef: "alert-630b68",
+    caseRef: "case-91dbe2", lessonRef: null, workspace: "v3-1-replay", summary: "Alice approved recommendation.",
+    result: "Approved — Not Executed", sourceSubsystem: "response_decisions", detail: { reason: "Reviewed" } },
+];
 
 function setup() {
   return stubFetch(request => {
@@ -40,6 +57,15 @@ function setup() {
       { username: "admin", displayName: "System Administrator", role: "system_admin", status: "active", lastLogin: "2026-11-03T00:00:00Z" },
       { username: "g.ang", displayName: "Glenn Ang", role: "security_analyst", status: "active", lastLogin: null },
     ] });
+    if (path === "/api/admin/audit/current") {
+      const query = new URL(request.url).searchParams;
+      const items = auditEvents.filter(event => (!query.get("category") || event.eventCategory === query.get("category")) &&
+        (!query.get("decisionSource") || event.decisionSource === query.get("decisionSource")) &&
+        (!query.get("objectType") || event.objectType === query.get("objectType")) &&
+        (!query.get("search") || [event.alertRef, event.caseRef, event.lessonRef].some(ref => ref?.includes(query.get("search")!))) &&
+        (!query.get("actor") || event.actorName?.includes(query.get("actor")!)));
+      return jsonResponse({ items, total: items.length, limit: 25, offset: 0, activeWorkspace: "v3-1-replay" });
+    }
     return jsonResponse({ error: { code: "NOT_FOUND", message: path } }, 404);
   });
 }
@@ -107,13 +133,47 @@ describe("current Admin surface", () => {
     expect(screen.queryByText(/password reset|permission matrix/i)).toBeNull();
   });
 
-  it("links to the reused Final V3.1 route and labels retained audit coverage", async () => {
+  it("separates current audit, frozen evaluation, and historical feedback", async () => {
     setup();
     renderApp("/admin/evaluation", { session: admin });
     expect(await screen.findByRole("heading", { level: 1, name: "Evaluation & Audit" })).toBeVisible();
     expect(screen.getByRole("link", { name: "Open Final V3.1 Evaluation" })).toHaveAttribute("href", "/admin/evaluation/final-v3-1");
-    expect(screen.getByRole("link", { name: "Open Audit Trail" })).toHaveAttribute("href", "/admin/audit");
-    expect(screen.getByText(/not yet a unified audit projection/)).toBeVisible();
+    expect(screen.getByRole("link", { name: "Open Current HITL Audit" })).toHaveAttribute("href", "/admin/evaluation/audit");
+    expect(screen.getByRole("link", { name: "Open Historical Audit" })).toHaveAttribute("href", "/admin/audit");
+    expect(screen.getByText(/separate from this evaluation/)).toBeVisible();
+  });
+
+  it("renders one current timeline with attribution, references, filters and non-execution", async () => {
+    const seen = setup();
+    renderApp("/admin/evaluation/audit", { session: admin });
+    expect(await screen.findByRole("heading", { level: 1, name: "Current HITL Audit" })).toBeVisible();
+    expect(screen.getAllByTestId("audit-event")).toHaveLength(3);
+    expect(within(screen.getAllByTestId("audit-event")[1]!).getAllByText("System Policy")[0]).toBeVisible();
+    expect(screen.getAllByText("Alice")).toHaveLength(2);
+    expect(screen.getByText("Approved — Not Executed")).toBeVisible();
+    fireEvent.click(screen.getAllByText("Event details")[1]!);
+    expect(screen.getAllByText("lesson-31a9cd").length).toBeGreaterThan(0);
+    fireEvent.change(screen.getByRole("combobox", { name: "Category" }), { target: { value: "MEMORY" } });
+    await waitFor(() => expect(screen.getAllByTestId("audit-event")).toHaveLength(1));
+    expect(screen.getByText("Lesson auto-activated")).toBeVisible();
+    expect(seen.some(request => new URL(request.url).searchParams.get("category") === "MEMORY")).toBe(true);
+    fireEvent.change(screen.getByRole("combobox", { name: "Category" }), { target: { value: "" } });
+    fireEvent.change(screen.getByRole("combobox", { name: "Decision source" }), { target: { value: "system_policy" } });
+    await waitFor(() => expect(screen.getAllByTestId("audit-event")).toHaveLength(1));
+    fireEvent.change(screen.getByRole("combobox", { name: "Decision source" }), { target: { value: "" } });
+    fireEvent.change(screen.getByRole("textbox", { name: "Reference search" }), { target: { value: "case-91dbe2" } });
+    fireEvent.click(screen.getByRole("button", { name: "Apply text filters" }));
+    await waitFor(() => expect(screen.getAllByTestId("audit-event")).toHaveLength(1));
+    expect(screen.getByText("Approved — Not Executed")).toBeVisible();
+  });
+
+  it("keeps Current HITL Audit unavailable to Analyst and Evaluator routes", async () => {
+    setup();
+    const mounted = renderApp("/admin/evaluation/audit", { session: analyst });
+    await waitFor(() => expect(mounted.router.state.location.pathname).not.toBe("/admin/evaluation/audit"));
+    mounted.unmount();
+    const other = renderApp("/admin/evaluation/audit", { session: evaluator });
+    await waitFor(() => expect(other.router.state.location.pathname).not.toBe("/admin/evaluation/audit"));
   });
 
   it("preserves the Evaluator and Analyst primary navigation", async () => {

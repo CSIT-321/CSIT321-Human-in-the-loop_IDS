@@ -2144,6 +2144,216 @@
         "title": "CreateCaseRequest",
         "type": "object"
       },
+      "CurrentAuditEvent": {
+        "additionalProperties": false,
+        "properties": {
+          "action": {
+            "title": "Action",
+            "type": "string"
+          },
+          "actorId": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Actorid"
+          },
+          "actorName": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Actorname"
+          },
+          "actorType": {
+            "enum": [
+              "human",
+              "system"
+            ],
+            "title": "Actortype",
+            "type": "string"
+          },
+          "alertRef": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Alertref"
+          },
+          "caseRef": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Caseref"
+          },
+          "decisionSource": {
+            "enum": [
+              "analyst",
+              "system_policy",
+              "historical_migration",
+              "admin"
+            ],
+            "title": "Decisionsource",
+            "type": "string"
+          },
+          "detail": {
+            "additionalProperties": true,
+            "title": "Detail",
+            "type": "object"
+          },
+          "eventCategory": {
+            "enum": [
+              "WORKSPACE",
+              "WORK",
+              "VERDICT",
+              "MEMORY",
+              "REVIEW",
+              "TIER2",
+              "RESPONSE",
+              "RESOLUTION"
+            ],
+            "title": "Eventcategory",
+            "type": "string"
+          },
+          "eventRef": {
+            "title": "Eventref",
+            "type": "string"
+          },
+          "eventType": {
+            "title": "Eventtype",
+            "type": "string"
+          },
+          "lessonRef": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Lessonref"
+          },
+          "objectRef": {
+            "title": "Objectref",
+            "type": "string"
+          },
+          "objectType": {
+            "enum": [
+              "workspace",
+              "alert",
+              "case",
+              "lesson",
+              "recommendation"
+            ],
+            "title": "Objecttype",
+            "type": "string"
+          },
+          "result": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Result"
+          },
+          "sourceSubsystem": {
+            "title": "Sourcesubsystem",
+            "type": "string"
+          },
+          "summary": {
+            "title": "Summary",
+            "type": "string"
+          },
+          "timestamp": {
+            "title": "Timestamp",
+            "type": "string"
+          },
+          "workspace": {
+            "title": "Workspace",
+            "type": "string"
+          }
+        },
+        "required": [
+          "eventRef",
+          "timestamp",
+          "actorType",
+          "decisionSource",
+          "eventCategory",
+          "eventType",
+          "action",
+          "objectType",
+          "objectRef",
+          "workspace",
+          "summary",
+          "sourceSubsystem"
+        ],
+        "title": "CurrentAuditEvent",
+        "type": "object"
+      },
+      "CurrentAuditPage": {
+        "additionalProperties": false,
+        "properties": {
+          "activeWorkspace": {
+            "title": "Activeworkspace",
+            "type": "string"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/CurrentAuditEvent"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "limit": {
+            "title": "Limit",
+            "type": "integer"
+          },
+          "offset": {
+            "title": "Offset",
+            "type": "integer"
+          },
+          "total": {
+            "title": "Total",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "items",
+          "total",
+          "limit",
+          "offset",
+          "activeWorkspace"
+        ],
+        "title": "CurrentAuditPage",
+        "type": "object"
+      },
       "DashboardBreakdowns": {
         "additionalProperties": false,
         "description": "``GET /api/dashboard/breakdowns`` — top talkers, verdict and status mix, guardrail actions,\nand flow volume by capture hour (console rebuild B4).\n\nThese are **recorded** flows: the histogram shows when the traffic was captured, not a live rate.",
@@ -12301,6 +12511,181 @@
   },
   "openapi": "3.1.0",
   "paths": {
+    "/api/admin/audit/current": {
+      "get": {
+        "operationId": "listCurrentHitlAudit",
+        "parameters": [
+          {
+            "description": "`Bearer <token>` from POST /api/auth/login",
+            "in": "header",
+            "name": "Authorization",
+            "required": false,
+            "schema": {
+              "example": "Bearer eyJhbGciOiJIUzI1NiJ9...",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 25,
+              "maximum": 200,
+              "minimum": 1,
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "offset",
+            "required": false,
+            "schema": {
+              "default": 0,
+              "minimum": 0,
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "category",
+            "required": false,
+            "schema": {
+              "enum": [
+                "WORKSPACE",
+                "WORK",
+                "VERDICT",
+                "MEMORY",
+                "REVIEW",
+                "TIER2",
+                "RESPONSE",
+                "RESOLUTION"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "actor",
+            "required": false,
+            "schema": {
+              "maxLength": 100,
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "decisionSource",
+            "required": false,
+            "schema": {
+              "enum": [
+                "analyst",
+                "system_policy",
+                "historical_migration",
+                "admin"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "objectType",
+            "required": false,
+            "schema": {
+              "enum": [
+                "workspace",
+                "alert",
+                "case",
+                "lesson",
+                "recommendation"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "search",
+            "required": false,
+            "schema": {
+              "maxLength": 120,
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "workspace",
+            "required": false,
+            "schema": {
+              "enum": [
+                "operational",
+                "v3-1-replay",
+                "global"
+              ],
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CurrentAuditPage"
+                }
+              }
+            },
+            "description": "Filtered current HITL audit page"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Validation failed"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not signed in, or the token expired"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Role not permitted"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Database unavailable or schema unsupported; read-only requests never migrate"
+          }
+        },
+        "summary": "Read-only current HITL audit",
+        "tags": [
+          "Current Admin"
+        ],
+        "x-required-roles": [
+          "system_admin"
+        ]
+      }
+    },
     "/api/admin/governance": {
       "get": {
         "operationId": "getCurrentHitlGovernance",
