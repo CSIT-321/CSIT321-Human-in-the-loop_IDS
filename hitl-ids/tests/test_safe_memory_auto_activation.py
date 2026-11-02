@@ -23,6 +23,8 @@ def conn():
 def sources(c,n=6):
     stage(c,[event(300+i,'SYNTHETIC automatic SSH scan',severity=1) for i in range(n)])
     alerts=admit_all(c)
+    from work_claim_fixture import claim_work
+    for a in alerts:claim_work(c,a)
     for a in alerts:seed_synthetic_facts(c,a,safe_context(),m.utc_now())
     return alerts
 

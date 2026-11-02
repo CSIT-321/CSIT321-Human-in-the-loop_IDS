@@ -176,6 +176,8 @@ def test_effective_attention_real_services_and_readonly(conn,api,monkeypatch,wit
 
 def test_current_candidate_api_blocked_and_manual_override_atomic(conn,api):
     stage(conn,[event()]);alert=admit_all(conn)[0];ref=alert.operational_alert_ref
+    from work_claim_fixture import claim_work
+    claim_work(conn,alert)
     view=api.get(f'/api/v2/alerts/{ref}/triage-state').json()
     body=dict(requestId=str(uuid4()),expectedStateVersion=view['stateVersion'],reason='SYNTHETIC manual investigation')
     before='\n'.join(conn.iterdump())

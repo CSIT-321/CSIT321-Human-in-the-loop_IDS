@@ -17,6 +17,7 @@ from packages.detection.adapters.operational_v2 import read_triage, read_project
 from packages.contracts.operational_v2 import OperationalAlertV2, HandlingRouteV2, PriorityBandV2
 from packages.contracts.suricata_bundle import AttackCategory
 from packages.detection.selective_review import Disposition, effective_review
+from packages.detection.analyst_work import read_work, Scope
 from packages.detection.routing import (
     RoutingRequest, RoutingAction, RoutingConflict, allowed_actions, decode_audit,
     route_alert, state_version,
@@ -43,7 +44,11 @@ def _view(conn, alert_id, principal, review=None):
     case = conn.execute('SELECT case_ref FROM tier2_cases WHERE primary_operational_alert_id=?', (alert_id,)).fetchone()
     system = conn.execute('SELECT classification,routing_decision FROM operational_system_routing WHERE operational_alert_id=?', (alert_id,)).fetchone()
     bundle = json.loads(row['detector_evidence']).get('structured_evidence', {}).get('suricataBundle')
-    return RoutingView(effective_review=review or effective_review(conn, row['operational_alert_ref']),
+    attention=review or effective_review(conn,row['operational_alert_ref'])
+    work=read_work(conn,alert_id,principal.user_id,attention)
+    actions=list(allowed_actions(state)) if principal.role in ('security_analyst','system_admin') else []
+    if system and state.handling_route=='tier1_review' and work.status!='completed' and not work.can_mutate: actions=[]
+    return RoutingView(effective_review=attention,
         classification=json.loads(system['classification']) if system else None,
         detection_summary=QueueDetectionSummary(source_ip=row['source_ip'], destination_ip=row['destination_ip'],
             destination_port=row['destination_port'], occurred_at=row['occurred_at'],
@@ -52,7 +57,7 @@ def _view(conn, alert_id, principal, review=None):
         system_routing=json.loads(system['routing_decision']) if system else None, operational_alert_ref=row['operational_alert_ref'], title=row['detection_title'],
         detector_name=row['detector_name'], detector_source=row['detector_source'], state=state, state_version=state_version(state),
         review_reasons=[state.review_reason], latest_decision=decode_audit(audit) if audit else None,
-        allowed_actions=list(allowed_actions(state)) if principal.role in ('security_analyst', 'system_admin') else [],
+        allowed_actions=actions, work=work,
         case_ref=case['case_ref'] if case else None)
 
 
@@ -64,6 +69,7 @@ def list_routing(conn: ReadConn, principal: ReadPrincipal, limit: int = Query(50
                  priorityBand: PriorityBandV2 | None = None,
                  routeClass: Literal['ROUTINE_REVIEW', 'CRITICAL_ESCALATION', 'EXPERT_REVIEW_REQUIRED'] | None = None,
                  attackCategory: AttackCategory | None = None, q: str | None = Query(None, max_length=200),
+                 workScope: Scope = 'all',
                  sort: Literal['priority_desc'] = 'priority_desc'):
     """Filter the full V2 dataset before paging. Order: Operational Priority DESC (null last),
     occurredAt instant DESC, operationalAlertRef ASC. Attention is evaluated read-only."""
@@ -73,7 +79,7 @@ def list_routing(conn: ReadConn, principal: ReadPrincipal, limit: int = Query(50
         total, ids = operational_queue.queue_page(conn, limit=limit, offset=offset, reviews=reviews,
             handling_route=handlingRoute, review_required=reviewRequired, priority_band=priorityBand,
             review_disposition=reviewDisposition,
-            route_class=routeClass, attack_category=attackCategory, q=q)
+            route_class=routeClass, attack_category=attackCategory, q=q, work_scope=workScope)
         items = [_view(conn, alert_id, principal, reviews.get(alert_id)) for alert_id in ids]
         return Page(items=items, page=PageInfo(total=total, limit=limit, offset=offset, returned=len(items)))
 

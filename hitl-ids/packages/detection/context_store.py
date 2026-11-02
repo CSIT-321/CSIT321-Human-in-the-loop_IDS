@@ -82,6 +82,12 @@ def collect_fact(conn,*,actor_id,request:FactRequest):
             result=FactMutation(fact=fact,revision=revision(conn),replayed=True)
             conn.commit(); return result
         if revision(conn)!=request.expected_revision: raise FactConflict('fact history changed; refresh its revision')
+        if request.subject_type=='operational_alert':
+            from packages.detection.analyst_work import protect_owner, WorkConflict
+            subject=conn.execute('SELECT id FROM operational_alerts_v2 WHERE operational_alert_ref=?',(request.subject_value,)).fetchone()
+            if subject:
+                try: protect_owner(conn,subject[0],actor_id)
+                except WorkConflict as exc: raise FactConflict(str(exc)) from exc
         now=m.utc_now()
         if request.observed_at>now or request.expires_at<=now or request.expires_at<=request.valid_from:
             raise ValueError('observation cannot be future; validity must be nonempty and unexpired')

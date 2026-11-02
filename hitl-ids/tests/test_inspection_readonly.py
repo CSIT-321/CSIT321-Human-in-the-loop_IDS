@@ -15,6 +15,8 @@ from test_prospective_blockers import old_database
 
 
 INSPECTION_ROUTES = (
+    '/api/v2/alerts/{alertRef}/work',
+    '/api/v2/alerts/{alertRef}/work/events',
     '/api/v2/alerts/{alertRef}/triage-memory/verdict-state',
     '/api/v2/alerts/{alertRef}/verdict',
     '/api/v2/alerts/{alertRef}/verdict-history',

@@ -3,13 +3,17 @@ import type { Schemas } from "../../api/client";
 import type { paths } from "../../api/schema";
 
 import { needsReview } from "./EffectiveReview";
+import {workLabel} from './AnalystWork';
 
 type Summary = Schemas["OperationalSummary"];
 type Query = NonNullable<paths["/api/v2/alerts"]["get"]["parameters"]["query"]>;
 export const queueViews = [
+  { key: "active", label: "Active", count: "activeAlerts", query: {workScope:'active'} },
+  { key: "completed", label: "Completed", count: "completedWork", query: {workScope:'completed'} },
+  { key: "escalated", label: "Escalated", count: "escalatedWork", query: {workScope:'escalated'} },
   { key: "all", label: "All", count: "totalAlerts", query: {} },
   { key: "tier2", label: "Tier 2", count: "tier2Cases", query: { handlingRoute: "tier2_case" } },
-  { key: "tier1", label: "Tier 1", count: "tier1Review", query: { handlingRoute: "tier1_review" } },
+  { key: "tier1", label: "Tier 1", count: "tier1Review", query: { handlingRoute: "tier1_review",workScope:'active' } },
   { key: "expert", label: "Expert Review", count: "expertReview", query: { routeClass: "EXPERT_REVIEW_REQUIRED" } },
   { key: "critical", label: "Critical", count: "criticalAlerts", query: { priorityBand: "P1" } },
   { key: "needs-review", label: "Needs Review", count: "reviewRequired", query: { reviewRequired: true } },
@@ -24,13 +28,14 @@ export const attackCategories = [
 export const categoryLabel = (value: string) => attackCategories.find(([key]) => key === value)?.[1] ?? "Not classified";
 const number = (value: number | undefined) => value === undefined ? "—" : value.toLocaleString();
 const metrics = [
+  ["active", "Active Alerts", "activeAlerts", "Alerts without completed or escalated Tier 1 work; attention and Tier 2 remain separate"],
   ["critical", "Critical", "criticalAlerts", "Current priority band P1 / critical"],
   ["tier2", "Tier 2", "tier2Cases", "Current route is Tier 2 Case"],
   ["expert", "Expert Review", "expertReview", "Persisted Expert Review Required class or Unknown / Needs Expert classification"],
   ["needs-review", "Needs Review", "reviewRequired", "Effective attention requires human review, including audit samples"],
   ["no-review", "No Immediate Review", "noImmediateReview", "Effective attention is No Immediate Review; not a human verdict"],
   ["cases", "Open Tier 2 Cases", "openTier2Cases", "Cases with status open or investigating"],
-  ["tier1", "Tier 1", "tier1Review", "Current route is Tier 1 Review"],
+  ["tier1", "Active Tier 1", "tier1Review", "Tier 1 route with unfinished human work"],
   ["all", "Total Alerts", "totalAlerts", "All persisted operational V2 alerts"],
 ] as const;
 
@@ -46,7 +51,7 @@ export function OperationalKpis({ data, onView }: { data?: Summary; onView: (vie
           : <button key={key} aria-label={accessible} title={definition} onClick={() => onView(view)} className={className}>{content}</button>;
       })}
     </div>
-    <p className="px-3 pb-1 text-[10px] text-dim">Entire operational dataset · categories overlap · queue filters do not change these counts</p>
+    <p className="px-3 pb-1 text-[10px] text-dim">Active Alerts / Active Tier 1 exclude completed and escalated work. Other counts cover the entire operational dataset; attention is not work completion.</p>
   </section>;
 }
 
@@ -84,6 +89,7 @@ export function QueueItem({ item }: { item: Schemas["RoutingView"] }) {
       </span>
     </span>
     <span className="block break-words font-semibold">{item.title}</span>
+    {item.work?.status&&<span className="block break-words font-semibold text-accent">{workLabel(item.work)}{item.work.status==='completed'&&item.work.verdictOutcome?` · ${item.work.verdictOutcome.replaceAll('_',' ')}`:''}</span>}
     {!needsReview(item) && <span className="block text-ok">No Immediate Review</span>}
     <span className="block text-muted">{item.classification?.status === "informational_policy_signal" ? "Informational / Policy Signal" : categoryLabel(item.classification?.attackCategory ?? "")}</span>
     {detail && <span className="block break-all font-mono text-[10px]">{detail.sourceIp} → {detail.destinationIp}{detail.destinationPort != null ? ":" + detail.destinationPort : ""}</span>}

@@ -41,7 +41,11 @@ test('FINAL coherent Golden Path: staged correlated EVE → human learning → s
   await expect(page.getByRole('status')).toContainText('Operational admission completed');await page.getByRole('link',{name:'Open Analyst Workstation'}).click();
   refs[name]=new URL(page.url()).searchParams.get('alertRef')!;expect(refs[name]).toBeTruthy();
   await post(`${harness}/context/${refs[name]}`,{});
-  const state=await get(`/api/v2/alerts/${refs[name]}/triage-state`);evidence[name]={...manifest[name],alertRef:refs[name],admission:state};return state;
+  const state=await get(`/api/v2/alerts/${refs[name]}/triage-state`);evidence[name]={...manifest[name],alertRef:refs[name],admission:state};
+  // Explicit active review precedes judgments (and D's later policy deferral).
+  // System-routed Tier 2 never passes through Tier 1 claiming.
+  if(state.work?.canClaim){await workspace.getByRole('button',{name:'Start Review',exact:true}).click();await expect(workspace.getByRole('region',{name:'Human work status'})).toContainText('In Review — You');}
+  return state;
  }
  const learning=(name:string)=>get(`/api/v2/alerts/${refs[name]}/triage-memory/verdict-state`);
  const review=(name:string)=>get(`/api/v2/alerts/${refs[name]}/selective-review`);

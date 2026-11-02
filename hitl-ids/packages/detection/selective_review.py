@@ -219,6 +219,9 @@ def decide_review(conn,ref,*,actor_id,action,request:ReviewCommand):
             original.pop('collectionRecording',None)
             if retry['actor_id']!=actor_id or _json(original)!=payload:raise ReviewConflict('requestId belongs to another review decision')
             conn.commit();return ReviewMutation(view=current,replayed=True)
+        from packages.detection.analyst_work import protect_owner, WorkConflict
+        try: protect_owner(conn,current.policy_evaluation.inputs.alert.id,actor_id)
+        except WorkConflict as exc: raise ReviewConflict(str(exc)) from exc
         if current.version!=request.expected_version:raise ReviewConflict('review evidence changed; refresh before deciding')
         snapshot=current.policy_evaluation
         if action=='require_review':

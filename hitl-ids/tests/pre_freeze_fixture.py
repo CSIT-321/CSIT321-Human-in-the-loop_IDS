@@ -77,11 +77,16 @@ def review_scenario(conn, actor=1, scope='effective-review'):
     if lesson.decision is None:
         memory.decide_memory(conn, lesson.lesson.lesson_ref, actor_id=actor, action='activate', request=memory.MemoryDecisionRequest(
             request_id=uuid4(), expected_revision=lesson.revision, reason='SYNTHETIC evidence activation'))
-    for alert in alerts[3:]: assert defer(conn, alert, actor).disposition == 'no_immediate_review'
+    from work_claim_fixture import claim_work
+    for alert in alerts[3:]:
+        claim_work(conn,alert,actor)  # owned before policy deferral; Verdict must still recall it
+        assert defer(conn, alert, actor).disposition == 'no_immediate_review'
     return alerts
 
 
 def contribute_review(conn,alert,actor_id,request):
+    from work_claim_fixture import claim_work
+    claim_work(conn,alert,actor_id)
     from packages.detection.analyst_verdict import read_verdict,record_verdict,VerdictCommand
     view=read_verdict(conn,alert.operational_alert_ref,actor_id)
     verdict=record_verdict(conn,alert.operational_alert_ref,actor_id=actor_id,request=VerdictCommand(

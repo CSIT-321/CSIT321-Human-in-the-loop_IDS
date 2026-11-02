@@ -1379,6 +1379,60 @@
         "title": "CaseView",
         "type": "object"
       },
+      "ClaimCommand": {
+        "additionalProperties": false,
+        "properties": {
+          "expectedRevision": {
+            "minimum": 0,
+            "title": "Expectedrevision",
+            "type": "integer"
+          },
+          "requestId": {
+            "format": "uuid",
+            "title": "Requestid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "requestId",
+          "expectedRevision"
+        ],
+        "title": "ClaimCommand",
+        "type": "object"
+      },
+      "ClaimResult": {
+        "additionalProperties": false,
+        "properties": {
+          "outcome": {
+            "enum": [
+              "claimed",
+              "contended",
+              "ineligible"
+            ],
+            "title": "Outcome",
+            "type": "string"
+          },
+          "replayed": {
+            "title": "Replayed",
+            "type": "boolean"
+          },
+          "roundRef": {
+            "title": "Roundref",
+            "type": "string"
+          },
+          "work": {
+            "$ref": "#/components/schemas/WorkView"
+          }
+        },
+        "required": [
+          "roundRef",
+          "outcome",
+          "replayed",
+          "work"
+        ],
+        "title": "ClaimResult",
+        "type": "object"
+      },
       "ClassMetrics": {
         "additionalProperties": false,
         "properties": {
@@ -6694,12 +6748,37 @@
         "additionalProperties": false,
         "description": "Whole persisted V2 dataset; categories overlap, never a sum of queue pages.",
         "properties": {
+          "activeAlerts": {
+            "default": 0,
+            "title": "Activealerts",
+            "type": "integer"
+          },
+          "availableWork": {
+            "default": 0,
+            "title": "Availablework",
+            "type": "integer"
+          },
+          "completedWork": {
+            "default": 0,
+            "title": "Completedwork",
+            "type": "integer"
+          },
           "criticalAlerts": {
             "title": "Criticalalerts",
             "type": "integer"
           },
+          "escalatedWork": {
+            "default": 0,
+            "title": "Escalatedwork",
+            "type": "integer"
+          },
           "expertReview": {
             "title": "Expertreview",
+            "type": "integer"
+          },
+          "inReviewWork": {
+            "default": 0,
+            "title": "Inreviewwork",
             "type": "integer"
           },
           "noImmediateReview": {
@@ -8716,6 +8795,17 @@
           "title": {
             "title": "Title",
             "type": "string"
+          },
+          "work": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/WorkView"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
           }
         },
         "required": [
@@ -10634,6 +10724,225 @@
           "latest"
         ],
         "title": "VerdictView",
+        "type": "object"
+      },
+      "WorkEvent": {
+        "additionalProperties": false,
+        "properties": {
+          "actorId": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Actorid"
+          },
+          "createdAt": {
+            "title": "Createdat",
+            "type": "string"
+          },
+          "decisionSource": {
+            "title": "Decisionsource",
+            "type": "string"
+          },
+          "detail": {
+            "additionalProperties": true,
+            "title": "Detail",
+            "type": "object"
+          },
+          "eventType": {
+            "title": "Eventtype",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "roundRef": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Roundref"
+          }
+        },
+        "required": [
+          "id",
+          "eventType",
+          "actorId",
+          "decisionSource",
+          "roundRef",
+          "createdAt",
+          "detail"
+        ],
+        "title": "WorkEvent",
+        "type": "object"
+      },
+      "WorkView": {
+        "additionalProperties": false,
+        "properties": {
+          "canClaim": {
+            "default": false,
+            "title": "Canclaim",
+            "type": "boolean"
+          },
+          "canMutate": {
+            "default": false,
+            "title": "Canmutate",
+            "type": "boolean"
+          },
+          "claimedAt": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Claimedat"
+          },
+          "explanation": {
+            "title": "Explanation",
+            "type": "string"
+          },
+          "finishedAt": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Finishedat"
+          },
+          "finishedByActorId": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Finishedbyactorid"
+          },
+          "finishedByName": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Finishedbyname"
+          },
+          "isOwner": {
+            "default": false,
+            "title": "Isowner",
+            "type": "boolean"
+          },
+          "ownerActorId": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Owneractorid"
+          },
+          "ownerName": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Ownername"
+          },
+          "revision": {
+            "title": "Revision",
+            "type": "integer"
+          },
+          "roundRef": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Roundref"
+          },
+          "status": {
+            "anyOf": [
+              {
+                "enum": [
+                  "available",
+                  "in_review",
+                  "completed",
+                  "escalated"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Status"
+          },
+          "verdictOutcome": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Verdictoutcome"
+          },
+          "verdictRef": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Verdictref"
+          }
+        },
+        "required": [
+          "status",
+          "revision",
+          "explanation"
+        ],
+        "title": "WorkView",
         "type": "object"
       }
     }
@@ -13838,6 +14147,20 @@
           },
           {
             "in": "query",
+            "name": "workScope",
+            "schema": {
+              "default": "all",
+              "enum": [
+                "all",
+                "active",
+                "completed",
+                "escalated"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
             "name": "q",
             "schema": {
               "maxLength": 200,
@@ -15879,6 +16202,254 @@
         "summary": "Read append-only human verdict history",
         "tags": [
           "Analyst verdict"
+        ]
+      }
+    },
+    "/api/v2/alerts/{alertRef}/work": {
+      "get": {
+        "operationId": "getAnalystWork",
+        "parameters": [
+          {
+            "description": "`Bearer <token>` from POST /api/auth/login",
+            "in": "header",
+            "name": "Authorization",
+            "required": false,
+            "schema": {
+              "example": "Bearer eyJhbGciOiJIUzI1NiJ9...",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "alertRef",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorkView"
+                }
+              }
+            },
+            "description": "Current human work"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not found"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Database unavailable or schema unsupported; read-only requests never migrate"
+          }
+        },
+        "summary": "Read human work without claiming",
+        "tags": [
+          "Shared analyst work"
+        ]
+      }
+    },
+    "/api/v2/alerts/{alertRef}/work/claim": {
+      "post": {
+        "operationId": "claimAnalystWork",
+        "parameters": [
+          {
+            "description": "`Bearer <token>` from POST /api/auth/login",
+            "in": "header",
+            "name": "Authorization",
+            "required": false,
+            "schema": {
+              "example": "Bearer eyJhbGciOiJIUzI1NiJ9...",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "alertRef",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ClaimCommand"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClaimResult"
+                }
+              }
+            },
+            "description": "Finalized single-actor claim"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Validation failed"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Role not permitted"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Database unavailable or schema unsupported; read-only requests never migrate"
+          }
+        },
+        "summary": "Arbitrate explicit Tier 1 claim; multiple distinct contenders all conflict",
+        "tags": [
+          "Shared analyst work"
+        ]
+      }
+    },
+    "/api/v2/alerts/{alertRef}/work/events": {
+      "get": {
+        "operationId": "getAnalystWorkHistory",
+        "parameters": [
+          {
+            "description": "`Bearer <token>` from POST /api/auth/login",
+            "in": "header",
+            "name": "Authorization",
+            "required": false,
+            "schema": {
+              "example": "Bearer eyJhbGciOiJIUzI1NiJ9...",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "alertRef",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "schema": {
+              "default": 50,
+              "maximum": 200,
+              "minimum": 1,
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "offset",
+            "schema": {
+              "default": 0,
+              "minimum": 0,
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/WorkEvent"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Work history"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not found"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Database unavailable or schema unsupported; read-only requests never migrate"
+          }
+        },
+        "summary": "Read immutable claim and work history",
+        "tags": [
+          "Shared analyst work"
         ]
       }
     },

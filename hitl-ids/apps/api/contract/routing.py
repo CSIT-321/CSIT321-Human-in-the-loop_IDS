@@ -6,6 +6,7 @@ from packages.detection.routing import RoutingAction, RoutingAudit
 from packages.detection.tier2_cases import CaseView
 from packages.contracts.suricata_bundle import AttackClassification, SystemRoutingDecision
 from packages.detection.selective_review import EffectiveReview
+from packages.detection.analyst_work import WorkView
 
 
 class OperationalSummary(ApiModel):
@@ -18,6 +19,11 @@ class OperationalSummary(ApiModel):
     review_required: int
     no_immediate_review: int
     open_tier2_cases: int
+    active_alerts: int = 0
+    completed_work: int = 0
+    escalated_work: int = 0
+    available_work: int = 0
+    in_review_work: int = 0
 
 
 class QueueDetectionSummary(ApiModel):
@@ -44,6 +50,7 @@ class RoutingView(ApiModel):
     system_routing: SystemRoutingDecision | None = None
     detection_summary: QueueDetectionSummary | None = None
     effective_review: EffectiveReview | None = None
+    work: WorkView | None = None
 
 
 class RoutingResponse(ApiModel):

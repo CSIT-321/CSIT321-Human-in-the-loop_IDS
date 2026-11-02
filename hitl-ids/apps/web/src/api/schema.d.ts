@@ -816,6 +816,57 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v2/alerts/{alertRef}/work": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Read human work without claiming */
+        get: operations["getAnalystWork"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/alerts/{alertRef}/work/claim": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Arbitrate explicit Tier 1 claim; multiple distinct contenders all conflict */
+        post: operations["claimAnalystWork"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/alerts/{alertRef}/work/events": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Read immutable claim and work history */
+        get: operations["getAnalystWorkHistory"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v2/collection/runs": {
         parameters: {
             query?: never;
@@ -2026,6 +2077,29 @@ export interface components {
             title: string;
             /** Updatedat */
             updatedAt: string;
+        };
+        /** ClaimCommand */
+        ClaimCommand: {
+            /** Expectedrevision */
+            expectedRevision: number;
+            /**
+             * Requestid
+             * Format: uuid
+             */
+            requestId: string;
+        };
+        /** ClaimResult */
+        ClaimResult: {
+            /**
+             * Outcome
+             * @enum {string}
+             */
+            outcome: "claimed" | "contended" | "ineligible";
+            /** Replayed */
+            replayed: boolean;
+            /** Roundref */
+            roundRef: string;
+            work: components["schemas"]["WorkView"];
         };
         /** ClassMetrics */
         ClassMetrics: {
@@ -4269,10 +4343,35 @@ export interface components {
          * @description Whole persisted V2 dataset; categories overlap, never a sum of queue pages.
          */
         OperationalSummary: {
+            /**
+             * Activealerts
+             * @default 0
+             */
+            activeAlerts: number;
+            /**
+             * Availablework
+             * @default 0
+             */
+            availableWork: number;
+            /**
+             * Completedwork
+             * @default 0
+             */
+            completedWork: number;
             /** Criticalalerts */
             criticalAlerts: number;
+            /**
+             * Escalatedwork
+             * @default 0
+             */
+            escalatedWork: number;
             /** Expertreview */
             expertReview: number;
+            /**
+             * Inreviewwork
+             * @default 0
+             */
+            inReviewWork: number;
             /** Noimmediatereview */
             noImmediateReview: number;
             /** Opentier2Cases */
@@ -5070,6 +5169,8 @@ export interface components {
             systemRouting: components["schemas"]["SystemRoutingDecision"] | null;
             /** Title */
             title: string;
+            /** @default null */
+            work: components["schemas"]["WorkView"] | null;
         };
         /**
          * RuleMatchPanel
@@ -5844,6 +5945,94 @@ export interface components {
             revision: number;
             /** Sourcestateversion */
             sourceStateVersion: string;
+        };
+        /** WorkEvent */
+        WorkEvent: {
+            /** Actorid */
+            actorId: number | null;
+            /** Createdat */
+            createdAt: string;
+            /** Decisionsource */
+            decisionSource: string;
+            /** Detail */
+            detail: {
+                [key: string]: unknown;
+            };
+            /** Eventtype */
+            eventType: string;
+            /** Id */
+            id: number;
+            /** Roundref */
+            roundRef: string | null;
+        };
+        /** WorkView */
+        WorkView: {
+            /**
+             * Canclaim
+             * @default false
+             */
+            canClaim: boolean;
+            /**
+             * Canmutate
+             * @default false
+             */
+            canMutate: boolean;
+            /**
+             * Claimedat
+             * @default null
+             */
+            claimedAt: string | null;
+            /** Explanation */
+            explanation: string;
+            /**
+             * Finishedat
+             * @default null
+             */
+            finishedAt: string | null;
+            /**
+             * Finishedbyactorid
+             * @default null
+             */
+            finishedByActorId: number | null;
+            /**
+             * Finishedbyname
+             * @default null
+             */
+            finishedByName: string | null;
+            /**
+             * Isowner
+             * @default false
+             */
+            isOwner: boolean;
+            /**
+             * Owneractorid
+             * @default null
+             */
+            ownerActorId: number | null;
+            /**
+             * Ownername
+             * @default null
+             */
+            ownerName: string | null;
+            /** Revision */
+            revision: number;
+            /**
+             * Roundref
+             * @default null
+             */
+            roundRef: string | null;
+            /** Status */
+            status: ("available" | "in_review" | "completed" | "escalated") | null;
+            /**
+             * Verdictoutcome
+             * @default null
+             */
+            verdictOutcome: string | null;
+            /**
+             * Verdictref
+             * @default null
+             */
+            verdictRef: string | null;
         };
     };
     responses: never;
@@ -7352,6 +7541,7 @@ export interface operations {
                 attackCategory?: "brute_force" | "botnet_c2" | "dos" | "ddos" | "web_attack" | "infiltration" | "reconnaissance_port_scan" | "malware_exploit" | "other_known_attack" | "unknown_needs_expert";
                 reviewDisposition?: "must_review" | "recommended_review" | "no_immediate_review";
                 reviewRequired?: boolean;
+                workScope?: "all" | "active" | "completed" | "escalated";
                 q?: string;
                 sort?: "priority_desc";
             };
@@ -8738,6 +8928,169 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["VerdictHistory"];
+                };
+            };
+            /** @description Not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Database unavailable or schema unsupported; read-only requests never migrate */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    getAnalystWork: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description `Bearer <token>` from POST /api/auth/login */
+                Authorization?: string;
+            };
+            path: {
+                alertRef: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Current human work */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WorkView"];
+                };
+            };
+            /** @description Not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Database unavailable or schema unsupported; read-only requests never migrate */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    claimAnalystWork: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description `Bearer <token>` from POST /api/auth/login */
+                Authorization?: string;
+            };
+            path: {
+                alertRef: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ClaimCommand"];
+            };
+        };
+        responses: {
+            /** @description Finalized single-actor claim */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ClaimResult"];
+                };
+            };
+            /** @description Validation failed */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Role not permitted */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Database unavailable or schema unsupported; read-only requests never migrate */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    getAnalystWorkHistory: {
+        parameters: {
+            query?: {
+                limit?: number;
+                offset?: number;
+            };
+            header?: {
+                /** @description `Bearer <token>` from POST /api/auth/login */
+                Authorization?: string;
+            };
+            path: {
+                alertRef: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Work history */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WorkEvent"][];
                 };
             };
             /** @description Not found */

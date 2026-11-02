@@ -68,7 +68,7 @@ describe("Tier 2 cases", () => {
     renderApp("/analyst/tier2-cases/" + ref, { session });
     expect(await screen.findByText("Investigate source host")).toBeInTheDocument();
     expect(screen.getByText("Native Severity: 2")).toBeInTheDocument();
-    expect(screen.getByText("P2 / 65")).toBeInTheDocument();
+    expect(within(screen.getByRole("region", { name: "Case summary" })).getByText("P2 / 65")).toBeInTheDocument();
     expect(screen.getByText("Confidence: Not provided")).toBeInTheDocument();
     expect(await screen.findByText("No response recommendations.")).toBeInTheDocument();
     expect(screen.getByText("APPROVAL DOES NOT EXECUTE THE ACTION.")).toBeInTheDocument();

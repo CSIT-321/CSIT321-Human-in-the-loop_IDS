@@ -170,7 +170,7 @@ describe("unified operational workstation", () => {
     expect(within(workload).getByRole("button", { name: "No Immediate Review 4,664" })).toBeVisible();
     expect(within(workload).getByRole("link", { name: "Open Tier 2 Cases 24" })).toHaveAttribute("href", "/analyst/tier2-cases");
     const tabs = screen.getByRole("tablist", { name: "Operational queue views" });
-    expect(within(tabs).getAllByRole("tab")).toHaveLength(7);
+    expect(within(tabs).getAllByRole("tab")).toHaveLength(10);
     expect(within(tabs).getByRole("tab", { name: "Tier 2 24" })).toBeVisible();
     const queue = screen.getByRole("list", { name: "Operational alerts" });
     expect((await within(queue).findAllByLabelText("Operational Priority: 85"))[0]).toHaveTextContent("85");

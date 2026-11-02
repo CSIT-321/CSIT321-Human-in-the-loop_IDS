@@ -174,6 +174,8 @@ def test_unknown_auto_case_system_attribution_no_candidate_and_manual_override(c
     stage(conn,tmp_path,records()[-1:]);manual,_=admit(conn,2)
     alert=read_projection(conn,manual['operational_alert_id']); before=read_triage(conn,alert.id)
     command=EscalateCaseRequest(request_id=uuid4(),action='manual_escalate',expected_state_version=state_version(before),reason='Analyst investigation requires Tier 2')
+    from work_claim_fixture import claim_work
+    claim_work(conn,alert)
     escalated=escalate_case(conn,alert.operational_alert_ref,actor_id=1,request=command)
     assert escalated.case.created_by_actor_id==1 and escalated.case.decision_source=='analyst'
     assert escalated.case.snapshot.routing_decision.actor_id==1
@@ -234,6 +236,8 @@ def test_migration_fourteen_preserves_populated_history_and_constraints(tmp_path
         # projection while constructing the fixture; use the real reader after upgrade.
         with monkeypatch.context() as patch:
             patch.setattr('packages.detection.tier2_cases.system_classification',lambda *args:None)
+            patch.setattr('packages.detection.analyst_work.row',lambda *args:None)
+            patch.setattr('packages.detection.analyst_work.is_tier1_work',lambda *args:False)
             created=escalate_case(connection,alert.operational_alert_ref,actor_id=1,request=EscalateCaseRequest(
                 request_id=uuid4(),expected_state_version=state_version(state),reason='Historical manual escalation'))
         tables=[r[0] for r in connection.execute("SELECT name FROM sqlite_master WHERE type='table' AND name!='sqlite_sequence'")]

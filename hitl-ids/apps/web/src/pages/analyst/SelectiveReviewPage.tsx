@@ -40,7 +40,7 @@ export function ReviewSummary({view}:{view:View}) {
   </div>;
 }
 
-export function SelectiveReviewPanel({alertRef,onReview}:{alertRef:string;onReview?:(view:View)=>void}) {
+export function SelectiveReviewPanel({alertRef,onReview,readOnly=false}:{alertRef:string;onReview?:(view:View)=>void;readOnly?:boolean}) {
   const {session}=useSession();
   const [reason,setReason]=useState("");
   const [busy,setBusy]=useState(false);
@@ -58,7 +58,7 @@ export function SelectiveReviewPanel({alertRef,onReview}:{alertRef:string;onRevi
   useEffect(()=>{if(resource.status==="success")onReviewRef.current?.(resource.data);},[resource.status==="success"?resource.data.version:""]);
   const reload=resource.reload;
   useEffect(()=>{if(busy)return;const timer=setInterval(reload,15000);return()=>clearInterval(timer);},[reload,busy]);
-  const canWrite=session?.role==="security_analyst"||session?.role==="system_admin";
+  const canWrite=!readOnly&&(session?.role==="security_analyst"||session?.role==="system_admin");
   async function act(action:"apply"|"require_review") {
     if(busy||!reason.trim()||resource.status!=="success")return;
     if(action==="apply"&&runRef&&(!run||run.status!=="open"))return;

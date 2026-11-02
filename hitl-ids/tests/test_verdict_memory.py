@@ -12,7 +12,11 @@ from packages.detection.selective_review import read_review
 
 def alerts(conn,n=4):
     stage(conn,[event(100+i,'SYNTHETIC memory SSH scan',severity=1) for i in range(n)])
-    return admit_all(conn)
+    result=admit_all(conn)
+    if conn.execute('PRAGMA user_version').fetchone()[0]>=21:
+        from work_claim_fixture import claim_work
+        for a in result: claim_work(conn,a)
+    return result
 
 def verdict(conn,a,outcome='expected_activity'):
     v=read_verdict(conn,a.operational_alert_ref,1)
@@ -141,14 +145,19 @@ def test_migration_seventeen_preserves_verdicts_and_rolls_back(tmp_path,monkeypa
         db.insert(c,m.User(username='reviewer',password_hash='x',display_name='Reviewer',email='r@example.test',role='security_analyst'));c.commit()
         # Construct a genuine pre-feature Verdict; migration must not backfill on reads.
         monkeypatch.setattr(memory,'automatic_evidence',lambda *a,**k:None)
-        a=alerts(c,1)[0];verdict(c,a)
+        # Reproduce pre-claim behavior only while constructing schema-16 history.
+        from packages.detection import analyst_work as work
+        with monkeypatch.context() as old:
+            old.setattr(work,"read_work",lambda *a,**k:work.WorkView(status=None,revision=0,can_mutate=True,explanation="Historical fixture"))
+            old.setattr(work,"complete",lambda *a,**k:None)
+            a=alerts(c,1)[0];verdict(c,a)
         tables=[r[0] for r in c.execute("SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%'")]
         before={t:[tuple(r) for r in c.execute('SELECT * FROM '+t)] for t in tables};dump='\n'.join(c.iterdump())
         monkeypatch.setattr(db,'MIGRATIONS',migrations[:16]+((17,'injected',migrations[16][2]+'\nSELECT * FROM missing_contribution_table;\n'),))
         with pytest.raises(sqlite3.OperationalError):db.migrate(c)
         assert '\n'.join(c.iterdump())==dump
         monkeypatch.setattr(db,'MIGRATIONS',migrations)
-        assert db.migrate(c)==[17,18,19,20] and db.migrate(c)==[]
+        assert db.migrate(c)==[17,18,19,20,21] and db.migrate(c)==[]
         assert {t:[tuple(r) for r in c.execute('SELECT * FROM '+t)] for t in tables}==before
         assert not c.execute('PRAGMA foreign_key_check').fetchall()
     finally:c.close()

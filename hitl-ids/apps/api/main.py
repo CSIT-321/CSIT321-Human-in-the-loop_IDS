@@ -25,6 +25,7 @@ from apps.api import routes, routing_routes, external_admission_routes
 from apps.api import tier2_case_routes
 from apps.api import response_routes
 from apps.api import verdict_routes
+from apps.api import work_routes
 from apps.api import memory_routes
 from apps.api import selective_review_routes
 from apps.api import context_routes
@@ -83,6 +84,7 @@ def create_app(database: str | Path | None = None) -> FastAPI:
     app.include_router(tier2_case_routes.router)
     app.include_router(response_routes.router)
     app.include_router(verdict_routes.router)
+    app.include_router(work_routes.router)
     app.include_router(memory_routes.router)
     app.include_router(selective_review_routes.router)
     app.include_router(context_routes.router)

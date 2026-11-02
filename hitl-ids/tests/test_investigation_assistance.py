@@ -20,7 +20,10 @@ from packages.detection.context_store import collect_fact, FactRequest, revision
 def admit(conn, raw=None, *, sensor='review-sensor'):
     stage(conn, [raw or event(1, 'Unresolved suspicious activity', 'Misc activity', 4)],
           scope=str(uuid4()), sensor=sensor)
-    return admit_all(conn)[0]
+    alert=admit_all(conn)[0]
+    from work_claim_fixture import claim_work
+    claim_work(conn,alert)
+    return alert
 
 
 def automatic_case(conn, alert):
@@ -29,6 +32,8 @@ def automatic_case(conn, alert):
 
 
 def escalate(conn, alert):
+    from work_claim_fixture import claim_work
+    claim_work(conn,alert)
     return escalate_case(conn, alert.operational_alert_ref, actor_id=1, request=EscalateCaseRequest(
         request_id=uuid4(), reason='SYNTHETIC deeper review',
         expected_state_version=state_version(read_triage(conn, alert.id)))).case

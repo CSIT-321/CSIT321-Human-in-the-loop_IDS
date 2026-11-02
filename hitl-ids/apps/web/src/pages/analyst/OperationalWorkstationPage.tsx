@@ -1,4 +1,5 @@
 import { AnalystVerdictPanel, AnalystVerdictHistory } from "../../features/alert/AnalystVerdict";
+import { AnalystWorkPanel } from "../../features/alert/AnalystWork";
 import { useEffect, useRef, useState } from "react";
 import { Link, useSearchParams } from "react-router";
 import { api, unwrap, type Schemas } from "../../api/client";
@@ -70,7 +71,7 @@ function Assistance({ view, onReview }: { view: View; onReview: (review: Schemas
   </aside>;
 }
 
-function AlertWorkspace({ view, onChanged, refresh, onReview }: { view: View; onChanged: (view: View) => void; refresh: () => void; onReview: (review: Schemas["ReviewView"]) => void }) {
+function AlertWorkspace({ view, onChanged, refresh, onReview, onConflict }: { view: View; onChanged: (view: View) => void; refresh: () => void; onReview: (review: Schemas["ReviewView"]) => void; onConflict:(message:string)=>void }) {
   const [tab, setTab] = useState<Tab>("Overview");
   const evidence = useApi(signal => unwrap(api.GET("/api/v2/alerts/{alertRef}/evidence", { params: { path: { alertRef: view.operationalAlertRef } }, signal })), [view.operationalAlertRef]);
   return <section aria-label="Operational alert workspace" className="ops-detail flex min-h-0 min-w-0 flex-col bg-bg">
@@ -89,6 +90,7 @@ function AlertWorkspace({ view, onChanged, refresh, onReview }: { view: View; on
         onClick={() => setTab(name)} className={`border-b-2 px-3 py-2 text-xs ${tab === name ? "border-primary text-text" : "border-transparent text-muted hover:text-text"}`}>{name}</button>)}
     </div>
     <div id="ops-alert-panel" role="tabpanel" aria-label={tab} className="min-h-0 flex-1 space-y-4 overflow-auto p-4">
+      {view.work&&<AnalystWorkPanel alertRef={view.operationalAlertRef} work={view.work} onChanged={refresh} onConflict={onConflict}/>}
       {(tab === "Overview" || tab === "Evidence") && <>
         {view.classification && <p className="text-sm capitalize">{view.classification.status === "informational_policy_signal" ? "Classification" : "Attack Category"}: <strong>{attackLabel(view.classification.attackCategory)}</strong></p>}
         {evidence.status === "loading" && <LoadingState label="Loading canonical evidence…" />}
@@ -96,14 +98,14 @@ function AlertWorkspace({ view, onChanged, refresh, onReview }: { view: View; on
         {evidence.status === "success" && <OperationalEvidence alert={evidence.data} summaryOnly={tab === "Overview"} />}
       </>}
       <div hidden={tab !== "Overview" && tab !== "Analyst Verdict"}>
-        <AnalystVerdictPanel alertRef={view.operationalAlertRef} stateVersion={view.stateVersion} onUseMemory={()=>setTab("Triage Memory")} onRecorded={refresh}/>
+        <AnalystVerdictPanel alertRef={view.operationalAlertRef} stateVersion={view.stateVersion+":"+view.work?.revision} onUseMemory={()=>setTab("Triage Memory")} onRecorded={refresh}/>
       </div>
       {/* Keep this mounted across tabs so draft reasons, retry IDs and success remain stable. */}
       <div hidden={tab !== "Overview"} className="space-y-4">
         <SystemRouting view={view} />
         <RoutingDetail initial={view} refresh={refresh} canRecover compact onChanged={onChanged} />
       </div>
-      {tab === "Context & Review" && <SelectiveReviewPanel key={view.stateVersion} alertRef={view.operationalAlertRef} onReview={onReview} />}
+      {tab === "Context & Review" && <SelectiveReviewPanel key={view.stateVersion} alertRef={view.operationalAlertRef} readOnly={view.work?.status==='in_review'&&!view.work.isOwner} onReview={onReview} />}
       {tab === "Triage Memory" && <AlertMemoryPanel key={view.stateVersion} view={view} onVerdict={()=>setTab("Analyst Verdict")} onContributed={refresh} />}
       {tab === "History & Notes" && <section className="space-y-3" aria-label="Operational decision history">
         <AnalystVerdictHistory alertRef={view.operationalAlertRef}/>
@@ -137,13 +139,15 @@ export function OperationalWorkstationPage() {
   // Only one supported ranking. Missing/unknown URL values safely use this default.
   const sort = "priority_desc" as const;
   const [overrides, setOverrides] = useState<Record<string, View>>({});
+  const [claimConflict,setClaimConflict]=useState('');
+  const [mustReselect,setMustReselect]=useState(false);
   const summary = useApi(signal => unwrap(api.GET("/api/v2/alerts/summary", { signal })), []);
   const queue = useApi(signal => unwrap(api.GET("/api/v2/alerts", { params: { query: { limit: 50, offset, ...activeView.query, attackCategory, q: filter || undefined, sort } }, signal })), [offset, activeView.key, attackCategory, filter, sort]);
   const linked = useApi(async signal => requested ? unwrap(api.GET("/api/v2/alerts/{alertRef}/triage-state", { params: { path: { alertRef: requested } }, signal })) : null, [requested]);
   const items = queue.status === "success" ? queue.data.items.map(item => overrides[item.operationalAlertRef] ?? item) : [];
   const visible = items;
   const [lastCurrent, setLastCurrent] = useState<View>();
-  const selected = requested ?? visible[0]?.operationalAlertRef ??
+  const selected = mustReselect ? undefined : requested ?? visible[0]?.operationalAlertRef ??
     (queue.status === "loading" || (lastCurrent && overrides[lastCurrent.operationalAlertRef]) ? lastCurrent?.operationalAlertRef : undefined);
   const fresh = selected ? overrides[selected] ?? items.find(item => item.operationalAlertRef === selected)
     ?? (linked.status === "success" && linked.data?.operationalAlertRef === selected ? linked.data : undefined) : undefined;
@@ -153,7 +157,8 @@ export function OperationalWorkstationPage() {
     if (!current || current.operationalAlertRef !== review.operationalAlertRef || current.effectiveReview?.version === review.version) return;
     changed({ ...current, effectiveReview: reviewProjection(review) });
   }
-  function select(ref: string) { setSearch(previous => { const next = new URLSearchParams(previous); next.set("alertRef", ref); return next; }, { replace: true }); }
+  function select(ref: string) { setMustReselect(false);setClaimConflict('');setSearch(previous => { const next = new URLSearchParams(previous); next.set("alertRef", ref); return next; }, { replace: true }); }
+  function conflict(message:string){setClaimConflict(message);setMustReselect(true);setLastCurrent(undefined);setOverrides({});setSearch(previous=>{const next=new URLSearchParams(previous);next.delete('alertRef');return next;},{replace:true});queue.reload();summary.reload();}
   function page(nextOffset: number) { setSearch(previous => { const next = new URLSearchParams(previous); next.set("offset", String(nextOffset)); next.delete("alertRef"); return next; }); }
   function setFilter(key: string, value: string, replace = false) {
     setOverrides({});
@@ -193,6 +198,7 @@ export function OperationalWorkstationPage() {
       </div>
     </header>
     <OperationalKpis data={summary.status === "success" ? summary.data : undefined} onView={chooseView} />
+    {claimConflict&&<p role="alert" className="shrink-0 break-words border-b border-border p-3 text-sm text-warn">Claim Conflict — {claimConflict}</p>}
     {summary.status === "loading" && <p role="status" className="px-3 text-xs text-muted">Loading operational workload…</p>}
     {summary.status === "error" && <div role="alert" className="flex shrink-0 gap-2 px-3 py-1 text-xs">Workload unavailable: {summary.error.message} <button className={button} onClick={summary.reload}>Retry workload</button></div>}
     <div className="ops-grid grid min-h-0 flex-1">
@@ -225,7 +231,7 @@ export function OperationalWorkstationPage() {
           <button className={button} disabled={queue.status !== "success" || offset + 50 >= queue.data.page.total} onClick={() => page(offset + 50)}>Next alerts</button>
         </footer>
       </section>
-      {current ? <AlertWorkspace key={current.operationalAlertRef} view={current} onChanged={changed} refresh={refresh} onReview={reviewChanged} />
+      {current ? <AlertWorkspace key={current.operationalAlertRef} view={current} onChanged={changed} refresh={refresh} onReview={reviewChanged} onConflict={conflict} />
         : <section aria-label="Operational alert workspace" className="p-5 text-sm text-muted">{linked.status === "error" ? <ErrorState error={linked.error} onRetry={linked.reload} /> : "Select an operational alert."}</section>}
       {current && <Assistance key={"assistance-" + current.operationalAlertRef} view={current} onReview={reviewChanged} />}
     </div>

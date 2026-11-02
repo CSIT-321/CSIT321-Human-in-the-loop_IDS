@@ -108,6 +108,15 @@ def route_alert(conn: sqlite3.Connection, alert_id: int, *, actor_id: int,
                 conn.commit()
             return decode_audit(prior), True
         before = read_triage(conn, alert_id)
+        from packages.detection.analyst_work import is_tier1_work
+        if is_tier1_work(conn,alert_id):
+            from packages.detection.analyst_work import require_owner, row, WorkConflict
+            work=row(conn,alert_id)
+            # A completed historical judgment may still be explicitly handed to Tier 2.
+            # This does not reopen its completed Tier 1 work or create a new claim.
+            if not (work and work['status']=='completed' and action in ('manual_escalate','approve_tier2')):
+                try: require_owner(conn,alert_id,actor_id)
+                except WorkConflict as exc: raise RoutingConflict(str(exc)) from exc
         if state_version(before) != request.expected_state_version:
             raise RoutingConflict('V2 state changed; refresh and review before deciding again')
         if action not in allowed_actions(before):

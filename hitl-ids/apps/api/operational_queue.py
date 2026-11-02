@@ -8,7 +8,8 @@ from packages.detection.selective_review import effective_review
 
 SOURCE = '''FROM operational_alerts_v2 a
     LEFT JOIN operational_triage_state_v2 t ON t.operational_alert_id=a.id
-    LEFT JOIN operational_system_routing s ON s.operational_alert_id=a.id'''
+    LEFT JOIN operational_system_routing s ON s.operational_alert_id=a.id
+    LEFT JOIN analyst_work w ON w.operational_alert_id=a.id'''
 CATEGORY = "json_extract(s.classification, '$.attackCategory')"
 ROUTE_CLASS = "json_extract(s.routing_decision, '$.routeClass')"
 EXPERT = f"({ROUTE_CLASS}='EXPERT_REVIEW_REQUIRED' OR {CATEGORY}='unknown_needs_expert')"
@@ -30,9 +31,12 @@ def occurred_key(value):
         return None
 
 
-def matching(*, handling_route=None, priority_band=None,
+def matching(*, handling_route=None, priority_band=None, work_scope='all',
              route_class=None, attack_category=None, q=None):
     clauses, params = [], []
+    if work_scope=='active': clauses.append("(w.status IS NULL OR w.status NOT IN ('completed','escalated'))")
+    elif work_scope in ('completed','escalated'):
+        clauses.append('w.status=?');params.append(work_scope)
     for value, column in ((handling_route, 't.handling_route'),
                           (attack_category, CATEGORY)):
         if value is not None:
@@ -78,12 +82,23 @@ def queue_page(conn, *, limit, offset, review_required=None, review_disposition=
 def summary(conn):
     row = conn.execute(f'''SELECT count(*) AS total_alerts,
         count(CASE WHEN {CRITICAL} THEN 1 END) AS critical_alerts,
-        count(CASE WHEN t.handling_route='tier1_review' THEN 1 END) AS tier1_review,
+        count(CASE WHEN t.handling_route='tier1_review' AND (w.status IS NULL OR w.status NOT IN ('completed','escalated')) THEN 1 END) AS tier1_review,
         count(CASE WHEN t.handling_route='tier2_case' THEN 1 END) AS tier2_cases,
         count(CASE WHEN {EXPERT} THEN 1 END) AS expert_review
         {SOURCE}''').fetchone()
     open_cases = conn.execute("SELECT count(*) FROM tier2_cases c JOIN tier2_case_state cs ON cs.case_id=c.id WHERE cs.status IN ('open','investigating')").fetchone()[0]
     values = dict(row)
+    work=conn.execute(f'''SELECT
+        count(CASE WHEN w.status IS NULL OR w.status NOT IN ('completed','escalated') THEN 1 END) AS active_alerts,
+        count(CASE WHEN w.status='completed' THEN 1 END) AS completed_work,
+        count(CASE WHEN w.status='escalated' THEN 1 END) AS escalated_work,
+        count(CASE WHEN w.status='in_review' THEN 1 END) AS in_review_work,
+        count(CASE WHEN s.operational_alert_id IS NOT NULL AND t.handling_route='tier1_review' AND t.workflow_stage='triage' AND (w.status IS NULL OR w.status='available') THEN 1 END) AS available_work
+        {SOURCE}''').fetchone()
+    values.update(dict(work))
+    # Available means claim-eligible attention, not an unowned deferred item.
+    values['available_work']-=sum(effective_review(conn,item[0]).disposition=='no_immediate_review'
+        for item in conn.execute(f"SELECT a.operational_alert_ref {SOURCE} WHERE s.operational_alert_id IS NOT NULL AND t.handling_route='tier1_review' AND t.workflow_stage='triage' AND (w.status IS NULL OR w.status='available')"))
     deferred = sum(effective_review(conn, item[0]).disposition == 'no_immediate_review'
         for item in conn.execute('SELECT operational_alert_ref FROM operational_alerts_v2').fetchall())
     values.update(no_immediate_review=deferred, review_required=values['total_alerts'] - deferred)

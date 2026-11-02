@@ -63,6 +63,10 @@ def escalate_case(conn, alert_ref: UUID, *, actor_id: int, request: EscalateCase
             tier1_handoff_summary=handoff,
             reason=('Recover historical escalation: ' if request.action == 'recover_case' else 'Authenticated Tier 2 escalation: ') + request.reason,
         ), _escalation_transaction=True, _command_payload=payload)
+        from packages.detection.analyst_work import row, escalated
+        work=row(conn,alert.id)
+        if work and work['status']=='in_review':
+            escalated(conn,alert.id,actor_id,result.case.case_ref)
         conn.commit()
         return result
     except Exception:

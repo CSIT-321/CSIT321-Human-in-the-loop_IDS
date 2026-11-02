@@ -305,11 +305,14 @@ def test_migration_five_is_additive_and_preserves_existing_band_encoding(tmp_pat
         old_state = dict(conn.execute("SELECT * FROM operational_triage_state_v2").fetchone())
         legacy = snapshot(conn)
         root = conn.execute("SELECT rootpage FROM sqlite_master WHERE name='operational_triage_state_v2'").fetchone()[0]
-        assert db.migrate(conn) == [5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20] and db.migrate(conn) == []
+        assert db.migrate(conn) == [5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21] and db.migrate(conn) == []
         state = dict(conn.execute("SELECT * FROM operational_triage_state_v2").fetchone())
         assert state.pop("priority_band_scheme") == "legacy_labels"
         assert state == old_state and read_triage(conn, 1).priority_band == "high"
-        assert snapshot(conn) == legacy
+        upgraded=snapshot(conn)
+        assert {name:upgraded[name] for name in legacy} == legacy
+        assert set(upgraded)-set(legacy) == {'analyst_work','analyst_claim_rounds','analyst_claim_intents','analyst_work_events'}
+        assert all(not upgraded[name] for name in set(upgraded)-set(legacy))
         assert conn.execute("SELECT rootpage FROM sqlite_master WHERE name='operational_triage_state_v2'").fetchone()[0] == root
         assert conn.execute("PRAGMA foreign_keys").fetchone()[0] == 1
         assert not conn.execute("PRAGMA foreign_key_check").fetchall()

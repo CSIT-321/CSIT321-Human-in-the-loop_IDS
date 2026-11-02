@@ -77,9 +77,12 @@ def latest_verdict(conn,alert_id):
 def read_verdict(conn,ref,actor_id):
     alert=_alert(conn,ref);actor=db.get(conn,m.User,actor_id)
     latest=latest_verdict(conn,alert.id)
+    from packages.detection.analyst_work import read_work
+    work=read_work(conn,alert.id,actor_id)
     return VerdictView(operational_alert_ref=ref,revision=latest.revision if latest else 0,
         source_state_version=state_version(read_triage(conn,alert.id)),latest=latest,
-        can_record=bool(actor and actor.status=='active' and actor.role in ('security_analyst','system_admin') and _eligible(conn,alert)))
+        can_record=bool(actor and actor.status=='active' and actor.role in ('security_analyst','system_admin') and _eligible(conn,alert)
+                        and (work.can_mutate or (latest is not None and work.status=='completed'))))
 
 def verdict_history(conn,ref,limit=50,offset=0):
     alert=_alert(conn,ref)
@@ -116,6 +119,9 @@ def record_verdict(conn,ref,*,actor_id,request):
             (str(verdict.verdict_ref),alert.id,actor_id,verdict.revision,str(verdict.supersedes_ref) if verdict.supersedes_ref else None,str(request.request_id),payload,verdict.model_dump_json(by_alias=True)))
         from packages.detection.triage_memory import automatic_evidence
         automatic_evidence(conn,ref,verdict=verdict)
+        if view.latest is None:
+            from packages.detection.analyst_work import complete
+            complete(conn,alert.id,actor_id,verdict)
         conn.commit();return VerdictMutation(verdict=verdict,replayed=False)
     except Exception:
         conn.rollback();raise

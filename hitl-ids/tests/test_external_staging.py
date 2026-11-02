@@ -22,7 +22,7 @@ SCRIPT = Path(__file__).resolve().parents[1] / "scripts/import_suricata_eve.py"
 
 
 def table_rows(conn):
-    return {table: [tuple(row) for row in conn.execute(f'SELECT * FROM "{table}" ORDER BY id')]
+    return {table: [tuple(row) for row in conn.execute(f'SELECT * FROM "{table}" ORDER BY 1')]
             for (table,) in conn.execute("SELECT name FROM sqlite_master WHERE type='table' "
                                         "AND name NOT IN ('sqlite_sequence','external_alert_inbox', "
                                         "'operational_alerts_v2','operational_triage_state_v2', "

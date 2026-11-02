@@ -51,8 +51,8 @@ def test_whole_dataset_summary_overlap_and_readonly_snapshot(api, queue_db, monk
     monkeypatch.setattr(sqlite3, 'connect', traced)
     response = api.get('/api/v2/alerts/summary')
     assert response.status_code == 200
-    assert response.json() == dict(totalAlerts=66, criticalAlerts=54, tier1Review=11, tier2Cases=54,
-        expertReview=2, reviewRequired=64, noImmediateReview=2, openTier2Cases=54)
+    assert response.json() == dict(totalAlerts=66, criticalAlerts=54, tier1Review=8, tier2Cases=54,
+        expertReview=2, reviewRequired=64, noImmediateReview=2, openTier2Cases=54, activeAlerts=63, completedWork=3, escalatedWork=0, availableWork=6, inReviewWork=0)
     assert traces.count('BEGIN') == 1 and traces.count('COMMIT') == 1
     assert all(not sql.lstrip().upper().startswith(('INSERT','UPDATE','DELETE','CREATE','ALTER','REPLACE')) for sql in traces)
     assert len(page(api)['items']) == 50  # KPI totals are not this page.
@@ -115,7 +115,8 @@ def test_exact_requested_scores_ties_offsets_microseconds_and_invalid_priority()
     with closing(sqlite3.connect(':memory:')) as conn:
         conn.executescript('''CREATE TABLE operational_alerts_v2(id,operational_alert_ref,occurred_at);
             CREATE TABLE operational_triage_state_v2(operational_alert_id,operational_priority);
-            CREATE TABLE operational_system_routing(operational_alert_id);''')
+            CREATE TABLE operational_system_routing(operational_alert_id);
+            CREATE TABLE analyst_work(operational_alert_id,status);''')
         for i, score, stamp, ref in [(1,95,'2026-10-31T12:00:00.000001+08:00','z'),
                 (2,95,'2026-10-31T04:00:00.000002Z','b'), (3,72,'2026-11-01T00:00:00Z','c'),
                 (4,60,'2026-11-02T00:00:00Z','d'), (5,40,'2026-11-03T00:00:00Z','e'),
@@ -154,4 +155,4 @@ def test_empty_current_dataset(tmp_path):
         token = auth.encode_token(db.from_row(m.User, conn.execute("SELECT * FROM users WHERE username='g.ang'").fetchone()))
     with TestClient(create_app(path)) as api:
         data = api.get('/api/v2/alerts/summary',headers={'Authorization':'Bearer '+token}).json()
-    assert len(data) == 8 and set(data.values()) == {0}
+    assert len(data) == 13 and set(data.values()) == {0}

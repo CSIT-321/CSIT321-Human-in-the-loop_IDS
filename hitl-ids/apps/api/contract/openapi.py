@@ -30,6 +30,7 @@ from apps.api.contract.routing import RoutingView, RoutingResponse, EscalateCase
 from packages.detection.tier2_escalation import EscalateCaseRequest
 from packages.detection.investigation_assistance import InvestigationAssistance
 from packages.detection.analyst_verdict import VerdictCommand,VerdictView,VerdictHistory,VerdictMutation
+from packages.detection.analyst_work import ClaimCommand,ClaimResult,WorkView,WorkEvent
 from packages.detection.routing import RoutingRequest
 from packages.contracts.operational_v2 import OperationalAlertV2, HandlingRouteV2, PriorityBandV2
 from packages.contracts.suricata_bundle import AttackCategory
@@ -66,6 +67,7 @@ MODELS: tuple[type[BaseModel], ...] = (
     InvestigationAssistance,
     VerdictMemoryRequest,VerdictMemoryState,ConclusionMemoryRequest,ConclusionMemoryState,
     VerdictCommand,VerdictView,VerdictHistory,VerdictMutation,
+    ClaimCommand,ClaimResult,WorkView,WorkEvent,
     RunCreate,RunView,RunPage,RunCommand,ObservationRequest,RecordedArchive,CollectionDocument,
     FactRequest,FactPage,FactMutation,ResolvedTrustedContext,
     ReviewCommand,ReviewView,ReviewMutation,ReviewEvent,ReviewMetrics,
@@ -599,6 +601,7 @@ def _paths() -> dict[str, Any]:
                 ('attackCategory', get_args(AttackCategory)),
                 ('reviewDisposition', ['must_review', 'recommended_review', 'no_immediate_review']))],
             {'name': 'reviewRequired', 'in': 'query', 'schema': {'type': 'boolean'}},
+            {'name':'workScope','in':'query','schema':{'type':'string','enum':['all','active','completed','escalated'],'default':'all'}},
             {'name': 'q', 'in': 'query', 'schema': {'type': 'string', 'maxLength': 200}},
             {'name': 'sort', 'in': 'query', 'schema': {'type': 'string', 'enum': ['priority_desc'], 'default': 'priority_desc'}}],
         'responses': {'200': {'description': 'V2 routing page', **_page_of(RoutingView)}, **_errors(400, 503)}}}
@@ -768,6 +771,19 @@ def _paths() -> dict[str, Any]:
         'post': {'operationId':'recordAnalystVerdict','summary':'Record or correct authenticated Tier 1 verdict','tags':['Analyst verdict'],
             'parameters':[AUTH_PARAMETER,alert_ref], 'requestBody':{'required':True,**_json(VerdictCommand)},
             'responses':{'200':{'description':'Recorded verdict',**_json(VerdictMutation)},**_errors(400,403,404,409)}}}
+    paths['/api/v2/alerts/{alertRef}/work']={'get':{
+        'operationId':'getAnalystWork','summary':'Read human work without claiming','tags':['Shared analyst work'],
+        'parameters':[AUTH_PARAMETER,alert_ref],
+        'responses':{'200':{'description':'Current human work',**_json(WorkView)},**_errors(404,503)}}}
+    paths['/api/v2/alerts/{alertRef}/work/events']={'get':{
+        'operationId':'getAnalystWorkHistory','summary':'Read immutable claim and work history','tags':['Shared analyst work'],
+        'parameters':[AUTH_PARAMETER,alert_ref,{'name':'limit','in':'query','schema':{'type':'integer','minimum':1,'maximum':200,'default':50}},
+                      {'name':'offset','in':'query','schema':{'type':'integer','minimum':0,'default':0}}],
+        'responses':{'200':{'description':'Work history','content':{'application/json':{'schema':{'type':'array','items':{'$ref':'#/components/schemas/WorkEvent'}}}}},**_errors(404,503)}}}
+    paths['/api/v2/alerts/{alertRef}/work/claim']={'post':{
+        'operationId':'claimAnalystWork','summary':'Arbitrate explicit Tier 1 claim; multiple distinct contenders all conflict','tags':['Shared analyst work'],
+        'parameters':[AUTH_PARAMETER,alert_ref],'requestBody':{'required':True,**_json(ClaimCommand)},
+        'responses':{'200':{'description':'Finalized single-actor claim',**_json(ClaimResult)},**_errors(400,403,404,409,503)}}}
     paths['/api/v2/alerts/{alertRef}/verdict-history'] = {'get': {
         'operationId':'getAnalystVerdictHistory','summary':'Read append-only human verdict history','tags':['Analyst verdict'],
         'parameters':[AUTH_PARAMETER,alert_ref,

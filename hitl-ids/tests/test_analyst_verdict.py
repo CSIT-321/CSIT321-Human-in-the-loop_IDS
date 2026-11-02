@@ -12,7 +12,11 @@ from packages.detection.selective_review import read_review
 
 def alert(conn,signature='SSH brute force',category='Misc activity'):
     stage(conn,[event(signature=signature,category=category)])
-    return admit_all(conn)[0]
+    a=admit_all(conn)[0]
+    if conn.execute('PRAGMA user_version').fetchone()[0]>=21:
+        from work_claim_fixture import claim_work
+        claim_work(conn,a)
+    return a
 
 def command(conn,a,outcome='suspicious',**changes):
     view=read_verdict(conn,a.operational_alert_ref,1)
@@ -21,7 +25,7 @@ def command(conn,a,outcome='suspicious',**changes):
 
 def unchanged(conn):
     tables=[r[0] for r in conn.execute("SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%' AND name!='analyst_verdict_events' AND name NOT LIKE 'triage_memory_%' AND name NOT LIKE 'verdict_memory_%'")]
-    return {t:[tuple(r) for r in conn.execute('SELECT * FROM '+t)] for t in tables}
+    return {t:[tuple(r) for r in conn.execute('SELECT * FROM '+t)] for t in tables if t not in ('analyst_work','analyst_work_events')}
 
 @pytest.mark.parametrize('outcome',['confirmed_malicious','suspicious','expected_activity','false_positive'])
 def test_outcomes_no_operational_side_effects(conn,outcome):

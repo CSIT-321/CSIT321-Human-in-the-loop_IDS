@@ -479,6 +479,10 @@ def record_review(conn,alert_ref,*,actor_id,request:MemoryReviewRequest,_verdict
         if source is None:
             raise LookupError('Operational alert not found')
         alert=read_projection(conn,source[0])
+        if not _automatic:
+            from packages.detection.analyst_work import protect_owner, WorkConflict
+            try: protect_owner(conn,alert.id,actor_id)
+            except WorkConflict as exc: raise MemoryConflict(str(exc)) from exc
         state=read_triage(conn,source[0])
         if state_version(state)!=request.expected_state_version:
             raise MemoryConflict('alert state changed; refresh before recording human review')
