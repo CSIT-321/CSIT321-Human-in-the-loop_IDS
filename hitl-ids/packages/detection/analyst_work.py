@@ -104,7 +104,7 @@ def read_work(conn,alert_id,actor_id=None,review=None):
         'Tier 1 work transferred to the existing Tier 2 Case.' if status=='escalated' else
         'In Review — You' if owned else f"This alert is currently being reviewed by {work['owner_name']}." if status=='in_review' else
         'Require Human Review before starting work on a No Immediate Review alert.' if deferred else
-        'Available — select Start Review to request ownership.' if claimable else 'Tier 1 claiming does not apply to this workflow.')
+        'Available for Review. Selecting this alert starts your review.' if claimable else 'Tier 1 claiming does not apply to this workflow.')
     fields={k:work[k] for k in ('revision','owner_actor_id','owner_name','claimed_at','round_ref','finished_at','finished_by_actor_id','finished_by_name','verdict_ref')} if work else {'revision':0}
     latest=conn.execute('SELECT snapshot FROM analyst_verdict_events WHERE operational_alert_id=? ORDER BY revision DESC LIMIT 1',(alert_id,)).fetchone()
     return WorkView(status=status,**fields,is_owner=owned,can_claim=permitted and claimable,

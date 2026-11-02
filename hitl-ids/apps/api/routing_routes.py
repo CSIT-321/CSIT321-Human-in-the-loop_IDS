@@ -4,11 +4,12 @@ from uuid import UUID
 import sqlite3
 import json
 
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, Query, Request, Response
 from apps.api import auth
 from apps.api.contract.common import Page, PageInfo
 from apps.api.contract.routing import RoutingView, RoutingResponse, EscalateCaseResponse, OperationalSummary, QueueDetectionSummary
 from apps.api import operational_queue
+from apps.api import workspaces
 from packages.detection.tier2_escalation import EscalateCaseRequest, escalate_case
 from packages.detection.tier2_cases import CaseConflict
 from apps.api.deps import ApiError, get_connection
@@ -62,7 +63,7 @@ def _view(conn, alert_id, principal, review=None):
 
 
 @router.get('', response_model=Page[RoutingView], operation_id='listV2Routing')
-def list_routing(conn: ReadConn, principal: ReadPrincipal, limit: int = Query(50, ge=1, le=200),
+def list_routing(request: Request, response: Response, conn: ReadConn, principal: ReadPrincipal, limit: int = Query(50, ge=1, le=200),
                  offset: int = Query(0, ge=0),
                  handlingRoute: HandlingRouteV2 | None = None, reviewRequired: bool | None = None,
                  reviewDisposition: Disposition | None = None,
@@ -73,6 +74,7 @@ def list_routing(conn: ReadConn, principal: ReadPrincipal, limit: int = Query(50
                  sort: Literal['priority_desc'] = 'priority_desc'):
     """Filter the full V2 dataset before paging. Order: Operational Priority DESC (null last),
     occurredAt instant DESC, operationalAlertRef ASC. Attention is evaluated read-only."""
+    response.headers['X-Operational-Workspace'] = workspaces.selected_id(request)
     with conn:
         conn.execute('BEGIN')
         reviews = {}

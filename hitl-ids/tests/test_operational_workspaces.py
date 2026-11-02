@@ -177,6 +177,29 @@ def _claimable(client: TestClient, database: Path, analyst_headers: dict[str, st
     raise AssertionError("No Tier 1 claimable alert in workspace")
 
 
+def test_claim_selection_is_bound_to_the_queue_workspace(tmp_path):
+    client, operational, tokens = _client(tmp_path)
+    _one_operational_alert(operational, tmp_path)
+    queue = client.get('/api/v2/alerts', headers=tokens['analyst'])
+    assert queue.status_code == 200
+    assert queue.headers['X-Operational-Workspace'] == 'operational'
+    reason = {'reason': 'Test workspace change before claim'}
+    assert client.post('/api/admin/workspaces/v3-1-replay/prepare', headers=tokens['admin'], json=reason).status_code == 200
+    assert client.post('/api/admin/workspaces/v3-1-replay/activate', headers=tokens['admin'], json=reason).status_code == 200
+    replay = tmp_path / 'workspaces/v3-1-replay.db'
+    ref = _claimable(client, replay, tokens['analyst'])
+    work = client.get(f'/api/v2/alerts/{ref}/work', headers=tokens['analyst'])
+    assert work.status_code == 200 and work.headers['X-Operational-Workspace'] == 'v3-1-replay'
+    rejected = client.post(f'/api/v2/alerts/{ref}/work/claim',
+                           headers={**tokens['analyst'], 'X-Operational-Workspace': queue.headers['X-Operational-Workspace']},
+                           json={'requestId': str(uuid4()), 'expectedRevision': work.json()['revision']})
+    assert rejected.status_code == 409 and rejected.json()['error']['code'] == 'WORKSPACE_CHANGED'
+    with closing(sqlite3.connect(replay)) as conn:
+        assert conn.execute('SELECT count(*) FROM analyst_claim_intents').fetchone()[0] == 0
+    with closing(sqlite3.connect(operational)) as conn:
+        assert conn.execute('SELECT count(*) FROM analyst_claim_intents').fetchone()[0] == 0
+
+
 def test_analyst_claims_stay_in_selected_database_and_oracle_is_absent(tmp_path):
     client, operational, tokens = _client(tmp_path)
     _one_operational_alert(operational, tmp_path)

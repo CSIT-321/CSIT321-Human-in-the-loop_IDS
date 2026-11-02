@@ -786,7 +786,10 @@ def _paths() -> dict[str, Any]:
         'responses':{'200':{'description':'Work history','content':{'application/json':{'schema':{'type':'array','items':{'$ref':'#/components/schemas/WorkEvent'}}}}},**_errors(404,503)}}}
     paths['/api/v2/alerts/{alertRef}/work/claim']={'post':{
         'operationId':'claimAnalystWork','summary':'Arbitrate explicit Tier 1 claim; multiple distinct contenders all conflict','tags':['Shared analyst work'],
-        'parameters':[AUTH_PARAMETER,alert_ref],'requestBody':{'required':True,**_json(ClaimCommand)},
+        'parameters':[AUTH_PARAMETER,alert_ref,{'name':'X-Operational-Workspace','in':'header','required':False,
+            'description':'Optional workspace observed with the queue/work read; reject a switch before this claim.',
+            'schema':{'type':'string','enum':['operational','v3-1-replay']}}],
+        'requestBody':{'required':True,**_json(ClaimCommand)},
         'responses':{'200':{'description':'Finalized single-actor claim',**_json(ClaimResult)},**_errors(400,403,404,409,503)}}}
     paths['/api/v2/alerts/{alertRef}/verdict-history'] = {'get': {
         'operationId':'getAnalystVerdictHistory','summary':'Read append-only human verdict history','tags':['Analyst verdict'],

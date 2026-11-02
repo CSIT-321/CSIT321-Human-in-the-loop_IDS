@@ -53,8 +53,7 @@ Principal = Annotated[auth.Principal, Depends(auth.current_readonly_user)]
 @router.get("/api/workspace/current", response_model=WorkspaceCurrent,
             operation_id="getCurrentWorkspace")
 def current(request: Request, principal: Principal) -> WorkspaceCurrent:
-    _, _, replay = workspaces.paths(request)
-    active = "v3-1-replay" if workspaces.active_database(request) == replay else "operational"
+    active = workspaces.selected_id(request)
     return WorkspaceCurrent(id=active, name=workspaces.NAMES[active])
 
 

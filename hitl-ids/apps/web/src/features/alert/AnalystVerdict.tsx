@@ -37,7 +37,7 @@ export function AnalystVerdictPanel({ alertRef, stateVersion,onUseMemory,onRecor
       <p className="text-sm">Current Verdict: <strong>{resource.data.latest?verdictLabels[resource.data.latest.outcome]:"Not recorded"}</strong></p>
       {resource.data.latest&&<VerdictRecord verdict={resource.data.latest}/>}
       {resource.data.latest&&resource.data.canRecord&&onUseMemory&&<button className={button} onClick={onUseMemory}>View Human Learning</button>}
-      {!resource.data.canRecord&&<p className="text-xs text-muted">The first Tier 1 Verdict requires Start Review and ownership by the current analyst. Tier 2 uses Investigation Conclusion; no Tier 1 Verdict is required.</p>}
+      {!resource.data.canRecord&&<p className="text-xs text-muted">The first Tier 1 Verdict requires ownership by the current analyst. Select an Available alert to start review. Tier 2 uses Investigation Conclusion; no Tier 1 Verdict is required.</p>}
       {resource.data.canRecord&&<fieldset disabled={busy} className="min-w-0 space-y-3">
         <legend className="text-sm">{resource.data.latest?"Correct Verdict":"Record Verdict"}</legend>
         <label className="block text-sm" htmlFor="analyst-verdict-outcome">Verdict outcome</label>

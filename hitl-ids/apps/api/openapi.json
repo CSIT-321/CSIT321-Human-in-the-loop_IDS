@@ -18058,6 +18058,19 @@
               "format": "uuid",
               "type": "string"
             }
+          },
+          {
+            "description": "Optional workspace observed with the queue/work read; reject a switch before this claim.",
+            "in": "header",
+            "name": "X-Operational-Workspace",
+            "required": false,
+            "schema": {
+              "enum": [
+                "operational",
+                "v3-1-replay"
+              ],
+              "type": "string"
+            }
           }
         ],
         "requestBody": {

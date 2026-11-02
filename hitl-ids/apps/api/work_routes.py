@@ -1,8 +1,9 @@
 """Explicit POST-only work claims; inspection never arbitrates ownership."""
 import sqlite3
 from uuid import UUID
-from fastapi import APIRouter, Query
+from fastapi import APIRouter, Header, Query, Request, Response
 from apps.api.deps import ApiError
+from apps.api import workspaces
 from apps.api.routing_routes import Conn, Principal, MutationRole, _id
 from apps.api.read_only import ReadConn, ReadPrincipal
 from packages.detection.analyst_work import ClaimCommand, ClaimResult, WorkView, WorkEvent, WorkConflict, claim, read_work, history
@@ -10,7 +11,8 @@ from packages.detection.analyst_work import ClaimCommand, ClaimResult, WorkView,
 router=APIRouter(prefix='/api/v2/alerts',tags=['Shared analyst work'])
 
 @router.get('/{alertRef}/work',response_model=WorkView,operation_id='getAnalystWork')
-def get_work(alertRef:UUID,conn:ReadConn,principal:ReadPrincipal):
+def get_work(alertRef:UUID,request:Request,response:Response,conn:ReadConn,principal:ReadPrincipal):
+    response.headers['X-Operational-Workspace']=workspaces.selected_id(request)
     with conn:
         conn.execute('BEGIN')
         return read_work(conn,_id(conn,alertRef),principal.user_id)
@@ -22,7 +24,10 @@ def get_history(alertRef:UUID,conn:ReadConn,principal:ReadPrincipal,limit:int=Qu
         return history(conn,_id(conn,alertRef),limit,offset)
 
 @router.post('/{alertRef}/work/claim',response_model=ClaimResult,dependencies=[MutationRole],operation_id='claimAnalystWork')
-def post_claim(alertRef:UUID,body:ClaimCommand,conn:Conn,principal:Principal):
+def post_claim(alertRef:UUID,body:ClaimCommand,request:Request,conn:Conn,principal:Principal,
+               expected_workspace:str|None=Header(None,alias='X-Operational-Workspace')):
+    if expected_workspace is not None and expected_workspace!=workspaces.selected_id(request):
+        raise ApiError(409,'WORKSPACE_CHANGED','The active workspace changed. Refresh the queue and select an alert again.')
     try:
         result=claim(conn,alertRef,actor_id=principal.user_id,request=body)
     except PermissionError as exc: raise ApiError(403,'FORBIDDEN_ROLE',str(exc)) from exc

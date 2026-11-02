@@ -1,8 +1,14 @@
 import { createHash } from "node:crypto";
 import { readFileSync } from "node:fs";
+import { execFileSync } from "node:child_process";
+import { dirname, resolve } from "node:path";
 import { expect, test, type Page } from "@playwright/test";
 
 const database = process.env.HITL_WORKSPACES_DB;
+const replayDatabase = () => resolve(dirname(database!), "workspaces", "v3-1-replay.db");
+const python = (script: string, path: string) => execFileSync(process.env.HITL_PYTHON ?? "python", ["-c", script, path],
+  { cwd: resolve(process.cwd(), "../.."), encoding: "utf8" }).trim();
+const countClaims = (path: string) => Number(python("import sqlite3,sys; c=sqlite3.connect(sys.argv[1]); print(c.execute('SELECT count(*) FROM analyst_claim_intents').fetchone()[0])", path));
 const fingerprint = () => {
   if (!database) throw new Error("HITL_WORKSPACES_DB must name the disposable Operational database");
   return createHash("sha256").update(readFileSync(database)).digest("hex");
@@ -39,12 +45,14 @@ async function noPageOverflow(page: Page) {
 test("Admin workspace selection, isolated Analyst replay, and shared frozen Evaluation", async ({ browser }) => {
   const adminContext = await browser.newContext();
   const analystContext = await browser.newContext();
+  const bobContext = await browser.newContext();
   const evaluatorContext = await browser.newContext();
   const admin = await adminContext.newPage();
   const analyst = await analystContext.newPage();
+  const bob = await bobContext.newPage();
   const evaluator = await evaluatorContext.newPage();
   const errors: string[] = [];
-  for (const page of [admin, analyst, evaluator]) page.on("pageerror", error => errors.push(error.message));
+  for (const page of [admin, analyst, bob, evaluator]) page.on("pageerror", error => errors.push(error.message));
 
   await login(admin, "admin", "admin-demo");
   await admin.getByRole("navigation", { name: "Main" }).getByRole("link", { name: "Operational Workspace" }).click();
@@ -66,6 +74,8 @@ test("Admin workspace selection, isolated Analyst replay, and shared frozen Eval
   await expect(admin.getByText("Raw frozen workload records: 200")).toBeVisible();
   await expect(admin.getByText("Operational alerts: 200")).toBeVisible();
   expect(fingerprint()).toBe(before);
+  // A second Analyst exists only in the disposable Replay database for the Viewer journey.
+  python("import sys; from apps.api import auth; from packages.contracts import db,models as m; c=db.connect(sys.argv[1]); db.insert(c,m.User(username='bob',display_name='Bob',password_hash=auth.hash_password('work-demo'),email='bob@replay.test',role='security_analyst')); c.commit(); c.close()", replayDatabase());
   const replayCard = admin.getByText("Raw frozen workload records: 200").locator("xpath=ancestor::section[1]");
   await replayCard.getByRole("button", { name: "Activate" }).click();
   await expect(admin.getByText("V3.1 Demo Replay", { selector: "p" })).toBeVisible();
@@ -78,13 +88,26 @@ test("Admin workspace selection, isolated Analyst replay, and shared frozen Eval
   await tier1.click();
   await analyst.getByRole("list", { name: "Operational alerts" }).getByRole("button").first().click();
   await expect(analyst.getByRole("region", { name: "Operational alert workspace" })).toBeVisible();
-  await analyst.getByRole("button", { name: "Start Review", exact: true }).click();
-  await expect(analyst.getByRole("region", { name: "Human work status" })).toContainText("In Review — You");
+  await expect(analyst.getByRole("region", { name: "Human work status" })).toContainText("Your Access: Owner");
+  const ownedRef = new URL(analyst.url()).searchParams.get("alertRef");
+  expect(ownedRef).toBeTruthy();
+  expect(countClaims(replayDatabase())).toBe(1);
+  await login(bob, "bob", "work-demo");
+  await bob.goto(`/analyst/operations?alertRef=${ownedRef}`);
+  await expect(bob.getByRole("region", { name: "Human work status" })).toContainText("Your Access: Viewer");
+  await expect(bob.getByRole("region", { name: "Human work status" })).toContainText("Glenn Ang");
+  await bob.getByRole("list", { name: "Operational alerts" }).locator(`button[data-alert-ref="${ownedRef}"]`).click();
+  await bob.getByRole("tab", { name: "Analyst Verdict", exact: true }).click();
+  await expect(bob.getByLabel("Verdict reason")).toHaveCount(0);
+  await expect(bob.getByLabel("Decision reason", { exact: true })).toHaveCount(0);
+  expect(countClaims(replayDatabase())).toBe(1);
+  expect(fingerprint()).toBe(before);
   await analyst.getByRole("tab", { name: "Analyst Verdict", exact: true }).click();
   await analyst.getByLabel("Verdict outcome").selectOption("expected_activity");
   await analyst.getByLabel("Verdict reason").fill("Interactive replay browser validation");
   await analyst.getByRole("button", { name: "Record Verdict", exact: true }).click();
   await expect(analyst.getByRole("region", { name: "Human work status" })).toContainText("Completed");
+  expect(countClaims(replayDatabase())).toBe(1);
   expect(fingerprint()).toBe(before);
 
   const opCard = admin.getByText("Operational alerts: 0").locator("xpath=ancestor::section[1]");
@@ -132,5 +155,5 @@ test("Admin workspace selection, isolated Analyst replay, and shared frozen Eval
   await analyst.goto("/admin/evaluation/final-v3-1");
   await expect(analyst).toHaveURL(/\/analyst\/operations$/);
   expect(errors).toEqual([]);
-  await Promise.all([adminContext.close(), analystContext.close(), evaluatorContext.close()]);
+  await Promise.all([adminContext.close(), analystContext.close(), bobContext.close(), evaluatorContext.close()]);
 });

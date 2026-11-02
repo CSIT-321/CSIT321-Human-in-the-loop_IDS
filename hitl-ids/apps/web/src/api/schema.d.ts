@@ -10091,6 +10091,8 @@ export interface operations {
             header?: {
                 /** @description `Bearer <token>` from POST /api/auth/login */
                 Authorization?: string;
+                /** @description Optional workspace observed with the queue/work read; reject a switch before this claim. */
+                "X-Operational-Workspace"?: "operational" | "v3-1-replay";
             };
             path: {
                 alertRef: string;

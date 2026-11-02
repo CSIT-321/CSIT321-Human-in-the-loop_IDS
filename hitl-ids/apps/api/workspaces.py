@@ -83,6 +83,12 @@ def active_database(request: Request) -> Path:
     return selected
 
 
+def selected_id(request: Request) -> str:
+    """The allowlisted workspace bound to this request's operational connection."""
+    _, _, replay = paths(request)
+    return "v3-1-replay" if active_database(request) == replay else "operational"
+
+
 def _count(path: Path) -> int | None:
     if not path.exists():
         return None

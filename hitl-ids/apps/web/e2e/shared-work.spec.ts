@@ -19,7 +19,8 @@ test('three analysts share work, arbitrate contention, complete and escalate thr
  async function login(p:Page,name:string){
   await p.goto('/login');await p.getByLabel('Username').fill(name);await p.getByLabel('Password',{exact:true}).fill('work-demo');await p.getByRole('button',{name:'Sign in'}).click();await expect(p).not.toHaveURL(/\/login$/);
  }
- async function claim(p:Page){await p.getByRole('button',{name:'Start Review',exact:true}).click();await expect(panel(p)).toContainText('In Review — You');}
+ const row=(p:Page,n:string)=>p.getByRole('list',{name:'Operational alerts'}).locator(`button[data-alert-ref="${refs[n]}"]`);
+ async function claim(p:Page,n:string){await row(p,n).click();await expect(panel(p)).toContainText('Your Access: Owner');}
  async function smoke(p:Page,label:string,control:Locator){
   await expect(p.getByRole('button',{name:/^Total Alerts \d/})).toBeAttached();
   for(const theme of ['light','dark'])for(const width of [1440,1024,390]){
@@ -35,10 +36,10 @@ test('three analysts share work, arbitrate contention, complete and escalate thr
  await Promise.all([open(a,'1'),open(b,'1'),open(c,'1')]);
  await smoke(a,'available',panel(a));
  expect((await get(a,harness+'/proof')).digest).toBe(before.digest);
- await claim(a);await a.reload();await expect(panel(a)).toContainText('In Review — You');
+ await claim(a,'1');await a.reload();await expect(panel(a)).toContainText('Your Access: Owner');
  for(const p of [b,c]){
-  await p.getByRole('button',{name:'Refresh operational queue'}).click();await expect(panel(p)).toContainText('In Review — Alice');
-  expect(await p.getByRole('button',{name:'Start Review',exact:true}).count()).toBe(0);
+  await p.getByRole('button',{name:'Refresh operational queue'}).click();await expect(panel(p)).toContainText('Owner: Alice');
+  await expect(panel(p)).toContainText('Your Access: Viewer');
   expect(await workspace(p).getByRole('button',{name:'Escalate to Tier 2',exact:true}).count()).toBe(0);
   await workspace(p).getByRole('tab',{name:'Analyst Verdict',exact:true}).click();expect(await workspace(p).getByLabel('Verdict reason').count()).toBe(0);
  }
@@ -48,7 +49,7 @@ test('three analysts share work, arbitrate contention, complete and escalate thr
  let arrived=0;let release!:()=>void;const gate=new Promise<void>(resolve=>release=resolve);
  for(const p of [a,b])await p.route('**/work/claim',async route=>{if(++arrived===2)release();await gate;await route.continue();});
  const responses=[a,b].map(p=>p.waitForResponse(r=>r.url().endsWith('/work/claim')&&r.request().method()==='POST'));
- await Promise.all([a,b].map(p=>p.getByRole('button',{name:'Start Review',exact:true}).click()));
+ await Promise.all([a,b].map(p=>row(p,'2').click()));
  const raced=await Promise.all(responses);const raceBodies=await Promise.all(raced.map(r=>r.json()));
  writeFileSync(info.outputPath('race-debug.json'),JSON.stringify({requests:raced.map(r=>({url:r.url(),body:r.request().postDataJSON()})),raceBodies,proof:await get(a,harness+'/proof')},null,2));
  expect(raced.map(r=>r.status())).toEqual([409,409]);expect(raceBodies[0].error.detail.roundRef).toBe(raceBodies[1].error.detail.roundRef);
@@ -56,10 +57,10 @@ test('three analysts share work, arbitrate contention, complete and escalate thr
  const contested=await get(a,harness+'/proof');
  expect(contested.rounds.find((r:any)=>r.status==='contended').owner_actor_id).toBeNull();
  await smoke(a,'claim-conflict',a.getByRole('alert'));
- await open(b,'2');await claim(b);
+ await open(b,'2');await claim(b,'2');
  const late=await a.request.post(`/api/v2/alerts/${refs['2']}/work/claim`,{headers:{Authorization:tokens.get(a)!},data:{requestId:crypto.randomUUID(),expectedRevision:2}});
  expect(late.status()).toBe(409);expect((await get(b,`/api/v2/alerts/${refs['2']}/work`)).ownerName).toBe('Bob');
- await open(c,'3');await claim(c);
+ await open(c,'3');await claim(c,'3');
  await workspace(c).getByRole('tab',{name:'Analyst Verdict',exact:true}).click();
  await workspace(c).getByLabel('Verdict outcome').selectOption('expected_activity');await workspace(c).getByLabel('Verdict reason').fill('SYNTHETIC authorized activity independently reviewed by Carol');
  await workspace(c).getByRole('button',{name:'Record Verdict',exact:true}).click();await expect(panel(c)).toContainText('Completed — Reviewed by Carol');
@@ -70,10 +71,10 @@ test('three analysts share work, arbitrate contention, complete and escalate thr
  await workspace(c).getByRole('tab',{name:'Analyst Verdict',exact:true}).click();
  await workspace(c).getByLabel('Verdict outcome').selectOption('false_positive');await workspace(c).getByLabel('Verdict reason').fill('SYNTHETIC explicit historical correction');
  await workspace(c).getByRole('button',{name:'Correct Verdict',exact:true}).click();await expect(panel(c)).toContainText('false positive');
- await open(a,'4');await claim(a);await workspace(a).getByLabel('Decision reason',{exact:true}).fill('SYNTHETIC analyst requests expert investigation');
+ await open(a,'4');await claim(a,'4');await workspace(a).getByLabel('Decision reason',{exact:true}).fill('SYNTHETIC analyst requests expert investigation');
  await workspace(a).getByRole('button',{name:'Escalate to Tier 2',exact:true}).click();await expect(panel(a)).toContainText('Escalated — Alice');
  await expect(workspace(a).getByRole('link',{name:'Open Tier 2 Case',exact:true})).toBeVisible();
- await open(c,'6');expect(await c.getByRole('button',{name:'Start Review',exact:true}).count()).toBe(0);await expect(workspace(c).getByRole('link',{name:'Open Tier 2 Case',exact:true})).toBeVisible();
+ await open(c,'6');const beforeUnknown=(await get(c,harness+'/proof')).intents.length;await row(c,'6').click();expect((await get(c,harness+'/proof')).intents).toHaveLength(beforeUnknown);await expect(workspace(c).getByRole('link',{name:'Open Tier 2 Case',exact:true})).toBeVisible();
  const denied=await e.request.post(`/api/v2/alerts/${refs['5']}/work/claim`,{headers:{Authorization:tokens.get(e)!},data:{requestId:crypto.randomUUID(),expectedRevision:0}});expect(denied.status()).toBe(403);
  const proof=await get(a,harness+'/proof');expect(proof.collectionRuns).toBe(0);expect(proof.foreignKeys).toBe(0);expect(proof.verdicts).toBe(2);expect(proof.memoryEvidence).toBe(2);expect(proof.cases).toBe(2);expect(errors).toEqual([]);
  writeFileSync(info.outputPath('multi-user-proof.json'),JSON.stringify({refs,raceBodies,contested,final:proof},null,2));

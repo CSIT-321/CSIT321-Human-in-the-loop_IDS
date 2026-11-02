@@ -1,41 +1,46 @@
-import {render,screen,waitFor} from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
-import {describe,it,expect,vi} from 'vitest';
-import {stubFetch,jsonResponse} from '../../test/renderApp';
-import {AnalystWorkPanel} from './AnalystWork';
-import type {Schemas} from '../../api/client';
+import { render, screen } from "@testing-library/react";
+import { describe, expect, it } from "vitest";
 
-const work:Schemas['WorkView']={status:'available',revision:0,canClaim:true,canMutate:false,isOwner:false,explanation:'Available — select Start Review to request ownership.',claimedAt:null,finishedAt:null,finishedByActorId:null,finishedByName:null,ownerActorId:null,ownerName:null,roundRef:null,verdictRef:null,verdictOutcome:null};
-describe('explicit shared analyst claim',()=>{
- it('viewing never claims; Start Review submits the revision and refreshes',async()=>{
-  const bodies:unknown[]=[];const changed=vi.fn();
-  stubFetch(async r=>{bodies.push(await r.json());return jsonResponse({outcome:'claimed'});});
-  render(<AnalystWorkPanel alertRef="alert" work={work} onChanged={changed} onConflict={vi.fn()}/>);
-  expect(bodies).toHaveLength(0);
-  await userEvent.click(screen.getByRole('button',{name:'Start Review'}));
-  await waitFor(()=>expect(changed).toHaveBeenCalledOnce());
-  expect(bodies).toEqual([{requestId:expect.any(String),expectedRevision:0}]);
- });
- it('controlled contention requests reselect, without reporting ownership',async()=>{
-  const changed=vi.fn(),conflict=vi.fn();
-  stubFetch(()=>jsonResponse({error:{code:'CLAIM_CONTENTION',message:'Multiple analysts selected this alert. Select again.'}},409));
-  render(<AnalystWorkPanel alertRef="alert" work={work} onChanged={changed} onConflict={conflict}/>);
-  await userEvent.click(screen.getByRole('button',{name:'Start Review'}));
-  await waitFor(()=>expect(conflict).toHaveBeenCalledWith('Multiple analysts selected this alert. Select again.'));
-  expect(changed).not.toHaveBeenCalled();
- });
- it('uncertain network retries reuse exactly the same request identity',async()=>{
-  const bodies:unknown[]=[];const changed=vi.fn();
-  stubFetch(async r=>{bodies.push(await r.json());return bodies.length===1?jsonResponse({error:{code:'UNAVAILABLE',message:'Retry connection'}},503):jsonResponse({outcome:'claimed'});});
-  render(<AnalystWorkPanel alertRef="alert" work={work} onChanged={changed} onConflict={vi.fn()}/>);
-  await userEvent.click(screen.getByRole('button',{name:'Start Review'}));await screen.findByRole('alert');
-  await userEvent.click(screen.getByRole('button',{name:'Start Review'}));
-  await waitFor(()=>expect(changed).toHaveBeenCalledOnce());expect(bodies[0]).toEqual(bodies[1]);
- });
- it('non-owner and completed views have no claim controls and retain provenance',()=>{
-  const mounted=render(<AnalystWorkPanel alertRef="alert" work={{...work,status:'in_review',canClaim:false,ownerName:'Alice'}} onChanged={vi.fn()} onConflict={vi.fn()}/>);
-  expect(screen.getByText('In Review — Alice')).toBeVisible();expect(screen.queryByRole('button')).toBeNull();
-  mounted.rerender(<AnalystWorkPanel alertRef="alert" work={{...work,status:'completed',canClaim:false,finishedByName:'Alice',finishedAt:'2026-11-02T00:00:00Z',verdictOutcome:'expected_activity'}} onChanged={vi.fn()} onConflict={vi.fn()}/>);
-  expect(screen.getByText('Completed — Reviewed by Alice')).toBeVisible();expect(screen.getByText('Verdict: expected activity')).toBeVisible();expect(screen.queryByRole('button')).toBeNull();
- });
+import type { Schemas } from "../../api/client";
+import { AnalystWorkPanel } from "./AnalystWork";
+
+const available: Schemas["WorkView"] = {
+  status: "available", revision: 0, canClaim: true, canMutate: false, isOwner: false,
+  explanation: "Available for Review. Selecting this alert starts your review.",
+  claimedAt: null, finishedAt: null, finishedByActorId: null, finishedByName: null,
+  ownerActorId: null, ownerName: null, roundRef: null, verdictRef: null, verdictOutcome: null,
+};
+
+describe("human work presentation", () => {
+  it("shows Available and pending ownership without a separate Start Review action", () => {
+    const mounted = render(<AnalystWorkPanel work={available} />);
+    expect(screen.getByText("Available for Review")).toBeVisible();
+    expect(screen.getByText("Selecting this alert starts your review.")).toBeVisible();
+    expect(screen.queryByRole("button", { name: "Start Review" })).toBeNull();
+    mounted.rerender(<AnalystWorkPanel work={available} starting />);
+    expect(screen.getByText("Starting review…")).toBeVisible();
+  });
+
+  it("distinguishes the owner from a viewer without a second claim control", () => {
+    const mounted = render(<AnalystWorkPanel work={{ ...available, status: "in_review", canClaim: false,
+      canMutate: true, isOwner: true, ownerName: "Alice" }} />);
+    expect(screen.getByText("In Review")).toBeVisible();
+    expect(screen.getByText("Alice (You)")).toBeVisible();
+    expect(screen.getByText("Owner", { exact: true })).toBeVisible();
+    mounted.rerender(<AnalystWorkPanel work={{ ...available, status: "in_review", canClaim: false,
+      ownerName: "Alice" }} />);
+    expect(screen.getByText("Alice", { exact: true })).toBeVisible();
+    expect(screen.getByText("Viewer", { exact: true })).toBeVisible();
+    expect(screen.queryByRole("button")).toBeNull();
+  });
+
+  it("keeps Completed and Escalated as historical states", () => {
+    const mounted = render(<AnalystWorkPanel work={{ ...available, status: "completed", canClaim: false,
+      finishedByName: "Alice", verdictOutcome: "expected_activity" }} />);
+    expect(screen.getByText("Completed — Reviewed by Alice")).toBeVisible();
+    expect(screen.getByText("Verdict: expected activity")).toBeVisible();
+    mounted.rerender(<AnalystWorkPanel work={{ ...available, status: "escalated", canClaim: false,
+      finishedByName: "Alice" }} />);
+    expect(screen.getByText("Escalated — Alice")).toBeVisible();
+  });
 });

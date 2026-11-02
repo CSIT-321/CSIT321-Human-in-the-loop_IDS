@@ -40,9 +40,10 @@ def headers(path,actor):
     with closing(db.connect(path)) as c:
         return {'Authorization':'Bearer '+auth.encode_token(db.get(c,m.User,actor))}
 
-def test_real_concurrent_http_distinct_actors_both_conflict_then_retry(setup,monkeypatch):
+@pytest.mark.parametrize('claimants', [2, 3])
+def test_real_concurrent_http_distinct_actors_conflict_then_retry(setup, monkeypatch, claimants):
     path,alerts=setup;a=alerts[0];app=create_app(path)
-    start=Barrier(2);registered=Barrier(2);original=work.register
+    start=Barrier(claimants);registered=Barrier(claimants);original=work.register
     def register(*args,**kwargs):
         result=original(*args,**kwargs)
         registered.wait(timeout=5)  # both actual HTTP workers committed intents before either can finalize
@@ -51,17 +52,17 @@ def test_real_concurrent_http_distinct_actors_both_conflict_then_retry(setup,mon
         with TestClient(app) as client:
             start.wait(timeout=5)
             return client.post(f'/api/v2/alerts/{a.operational_alert_ref}/work/claim',headers=headers(path,actor),json={'requestId':str(uuid4()),'expectedRevision':0})
-    with patch.object(work,'register',register),ThreadPoolExecutor(max_workers=2) as pool:
-        futures=[pool.submit(send,actor) for actor in (1,2)]
+    with patch.object(work,'register',register),ThreadPoolExecutor(max_workers=claimants) as pool:
+        futures=[pool.submit(send,actor) for actor in range(1, claimants+1)]
         results=[f.result(timeout=10) for f in futures]
-    assert [r.status_code for r in results]==[409,409]
+    assert [r.status_code for r in results]==[409]*claimants
     assert all(r.json()['error']['code']=='CLAIM_CONTENTION' for r in results)
     assert len({r.json()['error']['detail']['roundRef'] for r in results})==1
     with closing(db.connect(path)) as c:
         view=work.read_work(c,a.id,1)
         assert view.status=='available' and view.owner_actor_id is None and view.revision==1
         assert c.execute('SELECT count(*) FROM analyst_claim_rounds').fetchone()[0]==1
-        assert c.execute('SELECT count(DISTINCT actor_id) FROM analyst_claim_intents').fetchone()[0]==2
+        assert c.execute('SELECT count(DISTINCT actor_id) FROM analyst_claim_intents').fetchone()[0]==claimants
         assert claim_work(c,a).owner_actor_id==1
         with pytest.raises(work.WorkConflict,match='Analyst 1'):
             work.claim(c,a.operational_alert_ref,actor_id=2,request=work.ClaimCommand(request_id=uuid4(),expected_revision=2))

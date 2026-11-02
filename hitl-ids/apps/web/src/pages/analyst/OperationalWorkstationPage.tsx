@@ -2,7 +2,8 @@ import { AnalystVerdictPanel, AnalystVerdictHistory } from "../../features/alert
 import { AnalystWorkPanel } from "../../features/alert/AnalystWork";
 import { useEffect, useRef, useState } from "react";
 import { Link, useSearchParams } from "react-router";
-import { api, unwrap, type Schemas } from "../../api/client";
+import { api, unwrap, ApiError, type Schemas } from "../../api/client";
+import { useSession } from "../../session/SessionContext";
 import { useApi } from "../../api/useApi";
 import { ErrorState, LoadingState } from "../../components/states";
 import { Pill } from "../../components/ui";
@@ -71,7 +72,7 @@ function Assistance({ view, onReview }: { view: View; onReview: (review: Schemas
   </aside>;
 }
 
-function AlertWorkspace({ view, onChanged, refresh, onReview, onConflict }: { view: View; onChanged: (view: View) => void; refresh: () => void; onReview: (review: Schemas["ReviewView"]) => void; onConflict:(message:string)=>void }) {
+function AlertWorkspace({ view, onChanged, refresh, onReview, starting }: { view: View; onChanged: (view: View) => void; refresh: () => void; onReview: (review: Schemas["ReviewView"]) => void; starting: boolean }) {
   const [tab, setTab] = useState<Tab>("Overview");
   const evidence = useApi(signal => unwrap(api.GET("/api/v2/alerts/{alertRef}/evidence", { params: { path: { alertRef: view.operationalAlertRef } }, signal })), [view.operationalAlertRef]);
   return <section aria-label="Operational alert workspace" className="ops-detail flex min-h-0 min-w-0 flex-col bg-bg">
@@ -90,7 +91,7 @@ function AlertWorkspace({ view, onChanged, refresh, onReview, onConflict }: { vi
         onClick={() => setTab(name)} className={`border-b-2 px-3 py-2 text-xs ${tab === name ? "border-primary text-text" : "border-transparent text-muted hover:text-text"}`}>{name}</button>)}
     </div>
     <div id="ops-alert-panel" role="tabpanel" aria-label={tab} className="min-h-0 flex-1 space-y-4 overflow-auto p-4">
-      {view.work&&<AnalystWorkPanel alertRef={view.operationalAlertRef} work={view.work} onChanged={refresh} onConflict={onConflict}/>}
+      {view.work&&<AnalystWorkPanel work={view.work} starting={starting}/>}
       {(tab === "Overview" || tab === "Evidence") && <>
         {view.classification && <p className="text-sm capitalize">{view.classification.status === "informational_policy_signal" ? "Classification" : "Attack Category"}: <strong>{attackLabel(view.classification.attackCategory)}</strong></p>}
         {evidence.status === "loading" && <LoadingState label="Loading canonical evidence…" />}
@@ -128,6 +129,7 @@ function AlertWorkspace({ view, onChanged, refresh, onReview, onConflict }: { vi
 }
 
 export function OperationalWorkstationPage() {
+  const { session } = useSession();
   const [search, setSearch] = useSearchParams();
   const requested = search.get("alertRef");
   const parsed = Number(search.get("offset") ?? 0);
@@ -139,9 +141,16 @@ export function OperationalWorkstationPage() {
   const sort = "priority_desc" as const;
   const [overrides, setOverrides] = useState<Record<string, View>>({});
   const [claimConflict,setClaimConflict]=useState('');
+  const [claimError,setClaimError]=useState('');
+  const [startingRef,setStartingRef]=useState<string|null>(null);
+  const claimInFlight=useRef(false);
+  const pendingClaims=useRef(new Map<string,Schemas['ClaimCommand']>());
   const [mustReselect,setMustReselect]=useState(false);
   const summary = useApi(signal => unwrap(api.GET("/api/v2/alerts/summary", { signal })), []);
-  const queue = useApi(signal => unwrap(api.GET("/api/v2/alerts", { params: { query: { limit: 50, offset, ...activeView.query, attackCategory, q: filter || undefined, sort } }, signal })), [offset, activeView.key, attackCategory, filter, sort]);
+  const queue = useApi(async signal => {
+    const result=await api.GET("/api/v2/alerts", { params: { query: { limit: 50, offset, ...activeView.query, attackCategory, q: filter || undefined, sort } }, signal });
+    return {...await unwrap(Promise.resolve(result)),workspaceId:result.response.headers.get('X-Operational-Workspace')};
+  }, [offset, activeView.key, attackCategory, filter, sort]);
   const linked = useApi(async signal => requested ? unwrap(api.GET("/api/v2/alerts/{alertRef}/triage-state", { params: { path: { alertRef: requested } }, signal })) : null, [requested]);
   const items = queue.status === "success" ? queue.data.items.map(item => overrides[item.operationalAlertRef] ?? item) : [];
   const visible = items;
@@ -156,8 +165,50 @@ export function OperationalWorkstationPage() {
     if (!current || current.operationalAlertRef !== review.operationalAlertRef || current.effectiveReview?.version === review.version) return;
     changed({ ...current, effectiveReview: reviewProjection(review) });
   }
-  function select(ref: string) { setMustReselect(false);setClaimConflict('');setSearch(previous => { const next = new URLSearchParams(previous); next.set("alertRef", ref); return next; }, { replace: true }); }
+  function select(ref: string) { setMustReselect(false);setClaimConflict('');setClaimError('');setSearch(previous => { const next = new URLSearchParams(previous); next.set("alertRef", ref); return next; }, { replace: true }); }
   function conflict(message:string){setClaimConflict(message);setMustReselect(true);setLastCurrent(undefined);setOverrides({});setSearch(previous=>{const next=new URLSearchParams(previous);next.delete('alertRef');return next;},{replace:true});queue.reload();summary.reload();}
+  async function claimAvailable(ref:string,workspaceId:string){
+    claimInFlight.current=true;setStartingRef(ref);
+    const claimKey=`${workspaceId}:${ref}`;
+    let submitted=false;
+    try{
+      // The read and POST both name the workspace of the clicked queue row. A switch rejects the
+      // action before the claim domain can write to another operational database.
+      const checked=await api.GET('/api/v2/alerts/{alertRef}/work',{params:{path:{alertRef:ref}}});
+      const work=await unwrap(Promise.resolve(checked));
+      if(checked.response.headers.get('X-Operational-Workspace')!==workspaceId){
+        pendingClaims.current.delete(claimKey);conflict('The active workspace changed. Please select an alert again.');return;
+      }
+      if(work.status!=='available'||!work.canClaim){pendingClaims.current.delete(claimKey);refresh();return;}
+      let command=pendingClaims.current.get(claimKey);
+      if(!command){command={requestId:crypto.randomUUID(),expectedRevision:work.revision};pendingClaims.current.set(claimKey,command);}
+      submitted=true;
+      await unwrap(api.POST('/api/v2/alerts/{alertRef}/work/claim',{
+        params:{path:{alertRef:ref}},headers:{'X-Operational-Workspace':workspaceId},body:command}));
+      pendingClaims.current.delete(claimKey);refresh();
+    }catch(cause){
+      if(cause instanceof ApiError&&cause.code==='CLAIM_CONTENTION'){
+        pendingClaims.current.delete(claimKey);
+        conflict('Another analyst selected this alert at the same time. No owner was assigned. Please select an alert again.');
+      }else if(cause instanceof ApiError&&cause.code==='WORKSPACE_CHANGED'){
+        pendingClaims.current.delete(claimKey);conflict('The active workspace changed. Please select an alert again.');
+      }else if(cause instanceof ApiError&&cause.status===409&&cause.code!=='WORK_RETRY'){
+        pendingClaims.current.delete(claimKey);refresh();
+      }else{
+        setClaimError(submitted?'Could not confirm review ownership. Select this alert again to retry.':
+          'Could not check review availability. Select this alert again to retry.');
+      }
+    }finally{claimInFlight.current=false;setStartingRef(null);}
+  }
+  function selectIntentional(item:View){
+    if(claimInFlight.current)return;
+    select(item.operationalAlertRef);
+    if(session?.role!=='security_analyst'||item.state.handlingRoute!=='tier1_review'||!needsReview(item)||
+      item.work?.status!=='available'||!item.work.canClaim)return;
+    const workspaceId=queue.status==='success'?queue.data.workspaceId:null;
+    if(!workspaceId){setClaimError('Current workspace is unavailable. Refresh the queue and select again.');return;}
+    void claimAvailable(item.operationalAlertRef,workspaceId);
+  }
   function page(nextOffset: number) { setSearch(previous => { const next = new URLSearchParams(previous); next.set("offset", String(nextOffset)); next.delete("alertRef"); return next; }); }
   function setFilter(key: string, value: string, replace = false) {
     setOverrides({});
@@ -176,7 +227,7 @@ export function OperationalWorkstationPage() {
       if ((event.key === "j" || event.key === "k") && visible.length) {
         const index = visible.findIndex(item => item.operationalAlertRef === selected);
         const next = visible[Math.max(0, Math.min(visible.length - 1, index + (event.key === "j" ? 1 : -1)))];
-        if (next) { event.preventDefault(); select(next.operationalAlertRef); }
+        if (next) { event.preventDefault(); selectIntentional(next); }
       }
     }
     window.addEventListener("keydown", key); return () => window.removeEventListener("keydown", key);
@@ -192,6 +243,7 @@ export function OperationalWorkstationPage() {
     </header>
     <OperationalKpis data={summary.status === "success" ? summary.data : undefined} onView={chooseView} />
     {claimConflict&&<p role="alert" className="shrink-0 break-words border-b border-border p-3 text-sm text-warn">Claim Conflict — {claimConflict}</p>}
+    {claimError&&<p role="alert" className="shrink-0 break-words border-b border-border p-3 text-sm text-warn">{claimError}</p>}
     {summary.status === "loading" && <p role="status" className="px-3 text-xs text-muted">Loading operational workload…</p>}
     {summary.status === "error" && <div role="alert" className="flex shrink-0 gap-2 px-3 py-1 text-xs">Workload unavailable: {summary.error.message} <button className={button} onClick={summary.reload}>Retry workload</button></div>}
     <div className="ops-grid grid min-h-0 flex-1">
@@ -212,7 +264,7 @@ export function OperationalWorkstationPage() {
           {queue.status === "error" && <ErrorState error={queue.error} onRetry={queue.reload} />}
           {queue.status === "success" && visible.length === 0 && <p className="p-4 text-sm text-muted">No operational alerts match this view.</p>}
           <ul aria-label="Operational alerts">{visible.map(item => <li key={item.operationalAlertRef}>
-            <button aria-pressed={selected === item.operationalAlertRef} onClick={() => select(item.operationalAlertRef)}
+            <button data-alert-ref={item.operationalAlertRef} aria-pressed={selected === item.operationalAlertRef} disabled={startingRef!==null} onClick={() => selectIntentional(item)}
               className={`relative block w-full space-y-2 border-b border-l-2 border-b-border px-3 py-3 text-left text-xs ${selected === item.operationalAlertRef ? "border-l-primary bg-raised" : "border-l-transparent hover:bg-raised"}`}>
               <QueueItem item={item} />
             </button>
@@ -224,7 +276,7 @@ export function OperationalWorkstationPage() {
           <button className={button} disabled={queue.status !== "success" || offset + 50 >= queue.data.page.total} onClick={() => page(offset + 50)}>Next alerts</button>
         </footer>
       </section>
-      {current ? <AlertWorkspace key={current.operationalAlertRef} view={current} onChanged={changed} refresh={refresh} onReview={reviewChanged} onConflict={conflict} />
+      {current ? <AlertWorkspace key={current.operationalAlertRef} view={current} onChanged={changed} refresh={refresh} onReview={reviewChanged} starting={startingRef===current.operationalAlertRef} />
         : <section aria-label="Operational alert workspace" className="p-5 text-sm text-muted">{linked.status === "error" ? <ErrorState error={linked.error} onRetry={linked.reload} /> : "Select an operational alert."}</section>}
       {current && <Assistance key={"assistance-" + current.operationalAlertRef} view={current} onReview={reviewChanged} />}
     </div>
