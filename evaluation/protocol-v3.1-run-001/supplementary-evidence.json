@@ -1,0 +1,631 @@
+{
+  "learning": {
+    "lessonCount": 20,
+    "statuses": {
+      "active": 10,
+      "candidate": 10
+    },
+    "outcomes": {
+      "expected_activity": 6,
+      "false_positive": 4,
+      "confirmed_malicious": 5,
+      "suspicious": 5
+    },
+    "supportDistribution": {
+      "3": 10,
+      "1": 10
+    },
+    "conflictDistribution": {
+      "0": 20
+    },
+    "evidenceAuthorDistribution": {
+      "1": 14,
+      "2": 13,
+      "3": 13
+    }
+  },
+  "finalMemoryStatuses": {
+    "active": 8,
+    "conflict_review": 2,
+    "candidate": 10
+  },
+  "finalConflictDistribution": {
+    "0": 18,
+    "1": 2
+  },
+  "reasonDistributionAllHoldout": {
+    "baseline": {
+      "NO_QUALIFIED_ACTIVE_EXACT_MEMORY": 160,
+      "KNOWN_MALICIOUS_INDICATOR": 20,
+      "EVIDENCE_CONFLICT": 20,
+      "UNSUPPORTED_WORKFLOW": 10
+    },
+    "adaptive": {
+      "VALIDATED_MEMORY_AND_CONTEXT": 39,
+      "DETERMINISTIC_AUDIT_SAMPLE": 3,
+      "NO_QUALIFIED_ACTIVE_EXACT_MEMORY": 118,
+      "KNOWN_MALICIOUS_INDICATOR": 20,
+      "EVIDENCE_CONFLICT": 20,
+      "UNSUPPORTED_WORKFLOW": 10,
+      "MEMORY_CONFLICT": 8
+    }
+  },
+  "memoryDetail": [
+    {
+      "lessonRef": "31a9cd2a-72ec-4b78-b387-0743f093be17",
+      "outcome": "expected_activity",
+      "scope": "exact",
+      "support": 3,
+      "conflicts": 0,
+      "status": "active",
+      "activationSource": "system_policy",
+      "validFrom": "2026-11-03T00:03:01Z",
+      "expiresAt": "2026-12-03T00:03:01Z",
+      "learningPattern": "p001",
+      "holdoutExactMatches": 10,
+      "agreementRatio": 1.0,
+      "evidenceAuthors": [
+        "1",
+        "2",
+        "3"
+      ],
+      "effectiveVoteCount": 3
+    },
+    {
+      "lessonRef": "bee1e704-1b44-4e60-b255-4d50b8169901",
+      "outcome": "expected_activity",
+      "scope": "exact",
+      "support": 3,
+      "conflicts": 0,
+      "status": "active",
+      "activationSource": "system_policy",
+      "validFrom": "2026-11-03T00:06:01.187000Z",
+      "expiresAt": "2026-12-03T00:06:01.187000Z",
+      "learningPattern": "p002",
+      "holdoutExactMatches": 10,
+      "agreementRatio": 1.0,
+      "evidenceAuthors": [
+        "1",
+        "2",
+        "3"
+      ],
+      "effectiveVoteCount": 3
+    },
+    {
+      "lessonRef": "648c5bd8-5f1d-4090-91e2-0b838b4f90b8",
+      "outcome": "expected_activity",
+      "scope": "exact",
+      "support": 3,
+      "conflicts": 0,
+      "status": "active",
+      "activationSource": "system_policy",
+      "validFrom": "2026-11-03T00:09:00.969000Z",
+      "expiresAt": "2026-12-03T00:09:00.969000Z",
+      "learningPattern": "p003",
+      "holdoutExactMatches": 10,
+      "agreementRatio": 1.0,
+      "evidenceAuthors": [
+        "1",
+        "2",
+        "3"
+      ],
+      "effectiveVoteCount": 3
+    },
+    {
+      "lessonRef": "5238cb2a-903e-4edc-89a7-2165df158759",
+      "outcome": "expected_activity",
+      "scope": "exact",
+      "support": 3,
+      "conflicts": 0,
+      "status": "active",
+      "activationSource": "system_policy",
+      "validFrom": "2026-11-03T00:12:01.110000Z",
+      "expiresAt": "2026-12-03T00:12:01.110000Z",
+      "learningPattern": "p004",
+      "holdoutExactMatches": 10,
+      "agreementRatio": 1.0,
+      "evidenceAuthors": [
+        "1",
+        "2",
+        "3"
+      ],
+      "effectiveVoteCount": 3
+    },
+    {
+      "lessonRef": "8064c8c6-c6bb-435e-8b0d-5f3df3dc8918",
+      "outcome": "false_positive",
+      "scope": "exact",
+      "support": 3,
+      "conflicts": 0,
+      "status": "active",
+      "activationSource": "system_policy",
+      "validFrom": "2026-11-03T00:15:01.109000Z",
+      "expiresAt": "2026-12-03T00:15:01.109000Z",
+      "learningPattern": "p005",
+      "holdoutExactMatches": 10,
+      "agreementRatio": 1.0,
+      "evidenceAuthors": [
+        "1",
+        "2",
+        "3"
+      ],
+      "effectiveVoteCount": 3
+    },
+    {
+      "lessonRef": "06594d3d-7619-4650-bf26-9df9bebbca21",
+      "outcome": "false_positive",
+      "scope": "exact",
+      "support": 3,
+      "conflicts": 0,
+      "status": "active",
+      "activationSource": "system_policy",
+      "validFrom": "2026-11-03T00:18:01.062000Z",
+      "expiresAt": "2026-12-03T00:18:01.062000Z",
+      "learningPattern": "p006",
+      "holdoutExactMatches": 10,
+      "agreementRatio": 1.0,
+      "evidenceAuthors": [
+        "1",
+        "2",
+        "3"
+      ],
+      "effectiveVoteCount": 3
+    },
+    {
+      "lessonRef": "c2ced81d-fe30-4896-b69a-7f7d504708b1",
+      "outcome": "false_positive",
+      "scope": "exact",
+      "support": 3,
+      "conflicts": 0,
+      "status": "active",
+      "activationSource": "system_policy",
+      "validFrom": "2026-11-03T00:21:01.047000Z",
+      "expiresAt": "2026-12-03T00:21:01.047000Z",
+      "learningPattern": "p007",
+      "holdoutExactMatches": 10,
+      "agreementRatio": 1.0,
+      "evidenceAuthors": [
+        "1",
+        "2",
+        "3"
+      ],
+      "effectiveVoteCount": 3
+    },
+    {
+      "lessonRef": "1ab5713c-15df-4f66-a8f9-7f76ee721731",
+      "outcome": "false_positive",
+      "scope": "exact",
+      "support": 3,
+      "conflicts": 0,
+      "status": "active",
+      "activationSource": "system_policy",
+      "validFrom": "2026-11-03T00:24:00.984000Z",
+      "expiresAt": "2026-12-03T00:24:00.984000Z",
+      "learningPattern": "p008",
+      "holdoutExactMatches": 10,
+      "agreementRatio": 1.0,
+      "evidenceAuthors": [
+        "1",
+        "2",
+        "3"
+      ],
+      "effectiveVoteCount": 3
+    },
+    {
+      "lessonRef": "2c149855-0f2f-4483-a391-55010ef2a11e",
+      "outcome": "expected_activity",
+      "scope": "exact",
+      "support": 3,
+      "conflicts": 0,
+      "status": "active",
+      "activationSource": "system_policy",
+      "validFrom": "2026-11-03T00:27:01.109000Z",
+      "expiresAt": "2026-12-03T00:27:01.109000Z",
+      "learningPattern": "p009",
+      "holdoutExactMatches": 5,
+      "agreementRatio": 1.0,
+      "evidenceAuthors": [
+        "1",
+        "2",
+        "3"
+      ],
+      "effectiveVoteCount": 3
+    },
+    {
+      "lessonRef": "346d4f91-99fc-40c7-8d6f-29a938d9fc97",
+      "outcome": "expected_activity",
+      "scope": "exact",
+      "support": 3,
+      "conflicts": 0,
+      "status": "active",
+      "activationSource": "system_policy",
+      "validFrom": "2026-11-03T00:30:01.125000Z",
+      "expiresAt": "2026-12-03T00:30:01.125000Z",
+      "learningPattern": "p010",
+      "holdoutExactMatches": 5,
+      "agreementRatio": 1.0,
+      "evidenceAuthors": [
+        "1",
+        "2",
+        "3"
+      ],
+      "effectiveVoteCount": 3
+    },
+    {
+      "lessonRef": "b0f03e3c-76c8-457d-8830-c36a8dc7e51f",
+      "outcome": "confirmed_malicious",
+      "scope": "exact",
+      "support": 1,
+      "conflicts": 0,
+      "status": "candidate",
+      "activationSource": null,
+      "validFrom": null,
+      "expiresAt": "2026-12-03T00:31:01.281000Z",
+      "learningPattern": "p011",
+      "holdoutExactMatches": 0,
+      "agreementRatio": 1.0,
+      "evidenceAuthors": [
+        "1"
+      ],
+      "effectiveVoteCount": 1
+    },
+    {
+      "lessonRef": "6fd1f930-f482-4115-b18c-1e445ef598c4",
+      "outcome": "confirmed_malicious",
+      "scope": "exact",
+      "support": 1,
+      "conflicts": 0,
+      "status": "candidate",
+      "activationSource": null,
+      "validFrom": null,
+      "expiresAt": "2026-12-03T00:32:01.359000Z",
+      "learningPattern": "p012",
+      "holdoutExactMatches": 0,
+      "agreementRatio": 1.0,
+      "evidenceAuthors": [
+        "2"
+      ],
+      "effectiveVoteCount": 1
+    },
+    {
+      "lessonRef": "ee401264-12a1-4447-a604-3e6cf5a4c962",
+      "outcome": "confirmed_malicious",
+      "scope": "exact",
+      "support": 1,
+      "conflicts": 0,
+      "status": "candidate",
+      "activationSource": null,
+      "validFrom": null,
+      "expiresAt": "2026-12-03T00:33:01.688000Z",
+      "learningPattern": "p013",
+      "holdoutExactMatches": 0,
+      "agreementRatio": 1.0,
+      "evidenceAuthors": [
+        "3"
+      ],
+      "effectiveVoteCount": 1
+    },
+    {
+      "lessonRef": "7af9c7a0-4f2a-483d-bc5f-820c9ab67448",
+      "outcome": "confirmed_malicious",
+      "scope": "exact",
+      "support": 1,
+      "conflicts": 0,
+      "status": "candidate",
+      "activationSource": null,
+      "validFrom": null,
+      "expiresAt": "2026-12-03T00:34:01.203000Z",
+      "learningPattern": "p014",
+      "holdoutExactMatches": 0,
+      "agreementRatio": 1.0,
+      "evidenceAuthors": [
+        "1"
+      ],
+      "effectiveVoteCount": 1
+    },
+    {
+      "lessonRef": "575f3324-3469-4f5d-8712-9f7ce615f21b",
+      "outcome": "confirmed_malicious",
+      "scope": "exact",
+      "support": 1,
+      "conflicts": 0,
+      "status": "candidate",
+      "activationSource": null,
+      "validFrom": null,
+      "expiresAt": "2026-12-03T00:35:01.062000Z",
+      "learningPattern": "p015",
+      "holdoutExactMatches": 0,
+      "agreementRatio": 1.0,
+      "evidenceAuthors": [
+        "2"
+      ],
+      "effectiveVoteCount": 1
+    },
+    {
+      "lessonRef": "e0b29dfa-4663-4b75-85d9-273626e75a47",
+      "outcome": "suspicious",
+      "scope": "exact",
+      "support": 1,
+      "conflicts": 0,
+      "status": "candidate",
+      "activationSource": null,
+      "validFrom": null,
+      "expiresAt": "2026-12-03T00:36:01.172000Z",
+      "learningPattern": "p016",
+      "holdoutExactMatches": 0,
+      "agreementRatio": 1.0,
+      "evidenceAuthors": [
+        "3"
+      ],
+      "effectiveVoteCount": 1
+    },
+    {
+      "lessonRef": "a234daf3-70d0-40d0-bab3-25d70a36bde8",
+      "outcome": "suspicious",
+      "scope": "exact",
+      "support": 1,
+      "conflicts": 0,
+      "status": "candidate",
+      "activationSource": null,
+      "validFrom": null,
+      "expiresAt": "2026-12-03T00:37:01.313000Z",
+      "learningPattern": "p017",
+      "holdoutExactMatches": 0,
+      "agreementRatio": 1.0,
+      "evidenceAuthors": [
+        "1"
+      ],
+      "effectiveVoteCount": 1
+    },
+    {
+      "lessonRef": "5bd22ea2-4794-4a9c-b59c-aa6180a6acea",
+      "outcome": "suspicious",
+      "scope": "exact",
+      "support": 1,
+      "conflicts": 0,
+      "status": "candidate",
+      "activationSource": null,
+      "validFrom": null,
+      "expiresAt": "2026-12-03T00:38:01.766000Z",
+      "learningPattern": "p018",
+      "holdoutExactMatches": 0,
+      "agreementRatio": 1.0,
+      "evidenceAuthors": [
+        "2"
+      ],
+      "effectiveVoteCount": 1
+    },
+    {
+      "lessonRef": "b044b1bc-bbf2-4037-9e82-c8050aa1d5ea",
+      "outcome": "suspicious",
+      "scope": "exact",
+      "support": 1,
+      "conflicts": 0,
+      "status": "candidate",
+      "activationSource": null,
+      "validFrom": null,
+      "expiresAt": "2026-12-03T00:39:01.204000Z",
+      "learningPattern": "p019",
+      "holdoutExactMatches": 0,
+      "agreementRatio": 1.0,
+      "evidenceAuthors": [
+        "3"
+      ],
+      "effectiveVoteCount": 1
+    },
+    {
+      "lessonRef": "5045c0f2-470a-456f-b340-f04411fcef99",
+      "outcome": "suspicious",
+      "scope": "exact",
+      "support": 1,
+      "conflicts": 0,
+      "status": "candidate",
+      "activationSource": null,
+      "validFrom": null,
+      "expiresAt": "2026-12-03T00:40:01.235000Z",
+      "learningPattern": "p020",
+      "holdoutExactMatches": 0,
+      "agreementRatio": 1.0,
+      "evidenceAuthors": [
+        "1"
+      ],
+      "effectiveVoteCount": 1
+    }
+  ],
+  "driftDetail": [
+    {
+      "pattern": "p009",
+      "eventIndex": 191,
+      "disposition": "no_immediate_review",
+      "oracleOutcome": "confirmed_malicious",
+      "feedbackInjected": true,
+      "beforeSupport": 3,
+      "beforeConflicts": 0,
+      "beforeStatus": "active",
+      "guidanceActive": true,
+      "afterFeedbackSupport": 3,
+      "afterFeedbackConflicts": 1,
+      "afterFeedbackStatus": "conflict_review",
+      "nextAlertDisposition": "must_review",
+      "alertRef": "20087451-6961-54cf-8271-f5e59b0a1298",
+      "firstContradictionDeferred": true,
+      "explicitRequireHumanReview": true,
+      "guidanceActiveOnNextMatchingAlert": false
+    },
+    {
+      "pattern": "p009",
+      "eventIndex": 192,
+      "disposition": "must_review",
+      "oracleOutcome": "confirmed_malicious",
+      "feedbackInjected": false,
+      "beforeSupport": 3,
+      "beforeConflicts": 1,
+      "beforeStatus": "conflict_review",
+      "guidanceActive": false,
+      "afterFeedbackSupport": null,
+      "afterFeedbackConflicts": null,
+      "afterFeedbackStatus": null,
+      "nextAlertDisposition": "must_review",
+      "alertRef": "f014801f-2ca3-5653-9580-3a424a2ef2ea",
+      "firstContradictionDeferred": false,
+      "explicitRequireHumanReview": false,
+      "guidanceActiveOnNextMatchingAlert": null
+    },
+    {
+      "pattern": "p009",
+      "eventIndex": 193,
+      "disposition": "must_review",
+      "oracleOutcome": "confirmed_malicious",
+      "feedbackInjected": false,
+      "beforeSupport": 3,
+      "beforeConflicts": 1,
+      "beforeStatus": "conflict_review",
+      "guidanceActive": false,
+      "afterFeedbackSupport": null,
+      "afterFeedbackConflicts": null,
+      "afterFeedbackStatus": null,
+      "nextAlertDisposition": "must_review",
+      "alertRef": "b454f30b-b8ac-5dfc-bfd0-c4c0bc49ea39",
+      "firstContradictionDeferred": false,
+      "explicitRequireHumanReview": false,
+      "guidanceActiveOnNextMatchingAlert": null
+    },
+    {
+      "pattern": "p009",
+      "eventIndex": 194,
+      "disposition": "must_review",
+      "oracleOutcome": "confirmed_malicious",
+      "feedbackInjected": false,
+      "beforeSupport": 3,
+      "beforeConflicts": 1,
+      "beforeStatus": "conflict_review",
+      "guidanceActive": false,
+      "afterFeedbackSupport": null,
+      "afterFeedbackConflicts": null,
+      "afterFeedbackStatus": null,
+      "nextAlertDisposition": "must_review",
+      "alertRef": "e1aac7a5-55c5-58a3-b4c4-4a519e2554fc",
+      "firstContradictionDeferred": false,
+      "explicitRequireHumanReview": false,
+      "guidanceActiveOnNextMatchingAlert": null
+    },
+    {
+      "pattern": "p009",
+      "eventIndex": 195,
+      "disposition": "must_review",
+      "oracleOutcome": "confirmed_malicious",
+      "feedbackInjected": false,
+      "beforeSupport": 3,
+      "beforeConflicts": 1,
+      "beforeStatus": "conflict_review",
+      "guidanceActive": false,
+      "afterFeedbackSupport": null,
+      "afterFeedbackConflicts": null,
+      "afterFeedbackStatus": null,
+      "nextAlertDisposition": null,
+      "alertRef": "45e2916d-7d86-57ab-8d67-74ad42705741",
+      "firstContradictionDeferred": false,
+      "explicitRequireHumanReview": false,
+      "guidanceActiveOnNextMatchingAlert": null
+    },
+    {
+      "pattern": "p010",
+      "eventIndex": 196,
+      "disposition": "no_immediate_review",
+      "oracleOutcome": "suspicious",
+      "feedbackInjected": true,
+      "beforeSupport": 3,
+      "beforeConflicts": 0,
+      "beforeStatus": "active",
+      "guidanceActive": true,
+      "afterFeedbackSupport": 3,
+      "afterFeedbackConflicts": 1,
+      "afterFeedbackStatus": "conflict_review",
+      "nextAlertDisposition": "must_review",
+      "alertRef": "e1bc85ed-4f69-5a13-9002-b9832918a837",
+      "firstContradictionDeferred": true,
+      "explicitRequireHumanReview": true,
+      "guidanceActiveOnNextMatchingAlert": false
+    },
+    {
+      "pattern": "p010",
+      "eventIndex": 197,
+      "disposition": "must_review",
+      "oracleOutcome": "suspicious",
+      "feedbackInjected": false,
+      "beforeSupport": 3,
+      "beforeConflicts": 1,
+      "beforeStatus": "conflict_review",
+      "guidanceActive": false,
+      "afterFeedbackSupport": null,
+      "afterFeedbackConflicts": null,
+      "afterFeedbackStatus": null,
+      "nextAlertDisposition": "must_review",
+      "alertRef": "20e3f183-a48d-5beb-a654-6037d9b59b0e",
+      "firstContradictionDeferred": false,
+      "explicitRequireHumanReview": false,
+      "guidanceActiveOnNextMatchingAlert": null
+    },
+    {
+      "pattern": "p010",
+      "eventIndex": 198,
+      "disposition": "must_review",
+      "oracleOutcome": "suspicious",
+      "feedbackInjected": false,
+      "beforeSupport": 3,
+      "beforeConflicts": 1,
+      "beforeStatus": "conflict_review",
+      "guidanceActive": false,
+      "afterFeedbackSupport": null,
+      "afterFeedbackConflicts": null,
+      "afterFeedbackStatus": null,
+      "nextAlertDisposition": "must_review",
+      "alertRef": "7d61e870-1dcf-5cee-9d1c-1c30d040e9b3",
+      "firstContradictionDeferred": false,
+      "explicitRequireHumanReview": false,
+      "guidanceActiveOnNextMatchingAlert": null
+    },
+    {
+      "pattern": "p010",
+      "eventIndex": 199,
+      "disposition": "must_review",
+      "oracleOutcome": "suspicious",
+      "feedbackInjected": false,
+      "beforeSupport": 3,
+      "beforeConflicts": 1,
+      "beforeStatus": "conflict_review",
+      "guidanceActive": false,
+      "afterFeedbackSupport": null,
+      "afterFeedbackConflicts": null,
+      "afterFeedbackStatus": null,
+      "nextAlertDisposition": "must_review",
+      "alertRef": "871f1346-216d-5d8d-8faf-7d1b084441de",
+      "firstContradictionDeferred": false,
+      "explicitRequireHumanReview": false,
+      "guidanceActiveOnNextMatchingAlert": null
+    },
+    {
+      "pattern": "p010",
+      "eventIndex": 200,
+      "disposition": "must_review",
+      "oracleOutcome": "suspicious",
+      "feedbackInjected": false,
+      "beforeSupport": 3,
+      "beforeConflicts": 1,
+      "beforeStatus": "conflict_review",
+      "guidanceActive": false,
+      "afterFeedbackSupport": null,
+      "afterFeedbackConflicts": null,
+      "afterFeedbackStatus": null,
+      "nextAlertDisposition": null,
+      "alertRef": "b4d49c72-94c9-58d2-9e6a-ba4cbb115935",
+      "firstContradictionDeferred": false,
+      "explicitRequireHumanReview": false,
+      "guidanceActiveOnNextMatchingAlert": null
+    }
+  ],
+  "falsePositiveStableHoldout": {
+    "total": 40,
+    "reviewRequired": 40
+  }
+}

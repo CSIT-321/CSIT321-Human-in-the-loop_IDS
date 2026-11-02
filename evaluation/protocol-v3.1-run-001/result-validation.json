@@ -1,0 +1,84 @@
+{
+  "status": "PASS",
+  "validatedAt": "2026-11-02T09:31:37.068696+00:00",
+  "frozenPreflight": {
+    "alerts": 200,
+    "learning": 40,
+    "holdout": 160,
+    "primary": 140,
+    "exactFields": [
+      "detectorSource",
+      "detectionTitle",
+      "sourceIp",
+      "destinationIp",
+      "protocol"
+    ],
+    "patterns": 90
+  },
+  "arms": {
+    "baseline": {
+      "durableDecisions": 160,
+      "learning": 0,
+      "holdout": 160,
+      "databaseCounts": {
+        "external_alert_inbox": 160,
+        "analyst_verdict_events": 0,
+        "response_recommendations": 0,
+        "response_decisions": 0,
+        "prospective_runs": 0
+      },
+      "databaseSha256": "a283df67ec4d2b3db7a3102f7fe40c0de4ecf7becc87d37f30354a47cdead476",
+      "databaseCommitted": false,
+      "receiptHash": "4b26e764a67bf905ce0d3d22fd9de11b9aa604e6b90fe279fa30c0b6acc6e3e6",
+      "receiptFileTimestamp": "2026-11-02T09:28:19.769665+00:00",
+      "databaseCreationTimestamp": "2026-11-02T09:27:22.759116+00:00"
+    },
+    "adaptive": {
+      "durableDecisions": 200,
+      "learning": 40,
+      "holdout": 160,
+      "databaseCounts": {
+        "external_alert_inbox": 200,
+        "analyst_verdict_events": 42,
+        "response_recommendations": 0,
+        "response_decisions": 0,
+        "prospective_runs": 0
+      },
+      "databaseSha256": "37b7e1806e6c928b3677bfe98b4b063756a18c8f07e12b6175c6a2700df55d90",
+      "databaseCommitted": false,
+      "receiptHash": "58800cf1351e0fc28438ad02ffcb250b9b453c237fd3d17f783a12076ee3d867",
+      "receiptFileTimestamp": "2026-11-02T09:31:06.720005+00:00",
+      "databaseCreationTimestamp": "2026-11-02T09:28:49.073967+00:00"
+    }
+  },
+  "pairedHoldout": 160,
+  "primaryPopulation": 140,
+  "schemaValid": true,
+  "decisionAndReceiptHashesValid": true,
+  "oracleOutcomesComplete": true,
+  "metricArithmeticMatchesFrozenEvaluator": true,
+  "allowedHoldoutFeedbackIndices": [
+    191,
+    196
+  ],
+  "oracleLeakageViolations": 0,
+  "oracleIsolationEvidence": "Both runtime file-open probes denied; unchanged runner fsync-before-reveal and decision/outcome hash bindings verified. Not an adversarial OS sandbox guarantee.",
+  "responseExecutionCount": 0,
+  "collectionRuns": 0,
+  "frozenArtifactsUnchanged": true,
+  "v30ResultsReused": false,
+  "v30EvidenceUnchanged": true,
+  "v2UnchangedUnopened": true,
+  "safety": {
+    "oneAlertOneVoteViolations": 0,
+    "tier2SafetyViolations": 0,
+    "postContradictionUnsafeDeferrals": 0,
+    "conflictTriggeredWithdrawals": 2,
+    "firstContradictionDeferred": 2,
+    "activeLessonsEnteringDrift": 2,
+    "tier2ExpertReviewRequired": 10,
+    "formalTier2Cases": 10,
+    "baselineFormalTier2Cases": 10,
+    "tier2NoImmediateReview": 0
+  }
+}

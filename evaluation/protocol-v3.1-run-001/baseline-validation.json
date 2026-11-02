@@ -1,0 +1,16 @@
+{
+  "status": "PASS",
+  "validatedAt": "2026-11-02T09:28:34.634430+00:00",
+  "durableDecisions": 160,
+  "duplicates": 0,
+  "missingIdentities": 0,
+  "snapshotAndReceiptHashesValid": true,
+  "oracleAccessDenied": true,
+  "memoryLessons": 0,
+  "verdicts": 0,
+  "databaseCounts": {
+    "response_recommendations": 0,
+    "response_decisions": 0,
+    "prospective_runs": 0
+  }
+}

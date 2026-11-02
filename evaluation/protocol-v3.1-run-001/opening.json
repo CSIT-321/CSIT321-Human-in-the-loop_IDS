@@ -1,0 +1,18 @@
+{
+  "protocolVersion": "final-evaluation-protocol-v3.1",
+  "status": "opened",
+  "runtimeSha": "c00c556405198f60adc42f8bb2a7cee03689a60c",
+  "manifestHash": "5b0d7bc725ddc04b2e2edecf1db04f4c9af58f5288b6ee6d069d59c0be11138d",
+  "outputRoot": "C:\\Users\\cheek\\OneDrive\\Documents\\fyp_website\\final-evaluation-protocol-v3-1\\evaluation\\protocol-v3.1-run-001",
+  "openedAt": "2026-11-02T09:27:10.397992+00:00",
+  "operatorAcknowledgement": "OPEN-FINAL-V3.1",
+  "environment": {
+    "pythonFullVersion": "3.11.18 (main, Oct 26 2026, 14:08:50) [MSC v.1944 64 bit (AMD64)]",
+    "pythonMajor": 3,
+    "pythonMinor": 11,
+    "pythonPatch": 18,
+    "executablePath": "C:\\Users\\cheek\\OneDrive\\Documents\\fyp_website\\final-evaluation-protocol-v3-1\\hitl-ids\\.venv311\\Scripts\\python.exe",
+    "platform": "Windows-10-10.0.26200-SP0"
+  },
+  "requirementsHash": "3a69f6d461a2abbab0a532f297691fa568db08ad6023447f436f1bae4da0ba05"
+}

@@ -1,0 +1,260 @@
+[
+  {
+    "stratum": "stable_matching_benign",
+    "population": 80,
+    "baselineImmediateReview": 80,
+    "adaptiveImmediateReview": 43,
+    "baselineNoImmediateReview": 0,
+    "adaptiveNoImmediateReview": 37,
+    "immediateReviewReductionCount": 37,
+    "immediateReviewReductionRate": {
+      "numerator": 37,
+      "denominator": 80,
+      "value": 0.4625
+    },
+    "totalDeferrals": 37,
+    "safeDeferrals": 37,
+    "unsafeDeferrals": 0,
+    "unassessedDeferrals": 0,
+    "unsafeDeferralRate": {
+      "numerator": 0,
+      "denominator": 37,
+      "value": 0.0
+    },
+    "benignDeferralCoverage": {
+      "numerator": 37,
+      "denominator": 80,
+      "value": 0.4625
+    },
+    "outcomeCompleteness": {
+      "numerator": 80,
+      "denominator": 80,
+      "value": 1.0
+    },
+    "missingOutcomes": [],
+    "humanOverrides": 0,
+    "humanOverrideRate": {
+      "numerator": 0,
+      "denominator": 80,
+      "value": 0.0
+    },
+    "baselineHumanOverrides": 0,
+    "baselineAuditSamples": 0,
+    "adaptiveAuditSamples": 3
+  },
+  {
+    "stratum": "unseen_benign",
+    "population": 20,
+    "baselineImmediateReview": 20,
+    "adaptiveImmediateReview": 20,
+    "baselineNoImmediateReview": 0,
+    "adaptiveNoImmediateReview": 0,
+    "immediateReviewReductionCount": 0,
+    "immediateReviewReductionRate": {
+      "numerator": 0,
+      "denominator": 20,
+      "value": 0.0
+    },
+    "totalDeferrals": 0,
+    "safeDeferrals": 0,
+    "unsafeDeferrals": 0,
+    "unassessedDeferrals": 0,
+    "unsafeDeferralRate": {
+      "numerator": 0,
+      "denominator": 0,
+      "value": null
+    },
+    "benignDeferralCoverage": {
+      "numerator": 0,
+      "denominator": 20,
+      "value": 0.0
+    },
+    "outcomeCompleteness": {
+      "numerator": 20,
+      "denominator": 20,
+      "value": 1.0
+    },
+    "missingOutcomes": [],
+    "humanOverrides": 0,
+    "humanOverrideRate": {
+      "numerator": 0,
+      "denominator": 20,
+      "value": 0.0
+    },
+    "baselineHumanOverrides": 0,
+    "baselineAuditSamples": 0,
+    "adaptiveAuditSamples": 0
+  },
+  {
+    "stratum": "malicious",
+    "population": 20,
+    "baselineImmediateReview": 20,
+    "adaptiveImmediateReview": 20,
+    "baselineNoImmediateReview": 0,
+    "adaptiveNoImmediateReview": 0,
+    "immediateReviewReductionCount": 0,
+    "immediateReviewReductionRate": {
+      "numerator": 0,
+      "denominator": 20,
+      "value": 0.0
+    },
+    "totalDeferrals": 0,
+    "safeDeferrals": 0,
+    "unsafeDeferrals": 0,
+    "unassessedDeferrals": 0,
+    "unsafeDeferralRate": {
+      "numerator": 0,
+      "denominator": 0,
+      "value": null
+    },
+    "benignDeferralCoverage": {
+      "numerator": 0,
+      "denominator": 0,
+      "value": null
+    },
+    "outcomeCompleteness": {
+      "numerator": 20,
+      "denominator": 20,
+      "value": 1.0
+    },
+    "missingOutcomes": [],
+    "humanOverrides": 0,
+    "humanOverrideRate": {
+      "numerator": 0,
+      "denominator": 20,
+      "value": 0.0
+    },
+    "baselineHumanOverrides": 0,
+    "baselineAuditSamples": 0,
+    "adaptiveAuditSamples": 0
+  },
+  {
+    "stratum": "suspicious",
+    "population": 20,
+    "baselineImmediateReview": 20,
+    "adaptiveImmediateReview": 20,
+    "baselineNoImmediateReview": 0,
+    "adaptiveNoImmediateReview": 0,
+    "immediateReviewReductionCount": 0,
+    "immediateReviewReductionRate": {
+      "numerator": 0,
+      "denominator": 20,
+      "value": 0.0
+    },
+    "totalDeferrals": 0,
+    "safeDeferrals": 0,
+    "unsafeDeferrals": 0,
+    "unassessedDeferrals": 0,
+    "unsafeDeferralRate": {
+      "numerator": 0,
+      "denominator": 0,
+      "value": null
+    },
+    "benignDeferralCoverage": {
+      "numerator": 0,
+      "denominator": 0,
+      "value": null
+    },
+    "outcomeCompleteness": {
+      "numerator": 20,
+      "denominator": 20,
+      "value": 1.0
+    },
+    "missingOutcomes": [],
+    "humanOverrides": 0,
+    "humanOverrideRate": {
+      "numerator": 0,
+      "denominator": 20,
+      "value": 0.0
+    },
+    "baselineHumanOverrides": 0,
+    "baselineAuditSamples": 0,
+    "adaptiveAuditSamples": 0
+  },
+  {
+    "stratum": "unknown_tier2",
+    "population": 10,
+    "baselineImmediateReview": 10,
+    "adaptiveImmediateReview": 10,
+    "baselineNoImmediateReview": 0,
+    "adaptiveNoImmediateReview": 0,
+    "immediateReviewReductionCount": 0,
+    "immediateReviewReductionRate": {
+      "numerator": 0,
+      "denominator": 10,
+      "value": 0.0
+    },
+    "totalDeferrals": 0,
+    "safeDeferrals": 0,
+    "unsafeDeferrals": 0,
+    "unassessedDeferrals": 0,
+    "unsafeDeferralRate": {
+      "numerator": 0,
+      "denominator": 0,
+      "value": null
+    },
+    "benignDeferralCoverage": {
+      "numerator": 0,
+      "denominator": 0,
+      "value": null
+    },
+    "outcomeCompleteness": {
+      "numerator": 10,
+      "denominator": 10,
+      "value": 1.0
+    },
+    "missingOutcomes": [],
+    "humanOverrides": 0,
+    "humanOverrideRate": {
+      "numerator": 0,
+      "denominator": 10,
+      "value": 0.0
+    },
+    "baselineHumanOverrides": 0,
+    "baselineAuditSamples": 0,
+    "adaptiveAuditSamples": 0
+  },
+  {
+    "stratum": "drift_conflict",
+    "population": 10,
+    "baselineImmediateReview": 10,
+    "adaptiveImmediateReview": 8,
+    "baselineNoImmediateReview": 0,
+    "adaptiveNoImmediateReview": 2,
+    "immediateReviewReductionCount": 2,
+    "immediateReviewReductionRate": {
+      "numerator": 2,
+      "denominator": 10,
+      "value": 0.2
+    },
+    "totalDeferrals": 2,
+    "safeDeferrals": 0,
+    "unsafeDeferrals": 2,
+    "unassessedDeferrals": 0,
+    "unsafeDeferralRate": {
+      "numerator": 2,
+      "denominator": 2,
+      "value": 1.0
+    },
+    "benignDeferralCoverage": {
+      "numerator": 0,
+      "denominator": 0,
+      "value": null
+    },
+    "outcomeCompleteness": {
+      "numerator": 10,
+      "denominator": 10,
+      "value": 1.0
+    },
+    "missingOutcomes": [],
+    "humanOverrides": 2,
+    "humanOverrideRate": {
+      "numerator": 2,
+      "denominator": 10,
+      "value": 0.2
+    },
+    "baselineHumanOverrides": 0,
+    "baselineAuditSamples": 0,
+    "adaptiveAuditSamples": 0
+  }
+]

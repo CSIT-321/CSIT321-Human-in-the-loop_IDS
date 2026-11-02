@@ -1,0 +1,70 @@
+# Final V3 controlled evaluation
+
+| Metric | Baseline | Adaptive | Difference / Rate |
+|---|---|---|---|
+| Immediate Review Count | 140 | 103 | 37 |
+| No Immediate Review Count | 0 | 37 | N/A |
+| Immediate Review Reduction Count | N/A | 37 | 37 |
+| Immediate Review Reduction Rate | N/A | 37 / 140 = 0.2642857142857143 | 37 / 140 = 0.2642857142857143 |
+| Total Deferrals | N/A | 37 | 37 |
+| Safe Deferrals | N/A | 37 | 37 |
+| Unsafe Deferrals | N/A | 0 | 0 |
+| Unsafe Deferral Rate | N/A | 0 / 37 = 0.0 | 0 / 37 = 0.0 |
+| Benign Deferral Coverage | N/A | 37 / 100 = 0.37 | 37 / 100 = 0.37 |
+| Human Overrides | 0 | 0 | 0 |
+| Audit Samples | 0 | 3 | 3 |
+| Outcome Completeness | N/A | 140 / 140 = 1.0 | 140 / 140 = 1.0 |
+
+## Strata
+
+| stratum | population | baselineImmediateReview | adaptiveImmediateReview | adaptiveNoImmediateReview | safeDeferrals | unsafeDeferrals |
+|---|---|---|---|---|---|---|
+| stable_matching_benign | 80 | 80 | 43 | 37 | 37 | 0 |
+| unseen_benign | 20 | 20 | 20 | 0 | 0 | 0 |
+| malicious | 20 | 20 | 20 | 0 | 0 | 0 |
+| suspicious | 20 | 20 | 20 | 0 | 0 | 0 |
+| unknown_tier2 | 10 | 10 | 10 | 0 | 0 | 0 |
+| drift_conflict | 10 | 10 | 8 | 2 | 0 | 2 |
+
+## Memory
+
+| lessonRef | outcome | scope | support | conflicts | status | activationSource | validFrom | expiresAt | learningPattern | holdoutExactMatches |
+|---|---|---|---|---|---|---|---|---|---|---|
+| 31a9cd2a-72ec-4b78-b387-0743f093be17 | expected_activity | exact | 3 | 0 | active | system_policy | 2026-11-03T00:03:01Z | 2026-12-03T00:03:01Z | p001 | 10 |
+| bee1e704-1b44-4e60-b255-4d50b8169901 | expected_activity | exact | 3 | 0 | active | system_policy | 2026-11-03T00:06:01.187000Z | 2026-12-03T00:06:01.187000Z | p002 | 10 |
+| 648c5bd8-5f1d-4090-91e2-0b838b4f90b8 | expected_activity | exact | 3 | 0 | active | system_policy | 2026-11-03T00:09:00.969000Z | 2026-12-03T00:09:00.969000Z | p003 | 10 |
+| 5238cb2a-903e-4edc-89a7-2165df158759 | expected_activity | exact | 3 | 0 | active | system_policy | 2026-11-03T00:12:01.110000Z | 2026-12-03T00:12:01.110000Z | p004 | 10 |
+| 8064c8c6-c6bb-435e-8b0d-5f3df3dc8918 | false_positive | exact | 3 | 0 | active | system_policy | 2026-11-03T00:15:01.109000Z | 2026-12-03T00:15:01.109000Z | p005 | 10 |
+| 06594d3d-7619-4650-bf26-9df9bebbca21 | false_positive | exact | 3 | 0 | active | system_policy | 2026-11-03T00:18:01.062000Z | 2026-12-03T00:18:01.062000Z | p006 | 10 |
+| c2ced81d-fe30-4896-b69a-7f7d504708b1 | false_positive | exact | 3 | 0 | active | system_policy | 2026-11-03T00:21:01.047000Z | 2026-12-03T00:21:01.047000Z | p007 | 10 |
+| 1ab5713c-15df-4f66-a8f9-7f76ee721731 | false_positive | exact | 3 | 0 | active | system_policy | 2026-11-03T00:24:00.984000Z | 2026-12-03T00:24:00.984000Z | p008 | 10 |
+| 2c149855-0f2f-4483-a391-55010ef2a11e | expected_activity | exact | 3 | 0 | active | system_policy | 2026-11-03T00:27:01.109000Z | 2026-12-03T00:27:01.109000Z | p009 | 5 |
+| 346d4f91-99fc-40c7-8d6f-29a938d9fc97 | expected_activity | exact | 3 | 0 | active | system_policy | 2026-11-03T00:30:01.125000Z | 2026-12-03T00:30:01.125000Z | p010 | 5 |
+| b0f03e3c-76c8-457d-8830-c36a8dc7e51f | confirmed_malicious | exact | 1 | 0 | candidate | N/A | N/A | 2026-12-03T00:31:01.281000Z | p011 | 0 |
+| 6fd1f930-f482-4115-b18c-1e445ef598c4 | confirmed_malicious | exact | 1 | 0 | candidate | N/A | N/A | 2026-12-03T00:32:01.359000Z | p012 | 0 |
+| ee401264-12a1-4447-a604-3e6cf5a4c962 | confirmed_malicious | exact | 1 | 0 | candidate | N/A | N/A | 2026-12-03T00:33:01.688000Z | p013 | 0 |
+| 7af9c7a0-4f2a-483d-bc5f-820c9ab67448 | confirmed_malicious | exact | 1 | 0 | candidate | N/A | N/A | 2026-12-03T00:34:01.203000Z | p014 | 0 |
+| 575f3324-3469-4f5d-8712-9f7ce615f21b | confirmed_malicious | exact | 1 | 0 | candidate | N/A | N/A | 2026-12-03T00:35:01.062000Z | p015 | 0 |
+| e0b29dfa-4663-4b75-85d9-273626e75a47 | suspicious | exact | 1 | 0 | candidate | N/A | N/A | 2026-12-03T00:36:01.172000Z | p016 | 0 |
+| a234daf3-70d0-40d0-bab3-25d70a36bde8 | suspicious | exact | 1 | 0 | candidate | N/A | N/A | 2026-12-03T00:37:01.313000Z | p017 | 0 |
+| 5bd22ea2-4794-4a9c-b59c-aa6180a6acea | suspicious | exact | 1 | 0 | candidate | N/A | N/A | 2026-12-03T00:38:01.766000Z | p018 | 0 |
+| b044b1bc-bbf2-4037-9e82-c8050aa1d5ea | suspicious | exact | 1 | 0 | candidate | N/A | N/A | 2026-12-03T00:39:01.204000Z | p019 | 0 |
+| 5045c0f2-470a-456f-b340-f04411fcef99 | suspicious | exact | 1 | 0 | candidate | N/A | N/A | 2026-12-03T00:40:01.235000Z | p020 | 0 |
+
+## Drift timeline
+
+| pattern | eventIndex | disposition | oracleOutcome | feedbackInjected | beforeSupport | beforeConflicts | beforeStatus | guidanceActive | afterFeedbackStatus | nextAlertDisposition |
+|---|---|---|---|---|---|---|---|---|---|---|
+| p009 | 191 | no_immediate_review | confirmed_malicious | True | 3 | 0 | active | True | conflict_review | must_review |
+| p009 | 192 | must_review | confirmed_malicious | False | 3 | 1 | conflict_review | False | N/A | must_review |
+| p009 | 193 | must_review | confirmed_malicious | False | 3 | 1 | conflict_review | False | N/A | must_review |
+| p009 | 194 | must_review | confirmed_malicious | False | 3 | 1 | conflict_review | False | N/A | must_review |
+| p009 | 195 | must_review | confirmed_malicious | False | 3 | 1 | conflict_review | False | N/A | N/A |
+| p010 | 196 | no_immediate_review | suspicious | True | 3 | 0 | active | True | conflict_review | must_review |
+| p010 | 197 | must_review | suspicious | False | 3 | 1 | conflict_review | False | N/A | must_review |
+| p010 | 198 | must_review | suspicious | False | 3 | 1 | conflict_review | False | N/A | must_review |
+| p010 | 199 | must_review | suspicious | False | 3 | 1 | conflict_review | False | N/A | must_review |
+| p010 | 200 | must_review | suspicious | False | 3 | 1 | conflict_review | False | N/A | N/A |
+
+R02 is supplementary observed runtime safety, not the external-oracle unsafe deferral rate.
+No detector accuracy, human time savings, population inference or statistical significance is claimed.

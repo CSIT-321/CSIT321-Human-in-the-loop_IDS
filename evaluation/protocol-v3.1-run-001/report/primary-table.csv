@@ -1,0 +1,13 @@
+metric,baseline,adaptive,differenceOrRate
+Immediate Review Count,140,103,37
+No Immediate Review Count,0,37,
+Immediate Review Reduction Count,,37,37
+Immediate Review Reduction Rate,,"{""denominator"": 140, ""numerator"": 37, ""value"": 0.2642857142857143}","{""denominator"": 140, ""numerator"": 37, ""value"": 0.2642857142857143}"
+Total Deferrals,,37,37
+Safe Deferrals,,37,37
+Unsafe Deferrals,,0,0
+Unsafe Deferral Rate,,"{""denominator"": 37, ""numerator"": 0, ""value"": 0.0}","{""denominator"": 37, ""numerator"": 0, ""value"": 0.0}"
+Benign Deferral Coverage,,"{""denominator"": 100, ""numerator"": 37, ""value"": 0.37}","{""denominator"": 100, ""numerator"": 37, ""value"": 0.37}"
+Human Overrides,0,0,0
+Audit Samples,0,3,3
+Outcome Completeness,,"{""denominator"": 140, ""numerator"": 140, ""value"": 1.0}","{""denominator"": 140, ""numerator"": 140, ""value"": 1.0}"

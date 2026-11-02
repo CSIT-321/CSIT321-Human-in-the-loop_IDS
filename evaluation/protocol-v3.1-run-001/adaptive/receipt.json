@@ -1,0 +1,18 @@
+{
+  "status": "completed",
+  "arm": "adaptive",
+  "runtimeSha": "c00c556405198f60adc42f8bb2a7cee03689a60c",
+  "manifestHash": "5b0d7bc725ddc04b2e2edecf1db04f4c9af58f5288b6ee6d069d59c0be11138d",
+  "oracleIsolation": {
+    "oracleAccessDenied": true
+  },
+  "files": {
+    "decisions.jsonl": "36b88a56973628d3304cbe293a679a5c91cd84a0f08093218a14ce1af6ea1254",
+    "feedback.json": "b0d68b73263c6996adac5f139a28c05b8e4696c59dd814edfdc95bd740bbe280",
+    "feedback.jsonl": "b0d68b73263c6996adac5f139a28c05b8e4696c59dd814edfdc95bd740bbe280",
+    "final-memory.json": "760276e68276db4e7848c00429d02c9e3462d848122d965b8b50e1daeddd1c1a",
+    "learning-end.json": "12c288b9ac8fa944919fca0073fea25d10ca98534cf9fedca13dfe6596df248d",
+    "outcomes.jsonl": "338e1a571129acdbd98e93bdafcf1151cbe3471c84226f2e821e776cfd108f96",
+    "runtime-metrics.json": "068491f48d3e1aba32d818354cf392ae1b0e8a05b708f8e49d032492d9783a71"
+  }
+}

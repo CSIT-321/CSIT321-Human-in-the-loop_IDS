@@ -1,0 +1,18 @@
+{
+  "status": "completed",
+  "arm": "baseline",
+  "runtimeSha": "c00c556405198f60adc42f8bb2a7cee03689a60c",
+  "manifestHash": "5b0d7bc725ddc04b2e2edecf1db04f4c9af58f5288b6ee6d069d59c0be11138d",
+  "oracleIsolation": {
+    "oracleAccessDenied": true
+  },
+  "files": {
+    "decisions.jsonl": "b74f54e19c61f1492930de7a3f0ad413fdf737edf707d0fd0d7dafa805ec8c1e",
+    "feedback.json": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "feedback.jsonl": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "final-memory.json": "129205e6f5e6a25eaa34f4546504649877fc52865ad67e909a9a559f3543c0cb",
+    "learning-end.json": "83fd492e3200d775eaaf95876f7b8eb9b75a33a552a27e4042962af9ed9171b2",
+    "outcomes.jsonl": "6dbdd46e1e111fc7c944aef9b0f5887dec45a7bd76b19ff3e59342fd24519805",
+    "runtime-metrics.json": "a3b0d646ada24d7128b91a5c13b7d3b0f8791a89bc9605ce337c72b3be531e86"
+  }
+}

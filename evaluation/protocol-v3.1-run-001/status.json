@@ -1,0 +1,18 @@
+{
+  "status": "completed_frozen_results",
+  "displayStatus": "COMPLETED / FROZEN RESULTS",
+  "protocolVersion": "final-evaluation-protocol-v3.1",
+  "protocolCommit": "0836502987c7bc560eb12430c9a6f3ce33f2c2f1",
+  "runtimeSha": "c00c556405198f60adc42f8bb2a7cee03689a60c",
+  "manifestHash": "5b0d7bc725ddc04b2e2edecf1db04f4c9af58f5288b6ee6d069d59c0be11138d",
+  "openedAt": "2026-11-02T09:27:10.397992+00:00",
+  "completedAt": "2026-11-02T09:37:18.108922+00:00",
+  "validation": "PASS",
+  "methodologicalPass": true,
+  "criticalSafetyPass": true,
+  "officialRun": "protocol-v3.1-run-001",
+  "primaryUnsafeDeferrals": 0,
+  "allHoldoutUnsafeDeferrals": 2,
+  "repeatabilityRun": false,
+  "v30ResultsReused": false
+}

@@ -1,0 +1,106 @@
+[
+  {
+    "metric": "Immediate Review Count",
+    "baseline": 140,
+    "adaptive": 103,
+    "differenceOrRate": 37
+  },
+  {
+    "metric": "No Immediate Review Count",
+    "baseline": 0,
+    "adaptive": 37,
+    "differenceOrRate": null
+  },
+  {
+    "metric": "Immediate Review Reduction Count",
+    "baseline": null,
+    "adaptive": 37,
+    "differenceOrRate": 37
+  },
+  {
+    "metric": "Immediate Review Reduction Rate",
+    "baseline": null,
+    "adaptive": {
+      "numerator": 37,
+      "denominator": 140,
+      "value": 0.2642857142857143
+    },
+    "differenceOrRate": {
+      "numerator": 37,
+      "denominator": 140,
+      "value": 0.2642857142857143
+    }
+  },
+  {
+    "metric": "Total Deferrals",
+    "baseline": null,
+    "adaptive": 37,
+    "differenceOrRate": 37
+  },
+  {
+    "metric": "Safe Deferrals",
+    "baseline": null,
+    "adaptive": 37,
+    "differenceOrRate": 37
+  },
+  {
+    "metric": "Unsafe Deferrals",
+    "baseline": null,
+    "adaptive": 0,
+    "differenceOrRate": 0
+  },
+  {
+    "metric": "Unsafe Deferral Rate",
+    "baseline": null,
+    "adaptive": {
+      "numerator": 0,
+      "denominator": 37,
+      "value": 0.0
+    },
+    "differenceOrRate": {
+      "numerator": 0,
+      "denominator": 37,
+      "value": 0.0
+    }
+  },
+  {
+    "metric": "Benign Deferral Coverage",
+    "baseline": null,
+    "adaptive": {
+      "numerator": 37,
+      "denominator": 100,
+      "value": 0.37
+    },
+    "differenceOrRate": {
+      "numerator": 37,
+      "denominator": 100,
+      "value": 0.37
+    }
+  },
+  {
+    "metric": "Human Overrides",
+    "baseline": 0,
+    "adaptive": 0,
+    "differenceOrRate": 0
+  },
+  {
+    "metric": "Audit Samples",
+    "baseline": 0,
+    "adaptive": 3,
+    "differenceOrRate": 3
+  },
+  {
+    "metric": "Outcome Completeness",
+    "baseline": null,
+    "adaptive": {
+      "numerator": 140,
+      "denominator": 140,
+      "value": 1.0
+    },
+    "differenceOrRate": {
+      "numerator": 140,
+      "denominator": 140,
+      "value": 1.0
+    }
+  }
+]

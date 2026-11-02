@@ -1,0 +1,32 @@
+Working directory: C:/Users/cheek/OneDrive/Documents/fyp_website/final-evaluation-protocol-v3-1/hitl-ids
+All Python commands explicitly use .venv311/Scripts/python.exe (Python 3.11.18), PYTHONUTF8=1.
+Both runtime arms execute on host because Windows sandbox denies asyncio socketpair; no source/environment-policy patch.
+
+PRE-OPENING (executed)
+.venv311/Scripts/python.exe --version
+.venv311/Scripts/python.exe scripts/validate_protocol_v3_1.py
+Read-only environment_receipt(), manifest SHA and requirements SHA verification; verify_runtime('../../final-legacy-cleanup').
+git switch -c feat/final-evaluation-v3-1-run
+
+OPENING (executed)
+.venv311/Scripts/python.exe scripts/open_protocol_v3_1.py --runtime-root ../../final-legacy-cleanup --out ../evaluation/protocol-v3.1-run-001 --ack OPEN-FINAL-V3.1
+
+BASELINE (executed and validated before Adaptive)
+.venv311/Scripts/python.exe scripts/run_protocol_v3_1_baseline.py --runtime-root ../../final-legacy-cleanup --opening ../evaluation/protocol-v3.1-run-001/opening.json --out ../evaluation/protocol-v3.1-run-001/baseline
+Read-only frozen load_arm validation, exact frozen Holdout IDs, no Memory/Verdict, oracle guard receipt, response/collection table counts.
+
+ADAPTIVE (started after Baseline PASS)
+.venv311/Scripts/python.exe scripts/run_protocol_v3_1_adaptive.py --runtime-root ../../final-legacy-cleanup --opening ../evaluation/protocol-v3.1-run-001/opening.json --out ../evaluation/protocol-v3.1-run-001/adaptive
+
+EVALUATOR (executed only after both arms completed)
+.venv311/Scripts/python.exe scripts/evaluate_protocol_v3_1.py --baseline ../evaluation/protocol-v3.1-run-001/baseline --adaptive ../evaluation/protocol-v3.1-run-001/adaptive --out ../evaluation/protocol-v3.1-run-001/report
+
+RESULT VALIDATION
+.venv311/Scripts/python.exe .pytest-tmp/validate-official-v31.py
+Read-only source checks, exact schemas/identities/counts, frozen-evaluator arithmetic consistency, outcome hash bindings, permitted feedback, SQLite integrity and response/collection counts.
+
+REPORT
+Python 3.11 inline report formatter reads only evaluator outputs and original Memory snapshots; appends environment/history/safety interpretation. No primary metric definitions changed.
+
+RESULT FREEZE
+Canonical hash every official non-DB artifact including report, opening/status and validation. Preserve local DB byte hashes separately. No repeatability rerun.

@@ -1,0 +1,12 @@
+{
+  "totalAlerts": 200,
+  "eligibleAlerts": 190,
+  "mustReviewCount": 160,
+  "recommendedReviewCount": 3,
+  "noImmediateReviewCount": 37,
+  "immediateReviewReductionRate": 0.19473684210526315,
+  "unsafeSuppressionCount": 2,
+  "conflictTriggeredRecallCount": 0,
+  "sampledOverrideCount": 3,
+  "dataBasis": "Observed local decisions and human outcomes; not a measured real-world workload benefit."
+}

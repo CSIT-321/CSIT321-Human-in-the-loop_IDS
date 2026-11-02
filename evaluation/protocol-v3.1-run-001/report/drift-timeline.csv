@@ -1,0 +1,11 @@
+pattern,eventIndex,disposition,oracleOutcome,feedbackInjected,beforeSupport,beforeConflicts,beforeStatus,guidanceActive,afterFeedbackSupport,afterFeedbackConflicts,afterFeedbackStatus,nextAlertDisposition
+p009,191,no_immediate_review,confirmed_malicious,True,3,0,active,True,3,1,conflict_review,must_review
+p009,192,must_review,confirmed_malicious,False,3,1,conflict_review,False,,,,must_review
+p009,193,must_review,confirmed_malicious,False,3,1,conflict_review,False,,,,must_review
+p009,194,must_review,confirmed_malicious,False,3,1,conflict_review,False,,,,must_review
+p009,195,must_review,confirmed_malicious,False,3,1,conflict_review,False,,,,
+p010,196,no_immediate_review,suspicious,True,3,0,active,True,3,1,conflict_review,must_review
+p010,197,must_review,suspicious,False,3,1,conflict_review,False,,,,must_review
+p010,198,must_review,suspicious,False,3,1,conflict_review,False,,,,must_review
+p010,199,must_review,suspicious,False,3,1,conflict_review,False,,,,must_review
+p010,200,must_review,suspicious,False,3,1,conflict_review,False,,,,
