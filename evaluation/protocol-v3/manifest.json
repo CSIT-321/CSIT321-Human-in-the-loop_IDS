@@ -1,0 +1,130 @@
+{
+  "protocolVersion": "final-evaluation-protocol-v3.0",
+  "status": "frozen_unopened",
+  "runtimeSha": "c00c556405198f60adc42f8bb2a7cee03689a60c",
+  "createdAt": "2026-11-02T08:32:54.848737+00:00",
+  "workloadAlertCount": 200,
+  "learningCount": 40,
+  "holdoutCount": 160,
+  "primaryCount": 140,
+  "generatorVersion": "protocol-v3-generator-1",
+  "runnerVersion": "protocol-v3-runner-1",
+  "evaluatorVersion": "protocol-v3-evaluator-1",
+  "hashEncoding": "JSON = UTF-8 sorted keys compact separators no NaN; JSONL = ordered parsed array canonical JSON; source/docs = UTF-8 LF; manifest excludes itself",
+  "runtimePolicies": {
+    "analyst-work-claim-v1.json": {
+      "version": "analyst-work-claim-v1",
+      "sha256": "a0855d479deaaea3c12685d5318234fc734ac51a3fbc017d433172be59159bd8"
+    },
+    "context-provenance-v1.json": {
+      "version": "context-provenance-v1",
+      "sha256": "b54c3fa27970246b5796d2a35079431916bf7b14cfd87862e93e631fd6be868d"
+    },
+    "external-admission.json": {
+      "version": "suricata-offline-v1",
+      "sha256": "53975fb6f197c364479579ea403ff11256de3b724a0d128557651c0da343ec9a"
+    },
+    "operational-triage-v1.json": {
+      "version": "operational-triage-v1",
+      "sha256": "02f832e774468d73c81cf659cd7195417388ac15f1558cbab987eaedd38c4868"
+    },
+    "prospective-context-protocol-v1.json": {
+      "version": "prospective-context-protocol-v1",
+      "sha256": "931e91df5ec4bc723b8332e1f7c2324c7d83497d1fd17af0bdcff5e63c8356de"
+    },
+    "prospective-context-protocol-v2-draft.json": {
+      "version": "prospective-context-protocol-v2-draft",
+      "sha256": "8e5c7db8238c6f0fa26d59a9cb1a7bbbf71a64ced15c0fa146f3463bb75f8319"
+    },
+    "prospective-context-protocol-v2.json": {
+      "version": "prospective-context-protocol-v2",
+      "sha256": "cfc9539c0b325919a60eb8a5722826affa53e1c253e3b96c15e3a6db41dd2541"
+    },
+    "prospective-protocol-v2-manifest.json": {
+      "version": null,
+      "sha256": "0c41c2d45e846b408cbe50a0f6166ced39fa98a58f33bb61003eddf4d2143225"
+    },
+    "safe-memory-auto-activation-v1.json": {
+      "version": "safe-memory-auto-activation-v1",
+      "sha256": "0d559efd1b0bd91954621916226ee33336b29dadf2fbeef50b1e3f6c82141066"
+    },
+    "selective-review-v1.json": {
+      "version": "selective-review-v1",
+      "sha256": "cb2129bfce81926d47dcd4c46302ccd3959cbc90420e4fe4a57e59f16d258295"
+    },
+    "severity-chart.json": {
+      "version": "sev-1",
+      "sha256": "83f6eddffbbe475713d1cf95027ced36e9bc6420f40a9a4d53f1a4aeffd05fc7"
+    },
+    "suricata-classification-v1.json": {
+      "version": "suricata-classification-v1",
+      "sha256": "010e0280ef97852d0661e490ca730cf85c7bd61a989b0dcaf58bb5c4fb988dca"
+    },
+    "suricata-classification-v2.json": {
+      "version": "suricata-classification-v2",
+      "sha256": "b9aa354b699e51a54bf1d3c2efc92bca56040fe84d29a66977d3a462b505d659"
+    },
+    "suricata-classification-v3.json": {
+      "version": "suricata-classification-v3",
+      "sha256": "a5f3914c360cb76941d3d7e217896fd5929739739646de0f738c37ef676cda32"
+    },
+    "system-routing-v1.json": {
+      "version": "system-routing-v1",
+      "sha256": "d2cb4581084be711fe8f71d5fa9301cc90073c1921f7f2323bede431ffa432d5"
+    },
+    "tier2-assistance-v1.json": {
+      "version": "tier2-assistance-v1",
+      "sha256": "c7535142ad52ae69da576511c620f2d174e93522d5734d8e4d32b50700a18597"
+    },
+    "triage-memory-v1.json": {
+      "version": "triage-memory-v1",
+      "sha256": "a925ea50a1bf82c8932a1bf97b7aeabec335851e84e6298401d90e79ea8bad37"
+    }
+  },
+  "runtimeTrees": {
+    "hitl-ids/apps": "bc77d1de4e4f192b98bab22d93df36a101979c3d",
+    "hitl-ids/packages": "3469b3bae66deb14c28667a55ef4065c05dbd06e",
+    "hitl-ids/config": "58b1cd4ae723cbef57ab25977119a94bb25b6982"
+  },
+  "hashes": {
+    "docs/final-evaluation-protocol-v3.md": "7db4c999c72daa2d53d858f0570542bec9ddf588ae220ee73a5b4a29656a03ef",
+    "evaluation/protocol-v3/expected/workload-structure.json": "9255c187270325e5c5ed38eb0f3d6ce40951b2fd24955981596ac61a64ead33c",
+    "evaluation/protocol-v3/oracle/external-outcomes.json": "a5d882a8f9f7331ba0195f32851b53f35892e59c13a6eda86a1405dbab24d056",
+    "evaluation/protocol-v3/protocol-v3.json": "c2b1b94cbae968035114ab94ecad0836c00ffd6dcd07a816dd23eba79b2a7960",
+    "evaluation/protocol-v3/README.md": "e8b3cf713ae7f8267a7871103c6ebff300b63c4f4821074d36d6d44b634dee7f",
+    "evaluation/protocol-v3/result-record.schema.json": "58052a1559a6a90e8a147c09fd84b1e60b9ec8ae3937d698a8521e471acaf8c3",
+    "evaluation/protocol-v3/workload/operational-workload.jsonl": "63d8f2d3e5c9dc300acbce54cd6ad3cb1395ddb7267bb67fbd743e45bee9ff6e",
+    "evaluation/protocol-v3/workload/trusted-context.json": "f0556a3ec7f816dd7da94584d95578e21a6ee9184c948e29c598c55c842159c0",
+    "hitl-ids/config/analyst-work-claim-v1.json": "a0855d479deaaea3c12685d5318234fc734ac51a3fbc017d433172be59159bd8",
+    "hitl-ids/config/context-provenance-v1.json": "b54c3fa27970246b5796d2a35079431916bf7b14cfd87862e93e631fd6be868d",
+    "hitl-ids/config/external-admission.json": "53975fb6f197c364479579ea403ff11256de3b724a0d128557651c0da343ec9a",
+    "hitl-ids/config/operational-triage-v1.json": "02f832e774468d73c81cf659cd7195417388ac15f1558cbab987eaedd38c4868",
+    "hitl-ids/config/prospective-context-protocol-v1.json": "931e91df5ec4bc723b8332e1f7c2324c7d83497d1fd17af0bdcff5e63c8356de",
+    "hitl-ids/config/prospective-context-protocol-v2-draft.json": "8e5c7db8238c6f0fa26d59a9cb1a7bbbf71a64ced15c0fa146f3463bb75f8319",
+    "hitl-ids/config/prospective-context-protocol-v2.json": "cfc9539c0b325919a60eb8a5722826affa53e1c253e3b96c15e3a6db41dd2541",
+    "hitl-ids/config/prospective-protocol-v2-manifest.json": "0c41c2d45e846b408cbe50a0f6166ced39fa98a58f33bb61003eddf4d2143225",
+    "hitl-ids/config/safe-memory-auto-activation-v1.json": "0d559efd1b0bd91954621916226ee33336b29dadf2fbeef50b1e3f6c82141066",
+    "hitl-ids/config/selective-review-v1.json": "cb2129bfce81926d47dcd4c46302ccd3959cbc90420e4fe4a57e59f16d258295",
+    "hitl-ids/config/severity-chart.json": "83f6eddffbbe475713d1cf95027ced36e9bc6420f40a9a4d53f1a4aeffd05fc7",
+    "hitl-ids/config/suricata-classification-v1.json": "010e0280ef97852d0661e490ca730cf85c7bd61a989b0dcaf58bb5c4fb988dca",
+    "hitl-ids/config/suricata-classification-v2.json": "b9aa354b699e51a54bf1d3c2efc92bca56040fe84d29a66977d3a462b505d659",
+    "hitl-ids/config/suricata-classification-v3.json": "a5f3914c360cb76941d3d7e217896fd5929739739646de0f738c37ef676cda32",
+    "hitl-ids/config/system-routing-v1.json": "d2cb4581084be711fe8f71d5fa9301cc90073c1921f7f2323bede431ffa432d5",
+    "hitl-ids/config/tier2-assistance-v1.json": "c7535142ad52ae69da576511c620f2d174e93522d5734d8e4d32b50700a18597",
+    "hitl-ids/config/triage-memory-v1.json": "a925ea50a1bf82c8932a1bf97b7aeabec335851e84e6298401d90e79ea8bad37",
+    "hitl-ids/requirements.txt": "3a69f6d461a2abbab0a532f297691fa568db08ad6023447f436f1bae4da0ba05",
+    "hitl-ids/scripts/build_protocol_v3_workload.py": "d88346513fc7a67e6a2d6e928f20e03eb689b83fb37a2ca198276dee0b42a93c",
+    "hitl-ids/scripts/evaluate_protocol_v3.py": "01e3be4c324c6db1e969c06ea64e306538aed35a692d5f9dc2a4ae75c48290bc",
+    "hitl-ids/scripts/freeze_protocol_v3.py": "a71e536137a96fce73356e2748f1756cc9cd4e6684c26f86dbd5db9af15ef98a",
+    "hitl-ids/scripts/open_protocol_v3.py": "c99942e6ff3017e9cb1ab34b9bf858f03b83f347352819dbf9c22a99c18548ba",
+    "hitl-ids/scripts/protocol_v3/__init__.py": "82a2992c4aadb4afaae5b33fb82414ca1180c59ba9ab5721f134c3fd8f22caca",
+    "hitl-ids/scripts/protocol_v3/common.py": "ef0389fc44eb10dc892a182c9e5798b84edc740d9843fbb013dd795401c5915b",
+    "hitl-ids/scripts/protocol_v3/runner.py": "2c2ba544e114cc3ad976d20f6baae0c969847c1507c9914fff9e769cc285b799",
+    "hitl-ids/scripts/protocol_v3/worker.py": "584ab47be3457139cb8402c2277c3543073de5250374a59b19abdc555737a589",
+    "hitl-ids/scripts/run_protocol_v3_adaptive.py": "bd509fc361aaf888d0f0eea3d0d7e62ffedb725e4d1d1f5d02e3748f15bca199",
+    "hitl-ids/scripts/run_protocol_v3_baseline.py": "872ad1ea1d126670b301041a4cc87414e58bee96c789d8c7afdcf20076888166",
+    "hitl-ids/scripts/smoke_protocol_v3.py": "9b98e1ceac4c66425a3b229918aa93d0e178559136df2e7c727d29967f60fb82",
+    "hitl-ids/scripts/validate_protocol_v3.py": "e8dbacd3eb5fea02f65c0d734b55fdb930d784453ee1379cc9c0566521c28c71",
+    "hitl-ids/tests/test_protocol_v3.py": "7ae4451dcbda3a5a3d4b3767f1346274cf11883e7f817406bbda0ee04dd4d924"
+  }
+}

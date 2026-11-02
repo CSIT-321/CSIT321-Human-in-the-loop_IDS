@@ -1,0 +1,82 @@
+{
+  "checkedAt": "2026-11-02T08:35:37.899935+00:00",
+  "protocolStatus": "frozen_unopened",
+  "manifestCanonicalSha256": "08d83a43eaa6fa0cbd1ca8ff049c7cea52f9979cb8038d490e0ea0b6a435db37",
+  "preflight": {
+    "alerts": 200,
+    "learning": 40,
+    "holdout": 160,
+    "primary": 140,
+    "exactFields": [
+      "detectorSource",
+      "detectionTitle",
+      "sourceIp",
+      "destinationIp",
+      "protocol"
+    ],
+    "patterns": 90
+  },
+  "pytest": {
+    "passed": 81,
+    "failed": 0,
+    "warnings": 2,
+    "suites": [
+      "test_protocol_v3.py",
+      "test_verdict_memory.py",
+      "test_conclusion_memory.py",
+      "test_analyst_work_claim.py",
+      "test_protocol_v2_freeze.py"
+    ]
+  },
+  "developmentRuns": [
+    {
+      "type": "development_only",
+      "alerts": 8,
+      "disjointFromFinalWorkload": true,
+      "runtimeSha": "c00c556405198f60adc42f8bb2a7cee03689a60c",
+      "oracleAccessDeniedBaseline": true,
+      "oracleAccessDeniedAdaptive": true,
+      "learningSupport": 3,
+      "learningStatus": "active",
+      "distinctLearningAuthors": 3,
+      "canonicalVerdictsIncludingOneDevelopmentDriftAudit": 4,
+      "postFeedbackStatus": "conflict_review",
+      "remainingDriftDispositions": [
+        "must_review",
+        "must_review"
+      ],
+      "voteViolations": 0,
+      "collectionRuns": 0,
+      "baselineReceiptHash": "6432f6eb92324ffaa3d53ba4f4a78322b998766f66038240f27aa1e9038a3786",
+      "adaptiveReceiptHash": "ffe1861c72212d3fbf269f95c199f076c49f2f2c3abb1166db6a418fbe290c68"
+    },
+    {
+      "type": "development_only",
+      "alerts": 8,
+      "disjointFromFinalWorkload": true,
+      "runtimeSha": "c00c556405198f60adc42f8bb2a7cee03689a60c",
+      "oracleAccessDeniedBaseline": true,
+      "oracleAccessDeniedAdaptive": true,
+      "learningSupport": 3,
+      "learningStatus": "active",
+      "distinctLearningAuthors": 3,
+      "canonicalVerdictsIncludingOneDevelopmentDriftAudit": 4,
+      "postFeedbackStatus": "conflict_review",
+      "remainingDriftDispositions": [
+        "must_review",
+        "must_review"
+      ],
+      "voteViolations": 0,
+      "collectionRuns": 0,
+      "baselineReceiptHash": "dfbf307d99b1d1480e0a5f2e68c48fcf8b43abcef2cc342be35ac52aa4249d37",
+      "adaptiveReceiptHash": "a227d27161c0d8a3b4236c2a5ad902fd16f91986d87e52c0bd9eabf710fe886e"
+    }
+  ],
+  "semanticReplayMatched": true,
+  "finalWorkloadExecuted": false,
+  "openingReceiptCreated": false,
+  "runtimeProductDiffEmpty": true,
+  "protocolV2Changed": false,
+  "protocolV2CollectionOpened": false,
+  "responseExecuted": false
+}

@@ -1,0 +1,141 @@
+{
+  "title": "Paired V3 result; oracle joined only after each arm decision is durable",
+  "type": "object",
+  "required": [
+    "alertRef",
+    "index",
+    "stratum",
+    "pattern",
+    "baselineDisposition",
+    "adaptiveDisposition",
+    "baselineReviewRequired",
+    "adaptiveReviewRequired",
+    "baselineDecisionTimestamp",
+    "adaptiveDecisionTimestamp",
+    "baselineReasonCodes",
+    "adaptiveReasonCodes",
+    "route",
+    "classification",
+    "priority",
+    "caseRef",
+    "matchedMemoryLessonRef",
+    "memoryMatches",
+    "humanOverride",
+    "explicitAuditOverride",
+    "baselineHumanOverride",
+    "oracleOutcome",
+    "deferralClassification",
+    "baselineSnapshotHash",
+    "adaptiveSnapshotHash",
+    "baselineCaseRef"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "alertRef": {
+      "type": "string"
+    },
+    "index": {
+      "type": "integer"
+    },
+    "stratum": {
+      "type": "string"
+    },
+    "pattern": {
+      "type": "string"
+    },
+    "baselineDisposition": {
+      "type": "string"
+    },
+    "adaptiveDisposition": {
+      "type": "string"
+    },
+    "baselineReviewRequired": {
+      "type": "boolean"
+    },
+    "adaptiveReviewRequired": {
+      "type": "boolean"
+    },
+    "baselineDecisionTimestamp": {
+      "type": "string"
+    },
+    "adaptiveDecisionTimestamp": {
+      "type": "string"
+    },
+    "baselineReasonCodes": {
+      "type": "array"
+    },
+    "adaptiveReasonCodes": {
+      "type": "array"
+    },
+    "route": {
+      "type": "string"
+    },
+    "classification": {
+      "type": "object"
+    },
+    "priority": {
+      "type": [
+        "number",
+        "null"
+      ]
+    },
+    "caseRef": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "matchedMemoryLessonRef": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "memoryMatches": {
+      "type": "array"
+    },
+    "humanOverride": {
+      "type": "boolean"
+    },
+    "explicitAuditOverride": {
+      "type": "boolean"
+    },
+    "baselineHumanOverride": {
+      "type": "boolean"
+    },
+    "oracleOutcome": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "enum": [
+        "confirmed_malicious",
+        "expected_activity",
+        "false_positive",
+        "suspicious",
+        null
+      ]
+    },
+    "deferralClassification": {
+      "type": "string",
+      "enum": [
+        "safe",
+        "unsafe",
+        "not-deferred",
+        "unassessed"
+      ]
+    },
+    "baselineSnapshotHash": {
+      "type": "string"
+    },
+    "adaptiveSnapshotHash": {
+      "type": "string"
+    },
+    "baselineCaseRef": {
+      "type": [
+        "string",
+        "null"
+      ]
+    }
+  }
+}
