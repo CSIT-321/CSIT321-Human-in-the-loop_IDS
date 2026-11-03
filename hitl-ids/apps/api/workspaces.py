@@ -11,6 +11,7 @@ import hashlib
 import json
 import os
 import sqlite3
+import time
 from contextlib import closing
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
@@ -65,6 +66,17 @@ def _control(path: Path, *, create: bool = False) -> sqlite3.Connection | None:
         INSERT OR IGNORE INTO selection(id,workspace) VALUES (1,'operational');
         """)
     return conn
+
+
+def configure_presentation_database(path: Path) -> None:
+    """Allow Replay arrivals to commit while Analyst/SSE readers remain active."""
+    if not path.is_file():
+        return
+    with closing(sqlite3.connect(path, timeout=10)) as conn:
+        if conn.execute('PRAGMA journal_mode').fetchone()[0].lower() != 'wal':
+            mode = conn.execute('PRAGMA journal_mode=WAL').fetchone()[0]
+            if mode.lower() != 'wal':
+                raise sqlite3.OperationalError('Presentation Replay requires WAL journaling')
 
 
 def active_id(control: Path) -> str:
@@ -223,6 +235,8 @@ def prepare(request: Request, actor: str, reason: str, mode: str = 'full') -> di
                 staged = report.staged
         os.replace(temporary, replay)
         published = True
+        if mode == 'presentation':
+            configure_presentation_database(replay)
         conn.execute("INSERT OR REPLACE INTO replay_meta VALUES (1,?,?,?,?,?)",
                      (datetime.now(timezone.utc).isoformat(), 200, staged, count,
                       hashlib.sha256(raw).hexdigest()))
@@ -277,7 +291,17 @@ def _advance_locked(conn: sqlite3.Connection, replay: Path, count: int, actor: s
     order = json.loads(row['arrival_order'])
     cursor = row['cursor']
     for _ in range(min(count, 160-cursor)):
-        presentation_replay.advance_one(replay, order[cursor], row['preparing_admin'])
+        for attempt in range(3):
+            try:
+                presentation_replay.advance_one(replay, order[cursor], row['preparing_admin'])
+                break
+            except sqlite3.OperationalError as exc:
+                if 'locked' not in str(exc).lower() and 'busy' not in str(exc).lower():
+                    raise
+                if attempt == 2:
+                    raise ApiError(503, 'REPLAY_DATABASE_BUSY',
+                                   'Presentation Replay database remained busy after bounded retry.') from exc
+                time.sleep(.1 * (2 ** attempt))
         cursor += 1
         stamp = datetime.now(timezone.utc).isoformat()
         conn.execute('UPDATE presentation SET cursor=?,last_arrival_at=? WHERE id=1', (cursor, stamp))
@@ -310,6 +334,12 @@ def advance(request: Request, count: int, actor: str, reason: str, request_id: s
             _audit(conn, actor, 'presentation_manual_advance', 'v3-1-replay',
                    f'{reason} · requested {count}; Holdout arrived {current}/160')
         conn.commit()
+    except sqlite3.OperationalError as exc:
+        conn.rollback()
+        if 'locked' in str(exc).lower() or 'busy' in str(exc).lower():
+            raise ApiError(503, 'REPLAY_DATABASE_BUSY',
+                           'Presentation Replay database remained busy after bounded retry.') from exc
+        raise
     except Exception:
         conn.rollback()
         raise
@@ -379,7 +409,7 @@ def tick(operational: Path) -> None:
         except Exception as exc:
             conn.execute("UPDATE presentation SET playback_state='paused',next_due_at=NULL WHERE id=1")
             _audit(conn, 'System Policy', 'presentation_playback_paused', 'v3-1-replay',
-                   f'Automatic arrival paused after error: {type(exc).__name__}')
+                   f'Automatic arrival paused after error: {exc.code if isinstance(exc, ApiError) else type(exc).__name__}')
         conn.commit()
     except Exception:
         conn.rollback()

@@ -2,13 +2,14 @@
 import hashlib
 import json
 import sqlite3
+import threading
 from contextlib import closing
 from time import sleep
 from uuid import uuid4
 
 from fastapi.testclient import TestClient
 
-from apps.api import workspaces
+from apps.api import alert_stream_routes, workspaces
 from apps.api.main import create_app
 from packages.contracts import db
 from test_operational_workspaces import _client
@@ -126,3 +127,77 @@ def test_automatic_tick_is_due_only_once(tmp_path):
     sleep(.1)
     workspaces.tick(operational)
     assert client.get('/api/admin/workspaces', headers=tokens['admin']).json()['workspaces'][1]['holdoutArrived'] == 12
+
+
+def test_manual_and_automatic_arrivals_survive_long_analyst_reader_past_57(tmp_path, monkeypatch):
+    client, operational, tokens = _client(tmp_path)
+    body = {'reason': 'Concurrent Analyst and SSE Replay regression', 'mode': 'presentation'}
+    assert client.post('/api/admin/workspaces/v3-1-replay/prepare', headers=tokens['admin'], json=body).status_code == 200
+    assert client.post('/api/admin/workspaces/v3-1-replay/activate', headers=tokens['admin'], json=body).status_code == 200
+    replay = tmp_path / 'workspaces/v3-1-replay.db'
+    control = tmp_path / 'workspaces/control.db'
+    stop = threading.Event()
+    errors = []
+
+    def sse_reader():
+        while not stop.is_set():
+            try:
+                alert_stream_routes._arrivals(replay, 0)
+            except Exception as exc:
+                errors.append(exc)
+            sleep(.02)
+
+    thread = threading.Thread(target=sse_reader, daemon=True)
+    thread.start()
+    try:
+        with closing(sqlite3.connect(replay.resolve().as_uri() + '?mode=ro', uri=True)) as long_reader:
+            long_reader.execute('BEGIN')
+            long_reader.execute('SELECT count(*) FROM operational_alerts_v2').fetchone()
+            assert long_reader.execute('PRAGMA journal_mode').fetchone()[0] == 'wal'
+            manual = client.post('/api/admin/workspaces/v3-1-replay/advance', headers=tokens['admin'],
+                json={'reason': 'Manual Next Alert with reader held open', 'requestId': str(uuid4()), 'count': 1})
+            assert manual.status_code == 200, manual.text
+            assert manual.json()['workspaces'][1]['holdoutArrived'] == 11
+            assert client.post('/api/admin/workspaces/v3-1-replay/start', headers=tokens['admin'], json=body).status_code == 200
+            # Drive the actual automatic controller without waiting 5 seconds per arrival.
+            for expected in range(12, 77):
+                with closing(sqlite3.connect(control)) as conn:
+                    conn.execute("UPDATE presentation SET next_due_at='2000-01-01T00:00:00+00:00'")
+                    conn.commit()
+                workspaces.tick(operational)
+                with closing(sqlite3.connect(control)) as conn:
+                    cursor, state = conn.execute('SELECT cursor,playback_state FROM presentation').fetchone()
+                assert (cursor, state) == (expected, 'running')
+            assert client.get('/api/workspace/current', headers=tokens['analyst']).status_code == 200
+    finally:
+        stop.set()
+        thread.join(timeout=2)
+    assert not errors
+    with closing(sqlite3.connect(replay)) as conn:
+        assert conn.execute('SELECT count(*) FROM operational_alerts_v2').fetchone()[0] == 116
+        assert conn.execute('SELECT count(*) FROM external_operational_admission').fetchone()[0] == 116
+        assert conn.execute('SELECT count(*) FROM external_alert_inbox').fetchone()[0] == 116
+        assert not conn.execute('''SELECT external_inbox_id FROM external_operational_admission
+            GROUP BY external_inbox_id HAVING count(*)>1''').fetchone()
+        assert not conn.execute('''SELECT operational_alert_id FROM operational_system_routing
+            GROUP BY operational_alert_id HAVING count(*)>1''').fetchone()
+        assert not conn.execute('''SELECT primary_operational_alert_id FROM tier2_cases
+            GROUP BY primary_operational_alert_id HAVING count(*)>1''').fetchone()
+    with closing(sqlite3.connect(control)) as conn:
+        assert not conn.execute("SELECT 1 FROM actions WHERE reason LIKE '%error:%'").fetchone()
+
+    def locked(*_args, **_kwargs):
+        raise sqlite3.OperationalError('database is locked')
+
+    monkeypatch.setattr(workspaces.presentation_replay, 'advance_one', locked)
+    failed = client.post('/api/admin/workspaces/v3-1-replay/advance', headers=tokens['admin'],
+        json={'reason': 'Bounded lock failure', 'requestId': str(uuid4()), 'count': 1})
+    assert failed.status_code == 503 and failed.json()['error']['code'] == 'REPLAY_DATABASE_BUSY'
+    with closing(sqlite3.connect(control)) as conn:
+        assert conn.execute('SELECT cursor,playback_state FROM presentation').fetchone() == (76, 'running')
+        conn.execute("UPDATE presentation SET next_due_at='2000-01-01T00:00:00+00:00'")
+        conn.commit()
+    workspaces.tick(operational)
+    with closing(sqlite3.connect(control)) as conn:
+        assert conn.execute('SELECT cursor,playback_state FROM presentation').fetchone() == (76, 'paused')
+        assert 'REPLAY_DATABASE_BUSY' in conn.execute('SELECT reason FROM actions ORDER BY id DESC LIMIT 1').fetchone()[0]

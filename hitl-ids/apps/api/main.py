@@ -108,6 +108,8 @@ def create_app(database: str | Path | None = None) -> FastAPI:
     def start_presentation_controller() -> None:
         nonlocal playback_thread
         operational = Path(getattr(app.state, 'database_path', None) or database_path())
+        # Existing prepared Replay databases predate concurrent-reader WAL mode.
+        workspaces.configure_presentation_database(operational.parent / 'workspaces' / 'v3-1-replay.db')
         # Existing demo databases can predate the corrected seeded Admin name. This
         # narrow, idempotent synchronization runs before read-only account APIs serve.
         for path in (operational, operational.parent / 'workspaces' / 'v3-1-replay.db'):
