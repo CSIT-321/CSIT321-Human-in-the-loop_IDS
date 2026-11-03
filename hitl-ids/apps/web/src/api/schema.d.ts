@@ -129,6 +129,40 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/admin/workspaces/v3-1-replay/advance": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** advancePresentationReplay */
+        post: operations["advancePresentationReplay"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/workspaces/v3-1-replay/pause": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** pausePresentationReplay */
+        post: operations["pausePresentationReplay"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/admin/workspaces/v3-1-replay/prepare": {
         parameters: {
             query?: never;
@@ -157,6 +191,23 @@ export interface paths {
         put?: never;
         /** resetV31Replay */
         post: operations["resetV31Replay"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/workspaces/v3-1-replay/start": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** startPresentationReplay */
+        post: operations["startPresentationReplay"];
         delete?: never;
         options?: never;
         head?: never;
@@ -5442,6 +5493,32 @@ export interface components {
             /** Timestamp */
             timestamp: string;
         };
+        /** ReplayAdvanceCommand */
+        ReplayAdvanceCommand: {
+            /**
+             * Count
+             * @enum {integer}
+             */
+            count: 1 | 5 | 150;
+            /** Reason */
+            reason: string;
+            /**
+             * Requestid
+             * Format: uuid
+             */
+            requestId: string;
+        };
+        /** ReplayPrepareCommand */
+        ReplayPrepareCommand: {
+            /**
+             * Mode
+             * @default full
+             * @enum {string}
+             */
+            mode: "full" | "presentation";
+            /** Reason */
+            reason: string;
+        };
         /** ResolutionResponse */
         ResolutionResponse: {
             /**
@@ -6832,12 +6909,42 @@ export interface components {
             active: boolean;
             /** Alertcount */
             alertCount: number | null;
+            /**
+             * Holdoutarrived
+             * @default null
+             */
+            holdoutArrived: number | null;
+            /**
+             * Holdoutremaining
+             * @default null
+             */
+            holdoutRemaining: number | null;
             /** Id */
             id: string;
+            /**
+             * Lastarrivalat
+             * @default null
+             */
+            lastArrivalAt: string | null;
             /** Lastpreparedat */
             lastPreparedAt: string | null;
+            /**
+             * Learningprocessed
+             * @default null
+             */
+            learningProcessed: number | null;
             /** Name */
             name: string;
+            /**
+             * Playbackstate
+             * @default null
+             */
+            playbackState: ("running" | "paused" | "complete") | null;
+            /**
+             * Preparationmode
+             * @default null
+             */
+            preparationMode: ("full" | "presentation") | null;
             /** Rawrecords */
             rawRecords: number | null;
             /** Ready */
@@ -7305,7 +7412,79 @@ export interface operations {
             };
         };
     };
-    prepareV31Replay: {
+    advancePresentationReplay: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description `Bearer <token>` from POST /api/auth/login */
+                Authorization?: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReplayAdvanceCommand"];
+            };
+        };
+        responses: {
+            /** @description Presentation Replay state */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WorkspaceState"];
+                };
+            };
+            /** @description Validation failed */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not signed in, or the token expired */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Role not permitted */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Database unavailable or schema unsupported; read-only requests never migrate */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    pausePresentationReplay: {
         parameters: {
             query?: never;
             header?: {
@@ -7318,6 +7497,78 @@ export interface operations {
         requestBody: {
             content: {
                 "application/json": components["schemas"]["WorkspaceCommand"];
+            };
+        };
+        responses: {
+            /** @description Presentation Replay state */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WorkspaceState"];
+                };
+            };
+            /** @description Validation failed */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not signed in, or the token expired */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Role not permitted */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Database unavailable or schema unsupported; read-only requests never migrate */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    prepareV31Replay: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description `Bearer <token>` from POST /api/auth/login */
+                Authorization?: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReplayPrepareCommand"];
             };
         };
         responses: {
@@ -7440,6 +7691,78 @@ export interface operations {
             };
             /** @description Not found */
             404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Database unavailable or schema unsupported; read-only requests never migrate */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    startPresentationReplay: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description `Bearer <token>` from POST /api/auth/login */
+                Authorization?: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["WorkspaceCommand"];
+            };
+        };
+        responses: {
+            /** @description Presentation Replay state */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WorkspaceState"];
+                };
+            };
+            /** @description Validation failed */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not signed in, or the token expired */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Role not permitted */
+            403: {
                 headers: {
                     [name: string]: unknown;
                 };

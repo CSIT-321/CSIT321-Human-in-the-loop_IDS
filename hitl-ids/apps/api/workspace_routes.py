@@ -1,7 +1,8 @@
 """One product's administrator-controlled operational workspaces."""
 from __future__ import annotations
 
-from typing import Annotated
+from typing import Annotated, Literal
+from uuid import UUID
 
 from fastapi import APIRouter, Depends, Request
 from pydantic import BaseModel, Field
@@ -11,6 +12,15 @@ from apps.api import auth, workspaces
 
 class WorkspaceCommand(BaseModel):
     reason: str = Field(min_length=3, max_length=500)
+
+
+class ReplayPrepareCommand(WorkspaceCommand):
+    mode: Literal['full', 'presentation'] = 'full'
+
+
+class ReplayAdvanceCommand(WorkspaceCommand):
+    requestId: UUID
+    count: Literal[1, 5, 150]
 
 
 class WorkspaceInfo(BaseModel):
@@ -23,6 +33,12 @@ class WorkspaceInfo(BaseModel):
     rawRecords: int | None
     stagedAlerts: int | None
     workloadSha256: str | None
+    preparationMode: Literal['full', 'presentation'] | None = None
+    learningProcessed: int | None = None
+    holdoutArrived: int | None = None
+    holdoutRemaining: int | None = None
+    playbackState: Literal['running', 'paused', 'complete'] | None = None
+    lastArrivalAt: str | None = None
 
 
 class WorkspaceAction(BaseModel):
@@ -71,11 +87,30 @@ def activate(workspaceId: str, body: WorkspaceCommand, request: Request, princip
 
 @router.post("/api/admin/workspaces/v3-1-replay/prepare", response_model=WorkspaceState,
              operation_id="prepareV31Replay")
-def prepare(body: WorkspaceCommand, request: Request, principal: Admin) -> WorkspaceState:
-    return WorkspaceState.model_validate(workspaces.prepare(request, principal.username, body.reason))
+def prepare(body: ReplayPrepareCommand, request: Request, principal: Admin) -> WorkspaceState:
+    return WorkspaceState.model_validate(workspaces.prepare(request, principal.username, body.reason, body.mode))
 
 
 @router.post("/api/admin/workspaces/v3-1-replay/reset", response_model=WorkspaceState,
              operation_id="resetV31Replay")
 def reset(body: WorkspaceCommand, request: Request, principal: Admin) -> WorkspaceState:
     return WorkspaceState.model_validate(workspaces.reset(request, principal.username, body.reason))
+
+
+@router.post('/api/admin/workspaces/v3-1-replay/advance', response_model=WorkspaceState,
+             operation_id='advancePresentationReplay')
+def advance(body: ReplayAdvanceCommand, request: Request, principal: Admin) -> WorkspaceState:
+    return WorkspaceState.model_validate(workspaces.advance(request, body.count, principal.username,
+        body.reason, str(body.requestId)))
+
+
+@router.post('/api/admin/workspaces/v3-1-replay/start', response_model=WorkspaceState,
+             operation_id='startPresentationReplay')
+def start(body: WorkspaceCommand, request: Request, principal: Admin) -> WorkspaceState:
+    return WorkspaceState.model_validate(workspaces.playback(request, principal.username, body.reason, 'start'))
+
+
+@router.post('/api/admin/workspaces/v3-1-replay/pause', response_model=WorkspaceState,
+             operation_id='pausePresentationReplay')
+def pause(body: WorkspaceCommand, request: Request, principal: Admin) -> WorkspaceState:
+    return WorkspaceState.model_validate(workspaces.playback(request, principal.username, body.reason, 'pause'))

@@ -57,11 +57,18 @@ def _workspace_events(items: list[CurrentAuditEvent], control: Path) -> None:
         conn.row_factory = sqlite3.Row
         for row in conn.execute('SELECT id,actor,action,workspace,reason,created_at FROM actions'):
             label = {'workspace_activated': 'Workspace activated', 'replay_prepared': 'Replay prepared',
-                     'replay_reset': 'Replay reset'}.get(row['action'], row['action'])
+                     'replay_reset': 'Replay reset',
+                     'presentation_replay_prepared': 'Presentation Replay prepared',
+                     'presentation_playback_started': 'Presentation playback started',
+                     'presentation_playback_paused': 'Presentation playback paused',
+                     'presentation_manual_advance': 'Presentation manually advanced',
+                     'presentation_playback_completed': 'Presentation playback completed'}.get(row['action'], row['action'])
             _event(items, 'global', 'workspace_control', row['id'], row['created_at'],
                 'WORKSPACE', row['action'], label, 'workspace', row['workspace'],
                 f"{row['actor']} — {label.lower()} ({row['workspace']}).",
-                actor_name=row['actor'], decision_source='admin', result=row['workspace'],
+                actor_name=None if row['actor'] == 'System Policy' else row['actor'],
+                decision_source='system_policy' if row['actor'] == 'System Policy' else 'admin',
+                result=row['workspace'],
                 detail={'reason': row['reason'], 'targetWorkspace': row['workspace']})
 
 

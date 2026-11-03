@@ -8,10 +8,11 @@ operational database.
 from __future__ import annotations
 
 import hashlib
+import json
 import os
 import sqlite3
 from contextlib import closing
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from uuid import NAMESPACE_URL, uuid4, uuid5
 
@@ -24,6 +25,7 @@ from packages.detection.adapters.staging import stage_file
 from packages.detection.external_admission import (
     AdmissionRequest, EligibilityRequest, admit_external, review_eligibility,
 )
+from apps.api import presentation_replay
 
 REPOSITORY = Path(__file__).resolve().parents[3]
 WORKLOAD = REPOSITORY / "evaluation/protocol-v3.1/workload/operational-workload.jsonl"
@@ -52,6 +54,14 @@ def _control(path: Path, *, create: bool = False) -> sqlite3.Connection | None:
             workload_sha256 TEXT NOT NULL);
         CREATE TABLE IF NOT EXISTS actions (id INTEGER PRIMARY KEY, actor TEXT NOT NULL, action TEXT NOT NULL,
             workspace TEXT NOT NULL, reason TEXT NOT NULL, created_at TEXT NOT NULL);
+        CREATE TABLE IF NOT EXISTS presentation (id INTEGER PRIMARY KEY CHECK(id=1),
+            cursor INTEGER NOT NULL CHECK(cursor BETWEEN 0 AND 160), initial_holdout INTEGER NOT NULL,
+            arrival_order TEXT NOT NULL CHECK(json_valid(arrival_order)),
+            playback_state TEXT NOT NULL CHECK(playback_state IN ('paused','running','complete')),
+            next_due_at TEXT, last_arrival_at TEXT, preparing_admin TEXT NOT NULL);
+        CREATE TABLE IF NOT EXISTS presentation_requests (request_id TEXT PRIMARY KEY,
+            actor TEXT NOT NULL, count INTEGER NOT NULL, resulting_cursor INTEGER NOT NULL,
+            created_at TEXT NOT NULL);
         INSERT OR IGNORE INTO selection(id,workspace) VALUES (1,'operational');
         """)
     return conn
@@ -103,12 +113,16 @@ def state(request: Request) -> dict:
     operational, control, replay = paths(request)
     active = active_id(control)
     meta = None
+    presentation = None
     actions = []
     conn = _control(control)
     if conn is not None:
         try:
             row = conn.execute("SELECT * FROM replay_meta WHERE id=1").fetchone()
             meta = dict(row) if row else None
+            if conn.execute("SELECT 1 FROM sqlite_master WHERE type='table' AND name='presentation'").fetchone():
+                row = conn.execute("SELECT * FROM presentation WHERE id=1").fetchone()
+                presentation = dict(row) if row else None
             actions = [dict(row) for row in conn.execute(
                 "SELECT actor,action,workspace,reason,created_at FROM actions ORDER BY id DESC LIMIT 20")]
         finally:
@@ -121,6 +135,12 @@ def state(request: Request) -> dict:
                  "lastPreparedAt": meta["prepared_at"] if key == "v3-1-replay" and meta else None,
                  "rawRecords": meta["raw_records"] if key == "v3-1-replay" and meta else None,
                  "stagedAlerts": meta["staged_alerts"] if key == "v3-1-replay" and meta else None,
+                 "preparationMode": ('presentation' if presentation else 'full') if key == 'v3-1-replay' and meta else None,
+                 "learningProcessed": 40 if presentation and key == 'v3-1-replay' else 0 if key == 'v3-1-replay' and meta else None,
+                 "holdoutArrived": presentation['cursor'] if presentation and key == 'v3-1-replay' else 160 if key == 'v3-1-replay' and meta else None,
+                 "holdoutRemaining": 160-presentation['cursor'] if presentation and key == 'v3-1-replay' else 0 if key == 'v3-1-replay' and meta else None,
+                 "playbackState": presentation['playback_state'] if presentation and key == 'v3-1-replay' else None,
+                 "lastArrivalAt": presentation['last_arrival_at'] if presentation and key == 'v3-1-replay' else None,
                  "workloadSha256": meta["workload_sha256"] if key == "v3-1-replay" and meta else None}
                 for key, path in (("operational", operational), ("v3-1-replay", replay))]}
 
@@ -140,6 +160,10 @@ def activate(request: Request, workspace: str, actor: str, reason: str) -> dict:
     assert conn is not None
     try:
         conn.execute("BEGIN IMMEDIATE")
+        if workspace == 'operational':
+            paused = conn.execute("UPDATE presentation SET playback_state='paused',next_due_at=NULL WHERE id=1 AND playback_state='running'").rowcount
+            if paused:
+                _audit(conn, actor, 'presentation_playback_paused', 'v3-1-replay', 'Paused automatically when Operational became active')
         conn.execute("UPDATE selection SET workspace=? WHERE id=1", (workspace,))
         _audit(conn, actor, "workspace_activated", workspace, reason)
         conn.commit()
@@ -148,7 +172,9 @@ def activate(request: Request, workspace: str, actor: str, reason: str) -> dict:
     return state(request)
 
 
-def prepare(request: Request, actor: str, reason: str) -> dict:
+def prepare(request: Request, actor: str, reason: str, mode: str = 'full') -> dict:
+    if mode not in ('full', 'presentation'):
+        raise ApiError(400, 'INVALID_REPLAY_MODE', 'Choose Full Replay or Presentation Replay.')
     operational, control, replay = paths(request)
     conn = _control(control, create=True)
     assert conn is not None
@@ -166,34 +192,48 @@ def prepare(request: Request, actor: str, reason: str) -> dict:
             raise ApiError(503, "REPLAY_WORKLOAD_UNAVAILABLE", "Frozen V3.1 workload is unavailable.") from exc
         if len(raw.splitlines()) != 200:
             raise ApiError(503, "REPLAY_WORKLOAD_INVALID", "Frozen V3.1 workload must contain 200 records.")
-        with closing(db.connect(temporary)) as target:
-            db.create_schema(target)
-            auth.ensure_demo_accounts(target)
-            admin = target.execute("SELECT id FROM users WHERE username=? AND role='system_admin'",
-                                   (actor,)).fetchone()
-            if admin is None:
-                raise ApiError(409, "REPLAY_ACTOR_MISSING", "Administrator account cannot be prepared in Replay.")
-            actor_id = admin[0]
-            report = stage_file(target, WORKLOAD, "v3-1-demo-replay", capture_scope="v3-1-demo-replay")
-            if report.invalid or report.rejected_by_policy or report.parsed != 200:
-                raise ApiError(503, "REPLAY_STAGING_FAILED", "The frozen workload did not stage cleanly.")
-            inbox_ids = [row[0] for row in target.execute("SELECT id FROM external_alert_inbox ORDER BY id")]
-            for inbox_id in inbox_ids:
-                review = review_eligibility(target, inbox_id, actor_id=actor_id, request=EligibilityRequest(
-                    requestId=uuid5(NAMESPACE_URL, f"v3-1-replay:review:{inbox_id}"),
-                    expectedReviewId=None, decision="accepted", reason="Admin prepared isolated V3.1 demo replay"))
-                admit_external(target, inbox_id, actor_id=actor_id, request=AdmissionRequest(
-                    requestId=uuid5(NAMESPACE_URL, f"v3-1-replay:admit:{inbox_id}"),
-                    expectedReviewId=review["id"], reason="Admin prepared isolated V3.1 demo replay"))
-            count = int(target.execute("SELECT count(*) FROM operational_alerts_v2").fetchone()[0])
-            if target.execute("PRAGMA foreign_key_check").fetchone():
-                raise ApiError(503, "REPLAY_INTEGRITY_FAILED", "Replay database has foreign key violations.")
+        if mode == 'presentation':
+            source_hash, learning_counts, count = presentation_replay.build(temporary, actor)
+            if source_hash != hashlib.sha256(raw).hexdigest():
+                raise ApiError(503, 'REPLAY_WORKLOAD_CHANGED', 'Frozen workload changed during preparation.')
+            staged = count
+        else:
+            with closing(db.connect(temporary)) as target:
+                db.create_schema(target)
+                auth.ensure_demo_accounts(target)
+                admin = target.execute("SELECT id FROM users WHERE username=? AND role='system_admin'",
+                                       (actor,)).fetchone()
+                if admin is None:
+                    raise ApiError(409, "REPLAY_ACTOR_MISSING", "Administrator account cannot be prepared in Replay.")
+                actor_id = admin[0]
+                report = stage_file(target, WORKLOAD, "v3-1-demo-replay", capture_scope="v3-1-demo-replay")
+                if report.invalid or report.rejected_by_policy or report.parsed != 200:
+                    raise ApiError(503, "REPLAY_STAGING_FAILED", "The frozen workload did not stage cleanly.")
+                inbox_ids = [row[0] for row in target.execute("SELECT id FROM external_alert_inbox ORDER BY id")]
+                for inbox_id in inbox_ids:
+                    review = review_eligibility(target, inbox_id, actor_id=actor_id, request=EligibilityRequest(
+                        requestId=uuid5(NAMESPACE_URL, f"v3-1-replay:review:{inbox_id}"),
+                        expectedReviewId=None, decision="accepted", reason="Admin prepared isolated V3.1 demo replay"))
+                    admit_external(target, inbox_id, actor_id=actor_id, request=AdmissionRequest(
+                        requestId=uuid5(NAMESPACE_URL, f"v3-1-replay:admit:{inbox_id}"),
+                        expectedReviewId=review["id"], reason="Admin prepared isolated V3.1 demo replay"))
+                count = int(target.execute("SELECT count(*) FROM operational_alerts_v2").fetchone()[0])
+                if target.execute("PRAGMA foreign_key_check").fetchone():
+                    raise ApiError(503, "REPLAY_INTEGRITY_FAILED", "Replay database has foreign key violations.")
+                staged = report.staged
         os.replace(temporary, replay)
         published = True
         conn.execute("INSERT OR REPLACE INTO replay_meta VALUES (1,?,?,?,?,?)",
-                     (datetime.now(timezone.utc).isoformat(), 200, report.staged, count,
+                     (datetime.now(timezone.utc).isoformat(), 200, staged, count,
                       hashlib.sha256(raw).hexdigest()))
-        _audit(conn, actor, "replay_prepared", "v3-1-replay", reason)
+        if mode == 'presentation':
+            order = presentation_replay.arrival_order(json.loads(presentation_replay.STRUCTURE.read_text(encoding='utf-8')))
+            conn.execute("INSERT INTO presentation VALUES (1,?,?,?,?,?,?,?)",
+                (presentation_replay.INITIAL_HOLDOUT, presentation_replay.INITIAL_HOLDOUT,
+                 json.dumps(order), 'paused', None, datetime.now(timezone.utc).isoformat(), actor))
+            _audit(conn, actor, 'presentation_replay_prepared', 'v3-1-replay', reason)
+        else:
+            _audit(conn, actor, "replay_prepared", "v3-1-replay", reason)
         conn.commit()
     except Exception:
         conn.rollback()
@@ -221,8 +261,128 @@ def reset(request: Request, actor: str, reason: str) -> dict:
             except PermissionError as exc:
                 raise ApiError(409, "REPLAY_IN_USE", "Replay is still in use; retry after active requests finish.") from exc
         conn.execute("DELETE FROM replay_meta WHERE id=1")
+        conn.execute("DELETE FROM presentation WHERE id=1")
+        conn.execute("DELETE FROM presentation_requests")
         _audit(conn, actor, "replay_reset", "v3-1-replay", reason)
         conn.commit()
     finally:
         conn.close()
     return state(request)
+
+
+def _advance_locked(conn: sqlite3.Connection, replay: Path, count: int, actor: str, reason: str) -> int:
+    row = conn.execute('SELECT * FROM presentation WHERE id=1').fetchone()
+    if row is None or not replay.exists():
+        raise ApiError(409, 'PRESENTATION_NOT_PREPARED', 'Prepare Presentation Replay first.')
+    order = json.loads(row['arrival_order'])
+    cursor = row['cursor']
+    for _ in range(min(count, 160-cursor)):
+        presentation_replay.advance_one(replay, order[cursor], row['preparing_admin'])
+        cursor += 1
+        stamp = datetime.now(timezone.utc).isoformat()
+        conn.execute('UPDATE presentation SET cursor=?,last_arrival_at=? WHERE id=1', (cursor, stamp))
+        conn.execute('UPDATE replay_meta SET staged_alerts=?,operational_alerts=? WHERE id=1',
+                     (40+cursor, 40+cursor))
+    if cursor == 160 and row['playback_state'] != 'complete':
+        conn.execute("UPDATE presentation SET playback_state='complete',next_due_at=NULL WHERE id=1")
+        _audit(conn, actor, 'presentation_playback_completed', 'v3-1-replay', reason)
+    return cursor
+
+
+def advance(request: Request, count: int, actor: str, reason: str, request_id: str) -> dict:
+    if count not in (1, 5, 150):
+        raise ApiError(400, 'INVALID_ADVANCE_COUNT', 'Choose Next Alert, Next 5, or Load Remaining.')
+    _, control, replay = paths(request)
+    conn = _control(control, create=True)
+    assert conn is not None
+    try:
+        conn.execute('BEGIN IMMEDIATE')
+        if conn.execute('SELECT workspace FROM selection WHERE id=1').fetchone()[0] != 'v3-1-replay':
+            raise ApiError(409, 'REPLAY_INACTIVE', 'Activate V3.1 Demo Replay before advancing.')
+        previous = conn.execute('SELECT actor,count FROM presentation_requests WHERE request_id=?', (request_id,)).fetchone()
+        if previous:
+            if previous['actor'] != actor or previous['count'] != count:
+                raise ApiError(409, 'REQUEST_ID_CONFLICT', 'Request ID belongs to another advance command.')
+        else:
+            current = _advance_locked(conn, replay, count, actor, reason)
+            conn.execute('INSERT INTO presentation_requests VALUES (?,?,?,?,?)',
+                         (request_id, actor, count, current, datetime.now(timezone.utc).isoformat()))
+            _audit(conn, actor, 'presentation_manual_advance', 'v3-1-replay',
+                   f'{reason} · requested {count}; Holdout arrived {current}/160')
+        conn.commit()
+    except Exception:
+        conn.rollback()
+        raise
+    finally:
+        conn.close()
+    return state(request)
+
+
+def playback(request: Request, actor: str, reason: str, action: str) -> dict:
+    _, control, replay = paths(request)
+    conn = _control(control, create=True)
+    assert conn is not None
+    try:
+        conn.execute('BEGIN IMMEDIATE')
+        row = conn.execute('SELECT * FROM presentation WHERE id=1').fetchone()
+        if row is None or not replay.exists():
+            raise ApiError(409, 'PRESENTATION_NOT_PREPARED', 'Prepare Presentation Replay first.')
+        active = conn.execute('SELECT workspace FROM selection WHERE id=1').fetchone()[0]
+        if action == 'start':
+            if active != 'v3-1-replay':
+                raise ApiError(409, 'REPLAY_INACTIVE', 'Activate V3.1 Demo Replay before playback.')
+            if row['playback_state'] == 'paused' and row['cursor'] < 160:
+                due = datetime.now(timezone.utc) + timedelta(seconds=presentation_replay.RATE_SECONDS)
+                conn.execute("UPDATE presentation SET playback_state='running',next_due_at=? WHERE id=1", (due.isoformat(),))
+                _audit(conn, actor, 'presentation_playback_started', 'v3-1-replay', reason)
+        elif action == 'pause':
+            if row['playback_state'] == 'running':
+                conn.execute("UPDATE presentation SET playback_state='paused',next_due_at=NULL WHERE id=1")
+                _audit(conn, actor, 'presentation_playback_paused', 'v3-1-replay', reason)
+        else:
+            raise ApiError(400, 'INVALID_PLAYBACK_ACTION', 'Unknown presentation playback action.')
+        conn.commit()
+    except Exception:
+        conn.rollback()
+        raise
+    finally:
+        conn.close()
+    return state(request)
+
+
+def tick(operational: Path) -> None:
+    """At most one due arrival; SQLite control lock coordinates duplicate app workers."""
+    control = operational.resolve().parent / 'workspaces' / 'control.db'
+    replay = control.parent / 'v3-1-replay.db'
+    conn = _control(control)
+    if conn is None:
+        return
+    try:
+        if not conn.execute("SELECT 1 FROM sqlite_master WHERE name='presentation'").fetchone():
+            return
+        conn.execute('BEGIN IMMEDIATE')
+        row = conn.execute('SELECT * FROM presentation WHERE id=1').fetchone()
+        if row is None or row['playback_state'] != 'running':
+            conn.commit(); return
+        if conn.execute('SELECT workspace FROM selection WHERE id=1').fetchone()[0] != 'v3-1-replay':
+            conn.execute("UPDATE presentation SET playback_state='paused',next_due_at=NULL WHERE id=1")
+            _audit(conn, row['preparing_admin'], 'presentation_playback_paused', 'v3-1-replay',
+                   'Paused because Replay is not active')
+            conn.commit(); return
+        if row['next_due_at'] and datetime.now(timezone.utc) < datetime.fromisoformat(row['next_due_at']):
+            conn.commit(); return
+        try:
+            cursor = _advance_locked(conn, replay, 1, 'System Policy', 'Automatic presentation arrival')
+            if cursor < 160:
+                due = datetime.now(timezone.utc) + timedelta(seconds=presentation_replay.RATE_SECONDS)
+                conn.execute('UPDATE presentation SET next_due_at=? WHERE id=1', (due.isoformat(),))
+        except Exception as exc:
+            conn.execute("UPDATE presentation SET playback_state='paused',next_due_at=NULL WHERE id=1")
+            _audit(conn, 'System Policy', 'presentation_playback_paused', 'v3-1-replay',
+                   f'Automatic arrival paused after error: {type(exc).__name__}')
+        conn.commit()
+    except Exception:
+        conn.rollback()
+        raise
+    finally:
+        conn.close()

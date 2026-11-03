@@ -22,6 +22,44 @@ function workspaceState(active: "operational" | "v3-1-replay", prepared: boolean
 }
 
 describe("operational workspace controls", () => {
+  it("prepares Presentation Replay and advances only through Admin commands", async () => {
+    const user = userEvent.setup();
+    let active: "operational" | "v3-1-replay" = "operational";
+    let prepared = false;
+    let arrived = 10;
+    const seen = stubFetch(async request => {
+      const path = new URL(request.url).pathname;
+      if (request.method === "POST") {
+        if (path.endsWith("/prepare")) {
+          expect((await request.clone().json()).mode).toBe("presentation");
+          prepared = true;
+        }
+        if (path.endsWith("/activate")) active = path.includes("v3-1-replay") ? "v3-1-replay" : "operational";
+        if (path.endsWith("/advance")) arrived += (await request.clone().json()).count;
+      }
+      const state = workspaceState(active, prepared);
+      if (prepared) Object.assign(state.workspaces[1]!, {
+        alertCount: 40 + arrived, stagedAlerts: 40 + arrived, preparationMode: "presentation",
+        learningProcessed: 40, holdoutArrived: arrived, holdoutRemaining: 160 - arrived,
+        playbackState: "paused", lastArrivalAt: "2026-11-03T01:00:00Z",
+      });
+      return jsonResponse(state);
+    });
+    renderApp("/admin/workspaces", { session: ADMIN });
+    await screen.findByRole("heading", { name: "Operational Workspace" });
+    await user.selectOptions(screen.getByLabelText("Replay preparation mode"), "presentation");
+    await user.click(screen.getByRole("button", { name: "Prepare Replay" }));
+    expect(await screen.findByText("40 processed")).toBeVisible();
+    expect(screen.getByText("10 / 160")).toBeVisible();
+    expect(screen.getByRole("button", { name: "Next Alert" })).toBeDisabled();
+    await user.click(screen.getAllByRole("button", { name: "Activate" }).find(button => !button.hasAttribute("disabled"))!);
+    await user.click(screen.getByRole("button", { name: "Next Alert" }));
+    expect(await screen.findByText("11 / 160")).toBeVisible();
+    await user.click(screen.getByRole("button", { name: "Next 5" }));
+    expect(await screen.findByText("16 / 160")).toBeVisible();
+    expect(seen.filter(request => request.method === "POST" && request.url.endsWith("/advance"))).toHaveLength(2);
+  });
+
   it("shows Admin status and keeps Reset confined to Replay", async () => {
     const user = userEvent.setup();
     let active: "operational" | "v3-1-replay" = "operational";

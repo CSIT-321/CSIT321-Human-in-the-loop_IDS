@@ -219,7 +219,9 @@ export function OperationalWorkstationPage() {
   function refresh() { setOverrides({}); queue.reload(); linked.reload(); summary.reload(); }
   function changed(updated: View) { select(updated.operationalAlertRef); setOverrides(previous => ({ ...previous, [updated.operationalAlertRef]: updated })); queue.reload(); summary.reload(); }
   const refreshRef = useRef(refresh); refreshRef.current = refresh;
-  useEffect(() => { const timer = setInterval(() => refreshRef.current(), 15000); return () => clearInterval(timer); }, []);
+  const pollWorkspace = queue.status === "success" ? queue.data.workspaceId : null;
+  useEffect(() => { const timer = setInterval(() => refreshRef.current(), pollWorkspace === "v3-1-replay" ? 5000 : 15000);
+    return () => clearInterval(timer); }, [pollWorkspace]);
   useEffect(() => {
     function key(event: KeyboardEvent) {
       if (event.ctrlKey || event.metaKey || event.altKey || (event.target instanceof HTMLElement && (event.target.isContentEditable || /INPUT|TEXTAREA|SELECT/.test(event.target.tagName)))) return;

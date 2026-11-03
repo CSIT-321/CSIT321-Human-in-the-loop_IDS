@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { api, unwrap } from "../../api/client";
 import { useApi } from "../../api/useApi";
@@ -10,15 +10,24 @@ export function WorkspacesPage() {
   const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [reason, setReason] = useState("Prepare isolated V3.1 analyst demonstration");
+  const [mode, setMode] = useState<"full" | "presentation">("full");
+  const reload = useRef(state.reload); reload.current = state.reload;
+  useEffect(() => { const timer = setInterval(() => reload.current(), 2000); return () => clearInterval(timer); }, []);
 
-  async function act(action: "prepare" | "reset" | "activate", id = "v3-1-replay") {
+  async function act(action: "prepare" | "reset" | "activate" | "start" | "pause" | "advance",
+                     id = "v3-1-replay", count: 1 | 5 | 150 = 1) {
     if (action === "reset" && !window.confirm(
       "Reset V3.1 Demo Replay? This permanently removes only its isolated operational alerts, verdicts, memory and cases. The Operational workspace and official frozen evaluation remain unchanged.")) return;
     setBusy(`${action}:${id}`); setError(null);
     try {
       const body = { reason: reason.trim() || "Administrator workspace action" };
-      if (action === "prepare") await unwrap(api.POST("/api/admin/workspaces/v3-1-replay/prepare", { body }));
+      if (action === "prepare") await unwrap(api.POST("/api/admin/workspaces/v3-1-replay/prepare", { body: { ...body, mode } }));
       else if (action === "reset") await unwrap(api.POST("/api/admin/workspaces/v3-1-replay/reset", { body }));
+      else if (action === "start") await unwrap(api.POST("/api/admin/workspaces/v3-1-replay/start", { body }));
+      else if (action === "pause") await unwrap(api.POST("/api/admin/workspaces/v3-1-replay/pause", { body }));
+      else if (action === "advance") await unwrap(api.POST("/api/admin/workspaces/v3-1-replay/advance", {
+        body: { ...body, count, requestId: crypto.randomUUID() },
+      }));
       else await unwrap(api.POST("/api/admin/workspaces/{workspaceId}/activate", {
         params: { path: { workspaceId: id } }, body,
       }));
@@ -44,10 +53,25 @@ export function WorkspacesPage() {
           <p>Database: <strong className="text-text">{workspace.ready ? "Ready" : "Not prepared"}</strong></p>
           <p>Operational alerts: <strong className="text-text">{workspace.alertCount ?? "N/A"}</strong></p>
           {workspace.id === "v3-1-replay" && <>
+            {!workspace.ready && <label className="block text-sm text-text">Preparation mode
+              <select aria-label="Replay preparation mode" value={mode} onChange={event => setMode(event.target.value as typeof mode)}
+                className="mt-1 block w-full rounded-sm border border-border bg-raised px-3 py-2">
+                <option value="full">Full Replay · all 200 now</option>
+                <option value="presentation">Presentation Replay · progressive Holdout</option>
+              </select>
+            </label>}
+            {workspace.ready && <p>Mode: <strong className="text-text">{workspace.preparationMode === "presentation" ? "Presentation Replay" : "Full Replay"}</strong></p>}
             <p>Raw frozen workload records: {workspace.rawRecords ?? "N/A"}</p>
             <p>Staged alerts: {workspace.stagedAlerts ?? "N/A"}</p>
             <p>Last prepared: {workspace.lastPreparedAt ?? "Never"}</p>
-            <p className="text-xs">This is an interactive operational replay. Official controlled evaluation results are read separately.</p>
+            {workspace.preparationMode === "presentation" && <div className="space-y-1 rounded-sm border border-border bg-raised p-3">
+              <p>Learning history: <strong className="text-text">{workspace.learningProcessed} processed</strong></p>
+              <p>Holdout arrived: <strong className="text-text">{workspace.holdoutArrived} / 160</strong></p>
+              <p>Remaining: <strong className="text-text">{workspace.holdoutRemaining}</strong></p>
+              <p>Playback: <strong className="text-text">{workspace.playbackState === "running" ? "Running" : workspace.playbackState === "complete" ? "Complete" : "Paused"}</strong></p>
+              <p>Last arrival: {workspace.lastArrivalAt ?? "Not yet"}</p>
+            </div>}
+            <p className="text-xs">Recorded presentation replay, not live network traffic. Official frozen evaluation results are separate.</p>
           </>}
         </div>
         <div className="mt-4 flex flex-wrap gap-2">
@@ -61,6 +85,19 @@ export function WorkspacesPage() {
             <button type="button" disabled={busy !== null || !workspace.ready || workspace.active}
               onClick={() => void act("reset")}
               className="rounded-sm border border-danger/50 px-3 py-1.5 text-sm text-danger disabled:opacity-40">Reset Replay</button>
+            {workspace.preparationMode === "presentation" && <>
+              <button type="button" disabled={busy !== null || !workspace.active || workspace.playbackState !== "paused" || !workspace.holdoutRemaining}
+                onClick={() => void act("start")}
+                className="rounded-sm border border-accent px-3 py-1.5 text-sm text-accent disabled:opacity-40">Start Arrivals</button>
+              <button type="button" disabled={busy !== null || workspace.playbackState !== "running"}
+                onClick={() => void act("pause")}
+                className="rounded-sm border border-border px-3 py-1.5 text-sm text-text disabled:opacity-40">Pause</button>
+              {[1, 5, 150].map(count => <button key={count} type="button"
+                disabled={busy !== null || !workspace.active || !workspace.holdoutRemaining}
+                onClick={() => void act("advance", "v3-1-replay", count as 1 | 5 | 150)}
+                className="rounded-sm border border-border px-3 py-1.5 text-sm text-text disabled:opacity-40">
+                {count === 1 ? "Next Alert" : count === 5 ? "Next 5" : "Load Remaining"}</button>)}
+            </>}
           </>}
         </div>
       </Card>)}</div>

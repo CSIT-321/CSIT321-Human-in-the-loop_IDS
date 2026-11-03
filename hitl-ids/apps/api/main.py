@@ -15,6 +15,7 @@ translated into the same shape, so a client never has two error paths to write.
 from __future__ import annotations
 
 from pathlib import Path
+from threading import Event, Thread
 
 from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError
@@ -33,6 +34,7 @@ from apps.api import collection_routes
 from apps.api import workspace_routes
 from apps.api import admin_current_routes
 from apps.api import final_v3_routes
+from apps.api import workspaces
 from apps.api.contract.common import ErrorBody, ErrorResponse
 from apps.api.contract.openapi import API_VERSION, DESCRIPTION, openapi_document
 from apps.api.deps import ApiError, database_path
@@ -95,6 +97,30 @@ def create_app(database: str | Path | None = None) -> FastAPI:
     app.include_router(workspace_routes.router)
     app.include_router(admin_current_routes.router)
     app.include_router(final_v3_routes.router)
+
+    stop_playback = Event()
+    playback_thread: Thread | None = None
+
+    @app.on_event('startup')
+    def start_presentation_controller() -> None:
+        nonlocal playback_thread
+        operational = Path(getattr(app.state, 'database_path', None) or database_path())
+        def loop() -> None:
+            while not stop_playback.wait(0.5):
+                try:
+                    workspaces.tick(operational)
+                except Exception:
+                    # A later tick or Admin manual advance can recover. The controller
+                    # never changes Operational or frozen evaluation files.
+                    pass
+        playback_thread = Thread(target=loop, name='presentation-replay', daemon=True)
+        playback_thread.start()
+
+    @app.on_event('shutdown')
+    def stop_presentation_controller() -> None:
+        stop_playback.set()
+        if playback_thread is not None:
+            playback_thread.join(timeout=2)
 
     @app.get("/api/health", tags=["dashboard"], include_in_schema=False)
     def health(request: Request) -> dict[str, object]:
