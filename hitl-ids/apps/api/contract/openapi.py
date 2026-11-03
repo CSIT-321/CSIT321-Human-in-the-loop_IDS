@@ -280,7 +280,7 @@ def _paths() -> dict[str, Any]:
                 "requestBody": {"required": True, **_json(au.LoginRequest)},
                 "responses": {"200": {"description": "The token and the account it names",
                                       **_json(au.LoginResponse)},
-                              **_errors(401)},
+                              **_errors(401, 503)},
             }
         },
         "/api/auth/me": {

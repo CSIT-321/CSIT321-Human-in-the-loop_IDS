@@ -8,12 +8,13 @@ the way it self-heals its schema.
 from __future__ import annotations
 
 import time
+import threading
 
 import jwt as pyjwt
 import pytest
 from fastapi.testclient import TestClient
 
-from apps.api import auth
+from apps.api import auth, routes
 from apps.api.main import create_app
 from packages.contracts import db
 
@@ -58,6 +59,35 @@ def test_a_successful_sign_in_records_last_login(client, database):
         assert row["last_login"] is not None
     finally:
         conn.close()
+
+
+def test_sign_in_waits_for_a_short_sqlite_writer_lock(client, database, monkeypatch):
+    monkeypatch.setattr(routes, "LOGIN_BUSY_TIMEOUT_MS", 1000)
+    holder = db.connect(str(database), check_same_thread=False)
+    holder.execute("BEGIN IMMEDIATE")
+    release = threading.Timer(0.2, holder.rollback)
+    release.start()
+    try:
+        response = login(client, "g.ang", "analyst-demo")
+        assert response.status_code == 200, response.text
+    finally:
+        release.join()
+        holder.close()
+
+
+def test_sign_in_lock_timeout_has_contract_error_envelope(client, database, monkeypatch):
+    monkeypatch.setattr(routes, "LOGIN_BUSY_TIMEOUT_MS", 100)
+    holder = db.connect(str(database))
+    holder.execute("BEGIN IMMEDIATE")
+    try:
+        response = login(client, "g.ang", "analyst-demo")
+        assert response.status_code == 503
+        assert response.json()["error"]["code"] == "DATABASE_BUSY"
+        assert response.json()["error"]["message"] == "The database is busy. Retry sign-in shortly."
+        assert "token" not in response.json()
+    finally:
+        holder.rollback()
+        holder.close()
 
 
 def test_a_disabled_account_cannot_sign_in(client, database):

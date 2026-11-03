@@ -66,6 +66,7 @@ HITL = Path(__file__).resolve().parents[2]
 EVALUATION_RUNS = HITL / "evaluation" / "three-arm" / "runs"
 
 router = APIRouter()
+LOGIN_BUSY_TIMEOUT_MS = 20_000
 
 Conn = Annotated[sqlite3.Connection, Depends(get_connection)]
 Principal = Annotated[auth.Principal, Depends(auth.current_user)]
@@ -83,12 +84,20 @@ ReadAdminOnly = Depends(auth.require_role("system_admin", readonly=True))
 def login(body: au.LoginRequest, conn: Conn) -> au.LoginResponse:
     """Sign in as one of the seeded accounts. A wrong username, a wrong password and a disabled
     account all answer the same 401, so nothing about the account list leaks."""
-    user = auth.authenticate(conn, body.username, body.password)
-    if user is None:
-        raise ApiError(401, "UNAUTHORIZED", "Invalid username or password")
-    with conn:
-        conn.execute("UPDATE users SET last_login = ? WHERE id = ?",
-                     (db.format_timestamp(m.utc_now()), user.id))
+    try:
+        # A long read of the Replay queue can overlap sign-in on SQLite's rollback journal.
+        # Wait for that reader to finish before reporting a transient database lock.
+        conn.execute(f"PRAGMA busy_timeout={LOGIN_BUSY_TIMEOUT_MS}")
+        user = auth.authenticate(conn, body.username, body.password)
+        if user is None:
+            raise ApiError(401, "UNAUTHORIZED", "Invalid username or password")
+        with conn:
+            conn.execute("UPDATE users SET last_login = ? WHERE id = ?",
+                         (db.format_timestamp(m.utc_now()), user.id))
+    except sqlite3.OperationalError as exc:
+        if "locked" not in str(exc).lower() and "busy" not in str(exc).lower():
+            raise
+        raise ApiError(503, "DATABASE_BUSY", "The database is busy. Retry sign-in shortly.") from exc
     return au.LoginResponse(token=auth.encode_token(user), username=user.username,
                             display_name=user.display_name, role=user.role)
 

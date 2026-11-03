@@ -16026,6 +16026,16 @@
               }
             },
             "description": "Not signed in, or the token expired"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Database unavailable or schema unsupported; read-only requests never migrate"
           }
         },
         "summary": "Sign in and receive a bearer token",
