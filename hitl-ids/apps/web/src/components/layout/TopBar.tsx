@@ -52,7 +52,7 @@ function Clock() {
   );
 }
 
-export function TopBar() {
+export function TopBar({ onStartTour }: { onStartTour?: () => void }) {
   const { session, signOut } = useSession();
   const navigate = useNavigate();
   const [theme, setTheme] = useState(() => {
@@ -85,9 +85,11 @@ export function TopBar() {
           Imported evidence
         </span>
       </div>
-      <div className="flex items-center gap-2 sm:gap-3">
+      <div className="flex min-w-0 items-center gap-1 sm:gap-3">
         {session.role === "security_analyst" && <WorkspaceBadge />}
         <Clock />
+        {onStartTour && <button type="button" onClick={onStartTour}
+          className="shrink-0 rounded-sm border border-primary px-1.5 py-1 text-xs text-accent hover:bg-raised sm:px-2">Start tour</button>}
         <button type="button" aria-label="Light theme" aria-pressed={theme === "light"}
           title={`Switch to ${theme === "dark" ? "Light" : "Dark"} theme`}
           onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
@@ -97,7 +99,7 @@ export function TopBar() {
         <span
           aria-hidden
           title={session.username}
-          className="flex h-7 w-7 items-center justify-center rounded-sm border border-border bg-raised font-mono text-[11px] font-semibold text-accent"
+          className="hidden h-7 w-7 items-center justify-center rounded-sm border border-border bg-raised font-mono text-[11px] font-semibold text-accent sm:flex"
         >
           {initials(session.username)}
         </span>

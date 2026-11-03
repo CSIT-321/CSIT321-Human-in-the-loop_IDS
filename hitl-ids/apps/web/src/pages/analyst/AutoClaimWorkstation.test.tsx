@@ -89,6 +89,37 @@ const claims = (seen: Request[]) => seen.filter(request => request.method === "P
   new URL(request.url).pathname.endsWith("/work/claim"));
 
 describe("intentional queue selection auto-claim", () => {
+  it("keeps a Tour-open Verdict draft and selected alert through SSE arrival without claiming", async () => {
+    let controller!: ReadableStreamDefaultController<Uint8Array>;
+    const scenario: Scenario = { posts: [], stream: new ReadableStream({ start(value) { controller = value; } }),
+      overrideWork: { status: "in_review", canClaim: false, canMutate: true, isOwner: true, ownerName: "Glenn Ang" } };
+    const seen = setup(scenario);
+    const user = userEvent.setup();
+    const { router } = renderApp("/analyst/operations?alertRef=" + first, { session: analyst });
+    await screen.findByRole("list", { name: "Operational alerts" });
+    await waitFor(() => expect(screen.getByText("Arrival updates connected")).toBeVisible());
+    await user.click(screen.getByRole("button", { name: "Start tour" }));
+    const tour = screen.getByRole("region", { name: "Analyst feature tour" });
+    for (let index = 0; index < 6; index += 1) await user.click(within(tour).getByRole("button", { name: "Next" }));
+    await waitFor(() => expect(screen.getByRole("tab", { name: "Analyst Verdict" })).toHaveAttribute("aria-selected", "true"));
+    await user.type(await screen.findByLabelText("Verdict reason"), "Preserve this human draft");
+    scenario.arrived = true;
+    act(() => controller.enqueue(new TextEncoder().encode(`event: alert_arrived\ndata: ${JSON.stringify({
+      eventId: "operational:3", workspaceId: "operational", operationalAlertRef: third, timestamp: "now",
+    })}\n\n`)));
+    await screen.findByRole("button", { name: /Newly arrived alert/ });
+    expect(router.state.location.search).toContain("alertRef=" + first);
+    expect(screen.getByLabelText("Verdict reason")).toHaveValue("Preserve this human draft");
+    for (let index = 6; index < 11; index += 1) await user.click(within(tour).getByRole("button", { name: "Next" }));
+    expect(within(tour).getByRole("heading", { name: "Tier 2 investigation and closure" })).toBeVisible();
+    expect(router.state.location.pathname).toBe("/analyst/operations");
+    expect(screen.getByLabelText("Verdict reason")).toHaveValue("Preserve this human draft");
+    expect(claims(seen)).toHaveLength(0);
+    await user.click(within(tour).getByRole("button", { name: "Skip tour" }));
+    await waitFor(() => expect(router.state.location.search).toBe("?alertRef=" + first));
+    expect(screen.getByLabelText("Verdict reason")).toHaveValue("Preserve this human draft");
+  });
+
   it("silently reconciles a persisted arrival while preserving the selected alert, tab, draft and ownership", async () => {
     let streamController!: ReadableStreamDefaultController<Uint8Array>;
     const cancelled = vi.fn();

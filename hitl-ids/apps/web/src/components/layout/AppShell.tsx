@@ -6,27 +6,32 @@
  * console with no user in it.
  */
 
+import { useCallback, useState } from "react";
 import { Outlet, useLocation } from "react-router";
 
 import { useSession } from "../../session/SessionContext";
 import { Sidebar } from "./Sidebar";
 import { TopBar } from "./TopBar";
+import { AnalystTour } from "./AnalystTour";
 
 export function AppShell() {
   const { session } = useSession();
+  const [tourStep, setTourStep] = useState<number | null>(null);
+  const closeTour = useCallback(() => setTourStep(null), []);
   const routing = /\/(operations|v2-triage|external-admission|tier2-cases|triage-memory|selective-review)(\/[^/]+)?$/.test(useLocation().pathname);
 
   if (session === null) return null;
 
   return (
     <div className="flex h-full flex-col bg-bg">
-      <TopBar />
+      <TopBar onStartTour={session.role === "security_analyst" ? () => setTourStep(0) : undefined} />
       <div className="flex min-h-0 flex-1 max-sm:flex-col">
         <Sidebar />
-        <main className={`min-w-0 flex-1 overflow-auto ${routing ? "p-0" : "px-6 py-5"}`}>
+        <main data-tour="analyst-main" className={`min-w-0 flex-1 overflow-auto ${routing ? "p-0" : "px-6 py-5"}`}>
           <Outlet />
         </main>
       </div>
+      {session.role === "security_analyst" && <AnalystTour stepIndex={tourStep} onStep={setTourStep} onClose={closeTour} />}
     </div>
   );
 }

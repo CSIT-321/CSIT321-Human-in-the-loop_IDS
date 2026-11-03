@@ -75,6 +75,22 @@ function Assistance({ view, onReview }: { view: View; onReview: (review: Schemas
 
 function AlertWorkspace({ view, onChanged, refresh, onReview, starting }: { view: View; onChanged: (view: View) => void; refresh: () => void; onReview: (review: Schemas["ReviewView"]) => void; starting: boolean }) {
   const [tab, setTab] = useState<Tab>("Overview");
+  const tabBeforeTour = useRef<Tab | null>(null);
+  const currentTab = useRef(tab); currentTab.current = tab;
+  useEffect(() => {
+    const selectTourTab = (event: Event) => {
+      const selected = (event as CustomEvent<string | null>).detail;
+      if (selected && tabs.includes(selected as Tab)) {
+        if (tabBeforeTour.current === null) tabBeforeTour.current = currentTab.current;
+        setTab(selected as Tab);
+      } else if (tabBeforeTour.current !== null) {
+        setTab(tabBeforeTour.current);
+        tabBeforeTour.current = null;
+      }
+    };
+    window.addEventListener("analyst-tour-tab", selectTourTab);
+    return () => window.removeEventListener("analyst-tour-tab", selectTourTab);
+  }, []);
   const evidence = useApi(signal => unwrap(api.GET("/api/v2/alerts/{alertRef}/evidence", { params: { path: { alertRef: view.operationalAlertRef } }, signal })), [view.operationalAlertRef]);
   return <section aria-label="Operational alert workspace" className="ops-detail flex min-h-0 min-w-0 flex-col bg-bg">
     <header className="shrink-0 space-y-2 border-b border-l-4 border-border border-l-primary bg-surface p-4">

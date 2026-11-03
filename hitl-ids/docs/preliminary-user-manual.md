@@ -65,6 +65,9 @@ queue, dashboard, overview, feedback-impact and investigation pages show Page no
 System Administrator governance, evaluation, and audit remain distinct from the current Analyst
 workflow. Legacy evaluator routes are historical academic compatibility surfaces.
 
+Security Analysts can choose **Start tour** in the top bar for a read-only, 16-step guided walkthrough.
+It navigates and highlights current Analyst pages without claiming alerts or recording decisions.
+
 ## (4) Demonstration sequence
 
 1. Sign in as an Analyst and open Incoming Alerts. Review provenance and admit eligible real or

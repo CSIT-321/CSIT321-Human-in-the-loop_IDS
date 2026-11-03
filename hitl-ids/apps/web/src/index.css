@@ -50,6 +50,9 @@
   --font-mono: "JetBrains Mono", "Cascadia Mono", ui-monospace, monospace;
 }
 
+.analyst-tour-highlight { outline: 2px solid var(--color-primary); outline-offset: -2px; position: relative; z-index: 1; }
+@media (max-width: 639px) { .analyst-tour-card { left: 1rem; right: 1rem; } }
+
 :root { color-scheme: dark; }
 :root[data-theme="light"] {
   color-scheme: light;
