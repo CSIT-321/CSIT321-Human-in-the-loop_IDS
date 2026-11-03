@@ -17496,6 +17496,60 @@
         ]
       }
     },
+    "/api/v2/alerts/stream": {
+      "get": {
+        "description": "Authenticated read-only SSE stream scoped to the selected workspace. Reconnect and reconcile with the existing queue GET. No token in the URL, no claim or admission on GET.",
+        "operationId": "streamOperationalAlertArrivals",
+        "parameters": [
+          {
+            "description": "`Bearer <token>` from POST /api/auth/login",
+            "in": "header",
+            "name": "Authorization",
+            "required": false,
+            "schema": {
+              "example": "Bearer eyJhbGciOiJIUzI1NiJ9...",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "text/event-stream": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "description": "Server-sent alert_arrived and workspace_changed events"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not signed in, or the token expired"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Database unavailable or schema unsupported; read-only requests never migrate"
+          }
+        },
+        "summary": "Stream committed operational alert arrival notifications",
+        "tags": [
+          "V2 routing"
+        ]
+      }
+    },
     "/api/v2/alerts/summary": {
       "get": {
         "description": "Authenticated read-only consistent snapshot of persisted current V2 values. Categories intentionally overlap. Effective review attention is evaluated read-only; no scoring, routing changes, migration or materialization.",

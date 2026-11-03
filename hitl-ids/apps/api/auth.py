@@ -26,7 +26,7 @@ from datetime import timedelta
 
 import bcrypt
 import jwt
-from fastapi import Depends
+from fastapi import Depends, Request
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
 from apps.api.deps import ApiError, get_connection, get_readonly_connection
@@ -163,6 +163,18 @@ def current_readonly_user(
 ) -> Principal:
     """The same JWT/account checks without opening a writable authentication connection."""
     return _authenticated_user(credentials, conn)
+
+
+def current_stream_user(
+    request: Request,
+    credentials: HTTPAuthorizationCredentials | None = Depends(_bearer),
+) -> Principal:
+    """Use the normal JWT/account check, then close the read handle before streaming."""
+    connection = get_readonly_connection(request)
+    try:
+        return _authenticated_user(credentials, next(connection))
+    finally:
+        connection.close()
 
 
 def _authenticated_user(credentials, conn) -> Principal:

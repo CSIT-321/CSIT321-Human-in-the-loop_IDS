@@ -5,6 +5,7 @@ import { Link, useSearchParams } from "react-router";
 import { api, unwrap, ApiError, type Schemas } from "../../api/client";
 import { useSession } from "../../session/SessionContext";
 import { useApi } from "../../api/useApi";
+import { readAlertArrivals } from "../../api/alertArrivalStream";
 import { ErrorState, LoadingState } from "../../components/states";
 import { Pill } from "../../components/ui";
 import { OperationalEvidence, operationalDetector } from "../../features/alert/OperationalEvidence";
@@ -129,7 +130,7 @@ function AlertWorkspace({ view, onChanged, refresh, onReview, starting }: { view
 }
 
 export function OperationalWorkstationPage() {
-  const { session } = useSession();
+  const { session, signOut } = useSession();
   const [search, setSearch] = useSearchParams();
   const requested = search.get("alertRef");
   const parsed = Number(search.get("offset") ?? 0);
@@ -146,17 +147,19 @@ export function OperationalWorkstationPage() {
   const claimInFlight=useRef(false);
   const pendingClaims=useRef(new Map<string,Schemas['ClaimCommand']>());
   const [mustReselect,setMustReselect]=useState(false);
-  const summary = useApi(signal => unwrap(api.GET("/api/v2/alerts/summary", { signal })), []);
+  const [streamWorkspace, setStreamWorkspace] = useState<string | null>(null);
+  const [streamConnected, setStreamConnected] = useState(false);
+  const summary = useApi(signal => unwrap(api.GET("/api/v2/alerts/summary", { signal })), [], { keepPreviousData: true });
   const queue = useApi(async signal => {
     const result=await api.GET("/api/v2/alerts", { params: { query: { limit: 50, offset, ...activeView.query, attackCategory, q: filter || undefined, sort } }, signal });
     return {...await unwrap(Promise.resolve(result)),workspaceId:result.response.headers.get('X-Operational-Workspace')};
-  }, [offset, activeView.key, attackCategory, filter, sort]);
+  }, [offset, activeView.key, attackCategory, filter, sort], { keepPreviousData: true });
   const linked = useApi(async signal => requested ? unwrap(api.GET("/api/v2/alerts/{alertRef}/triage-state", { params: { path: { alertRef: requested } }, signal })) : null, [requested]);
-  const items = queue.status === "success" ? queue.data.items.map(item => overrides[item.operationalAlertRef] ?? item) : [];
+  const items = queue.status === "success" && (!streamWorkspace || queue.data.workspaceId === streamWorkspace)
+    ? queue.data.items.map(item => overrides[item.operationalAlertRef] ?? item) : [];
   const visible = items;
   const [lastCurrent, setLastCurrent] = useState<View>();
-  const selected = mustReselect ? undefined : requested ?? visible[0]?.operationalAlertRef ??
-    (queue.status === "loading" || (lastCurrent && overrides[lastCurrent.operationalAlertRef]) ? lastCurrent?.operationalAlertRef : undefined);
+  const selected = mustReselect ? undefined : requested ?? lastCurrent?.operationalAlertRef ?? visible[0]?.operationalAlertRef;
   const fresh = selected ? overrides[selected] ?? items.find(item => item.operationalAlertRef === selected)
     ?? (linked.status === "success" && linked.data?.operationalAlertRef === selected ? linked.data : undefined) : undefined;
   const current = fresh ?? (lastCurrent?.operationalAlertRef === selected ? lastCurrent : undefined);
@@ -209,19 +212,60 @@ export function OperationalWorkstationPage() {
     if(!workspaceId){setClaimError('Current workspace is unavailable. Refresh the queue and select again.');return;}
     void claimAvailable(item.operationalAlertRef,workspaceId);
   }
-  function page(nextOffset: number) { setSearch(previous => { const next = new URLSearchParams(previous); next.set("offset", String(nextOffset)); next.delete("alertRef"); return next; }); }
+  function page(nextOffset: number) { setLastCurrent(undefined); setSearch(previous => { const next = new URLSearchParams(previous); next.set("offset", String(nextOffset)); next.delete("alertRef"); return next; }); }
   function setFilter(key: string, value: string, replace = false) {
-    setOverrides({});
+    setOverrides({}); setLastCurrent(undefined);
     setSearch(previous => { const next = new URLSearchParams(previous); if (value) next.set(key, value); else next.delete(key);
       next.set("sort", sort); next.delete("offset"); next.delete("alertRef"); return next; }, { replace, flushSync: true });
   }
   function chooseView(view: QueueView) { setFilter("view", view); }
   function refresh() { setOverrides({}); queue.reload(); linked.reload(); summary.reload(); }
   function changed(updated: View) { select(updated.operationalAlertRef); setOverrides(previous => ({ ...previous, [updated.operationalAlertRef]: updated })); queue.reload(); summary.reload(); }
-  const refreshRef = useRef(refresh); refreshRef.current = refresh;
-  const pollWorkspace = queue.status === "success" ? queue.data.workspaceId : null;
-  useEffect(() => { const timer = setInterval(() => refreshRef.current(), pollWorkspace === "v3-1-replay" ? 5000 : 15000);
-    return () => clearInterval(timer); }, [pollWorkspace]);
+  const silentRefresh = () => { queue.reload(); summary.reload(); };
+  const refreshRef = useRef(silentRefresh); refreshRef.current = silentRefresh;
+  const connectedRef = useRef(streamConnected); connectedRef.current = streamConnected;
+  // Polling remains a recovery path when a proxy/browser cannot maintain the stream.
+  useEffect(() => { let ticks = 0; const timer = setInterval(() => {
+    ticks += 1;
+    if (!connectedRef.current || ticks % 4 === 0) refreshRef.current();
+  }, 15000);
+    return () => clearInterval(timer); }, []);
+  useEffect(() => {
+    if (!session?.token) return;
+    const controller = new AbortController();
+    let pending: ReturnType<typeof setTimeout> | undefined;
+    const reconcile = () => {
+      if (pending) clearTimeout(pending);
+      pending = setTimeout(() => { if (!controller.signal.aborted) refreshRef.current(); }, 200);
+    };
+    const run = async () => {
+      while (!controller.signal.aborted) {
+        try {
+          await readAlertArrivals(session.token, controller.signal, {
+            connected: workspaceId => { setStreamConnected(true); if (workspaceId) setStreamWorkspace(workspaceId); reconcile(); },
+            arrived: event => { if (event.workspaceId) reconcile(); },
+            workspaceChanged: workspaceId => {
+              setStreamWorkspace(workspaceId); setStreamConnected(false); setLastCurrent(undefined); setOverrides({});
+              setSearch(previous => { const next = new URLSearchParams(previous); next.delete("alertRef"); return next; }, { replace: true });
+              reconcile();
+            },
+          });
+        } catch (error) {
+          if (controller.signal.aborted) return;
+          if (error instanceof Error && error.message === "UNAUTHORIZED") { signOut(); return; }
+        }
+        if (controller.signal.aborted) return;
+        setStreamConnected(false);
+        reconcile();
+        await new Promise<void>(resolve => {
+          const timer = setTimeout(resolve, 2000);
+          controller.signal.addEventListener("abort", () => { clearTimeout(timer); resolve(); }, { once: true });
+        });
+      }
+    };
+    void run();
+    return () => { controller.abort(); if (pending) clearTimeout(pending); };
+  }, [session?.token, signOut, setSearch]);
   useEffect(() => {
     function key(event: KeyboardEvent) {
       if (event.ctrlKey || event.metaKey || event.altKey || (event.target instanceof HTMLElement && (event.target.isContentEditable || /INPUT|TEXTAREA|SELECT/.test(event.target.tagName)))) return;
@@ -239,6 +283,7 @@ export function OperationalWorkstationPage() {
       <h1 className="text-sm font-semibold">Analyst Workstation</h1>
       <div className="flex flex-wrap items-center gap-3 text-xs">
         <span className="hidden text-dim md:inline">j / k select · / search</span>
+        <span className="hidden text-dim md:inline" aria-live="polite">{streamConnected ? "Arrival updates connected" : "Arrival updates reconnecting"}</span>
         <button className={button} onClick={refresh}>Refresh operational queue</button>
 
       </div>

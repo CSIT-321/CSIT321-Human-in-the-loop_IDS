@@ -22,7 +22,7 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
-from apps.api import routes, routing_routes, external_admission_routes
+from apps.api import routes, routing_routes, external_admission_routes, alert_stream_routes
 from apps.api import tier2_case_routes
 from apps.api import response_routes
 from apps.api import verdict_routes
@@ -85,6 +85,7 @@ def create_app(database: str | Path | None = None) -> FastAPI:
 
     app.include_router(routes.router)
     app.include_router(routing_routes.router)
+    app.include_router(alert_stream_routes.router)
     app.include_router(external_admission_routes.router)
     app.include_router(tier2_case_routes.router)
     app.include_router(response_routes.router)

@@ -612,6 +612,14 @@ def _paths() -> dict[str, Any]:
             {'name': 'q', 'in': 'query', 'schema': {'type': 'string', 'maxLength': 200}},
             {'name': 'sort', 'in': 'query', 'schema': {'type': 'string', 'enum': ['priority_desc'], 'default': 'priority_desc'}}],
         'responses': {'200': {'description': 'V2 routing page', **_page_of(RoutingView)}, **_errors(400, 503)}}}
+    paths['/api/v2/alerts/stream'] = {'get': {
+        'operationId': 'streamOperationalAlertArrivals',
+        'summary': 'Stream committed operational alert arrival notifications',
+        'description': 'Authenticated read-only SSE stream scoped to the selected workspace. Reconnect and reconcile with the existing queue GET. No token in the URL, no claim or admission on GET.',
+        'tags': ['V2 routing'], 'parameters': [AUTH_PARAMETER],
+        'responses': {'200': {'description': 'Server-sent alert_arrived and workspace_changed events',
+                              'content': {'text/event-stream': {'schema': {'type': 'string'}}}},
+                      **_errors(503)}}}
     paths['/api/v2/alerts/summary'] = {'get': {
         'operationId': 'getV2AlertsSummary', 'summary': 'Read whole-dataset operational workload',
         'description': 'Authenticated read-only consistent snapshot of persisted current V2 values. Categories intentionally overlap. Effective review attention is evaluated read-only; no scoring, routing changes, migration or materialization.',

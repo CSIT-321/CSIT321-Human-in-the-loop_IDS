@@ -5,7 +5,7 @@
  * view that only handles success shows a blank panel the first time the API is down in a demo.
  */
 
-import { useCallback, useEffect, useState, type DependencyList } from "react";
+import { useCallback, useEffect, useRef, useState, type DependencyList } from "react";
 
 import { ApiError, CLIENT_ERROR } from "./client";
 
@@ -20,10 +20,14 @@ export function useApi<T>(load: (signal: AbortSignal) => Promise<T>, deps: Depen
                           options?: { keepPreviousData?: boolean }): ApiResource<T> {
   const [state, setState] = useState<ApiState<T>>({ status: "loading" });
   const [attempt, setAttempt] = useState(0);
+  const previousDeps = useRef<DependencyList | undefined>(undefined);
 
   useEffect(() => {
     const controller = new AbortController();
-    setState(previous => options?.keepPreviousData && previous.status === "success"
+    const sameQuery = previousDeps.current !== undefined &&
+      deps.length === previousDeps.current.length && deps.every((item, index) => Object.is(item, previousDeps.current?.[index]));
+    previousDeps.current = deps;
+    setState(previous => options?.keepPreviousData && sameQuery && previous.status === "success"
       ? previous : { status: "loading" });
     load(controller.signal).then(
       (data) => {
@@ -35,7 +39,8 @@ export function useApi<T>(load: (signal: AbortSignal) => Promise<T>, deps: Depen
           cause instanceof ApiError
             ? cause
             : new ApiError(0, { code: CLIENT_ERROR.unexpected, message: String(cause) });
-        setState({ status: "error", error });
+        setState(previous => options?.keepPreviousData && sameQuery && previous.status === "success"
+          ? previous : { status: "error", error });
       },
     );
     return () => controller.abort();

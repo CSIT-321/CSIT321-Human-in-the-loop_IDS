@@ -71,6 +71,17 @@ test("progressive frozen Replay reaches Analyst queue and automatic Tier 2 witho
   await expect(analyst.getByRole("region", { name: "Human work status" })).toContainText("Your Access: Owner");
   const ownedRef = new URL(analyst.url()).searchParams.get("alertRef");
   expect(ownedRef).toBeTruthy();
+  await expect(analyst.getByText("Arrival updates connected")).toBeVisible();
+  await analyst.getByRole("tab", { name: "Analyst Verdict" }).click();
+  await analyst.getByLabel("Verdict reason").fill("Investigation draft stays open across arrivals");
+  await analyst.evaluate(() => {
+    const state = window as unknown as { queueLoadingSeen: boolean };
+    state.queueLoadingSeen = false;
+    const queue = document.getElementById("operational-queue-panel")!;
+    new MutationObserver(() => {
+      if (queue.textContent?.includes("Loading operational alerts")) state.queueLoadingSeen = true;
+    }).observe(queue, { childList: true, subtree: true, characterData: true });
+  });
   await login(viewer, "bob", "work-demo");
   await viewer.goto(`/analyst/operations?alertRef=${ownedRef}`);
   await expect(viewer.getByRole("region", { name: "Human work status" })).toContainText("Your Access: Viewer");
@@ -79,9 +90,21 @@ test("progressive frozen Replay reaches Analyst queue and automatic Tier 2 witho
   await admin.getByRole("button", { name: "Next Alert" }).click();
   await expect(admin.getByText("11 / 160")).toBeVisible();
   await expect(analyst.getByRole("button", { name: /^Total Alerts 51$/ })).toBeVisible({ timeout: 15_000 });
+  expect(new URL(analyst.url()).searchParams.get("alertRef")).toBe(ownedRef);
+  await expect(analyst.getByRole("tab", { name: "Analyst Verdict" })).toHaveAttribute("aria-selected", "true");
+  await expect(analyst.getByLabel("Verdict reason")).toHaveValue("Investigation draft stays open across arrivals");
+  expect(await analyst.evaluate(() => (window as unknown as { queueLoadingSeen: boolean }).queueLoadingSeen)).toBe(false);
   await admin.getByRole("button", { name: "Next Alert" }).click();
   await expect(admin.getByText("12 / 160")).toBeVisible();
   await expect(analyst.getByRole("button", { name: /^Total Alerts 52$/ })).toBeVisible({ timeout: 15_000 });
+  expect(new URL(analyst.url()).searchParams.get("alertRef")).toBe(ownedRef);
+  await expect(analyst.getByLabel("Verdict reason")).toHaveValue("Investigation draft stays open across arrivals");
+  await analyst.getByPlaceholder("Search operational alerts…").fill("b905da10-a86d-5509-9064-a6525524abb0");
+  const newlyAvailable = analyst.locator('[data-alert-ref="b905da10-a86d-5509-9064-a6525524abb0"]');
+  await expect(newlyAvailable).toContainText("Available");
+  await newlyAvailable.click();
+  await expect(analyst.getByRole("region", { name: "Human work status" })).toContainText("Your Access: Owner");
+  await analyst.getByPlaceholder("Search operational alerts…").fill("");
   await analyst.getByRole("tablist", { name: "Operational queue views" }).getByRole("tab", { name: /^Tier 2 / }).click();
   await expect(analyst.getByRole("list", { name: "Operational alerts" }).getByRole("button").first()).toBeVisible();
   await analyst.goto("/analyst/tier2-cases");
