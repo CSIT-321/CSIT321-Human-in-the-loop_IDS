@@ -16,13 +16,15 @@ export type ApiState<T> =
 
 export type ApiResource<T> = ApiState<T> & { readonly reload: () => void };
 
-export function useApi<T>(load: (signal: AbortSignal) => Promise<T>, deps: DependencyList): ApiResource<T> {
+export function useApi<T>(load: (signal: AbortSignal) => Promise<T>, deps: DependencyList,
+                          options?: { keepPreviousData?: boolean }): ApiResource<T> {
   const [state, setState] = useState<ApiState<T>>({ status: "loading" });
   const [attempt, setAttempt] = useState(0);
 
   useEffect(() => {
     const controller = new AbortController();
-    setState({ status: "loading" });
+    setState(previous => options?.keepPreviousData && previous.status === "success"
+      ? previous : { status: "loading" });
     load(controller.signal).then(
       (data) => {
         if (!controller.signal.aborted) setState({ status: "success", data });
