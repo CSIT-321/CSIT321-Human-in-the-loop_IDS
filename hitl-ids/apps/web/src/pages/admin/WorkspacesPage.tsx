@@ -6,13 +6,14 @@ import { ApiView } from "../../components/states";
 import { Card, PageHeader, Pill } from "../../components/ui";
 
 export function WorkspacesPage() {
-  const state = useApi(signal => unwrap(api.GET("/api/admin/workspaces", { signal })), []);
+  const state = useApi(signal => unwrap(api.GET("/api/admin/workspaces", { signal })), [],
+    { keepPreviousData: true });
   const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [reason, setReason] = useState("Prepare isolated V3.1 analyst demonstration");
   const [mode, setMode] = useState<"full" | "presentation">("full");
   const reload = useRef(state.reload); reload.current = state.reload;
-  useEffect(() => { const timer = setInterval(() => reload.current(), 2000); return () => clearInterval(timer); }, []);
+  useEffect(() => { const timer = setInterval(() => reload.current(), 5000); return () => clearInterval(timer); }, []);
 
   async function act(action: "prepare" | "reset" | "activate" | "start" | "pause" | "advance",
                      id = "v3-1-replay", count: 1 | 5 | 150 = 1) {
