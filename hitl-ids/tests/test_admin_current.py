@@ -3,8 +3,9 @@ from hashlib import sha256
 
 from fastapi.testclient import TestClient
 
+from apps.api import auth
 from apps.api.main import create_app
-from packages.contracts import db
+from packages.contracts import db, models as m
 
 
 def test_current_admin_reads_are_fixed_source_and_do_not_write(tmp_path):
@@ -19,6 +20,17 @@ def test_current_admin_reads_are_fixed_source_and_do_not_write(tmp_path):
         result = client.post('/api/auth/login', json={'username': username, 'password': password})
         assert result.status_code == 200, result.text
         credentials[role] = {'Authorization': 'Bearer ' + result.json()['token']}
+    with db.connect(path) as conn:
+        password_hash = auth.hash_password('test-only')
+        for index in range(1, 4):
+            db.insert(conn, m.User(username=f'v3-analyst-{index}', display_name=f'V3 Analyst {index}',
+                                   password_hash=password_hash, email=f'v3-replay-{index}@example.test',
+                                   role='security_analyst'))
+        db.insert(conn, m.User(username='bob', display_name='Bob', password_hash=password_hash,
+                               email='bob@example.test', role='security_analyst'))
+        db.insert(conn, m.User(username='v3-analyst-4', display_name='Custom Analyst',
+                               password_hash=password_hash, email='custom@example.test',
+                               role='security_analyst'))
     before = sha256(path.read_bytes()).hexdigest()
 
     for endpoint in ('overview', 'governance', 'users'):
@@ -65,7 +77,13 @@ def test_current_admin_reads_are_fixed_source_and_do_not_write(tmp_path):
     users = client.get('/api/admin/users', headers=credentials['admin'])
     assert users.status_code == 200, users.text
     account = users.json()['items']
-    assert {user['username'] for user in account} == {'admin', 'evaluator', 'g.ang'}
+    assert {user['username'] for user in account} == {'admin', 'g.ang', 'bob', 'v3-analyst-4'}
+    assert {('admin', 'LIOW CHEE KUANG', 'system_admin'),
+            ('g.ang', 'Glenn Ang', 'security_analyst')} <= {
+        (user['username'], user['displayName'], user['role']) for user in account}
+    assert {(user['username'], user['displayName']) for user in account if user['username'] in ('bob', 'v3-analyst-4')} == {
+        ('bob', 'Bob'), ('v3-analyst-4', 'Custom Analyst'),
+    }
     assert all(set(user) == {'username', 'displayName', 'role', 'status', 'lastLogin'} for user in account)
     assert 'password' not in users.text.lower() and 'email' not in users.text.lower()
     assert sha256(path.read_bytes()).hexdigest() == before

@@ -42,6 +42,8 @@ def test_each_seeded_account_signs_in_with_its_own_role(client, username, passwo
     body = response.json()
     assert (body["username"], body["role"]) == (username, role)
     assert body["token"]
+    if username == 'admin':
+        assert body['displayName'] == 'LIOW CHEE KUANG'
 
 
 def test_a_wrong_password_and_an_unknown_user_answer_identically(client):
@@ -57,6 +59,60 @@ def test_a_successful_sign_in_records_last_login(client, database):
     try:
         row = conn.execute("SELECT last_login FROM users WHERE username = 'admin'").fetchone()
         assert row["last_login"] is not None
+    finally:
+        conn.close()
+
+
+def test_existing_seeded_admin_is_synchronized_before_readonly_account_views(client, database):
+    replay = database.parent / 'workspaces' / 'v3-1-replay.db'
+    replay.parent.mkdir()
+    with db.connect(replay) as replay_conn:
+        db.create_schema(replay_conn)
+        auth.ensure_demo_accounts(replay_conn)
+        replay_conn.execute("UPDATE users SET display_name='System Administrator' WHERE username='admin'")
+    conn = db.connect(str(database))
+    try:
+        with conn:
+            conn.execute("UPDATE users SET display_name='System Administrator' WHERE username='admin'")
+    finally:
+        conn.close()
+    with TestClient(create_app(database)) as started:
+        headers = {"Authorization": f"Bearer {client.tokens['admin']}"}
+        assert started.get('/api/auth/me', headers=headers).json()['displayName'] == 'LIOW CHEE KUANG'
+        users = started.get('/api/admin/users', headers=headers)
+        assert users.status_code == 200
+        assert {item['username'] for item in users.json()['items']} == {'admin', 'g.ang'}
+        assert next(item for item in users.json()['items'] if item['username'] == 'admin')['displayName'] == 'LIOW CHEE KUANG'
+    conn = db.connect(str(database))
+    try:
+        assert auth.sync_seeded_admin_identity(conn) is False  # idempotent
+    finally:
+        conn.close()
+    conn = db.connect(str(replay))
+    try:
+        assert conn.execute("SELECT display_name FROM users WHERE username='admin'").fetchone()[0] == 'LIOW CHEE KUANG'
+    finally:
+        conn.close()
+
+
+@pytest.mark.parametrize('change', [
+    {'display_name': 'Custom Administrator'},
+    {'email': 'owner@example.test'},
+    {'password_hash': auth.hash_password('custom-password')},
+    {'role': 'security_analyst'},
+])
+def test_seed_sync_preserves_customized_or_unrelated_admin_identity(client, database, change):
+    assert client.tokens['admin']
+    conn = db.connect(str(database))
+    try:
+        with conn:
+            conn.execute("UPDATE users SET display_name='System Administrator' WHERE username='admin'")
+            for field, value in change.items():
+                conn.execute(f'UPDATE users SET {field}=? WHERE username=?', (value, 'admin'))
+        assert auth.sync_seeded_admin_identity(conn) is False
+        row = conn.execute("SELECT * FROM users WHERE username='admin'").fetchone()
+        for field, value in change.items():
+            assert row[field] == value
     finally:
         conn.close()
 
@@ -164,7 +220,7 @@ def test_a_verdict_is_attributed_to_the_signed_in_account(client):
                        json={"category": "needs_investigation"},
                        headers={"Authorization": f"Bearer {client.tokens['admin']}"}).status_code == 200
     history = client.get(f"/api/alerts/{ref}/feedback-history").json()
-    assert history["events"][-1]["actor"]["displayName"] == "System Administrator"
+    assert history["events"][-1]["actor"]["displayName"] == "LIOW CHEE KUANG"
 
 
 # --------------------------------------------------------------------------------------------

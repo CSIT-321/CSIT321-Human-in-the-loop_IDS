@@ -54,7 +54,13 @@ def governance(principal: Admin) -> AdminGovernance:
 def users(conn: ReadConn, principal: Admin) -> AdminUsers:
     with conn:
         conn.execute('BEGIN')
-        rows = conn.execute('SELECT username,display_name,role,status,last_login FROM users ORDER BY username').fetchall()
+        rows = conn.execute('''SELECT username,display_name,role,status,last_login FROM users
+                               WHERE role IN ('security_analyst','system_admin')
+                                 AND NOT (
+                                   (username='v3-analyst-1' AND display_name='V3 Analyst 1' AND email='v3-replay-1@example.test') OR
+                                   (username='v3-analyst-2' AND display_name='V3 Analyst 2' AND email='v3-replay-2@example.test') OR
+                                   (username='v3-analyst-3' AND display_name='V3 Analyst 3' AND email='v3-replay-3@example.test'))
+                               ORDER BY username''').fetchall()
     return AdminUsers(items=[AdminUser(**dict(row)) for row in rows])
 
 

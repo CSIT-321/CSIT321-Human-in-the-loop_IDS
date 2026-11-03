@@ -22,7 +22,7 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
-from apps.api import routes, routing_routes, external_admission_routes, alert_stream_routes
+from apps.api import routes, routing_routes, external_admission_routes, alert_stream_routes, auth
 from apps.api import tier2_case_routes
 from apps.api import response_routes
 from apps.api import verdict_routes
@@ -38,6 +38,7 @@ from apps.api import workspaces
 from apps.api.contract.common import ErrorBody, ErrorResponse
 from apps.api.contract.openapi import API_VERSION, DESCRIPTION, openapi_document
 from apps.api.deps import ApiError, database_path
+from packages.contracts import db
 
 #: The Vite dev server. Wide-open CORS would be wrong even in a demo; this is the one origin S11
 #: actually runs on, and S18 takes the list from configuration.
@@ -106,6 +107,18 @@ def create_app(database: str | Path | None = None) -> FastAPI:
     def start_presentation_controller() -> None:
         nonlocal playback_thread
         operational = Path(getattr(app.state, 'database_path', None) or database_path())
+        # Existing demo databases can predate the corrected seeded Admin name. This
+        # narrow, idempotent synchronization runs before read-only account APIs serve.
+        for path in (operational, operational.parent / 'workspaces' / 'v3-1-replay.db'):
+            if not path.is_file():
+                continue
+            conn = db.connect(path)
+            try:
+                conn.execute('PRAGMA busy_timeout=20000')
+                if int(conn.execute('PRAGMA user_version').fetchone()[0]) == db.SCHEMA_VERSION:
+                    auth.sync_seeded_admin_identity(conn)
+            finally:
+                conn.close()
         def loop() -> None:
             while not stop_playback.wait(0.5):
                 try:

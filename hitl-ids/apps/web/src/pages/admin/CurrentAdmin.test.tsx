@@ -4,7 +4,7 @@ import { describe, expect, it } from "vitest";
 import { ROLE_META } from "../../session/roles";
 import { jsonResponse, renderApp, stubFetch } from "../../test/renderApp";
 
-const admin = { username: "admin", displayName: "System Administrator", role: "system_admin" as const, token: "admin-token" };
+const admin = { username: "admin", displayName: "LIOW CHEE KUANG", role: "system_admin" as const, token: "admin-token" };
 const analyst = { username: "g.ang", displayName: "Glenn Ang", role: "security_analyst" as const, token: "analyst-token" };
 const evaluator = { username: "evaluator", displayName: "Evaluator", role: "evaluator" as const, token: "eval-token" };
 const overview = {
@@ -54,8 +54,9 @@ function setup() {
     if (path === "/api/admin/overview") return jsonResponse(overview);
     if (path === "/api/admin/governance") return jsonResponse(governance);
     if (path === "/api/admin/users") return jsonResponse({ items: [
-      { username: "admin", displayName: "System Administrator", role: "system_admin", status: "active", lastLogin: "2026-11-03T00:00:00Z" },
+      { username: "admin", displayName: "LIOW CHEE KUANG", role: "system_admin", status: "active", lastLogin: "2026-11-03T00:00:00Z" },
       { username: "g.ang", displayName: "Glenn Ang", role: "security_analyst", status: "active", lastLogin: null },
+      { username: "evaluator", displayName: "Evaluator", role: "evaluator", status: "active", lastLogin: null },
     ] });
     if (path === "/api/admin/audit/current") {
       const query = new URL(request.url).searchParams;
@@ -128,8 +129,13 @@ describe("current Admin surface", () => {
     renderApp("/admin/users", { session: admin });
     expect(await screen.findByRole("heading", { level: 1, name: "Users & Access" })).toBeVisible();
     expect(screen.getByText("Glenn Ang")).toBeVisible();
-    expect(screen.getByText("Last login: Not available")).toBeVisible();
-    expect(screen.getByText("Read-only evaluation and assessment access.")).toBeVisible();
+    expect(screen.getByRole("cell", { name: "LIOW CHEE KUANG" })).toBeVisible();
+    expect(screen.getByRole("columnheader", { name: "Name" })).toBeVisible();
+    expect(screen.getByRole("cell", { name: "Not available" })).toBeVisible();
+    expect(screen.getByRole("cell", { name: "System Administrator" })).toBeVisible();
+    expect(screen.getByText(/Tier 2 \/ Senior Analyst investigation/)).toBeVisible();
+    expect(screen.getByText(/Final V3.1 Evaluation, and Current HITL Audit/)).toBeVisible();
+    expect(screen.queryByText("Evaluator")).toBeNull();
     expect(screen.queryByText(/password reset|permission matrix/i)).toBeNull();
   });
 

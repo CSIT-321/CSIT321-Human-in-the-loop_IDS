@@ -43,7 +43,11 @@ eligible alerts. Synthetic/demo input must stay explicitly labelled synthetic.
 The real-PCAP validation procedure is recorded in the repository's `real-suricata-pcap-validation.md`.
 Do not reset a database containing review history just to prepare a demo.
 
-Demo accounts: `g.ang` / `analyst-demo`, `admin` / `admin-demo`, `evaluator` / `evaluator-demo`.
+Current product accounts: **Security Analyst** `g.ang` / `analyst-demo` (Glenn Ang) and
+**System Administrator** `admin` / `admin-demo` (LIOW CHEE KUANG). The System Administrator
+owns Final V3.1 Evaluation and Current HITL Audit. Tier 2 / Senior Analyst investigation is
+performed through Tier 2 Cases within the Security Analyst workflow, not a separate login role.
+Legacy evaluator credentials and routes are retained only for academic/backward compatibility.
 Shared multi-user tests provision Alice/Bob/Carol independently in a disposable database.
 
 ## (3) Current navigation
@@ -58,8 +62,8 @@ Shared multi-user tests provision Alice/Bob/Carol independently in a disposable 
 
 There is one Analyst Workstation. Old workstation/triage bookmarks redirect there; obsolete
 queue, dashboard, overview, feedback-impact and investigation pages show Page not found.
-Admin/Evaluator Alert Triage provides role-scoped operational inspection. Their audit, governance
-and historical research diagnostics remain explicitly distinguished from the current analyst flow.
+System Administrator governance, evaluation, and audit remain distinct from the current Analyst
+workflow. Legacy evaluator routes are historical academic compatibility surfaces.
 
 ## (4) Demonstration sequence
 
@@ -69,7 +73,8 @@ and historical research diagnostics remain explicitly distinguished from the cur
    Routine Review goes to Tier 1; Critical / Expert Review creates a formal Tier 2 Case directly.
 3. Click Start Review. Only the owner can record that alert's Tier 1 Verdict. In Review identifies
    the owner; a same-round collision gives neither contender ownership. Refresh and retry explicitly.
-   Queue refresh is a read-only 15-second refresh, not an automatic claim.
+   Persisted alert arrivals reach the Workstation through a read-only event stream, with polling
+   fallback. Background refresh is not an automatic claim.
 4. Record the canonical Analyst Verdict with its reason. The alert moves to Completed/history.
    Exact Human Learning is recorded automatically: no second Memory outcome/reason or Exact button.
 5. Inspect Human Learning and Triage Memory. Eligible benign Exact evidence is auto-activated by

@@ -42,11 +42,11 @@ TOKEN_HOURS = 8
 
 _ALGORITHM = "HS256"
 
-#: (username, password, display_name, role, email). One account per role: the console's three
-#: views are three people, not one person switching hats.
+#: (username, password, display_name, role, email). The evaluator seed remains only for
+#: historical/academic compatibility; current product users are Analyst and Administrator.
 DEMO_ACCOUNTS: tuple[tuple[str, str, str, str, str], ...] = (
     ("g.ang", "analyst-demo", "Glenn Ang", "security_analyst", "g.ang@demo.local"),
-    ("admin", "admin-demo", "System Administrator", "system_admin", "admin@demo.local"),
+    ("admin", "admin-demo", "LIOW CHEE KUANG", "system_admin", "admin@demo.local"),
     ("evaluator", "evaluator-demo", "Evaluator", "evaluator", "evaluator@demo.local"),
 )
 
@@ -95,6 +95,22 @@ class Principal:
     role: str
 
 
+def sync_seeded_admin_identity(conn: sqlite3.Connection) -> bool:
+    """Update only the known old demo seed; preserve customized/user-created accounts."""
+    row = conn.execute("""SELECT id, role, email, display_name, password_hash FROM users
+                          WHERE username='admin'""").fetchone()
+    if (row is None or row["role"] != "system_admin" or row["email"] != "admin@demo.local"
+            or row["display_name"] != "System Administrator"
+            or not verify_password("admin-demo", row["password_hash"])):
+        return False
+    with conn:
+        conn.execute("""UPDATE users SET display_name='LIOW CHEE KUANG'
+                        WHERE id=? AND username='admin' AND role='system_admin'
+                          AND email='admin@demo.local' AND display_name='System Administrator'
+                          AND password_hash=?""", (row["id"], row["password_hash"]))
+    return True
+
+
 def ensure_demo_accounts(conn: sqlite3.Connection) -> None:
     """Create any of the three demo accounts that are missing. Idempotent and cheap when current:
     one SELECT of three usernames."""
@@ -104,12 +120,12 @@ def ensure_demo_accounts(conn: sqlite3.Connection) -> None:
                conn.execute(f"SELECT username FROM users WHERE username IN ({placeholders})",
                             usernames)}
     missing = [account for account in DEMO_ACCOUNTS if account[0] not in present]
-    if not missing:
-        return
-    with conn:
-        for username, password, display_name, role, email in missing:
-            db.insert(conn, m.User(username=username, password_hash=_seed_hash(password),
-                                   display_name=display_name, email=email, role=role))
+    if missing:
+        with conn:
+            for username, password, display_name, role, email in missing:
+                db.insert(conn, m.User(username=username, password_hash=_seed_hash(password),
+                                       display_name=display_name, email=email, role=role))
+    sync_seeded_admin_identity(conn)
 
 
 def authenticate(conn: sqlite3.Connection, username: str, password: str) -> m.User | None:
