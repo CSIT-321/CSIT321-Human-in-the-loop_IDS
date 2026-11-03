@@ -27,7 +27,6 @@ import { RunPage } from "./pages/evaluator/RunPage";
 import { ScenariosPage } from "./pages/evaluator/ScenariosPage";
 import { LoginPage } from "./pages/LoginPage";
 import { V2RoutingPage } from "./pages/analyst/V2RoutingPage";
-import { OperationalWorkstationPage } from "./pages/analyst/OperationalWorkstationPage";
 import { TriageMemoryPage } from "./pages/analyst/TriageMemoryPage";
 import { SelectiveReviewPage } from "./pages/analyst/SelectiveReviewPage";
 import { ExternalAdmissionPage } from "./pages/analyst/ExternalAdmissionPage";
@@ -59,7 +58,7 @@ export const routes: RouteObject[] = [
     children: [
       { index: true, element: <HomeRedirect /> },
       { path: "workstation", element: <WorkstationRedirect /> },
-      { path: "operations", element: <OperationalWorkstationPage /> },
+      { path: "operations", element: <></> },
       { path: "selective-review", element: <SelectiveReviewPage /> },
       { path: "triage-memory", element: <TriageMemoryPage /> },
       { path: "tier2-cases", element: <Tier2CasesPage /> },

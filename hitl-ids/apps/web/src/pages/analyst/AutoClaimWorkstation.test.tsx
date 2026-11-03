@@ -89,6 +89,40 @@ const claims = (seen: Request[]) => seen.filter(request => request.method === "P
   new URL(request.url).pathname.endsWith("/work/claim"));
 
 describe("intentional queue selection auto-claim", () => {
+  it("keeps one mounted Workstation and SSE stream across Analyst routes", async () => {
+    let controller!: ReadableStreamDefaultController<Uint8Array>;
+    const scenario: Scenario = { posts: [], stream: new ReadableStream({ start(value) { controller = value; } }),
+      overrideWork: { status: "in_review", canClaim: false, canMutate: true, isOwner: true, ownerName: "Glenn Ang" } };
+    const seen = setup(scenario);
+    const user = userEvent.setup();
+    const { router } = renderApp("/analyst/operations?alertRef=" + first, { session: analyst });
+    await screen.findByRole("region", { name: "Operational alert workspace" });
+    const workstation = document.querySelector(".operational-workstation");
+    expect(workstation).not.toBeNull();
+    await waitFor(() => expect(screen.getByText("Arrival updates connected")).toBeVisible());
+    await user.click(screen.getByRole("tab", { name: "Analyst Verdict" }));
+    await user.type(await screen.findByLabelText("Verdict reason"), "Draft survives the hidden page");
+    for (const path of ["/analyst/selective-review", "/analyst/tier2-cases",
+      "/analyst/triage-memory", "/analyst/external-admission"]) {
+      await act(async () => { await router.navigate(path); });
+      expect(workstation?.isConnected).toBe(true);
+      expect(workstation?.closest("[hidden]")).not.toBeNull();
+    }
+    scenario.arrived = true;
+    act(() => controller.enqueue(new TextEncoder().encode(`event: alert_arrived\ndata: ${JSON.stringify({
+      eventId: "operational:3", workspaceId: "operational", operationalAlertRef: third, timestamp: "now",
+    })}\n\n`)));
+    await waitFor(() => expect(document.querySelector(`[data-alert-ref="${third}"]`)).not.toBeNull());
+    expect(seen.filter(request => new URL(request.url).pathname === "/api/v2/alerts/stream")).toHaveLength(1);
+    await act(async () => { await router.navigate("/analyst/operations"); });
+    await waitFor(() => expect(router.state.location.search).toContain("alertRef=" + first));
+    expect(document.querySelector(".operational-workstation")).toBe(workstation);
+    expect(screen.getByRole("tab", { name: "Analyst Verdict" })).toHaveAttribute("aria-selected", "true");
+    expect(screen.getByLabelText("Verdict reason")).toHaveValue("Draft survives the hidden page");
+    expect(screen.getByRole("button", { name: /Newly arrived alert/ })).toBeVisible();
+    expect(claims(seen)).toHaveLength(0);
+  });
+
   it("keeps a Tour-open Verdict draft and selected alert through SSE arrival without claiming", async () => {
     let controller!: ReadableStreamDefaultController<Uint8Array>;
     const scenario: Scenario = { posts: [], stream: new ReadableStream({ start(value) { controller = value; } }),
@@ -112,8 +146,8 @@ describe("intentional queue selection auto-claim", () => {
     expect(screen.getByLabelText("Verdict reason")).toHaveValue("Preserve this human draft");
     for (let index = 6; index < 11; index += 1) await user.click(within(tour).getByRole("button", { name: "Next" }));
     expect(within(tour).getByRole("heading", { name: "Tier 2 investigation and closure" })).toBeVisible();
-    expect(router.state.location.pathname).toBe("/analyst/operations");
-    expect(screen.getByLabelText("Verdict reason")).toHaveValue("Preserve this human draft");
+    expect(router.state.location.pathname).toBe("/analyst/tier2-cases");
+    expect(document.querySelector("#analyst-verdict-reason")).toHaveValue("Preserve this human draft");
     expect(claims(seen)).toHaveLength(0);
     await user.click(within(tour).getByRole("button", { name: "Skip tour" }));
     await waitFor(() => expect(router.state.location.search).toBe("?alertRef=" + first));

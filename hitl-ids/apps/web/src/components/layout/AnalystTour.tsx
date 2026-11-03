@@ -48,10 +48,6 @@ export function AnalystTour({ stepIndex, onStep, onClose }: {
     previousStep.current = stepIndex;
     const step = steps[stepIndex];
     if (!step) return;
-    // A typed Verdict reason belongs to the mounted Workstation. Keep it mounted while the
-    // analyst reads the remaining tour steps; leaving the route would discard the draft.
-    const draft = document.querySelector<HTMLTextAreaElement>("#analyst-verdict-reason");
-    if (location.pathname === operations && step.path !== operations && draft?.value.trim()) return;
     if (step.path === operations) {
       if (location.pathname !== operations) void navigate(operations, { replace: true });
       else window.dispatchEvent(new CustomEvent("analyst-tour-tab", { detail: step.tab ?? null }));

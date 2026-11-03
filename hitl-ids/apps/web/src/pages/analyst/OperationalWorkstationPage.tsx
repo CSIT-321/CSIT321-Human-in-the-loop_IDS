@@ -1,7 +1,7 @@
 import { AnalystVerdictPanel, AnalystVerdictHistory } from "../../features/alert/AnalystVerdict";
 import { AnalystWorkPanel } from "../../features/alert/AnalystWork";
-import { useEffect, useRef, useState } from "react";
-import { Link, useSearchParams } from "react-router";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { createSearchParams, Link, useSearchParams } from "react-router";
 import { api, unwrap, ApiError, type Schemas } from "../../api/client";
 import { useSession } from "../../session/SessionContext";
 import { useApi } from "../../api/useApi";
@@ -23,14 +23,49 @@ const tabs = ["Overview", "Evidence", "Context & Review", "Analyst Verdict", "Tr
 type Tab = typeof tabs[number];
 const routeLabel = (value: string) => value === "tier2_candidate" ? "Historical routing record" : value.replaceAll("_", " ");
 
-function Assistance({ view, onReview }: { view: View; onReview: (review: Schemas["ReviewView"]) => void }) {
+function useWorkstationSearchParams(active: boolean) {
+  const [routeSearch, routeSet] = useSearchParams();
+  const [held, setHeld] = useState(() => new URLSearchParams(active ? routeSearch : undefined));
+  const heldRef = useRef(held);
+  const wasActive = useRef(active);
+  const activeRef = useRef(active); activeRef.current = active;
+  const routeSetRef = useRef(routeSet); routeSetRef.current = routeSet;
+  const search = active && routeSearch.toString() ? routeSearch : held;
+  const searchRef = useRef(search); searchRef.current = search;
+  useEffect(() => {
+    if (active) {
+      if (!wasActive.current && !routeSearch.toString() && heldRef.current.toString()) {
+        routeSet(heldRef.current, { replace: true });
+      } else {
+        const current = new URLSearchParams(routeSearch);
+        heldRef.current = current;
+        setHeld(current);
+      }
+    }
+    wasActive.current = active;
+  }, [active, routeSearch, routeSet]);
+  const setSearch = useCallback((next: Parameters<typeof routeSet>[0], options?: Parameters<typeof routeSet>[1]) => {
+    const value = typeof next === "function" ? next(new URLSearchParams(searchRef.current)) : next;
+    const updated = createSearchParams(value);
+    heldRef.current = updated;
+    setHeld(updated);
+    if (activeRef.current) routeSetRef.current(updated, options);
+  }, []);
+  return [search, setSearch] as const;
+}
+
+function Assistance({ view, onReview, active }: { view: View; onReview: (review: Schemas["ReviewView"]) => void; active: boolean }) {
   const ref = view.operationalAlertRef;
   const review = useApi(signal => unwrap(api.GET("/api/v2/alerts/{alertRef}/selective-review", { params: { path: { alertRef: ref } }, signal })), [ref, view.stateVersion, view.effectiveReview?.version]);
   const memory = useApi(signal => unwrap(api.GET("/api/v2/alerts/{alertRef}/triage-memory/matches", { params: { path: { alertRef: ref }, query: { limit: 5, offset: 0 } }, signal })), [ref, view.stateVersion, view.effectiveReview?.version]);
   const onReviewRef = useRef(onReview); onReviewRef.current = onReview;
   useEffect(() => { if (review.status === "success") onReviewRef.current(review.data); }, [review.status === "success" ? review.data.version : ""]);
   const refreshReview = review.reload; const refreshMemory = memory.reload;
-  useEffect(() => { const timer = setInterval(() => { refreshReview(); refreshMemory(); }, 15000); return () => clearInterval(timer); }, [refreshReview, refreshMemory]);
+  useEffect(() => {
+    if (!active) return;
+    const timer = setInterval(() => { refreshReview(); refreshMemory(); }, 15000);
+    return () => clearInterval(timer);
+  }, [active, refreshReview, refreshMemory]);
   return <aside aria-label="Context and assistance" className="ops-context divide-y divide-border overflow-y-auto border-l border-border bg-surface text-xs">
     <section className="space-y-2 p-4">
       <h2 className="label-mono">Why this alert needs attention</h2>
@@ -145,9 +180,9 @@ function AlertWorkspace({ view, onChanged, refresh, onReview, starting }: { view
   </section>;
 }
 
-export function OperationalWorkstationPage() {
+export function OperationalWorkstationPage({ active = true }: { active?: boolean }) {
   const { session, signOut } = useSession();
-  const [search, setSearch] = useSearchParams();
+  const [search, setSearch] = useWorkstationSearchParams(active);
   const requested = search.get("alertRef");
   const parsed = Number(search.get("offset") ?? 0);
   const offset = Number.isSafeInteger(parsed) && parsed >= 0 ? parsed : 0;
@@ -283,6 +318,7 @@ export function OperationalWorkstationPage() {
     return () => { controller.abort(); if (pending) clearTimeout(pending); };
   }, [session?.token, signOut, setSearch]);
   useEffect(() => {
+    if (!active) return;
     function key(event: KeyboardEvent) {
       if (event.ctrlKey || event.metaKey || event.altKey || (event.target instanceof HTMLElement && (event.target.isContentEditable || /INPUT|TEXTAREA|SELECT/.test(event.target.tagName)))) return;
       if (event.key === "/") { event.preventDefault(); document.getElementById("ops-search")?.focus(); }
@@ -293,7 +329,7 @@ export function OperationalWorkstationPage() {
       }
     }
     window.addEventListener("keydown", key); return () => window.removeEventListener("keydown", key);
-  }, [visible, selected, setSearch]);
+  }, [active, visible, selected, setSearch]);
   return <div className="operational-workstation flex h-full min-h-0 flex-col">
     <header className="flex shrink-0 flex-wrap items-center justify-between gap-2 border-b border-border bg-bg px-4 py-2">
       <h1 className="text-sm font-semibold">Analyst Workstation</h1>
@@ -341,7 +377,7 @@ export function OperationalWorkstationPage() {
       </section>
       {current ? <AlertWorkspace key={current.operationalAlertRef} view={current} onChanged={changed} refresh={refresh} onReview={reviewChanged} starting={startingRef===current.operationalAlertRef} />
         : <section aria-label="Operational alert workspace" className="p-5 text-sm text-muted">{linked.status === "error" ? <ErrorState error={linked.error} onRetry={linked.reload} /> : "Select an operational alert."}</section>}
-      {current && <Assistance key={"assistance-" + current.operationalAlertRef} view={current} onReview={reviewChanged} />}
+      {current && <Assistance key={"assistance-" + current.operationalAlertRef} view={current} onReview={reviewChanged} active={active} />}
     </div>
   </div>;
 }

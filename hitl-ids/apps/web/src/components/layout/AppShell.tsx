@@ -6,19 +6,25 @@
  * console with no user in it.
  */
 
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Outlet, useLocation } from "react-router";
 
 import { useSession } from "../../session/SessionContext";
 import { Sidebar } from "./Sidebar";
 import { TopBar } from "./TopBar";
 import { AnalystTour } from "./AnalystTour";
+import { OperationalWorkstationPage } from "../../pages/analyst/OperationalWorkstationPage";
 
 export function AppShell() {
   const { session } = useSession();
   const [tourStep, setTourStep] = useState<number | null>(null);
   const closeTour = useCallback(() => setTourStep(null), []);
-  const routing = /\/(operations|v2-triage|external-admission|tier2-cases|triage-memory|selective-review)(\/[^/]+)?$/.test(useLocation().pathname);
+  const pathname = useLocation().pathname;
+  const routing = /\/(operations|v2-triage|external-admission|tier2-cases|triage-memory|selective-review)(\/[^/]+)?$/.test(pathname);
+  const analyst = session?.role === "security_analyst";
+  const workstationVisible = pathname === "/analyst/operations";
+  const [workstationStarted, setWorkstationStarted] = useState(workstationVisible);
+  useEffect(() => { if (workstationVisible) setWorkstationStarted(true); }, [workstationVisible]);
 
   if (session === null) return null;
 
@@ -28,6 +34,9 @@ export function AppShell() {
       <div className="flex min-h-0 flex-1 max-sm:flex-col">
         <Sidebar />
         <main data-tour="analyst-main" className={`min-w-0 flex-1 overflow-auto ${routing ? "p-0" : "px-6 py-5"}`}>
+          {analyst && workstationStarted && <div hidden={!workstationVisible} className="h-full">
+            <OperationalWorkstationPage active={workstationVisible} />
+          </div>}
           <Outlet />
         </main>
       </div>
