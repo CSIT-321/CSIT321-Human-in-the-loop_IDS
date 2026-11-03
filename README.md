@@ -4,13 +4,16 @@ The current product lives in **`hitl-ids/`**. Start with the
 [current user manual](hitl-ids/docs/preliminary-user-manual.md) and
 [final surface cleanup record](docs/final-legacy-cleanup.md).
 
-Suricata → EVE JSON → Correlation → System Attack Classification → Priority / Routing →
-Analyst Workstation → Shared Claim → canonical Verdict → automatic Exact Human Learning →
-Triage Memory / Selective Review → Tier 2 Investigation → Response Decision → Case Resolution.
+Suricata EVE → Correlation → System Attack Classification → Operational Priority → System Routing →
+Analyst Workstation → Auto-Claim / Viewer → canonical Verdict → automatic Human Learning →
+Triage Memory → Selective Review → Tier 2 Investigation → Expert Learning → Response Decision → Case Resolution.
 
 The Security Analyst navigation is Analyst Workstation, Tier 2 Cases, Triage Memory,
 Selective Review and Incoming Alerts. There is one current Workstation at `/analyst/operations`.
-Response approval does not execute a response. Protocol V2 remains frozen and unopened.
+Response approval does not execute a response. System Administrator controls the Operational Workspace,
+including an isolated progressive Presentation Replay from frozen inputs. Persisted alert arrivals reach
+the Workstation through authenticated near-real-time delivery; arrival never claims. Final V3.1 Run 001
+evaluation is completed and frozen. Protocol V2 remains frozen and unopened.
 
 ## Run
 

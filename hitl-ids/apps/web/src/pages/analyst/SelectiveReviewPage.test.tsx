@@ -24,6 +24,7 @@ describe("Selective Human Review",()=>{
     await userEvent.click(await screen.findByRole("tab",{name:"Context & Review"}));
     expect(await within(screen.getByRole("tabpanel",{name:"Context & Review"})).findByText("No Immediate Review",{exact:true})).toBeInTheDocument();
     expect(screen.getAllByText("No Immediate Review is an automation decision, not a human verdict.")[0]).toBeInTheDocument();
+    expect(screen.getAllByText(/Active Memory alone does not suppress review/)[0]).toHaveTextContent("does not close the alert or execute a response");
     expect(screen.getByText("Operational priority: 85")).toBeInTheDocument();
     expect(screen.getByRole("button",{name:"Require Human Review"})).toBeDisabled();
   });

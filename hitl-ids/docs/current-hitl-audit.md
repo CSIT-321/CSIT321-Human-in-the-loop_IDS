@@ -11,7 +11,7 @@ The Admin **Evaluation & Audit → Current HITL Audit** page is a read-only prod
 | VERDICT | `analyst_verdict_events` | Canonical Tier 1 Verdict and later append-only corrections |
 | MEMORY | `triage_memory_audit` | Exact candidate/evidence, support, conflict, automatic/manual activation, rejection; current status at the event |
 | REVIEW | `selective_review_events` | Persisted disposition or human Require Review override only |
-| TIER2 | `operational_routing_audit`, `tier2_case_events` | System/manual routing, Candidate handoff, automatic/manual Case creation, start, note, link, Investigation Conclusion |
+| TIER2 | `operational_routing_audit`, `tier2_case_events` | System/manual routing directly to a formal Case, Case creation, investigation, notes, links and Investigation Conclusion. Old Candidate approval/rejection events are labelled historical compatibility. |
 | RESPONSE | `response_recommendations`, `response_decisions` | Durable recommendation, human approval/rejection; approval is **Not Executed** |
 | RESOLUTION | `tier2_case_events` action `resolve` | Explicit human Case closure |
 
@@ -30,5 +30,7 @@ Each row has a stable deterministic `eventRef`, timestamp, category, event type,
 ## Distinctions and limits
 
 **Historical Feedback / Legacy Audit** (`/admin/audit`) retains older Signature/XGBoost feedback and historical operations. Those events are not presented as current HITL events. **Final V3.1 Evaluation** is the frozen formal effectiveness and safety record; this post-evaluation product audit does not change or rerun it.
+
+The current Tier 2 path is system or owner manual routing → formal Tier 2 Case → investigation → Investigation Conclusion → human response decision → Case resolution. Historical `tier2_candidate`, `approve_tier2` and `reject_tier2` source records remain readable but are explicitly labelled historical compatibility, never current available actions.
 
 The page shows the active workspace plus global control actions. It does not combine both operational databases into one cross-workspace search. The read-time projection scans current event tables before filtering, which is appropriate for the current bounded product dataset; an indexed server-side union would be needed for substantially larger histories. It intentionally omits raw request payloads, evidence snapshots, credentials, target values, and arbitrary database content from event detail. Approval records never imply execution, and resolved Cases never imply a response was executed.

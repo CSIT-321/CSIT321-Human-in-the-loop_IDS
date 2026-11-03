@@ -57,6 +57,18 @@ describe("V2 routing", () => {
     expect(screen.queryByLabelText("Decision reason")).toBeNull();
     expect(seen).toHaveLength(0);
   });
+  it.each([
+    ["approve_tier2", "Historical Tier 2 candidate approval"],
+    ["reject_tier2", "Historical Tier 2 candidate rejection"],
+  ] as const)("labels %s as historical compatibility", (action, label) => {
+    render(<RoutingDetail initial={{ ...view, systemRouting: null, allowedActions: [], latestDecision: {
+      action, decisionSource: "analyst", actorId: 1, reason: "Legacy record", createdAt: "2026-10-31T00:00:00Z",
+      beforeState: { ...view.state, handlingRoute: "tier2_candidate" }, afterState: view.state,
+    } as Schemas["RoutingView"]["latestDecision"] }} refresh={vi.fn()} />);
+    expect(screen.getByText(new RegExp(label))).toBeVisible();
+    expect(screen.getByText(/Historical routing record/)).toBeVisible();
+    expect(screen.queryByRole("button", { name: /Approve Tier 2|Keep in Tier 1/ })).toBeNull();
+  });
   it("shows system routing and requires a reason", async () => {
     render(<RoutingDetail initial={view} refresh={vi.fn()} />);
     expect(screen.getByRole("heading", {name:"System Routing"})).toBeInTheDocument();

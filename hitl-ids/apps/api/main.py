@@ -15,6 +15,7 @@ translated into the same shape, so a client never has two error paths to write.
 from __future__ import annotations
 
 from pathlib import Path
+import sqlite3
 from threading import Event, Thread
 
 from fastapi import FastAPI, Request
@@ -112,13 +113,23 @@ def create_app(database: str | Path | None = None) -> FastAPI:
         for path in (operational, operational.parent / 'workspaces' / 'v3-1-replay.db'):
             if not path.is_file():
                 continue
-            conn = db.connect(path)
+            # Probe read-only first: ordinary startup and older schemas must not acquire a
+            # writable connection just to discover that no seeded-name correction is needed.
+            probe = sqlite3.connect(path.resolve().as_uri() + '?mode=ro', uri=True)
             try:
-                conn.execute('PRAGMA busy_timeout=20000')
-                if int(conn.execute('PRAGMA user_version').fetchone()[0]) == db.SCHEMA_VERSION:
-                    auth.sync_seeded_admin_identity(conn)
+                current = int(probe.execute('PRAGMA user_version').fetchone()[0]) == db.SCHEMA_VERSION
+                old_seed_name = current and probe.execute("""SELECT 1 FROM users
+                    WHERE username='admin' AND role='system_admin' AND email='admin@demo.local'
+                      AND display_name='System Administrator'""").fetchone() is not None
             finally:
-                conn.close()
+                probe.close()
+            if old_seed_name:
+                conn = db.connect(path)
+                try:
+                    conn.execute('PRAGMA busy_timeout=20000')
+                    auth.sync_seeded_admin_identity(conn)
+                finally:
+                    conn.close()
         def loop() -> None:
             while not stop_playback.wait(0.5):
                 try:

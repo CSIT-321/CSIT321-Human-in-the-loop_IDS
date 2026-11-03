@@ -71,25 +71,31 @@ workflow. Legacy evaluator routes are historical academic compatibility surfaces
    clearly labelled synthetic Suricata alerts. Open the admitted alert in Analyst Workstation.
 2. Use Available to select work. Read evidence, System Attack Classification, priority and routing.
    Routine Review goes to Tier 1; Critical / Expert Review creates a formal Tier 2 Case directly.
-3. Click Start Review. Only the owner can record that alert's Tier 1 Verdict. In Review identifies
-   the owner; a same-round collision gives neither contender ownership. Refresh and retry explicitly.
-   Persisted alert arrivals reach the Workstation through a read-only event stream, with polling
-   fallback. Background refresh is not an automatic claim.
+3. Intentionally select an eligible Available Tier 1 queue row. This automatically requests ownership
+   through 750 ms arbitration; there is no Start Review button. The initial/default display, direct
+   URL, arrival, reconnect, refresh, filter change, and background reconciliation do not claim.
+   Only the owner can record that alert's Tier 1 Verdict. Other analysts remain Viewers and can read
+   the alert without owner-only actions. A same-round collision assigns neither contender; select
+   again explicitly. Persisted arrivals reach the Workstation through an authenticated near-real-time
+   read-only stream with silent reconciliation and polling fallback. Arrival never claims.
 4. Record the canonical Analyst Verdict with its reason. The alert moves to Completed/history.
    Exact Human Learning is recorded automatically: no second Memory outcome/reason or Exact button.
 5. Inspect Human Learning and Triage Memory. Eligible benign Exact evidence is auto-activated by
    System Policy (`safe-memory-auto-activation-v1`). One Alert = One Current Vote; Tier 2 overrides
    Tier 1. The fixed validity is 30 days and conflicts withdraw unsafe reuse. Narrow learning remains
    an explicit human extension; historical/manual activation is not the normal Exact workflow.
-6. Open Selective Review. Active Memory plus current safe context can yield No Immediate Review.
-   Canonical Verdict guards, conflict safeguards and human override remain authoritative. Missing
-   trusted context must not be treated as safe. Suppression does not close an alert or execute a response.
+6. Open Selective Review. Active Memory alone does not suppress review: current trusted context,
+   safety gates and policy evaluation may produce No Immediate Review. Missing trusted context must
+   not be treated as safe. No Immediate Review is neither a human Verdict, alert closure, nor response
+   execution. Conflict safeguards and the human Require Human Review override remain authoritative.
 7. For operational escalation, the owner enters a Decision reason and clicks Escalate to Tier 2.
    A formal Case is created in that same operation; open it using Open Tier 2 Case. There is no
    Candidate approval or separate Create Case stage. Shared work records Escalated.
-8. In Tier 2 Cases, inspect Investigation Assistance and record Investigation Conclusion: Finding
+8. In Tier 2 Cases, inspect the same immutable Primary Alert Evidence used in Tier 1, then the
+   separate Investigation Assistance. Record Investigation Conclusion: Finding
    plus Human Final Attack Classification and reason. Exact Expert Learning is automatic into the
-   same Memory. Historical Findings are readable but not the current conclusion form.
+   same Memory. Historical Findings are readable but not the current conclusion form. Case Assignment
+   may read Unassigned / Collaborative; Tier 2 V1 has no automatic assignment or workload balancing.
 9. Review Response Recommendation, then make the human Approve/Reject decision. Approval displays
    Approved — Not Executed. No response is executed by this product.
 10. Resolve the Case when its existing resolution prerequisites are met. Resolved cases are read-only;
@@ -97,6 +103,18 @@ workflow. Legacy evaluator routes are historical academic compatibility surfaces
 
 ## (5) Evaluation boundaries
 
+System Administrator navigation is exactly Overview, Operational Workspace, HITL Governance,
+Users & Access, and Evaluation & Audit. The latter contains the implemented Current HITL Audit,
+the completed/frozen Final V3.1 Evaluation, and separate historical Feedback / Legacy Audit.
+
+Operational Workspace can prepare Full Replay or Progressive V3.1 Presentation Replay in an isolated
+database. Presentation preparation applies the 40 Learning history, then admits 10 initial Holdout
+alerts; the other 150 Holdout alerts arrive progressively through the persisted alert path. Admin
+can start or pause arrivals, advance one or five alerts, or load the remainder. Replay is a fixed
+demonstration from frozen inputs, not Live Monitoring or a rerun of the official evaluation.
+The authenticated alert-arrival stream updates the Workstation only after persistence; silent
+reconciliation preserves the current selection, tab, and draft where supported. Arrival never claims.
+
 The final Golden Path and shared Analyst validation use current routes only. Real Suricata PCAP
-validation evidence is retained. Protocol V2 remains frozen and unopened; do not open prospective
-collection during the demonstration. Readiness for a later Protocol V3 does not open it automatically.
+validation evidence is retained. Protocol V2 remains frozen and unopened. Final V3.1 Run 001 is
+completed and frozen; this demonstration does not rerun it or open prospective collection.

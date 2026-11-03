@@ -5,14 +5,26 @@ import { renderApp, stubFetch, jsonResponse } from "../../test/renderApp";
 
 const ref = "fe130e6f-af86-4fc6-89f2-bc76b6cad68b";
 const session = { username: "g.ang", displayName: "Analyst", role: "security_analyst" as const, token: "test" };
+const detectorEvidence = {
+  detectorName: "Suricata", detectorSource: "suricata", detectorVersion: "7.0", detectionTitle: "Suspicious connection",
+  detectionCategory: "Potentially Bad Traffic", detectorSeverity: 2, confidence: null,
+  sourceIp: "192.0.2.1", destinationIp: "198.51.100.2", sourcePort: null, destinationPort: 443,
+  protocol: "TCP", occurredAt: "2026-10-31T00:00:00Z", provenance: {}, originalDetectorFields: { event_type: "alert" },
+  structuredEvidence: { suricataBundle: { sensorId: "sensor-1", nativeSeverity: 2, evidenceTypes: ["alert", "flow"],
+    relatedSignatures: [
+      { sourceRecordRef: "eve:primary", timestamp: "2026-10-31T00:00:00Z", signatureId: 101, signature: "Suspicious connection", nativeCategory: "Potentially Bad Traffic", nativeSeverity: 2, action: "allowed" },
+      { sourceRecordRef: "eve:related", timestamp: "2026-10-31T00:00:01Z", signatureId: 102, signature: "Related signature", nativeCategory: "Potentially Bad Traffic", nativeSeverity: 2, action: "allowed" },
+    ], records: [{ sourceRecordRef: "eve:flow", eventType: "flow", timestamp: "2026-10-31T00:00:00Z", raw: { flow: { pkts_toserver: 3 } } }],
+  } },
+};
 const record = {
   caseRef: ref, primaryOperationalAlertRef: ref, title: "Connection investigation", ownerActorId: 1,
   createdByActorId: 1, createdAt: "2026-10-31T00:00:00Z", updatedAt: "2026-10-31T00:00:00Z", status: "open", revision: 1,
   snapshot: {
-    detector: { detectorName: "Suricata", detectorSource: "suricata", nativeSeverity: 2, detectorConfidence: null,
+    detector: { operationalAlertRef: ref, canonicalAlertId: "ba130e6f-af86-4fc6-89f2-bc76b6cad68b", detectorName: "Suricata", detectorSource: "suricata", nativeSeverity: 2, detectorConfidence: null,
       detectionTitle: "Suspicious connection", detectionCategory: "Potentially Bad Traffic",
       sourceIp: "192.0.2.1", destinationIp: "198.51.100.2", sourcePort: null, destinationPort: 443,
-      detectorEvidence: { confidence: null } },
+      protocol: "TCP", occurredAt: "2026-10-31T00:00:00Z", detectorEvidence },
     triage: { priorityBand: "P2", operationalPriority: 65, triagePolicyVersion: "operational-triage-v1",
       tier2RecommendationReasons: ["Unresolved by Tier 1"] },
     routingDecision: { eventType: "V2_MANUAL_ESCALATION", actorId: 1 },
@@ -63,16 +75,45 @@ describe("Tier 2 cases", () => {
     expect(seen.some(request => new URL(request.url).pathname === "/api/v2/alerts")).toBe(false);
   });
 
+  it("labels collaborative and stored assignment without implying an assignment engine", async () => {
+    stubFetch(() => jsonResponse({ ...empty, items: [{ ...record, ownerActorId: null }, { ...record, caseRef: relatedRef }], page: { ...empty.page, total: 2, returned: 2 } }));
+    renderApp("/analyst/tier2-cases", { session });
+    const table = await screen.findByRole("table", { name: "Tier 2 cases" });
+    expect(within(table).getByRole("columnheader", { name: "Case Assignment" })).toBeVisible();
+    expect(within(table).getByText("Unassigned / Collaborative")).toBeVisible();
+    expect(within(table).getByText("Assigned to Actor #1")).toBeVisible();
+    expect(screen.getByText(/does not implement automatic case assignment or workload balancing/)).toBeVisible();
+  });
+
   it("preserves handoff and separates severity from priority and response", async () => {
     stubFetch(request => jsonResponse(request.url.includes("/assistance") ? assistance : request.url.includes("/responses") ? { ...empty,caseRevision:1 } : request.url.includes("/events") ? empty : record));
     renderApp("/analyst/tier2-cases/" + ref, { session });
     expect(await screen.findByText("Investigate source host")).toBeInTheDocument();
-    expect(screen.getByText("Native Severity: 2")).toBeInTheDocument();
+    expect(within(screen.getByRole("region", { name: "Primary Alert Evidence" })).getAllByText("2").length).toBeGreaterThan(0);
     expect(within(screen.getByRole("region", { name: "Case summary" })).getByText("P2 / 65")).toBeInTheDocument();
-    expect(screen.getByText("Confidence: Not provided")).toBeInTheDocument();
+    expect(screen.getByRole("region", { name: "Primary Alert Evidence" })).toHaveTextContent("ConfidenceNot provided");
     expect(await screen.findByText("No response recommendations.")).toBeInTheDocument();
     expect(screen.getByText("APPROVAL DOES NOT EXECUTE THE ACTION.")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Add investigation note" })).toBeDisabled();
+  });
+
+  it("reuses the immutable primary detector snapshot and keeps investigation context separate", async () => {
+    const seen = stubFetch(request => jsonResponse(request.url.includes("/assistance") ? assistance : request.url.includes("/responses") ? { ...empty, caseRevision: 1 } : request.url.includes("/events") ? empty : { ...record, ownerActorId: null }));
+    renderApp("/analyst/tier2-cases/" + ref, { session });
+    const primary = await screen.findByRole("region", { name: "Primary Alert Evidence" });
+    expect(primary).toHaveTextContent(ref);
+    expect(primary).toHaveTextContent("Suricata");
+    expect(primary).toHaveTextContent("Suricata / 7.0");
+    expect(primary).toHaveTextContent("Suspicious connection");
+    expect(primary).toHaveTextContent("192.0.2.1");
+    expect(primary).toHaveTextContent("198.51.100.2:443");
+    expect(primary).toHaveTextContent("TCP");
+    const signatures = within(primary).getByRole("table", { name: "Related Suricata signatures" });
+    expect(within(signatures).getByText("Related signature")).toBeVisible();
+    expect(within(primary).getByRole("heading", { name: "Flow / Session Evidence" })).toBeVisible();
+    expect(await screen.findByRole("region", { name: "Investigation Assistance" })).toHaveTextContent("Why Tier 2");
+    expect(screen.getByRole("region", { name: "Case summary" })).toHaveTextContent("Unassigned / Collaborative");
+    expect(seen.every(request => request.method === "GET" && !request.url.endsWith("/evidence"))).toBe(true);
   });
 
   it("evaluator can inspect but cannot append investigation records", async () => {

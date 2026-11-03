@@ -182,7 +182,8 @@ def test_readonly_connection_enforces_uri_query_only_and_missing_path(database,m
         assert source_uri.endswith('?mode=ro') and kwargs.get('uri') is True
         conn=original(source_uri,**kwargs);conn.set_trace_callback(trace.append);return conn
     monkeypatch.setattr(sqlite3,'connect',connect)
-    request=SimpleNamespace(app=SimpleNamespace(state=SimpleNamespace(database_path=database)))
+    request=SimpleNamespace(app=SimpleNamespace(state=SimpleNamespace(database_path=database)),
+                            state=SimpleNamespace())
     reader=deps.get_readonly_connection(request);conn=next(reader)
     assert trace[0]=='PRAGMA query_only=ON'
     with pytest.raises(sqlite3.OperationalError): conn.execute('CREATE TABLE forbidden (id INTEGER)')

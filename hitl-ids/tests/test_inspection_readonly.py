@@ -15,6 +15,16 @@ from test_prospective_blockers import old_database
 
 
 INSPECTION_ROUTES = (
+    '/api/admin/audit/current',
+    '/api/admin/governance',
+    '/api/admin/overview',
+    '/api/admin/users',
+    '/api/admin/workspaces',
+    '/api/evaluation/final-v3-1',
+    '/api/evaluation/final-v3-1/memory-impact',
+    '/api/evaluation/final-v3-1/records',
+    '/api/evaluation/final-v3-1/records/{index}',
+    '/api/workspace/current',
     '/api/v2/alerts/{alertRef}/work',
     '/api/v2/alerts/{alertRef}/work/events',
     '/api/v2/alerts/{alertRef}/triage-memory/verdict-state',
@@ -66,12 +76,21 @@ INSPECTION_ROUTES = (
     '/api/v2/collection/runs/{runRef}/report',
 )
 DB_FREE_GETS = {'/api/health', '/openapi.json', '/docs', '/docs/oauth2-redirect'}
+STREAM_GETS = {'/api/v2/alerts/stream'}  # Long-lived read-only stream has its own auth dependency.
+WORKSPACE_COMMANDS = {
+    '/api/admin/workspaces/{workspaceId}/activate',
+    '/api/admin/workspaces/v3-1-replay/prepare',
+    '/api/admin/workspaces/v3-1-replay/reset',
+    '/api/admin/workspaces/v3-1-replay/advance',
+    '/api/admin/workspaces/v3-1-replay/start',
+    '/api/admin/workspaces/v3-1-replay/pause',
+}  # Admin commands authorize read-only, then write only through the workspace service.
 REF = '00000000-0000-4000-8000-000000000001'
 
 
 def path_for(route):
     return route.format(alertRef=REF, caseRef=REF, lessonRef=REF, runRef=REF,
-                        inboxId=1, ip='192.0.2.1', runId='missing-review-run')
+                        inboxId=1, ip='192.0.2.1', runId='missing-review-run', index=1)
 
 
 def dependency_calls(dependant):
@@ -98,7 +117,7 @@ def forbid_writable(monkeypatch):
 def test_complete_dependency_graph_separates_inspection_and_mutation():
     app = create_app()
     gets = {r.path for r in app.routes if 'GET' in getattr(r, 'methods', set())}
-    assert gets == set(INSPECTION_ROUTES) | DB_FREE_GETS
+    assert gets == set(INSPECTION_ROUTES) | STREAM_GETS | DB_FREE_GETS
     for route in app.routes:
         if not hasattr(route, 'dependant'):
             continue
@@ -108,6 +127,12 @@ def test_complete_dependency_graph_separates_inspection_and_mutation():
             assert auth.current_readonly_user in chain, route.path
             assert deps.get_connection not in chain, route.path
             assert auth.current_user not in chain, route.path
+        elif route.path in STREAM_GETS and 'GET' in route.methods:
+            assert auth.current_stream_user in chain, route.path
+            assert deps.get_connection not in chain, route.path
+        elif route.path in WORKSPACE_COMMANDS:
+            assert auth.current_readonly_user in chain, route.path
+            assert deps.get_connection not in chain, route.path
         elif route.methods & {'POST', 'PUT', 'PATCH', 'DELETE'}:
             assert deps.get_connection in chain, route.path
             assert deps.get_readonly_connection not in chain, route.path
@@ -159,7 +184,8 @@ def test_current_schema_inspection_uses_one_readonly_connection(database, client
         calls.setattr(sqlite3, 'connect', readonly)
         response = client.get(path_for(route), headers={'Authorization': 'Bearer '+client.tokens['admin']})
     assert response.status_code in (200, 404), response.text
-    assert len(traces) == 1 and traces[0][0] == 'PRAGMA query_only=ON'
+    assert len(traces) == (3 if route == '/api/admin/workspaces' else 1)
+    assert traces[0][0] == 'PRAGMA query_only=ON'
     assert fingerprint(database) == before
 
 

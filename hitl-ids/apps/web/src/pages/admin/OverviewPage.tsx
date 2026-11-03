@@ -22,12 +22,12 @@ export function OverviewPage() {
     <PageHeader title="Overview" subtitle="Current Suricata and Human-in-the-Loop operational state in the active workspace." />
     <button className="rounded-sm border border-border bg-raised px-3 py-1.5 text-sm hover:bg-surface" onClick={resource.reload}>Refresh overview</button>
     {resource.status === "error" && <ErrorState error={resource.error} onRetry={resource.reload} />}
-    <Card title="System" subtitle="The values below come from the current selected operational database.">
+    <Card title="System" subtitle="Availability of this API and the selected workspace; these are not production health probes.">
       <dl className="grid min-w-0 gap-2 p-4 sm:grid-cols-2 xl:grid-cols-5">
         <Measure label="API status" value={resource.status === "success" ? "Responding" : resource.status === "loading" ? "Checking" : "Not available"} />
-        <Measure label="Database status" value={data?.databaseReady ? "Ready" : undefined} />
+        <Measure label="Database availability" value={data?.databaseReady ? "Available" : undefined} />
         <Measure label="Active Workspace" value={data?.activeWorkspaceName} />
-        <Measure label="Workspace readiness" value={data?.workspaceReady ? "Ready" : undefined} />
+        <Measure label="Workspace availability" value={data?.workspaceReady ? "Available" : undefined} />
         <Measure label="Workspace alert count" value={data?.workspaceAlertCount} />
       </dl>
     </Card>

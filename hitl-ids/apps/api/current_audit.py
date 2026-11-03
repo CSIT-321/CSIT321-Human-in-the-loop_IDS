@@ -82,16 +82,17 @@ def _operational_events(items: list[CurrentAuditEvent], conn: sqlite3.Connection
         after = _json(row['after_state'])
         route = after.get('handlingRoute')
         action = {'system_route': 'System routed alert', 'manual_escalate': 'Manual Tier 2 escalation',
-                  'approve_tier2': 'Tier 2 recommendation approved',
-                  'reject_tier2': 'Tier 2 recommendation rejected',
+                  'approve_tier2': 'Historical Tier 2 candidate approval',
+                  'reject_tier2': 'Historical Tier 2 candidate rejection',
                   'admit_tier1': 'Tier 1 review admitted'}[row['action']]
+        route_label = 'Historical routing record' if route == 'tier2_candidate' else route or 'unknown route'
         category = 'TIER2' if (route or '').startswith('tier2') or row['action'] in ('approve_tier2', 'reject_tier2') else 'WORK'
         source = row['decision_source']
         _event(items, workspace, 'operational_routing_audit', row['id'], row['created_at'],
             category, row['event_type'], action, 'alert', row['alert_ref'],
-            f"{action} for alert {row['alert_ref']} → {route or 'unknown route'}.",
+            f"{action} for alert {row['alert_ref']} → {route_label}.",
             actor_id=row['actor_id'], actor_name=row['actor_name'], decision_source=source,
-            alert_ref=row['alert_ref'], result=route,
+            alert_ref=row['alert_ref'], result=route_label,
             detail={'reason': row['reason'], 'beforeRoute': before.get('handlingRoute'),
                     'afterRoute': route, 'afterStage': after.get('workflowStage'),
                     'beforeRevision': before.get('revision'), 'afterRevision': after.get('revision')})

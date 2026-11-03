@@ -11,8 +11,8 @@ import { SelectiveReviewPanel } from "./SelectiveReviewPage";
 type View = Schemas["RoutingView"];
 type Action = View["allowedActions"][number];
 const labels: Record<Action, string> = {
-  admit_tier1: "Admit to Tier 1", approve_tier2: "Approve Tier 2",
-  reject_tier2: "Keep in Tier 1", manual_escalate: "Escalate to Tier 2",
+  admit_tier1: "Admit to Tier 1", approve_tier2: "Historical Tier 2 candidate approval",
+  reject_tier2: "Historical Tier 2 candidate rejection", manual_escalate: "Escalate to Tier 2",
 };
 const button = "rounded-sm border border-border px-3 py-2 text-sm hover:bg-raised disabled:opacity-50";
 const pretty = (value: string) => value === "tier2_candidate" ? "Historical routing record" : value === "assessment" ? "Historical workflow state" : value.replaceAll("_", " ");

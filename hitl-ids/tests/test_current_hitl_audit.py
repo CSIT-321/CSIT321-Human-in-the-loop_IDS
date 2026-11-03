@@ -2,6 +2,7 @@
 from contextlib import closing
 from datetime import datetime
 from hashlib import sha256
+import json
 from time import sleep
 from unittest.mock import patch
 from uuid import uuid4
@@ -109,6 +110,20 @@ def test_current_audit_normalizes_full_real_hitl_chain_and_is_read_only(tmp_path
                 expected_revision=rejected_proposal.revision, reason='SYNTHETIC reject plan'))
         assert rejected.response.execution_status == 'not_executed'
 
+        # Retained pre-current Candidate records must stay readable without suggesting a current action.
+        historical = read_triage(conn, alerts[0].id).model_dump(mode='json', by_alias=True)
+        historical['handlingRoute'] = 'tier2_candidate'
+        historical['workflowStage'] = 'assessment'
+        for action in ('approve_tier2', 'reject_tier2'):
+            conn.execute('''INSERT INTO operational_routing_audit
+                (operational_alert_id,actor_id,request_id,action,event_type,expected_state_version,
+                 reason,before_state,after_state,created_at,decision_source)
+                 VALUES (?,?,?,?,?,?,?,?,?,?,?)''',
+                (alerts[0].id, 1, str(uuid4()), action, 'V2_HISTORICAL_CANDIDATE', '0' * 64,
+                 'SYNTHETIC retained record', json.dumps(historical), json.dumps(historical),
+                 m.utc_now(), 'analyst'))
+        conn.commit()
+
         admin = _token(conn, 3)
         analyst = _token(conn, 1)
         evaluator = _token(conn, 4)
@@ -170,6 +185,9 @@ def test_current_audit_normalizes_full_real_hitl_chain_and_is_read_only(tmp_path
     automatic = next(item for item in find('TIER2', 'Tier 2 Case created') if item['caseRef'] == str(case.case_ref))
     assert automatic['actorType'] == 'system' and automatic['decisionSource'] == 'system_policy'
     assert find('TIER2', 'Manual Tier 2 escalation')[0]['actorName'] == 'Actor 1'
+    for action in ('Historical Tier 2 candidate approval', 'Historical Tier 2 candidate rejection'):
+        assert 'Historical routing record' in find('TIER2', action)[0]['summary']
+        assert find('TIER2', action)[0]['result'] == 'Historical routing record'
     assert any(item['alertRef'] == str(unknown.operational_alert_ref) and item['actorType'] == 'system'
                for item in find('TIER2', 'System routed alert'))
     conclusion = find('TIER2', 'Investigation Conclusion')[0]

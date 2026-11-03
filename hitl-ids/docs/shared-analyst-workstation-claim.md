@@ -20,11 +20,11 @@ This is a minimal human-work lifecycle, not an enterprise assignment system. The
 
 Routing, priority, classification, review disposition and human work remain separate. Completion does not change review disposition or routing. Review disposition can change independently while an owner works; this does not release ownership. An unowned No Immediate Review alert has no active Tier 1 work projection and cannot be claimed until **Require Human Review** explicitly recalls it. A finalized owner can still record a Verdict after a later policy deferral, preserving canonical safety recognition.
 
-Only active `security_analyst` users and the already-supported operational `system_admin` role can claim. Evaluators stay read-only. Claiming requires the current persisted system-routing projection and current `tier1_review` / `triage` state. Legacy detector/routing history is not silently converted into current Tier 1 work. Auto-routed Unknown / Expert Review alerts retain their automatically created Tier 2 Cases and never require Tier 1 claims.
+Only active `security_analyst` users and the already-supported operational `system_admin` role can claim. The legacy evaluator compatibility account stays read-only and is not a current product role. Claiming requires the current persisted system-routing projection and current `tier1_review` / `triage` state. Legacy detector/routing history is not silently converted into current Tier 1 work. Auto-routed Unknown / Expert Review alerts retain their automatically created Tier 2 Cases and never require Tier 1 claims.
 
-## Explicit start and shared UI
+## Intentional selection and shared UI
 
-Viewing, selecting, deep linking, evidence inspection, GET requests, polling and reload never claim. **Start Review** is the explicit active-review control. It immediately requests ownership without an assignment form; the label becomes **Claiming…** while awaiting arbitration. Success refreshes the queue, detail and KPIs.
+An Analyst's intentional click on an eligible Available Tier 1 queue row automatically requests ownership through the existing 750 ms arbitration. Initial/default row display, page load, direct URL, SSE arrival, silent reconciliation, fallback polling, queue refresh, filter change and workspace reconnect never claim. Arrival and background rendering are not user selection. There is no current Start Review control. Success refreshes the queue, detail and KPIs.
 
 The owner sees **In Review — You**. Other analysts see **In Review — Alice**, can inspect the alert, and have no first-Verdict, escalation or Workstation review/context mutation controls. Backend authorization independently enforces ownership, including direct/stale requests. Alert-specific trusted facts, manual memory review and selective-review mutations cannot bypass another analyst's active ownership. Global context/lesson governance and existing Tier 2 collaboration are separate policies.
 
@@ -32,7 +32,7 @@ On a controlled conflict the UI clears the current selection, refreshes the shar
 
 > Claim Conflict — Another analyst attempted to claim this alert at the same time. No ownership was assigned. Please select an alert again.
 
-An already-owned alert instead explains that it is currently being reviewed by the named owner. Network uncertainty retains the same request ID for retry. The existing **Refresh operational queue** control and 15-second read-only polling expose other analysts' changes; there are no websockets.
+An already-owned alert instead explains that it is currently being reviewed by the named owner. Network uncertainty retains the same request ID for retry. Authenticated SSE signals persisted arrivals and silently reconciles the queue; slower safety reconciliation and temporary polling after disconnect expose other analysts' changes. There are no websockets.
 
 ## Claim API and exact arbitration
 
@@ -94,15 +94,15 @@ Upgrade through the existing explicit writable initialization/migration path (`d
 
 `apps/web/e2e/shared-work.spec.ts` signs Alice, Bob and Carol into separate browser contexts against a real temporary SQLite/FastAPI backend; a fourth evaluator context verifies 403. Browser requests are released together, with test-only server scheduling barriers before registration and after both real commits for the one contention scenario. The harness does not replace policy, time, domain outcomes or database writes. Other claims use ordinary real timing. Evidence includes the request/response bodies and persisted rounds, work and events in `test-results/shared-work/**/multi-user-proof.json`.
 
-The browser scenario covers read-only DB fingerprints, owner reload, other-user refresh/read-only controls, contention/reselect, retry, late rejection, Verdict→Completed, Completed filter/history, explicit correction, owner escalation/Case creation, automatic Unknown Case, evaluator rejection and no collection. Responsive Light/Dark checks at 1440/1024/390 create 24 screenshots across Available, other-owner In Review, conflict and Completed history, with overflow assertions. The existing coherent Final Golden Path is also run with explicit Start Review before active Tier 1 handling; its learning, R01/R02, response/closure assertions are retained.
+The browser scenario covers read-only DB fingerprints, owner reload, other-user refresh/read-only controls, contention/reselect, retry, late rejection, Verdict→Completed, Completed filter/history, explicit correction, owner escalation/Case creation, automatic Unknown Case, evaluator rejection and no collection. Responsive Light/Dark checks at 1440/1024/390 create 24 screenshots across Available, other-owner In Review, conflict and Completed history, with overflow assertions. The current Golden Path uses intentional eligible row selection to trigger Auto-Claim before active Tier 1 handling; its learning, R01/R02, response/closure assertions are retained.
 
 Detection, real PCAP→Suricata→EVE/import, classification, route transitions, score/priority policy, Tier 2 assistance/conclusions/expert learning, response recommendation/approval/**Approved — Not Executed**, and resolution behavior are unchanged. Only authorization and atomic human-work bookkeeping surround the existing supported operations. Protocol V2 stays historical, frozen and unopened; no prospective collection was opened. This implementation does not perform a new detection tuning or broad redesign.
 
 ## Limitations and evaluation readiness
 
-Abandoned finalized claims have **no automatic timeout or recovery in V1**. An owner who leaves or becomes inactive can strand work; there is intentionally no release/reassignment endpoint. A network-lost successful claim remains owned; the same actor's retry/reload recovers its state. Pending arbitration recovery needs a later explicit POST. Fifteen-second polling can temporarily show stale permissions, but backend checks reject unauthorized writes. Short arbitration windows cannot compensate for arbitrary transport delay.
+Abandoned finalized claims have **no automatic timeout or recovery in V1**. An owner who leaves or becomes inactive can strand work; there is intentionally no release/reassignment endpoint. A network-lost successful claim remains owned; the same actor's retry/reload recovers its state. Pending arbitration recovery needs a later explicit POST. Stream disconnection and fallback polling can temporarily show stale permissions, but backend checks reject unauthorized writes. Short arbitration windows cannot compensate for arbitrary transport delay.
 
-Completed-history correction follows existing operator authorization rather than an exclusive historical editor. Tier 2 remains collaborative under its existing policy. These are explicit V1 boundaries, not hidden leases or assignment features. Successful validation establishes a candidate for designing/approving Final Evaluation Protocol V3; it does not open V3, restart V2, or manufacture prospective evaluation results.
+Completed-history correction follows existing operator authorization rather than an exclusive historical editor. Tier 2 remains collaborative under its existing policy. These are explicit V1 boundaries, not hidden leases or assignment features. Final V3.1 Run 001 has since completed and frozen; this document's earlier validation predates that official evaluation and does not change its results.
 
 ## Recorded validation results
 
@@ -110,7 +110,7 @@ Completed-history correction follows existing operator authorization rather than
 - Frontend: **258 passed**, 36 files.
 - TypeScript: `tsc -b` passed. OpenAPI JSON freshness and generated TypeScript schema freshness passed. Production build passed (existing large-chunk advisory only).
 - Real multi-user browser E2E: **1 passed**; three analysts plus evaluator, 24 responsive/theme screenshots.
-- Existing Final Golden Path browser E2E: **1 passed** with explicit Start Review prerequisites; all original learning, safety, expert/response/resolution assertions retained.
+- Historical Final Golden Path browser E2E: **1 passed** under the former explicit review-start UX; the current Auto-Claim path requires separate regression validation.
 - Migration 20→21: populated data preserved, injected migration failure rolled back, repeated migration no-op, foreign-key and integrity checks passed.
 - Protocol V2 canonical SHA-256: `cfc9539c0b325919a60eb8a5722826affa53e1c253e3b96c15e3a6db41dd2541`; `collectionOpened=false`.
 

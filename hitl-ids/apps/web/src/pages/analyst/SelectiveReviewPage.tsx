@@ -78,6 +78,7 @@ export function SelectiveReviewPanel({alertRef,onReview,readOnly=false}:{alertRe
   return <section aria-label="Selective Human Review" className="min-w-0 space-y-4 border-t border-border pt-5">
     <h2 className="text-base font-semibold">Selective Human Review</h2>
     <p className="text-sm font-semibold text-warn">{warning}</p>
+    <p className="text-xs text-muted">Active Memory alone does not suppress review. Current trusted context, Selective Review safety gates, and policy evaluation may produce No Immediate Review; this does not close the alert or execute a response.</p>
     <details className="rounded-sm border border-border p-3 text-muted"><summary className="cursor-pointer text-sm">Advanced / Research &amp; Evaluation</summary>
     <button className={button} aria-expanded={collectionOpen} onClick={()=>setCollectionOpen(!collectionOpen)}>Prospective Collection</button>
     {collectionOpen&&<CollectionDecisionPanel alertRef={alertRef} runRef={runRef} onSelect={setRunRef} onRun={setRun} refreshKey={resource.status==="success"?resource.data.version:""}/>}

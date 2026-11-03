@@ -67,7 +67,8 @@ def test_a_request_connection_may_cross_worker_threads(database):  # noqa: F811
     The browser e2e run returned a 500 on the demo's centrepiece alert because SQLite refused a
     connection used off the thread that created it. Deterministic version of that interleaving.
     """
-    request = SimpleNamespace(app=SimpleNamespace(state=SimpleNamespace(database_path=database)))
+    request = SimpleNamespace(app=SimpleNamespace(state=SimpleNamespace(database_path=database)),
+                              state=SimpleNamespace())
     dependency = get_connection(request)
     connection = next(dependency)
     seen: list[object] = []

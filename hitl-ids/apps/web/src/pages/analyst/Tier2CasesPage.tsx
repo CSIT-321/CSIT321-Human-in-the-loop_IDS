@@ -3,6 +3,7 @@ import { Link, useNavigate, useParams } from "react-router";
 import { api, unwrap, type Schemas } from "../../api/client";
 import { useApi } from "../../api/useApi";
 import { PageHeader, Pill } from "../../components/ui";
+import { OperationalEvidence } from "../../features/alert/OperationalEvidence";
 import { useSession } from "../../session/SessionContext";
 import { ResponseRecommendations } from "./ResponseRecommendations";
 import { InvestigationAssistance } from "./InvestigationAssistance";
@@ -15,6 +16,7 @@ const input = "w-full min-w-0 rounded-sm border border-border bg-surface p-2 tex
 type Case = Schemas["CaseView"];
 type Tab = "note" | "finding" | "link" | "timeline";
 const prefixFor = (role?: string) => role === "system_admin" ? "/admin" : role === "evaluator" ? "/evaluator" : "/analyst";
+const caseAssignment = (ownerActorId: number | null) => ownerActorId == null ? "Unassigned / Collaborative" : `Assigned to Actor #${ownerActorId}`;
 
 export function CreateCasePanel({ alert }: { alert: Schemas["RoutingView"] }) {
   const { session } = useSession();
@@ -66,17 +68,18 @@ export function Tier2CasesPage() {
     {cases.status === "success" && <>
       {cases.data.items.length === 0 ? <p>No Tier 2 cases.</p> : <div className="overflow-x-auto">
         <table className="w-full text-left text-sm" aria-label="Tier 2 cases">
-          <thead><tr>{["Case ID", "Title", "Priority", "Status", "Owner", "Created", "Primary Alert"].map(x => <th className="border-b border-border p-2" key={x}>{x}</th>)}</tr></thead>
+          <thead><tr>{["Case ID", "Title", "Priority", "Status", "Case Assignment", "Created", "Primary Alert"].map(x => <th className="border-b border-border p-2" key={x}>{x}</th>)}</tr></thead>
           <tbody>{cases.data.items.map(item => <tr key={item.caseRef}>
             <td className="border-b border-border p-2"><Link className="text-accent underline" title={item.caseRef} to={prefixFor(session?.role) + "/tier2-cases/" + item.caseRef}>{item.caseRef.slice(0, 8)}</Link></td>
             <td className="min-w-48 border-b border-border p-2">{item.title}</td>
             <td className="border-b border-border p-2">{item.snapshot.triage.priorityBand ?? "Unassigned"} / {item.snapshot.triage.operationalPriority ?? "Not assigned"}</td>
-            <td className="border-b border-border p-2">{item.status === "resolved" ? "Resolved" : item.status}</td><td className="border-b border-border p-2">{item.ownerActorId == null ? "Unassigned" : `Actor #${item.ownerActorId}`}</td>
+            <td className="border-b border-border p-2">{item.status === "resolved" ? "Resolved" : item.status}</td><td className="border-b border-border p-2">{caseAssignment(item.ownerActorId)}</td>
             <td className="border-b border-border p-2">{item.createdAt}</td>
             <td className="border-b border-border p-2"><Link className="text-accent underline" to={(session?.role === "security_analyst" ? "/analyst/operations" : prefixFor(session?.role) + "/v2-triage") + "?alertRef=" + item.primaryOperationalAlertRef}>{item.primaryOperationalAlertRef.slice(0, 8)}</Link></td>
           </tr>)}</tbody>
         </table>
       </div>}
+      <p className="text-xs text-muted">Tier 2 V1 supports collaborative investigation; it does not implement automatic case assignment or workload balancing.</p>
       <div className="flex flex-wrap items-center gap-3 text-sm">
         <button className={button} disabled={offset === 0} onClick={() => setOffset(Math.max(0,offset-50))}>Previous</button>
         <span>{cases.data.page.total} cases</span>
@@ -142,12 +145,13 @@ export function CaseInvestigation({ initial, refresh }: { initial: Case; refresh
       <Pill tone="accent">{current.status === "resolved" ? "Resolved" : current.status}</Pill>
       {current.status === "resolved" && <p className="text-sm">Investigation closed. Evidence, history and human learning provenance remain available.</p>}
       <dl className="grid grid-cols-1 gap-3 text-sm sm:grid-cols-2">
-        <div><dt className="text-muted">Owner</dt><dd>{current.ownerActorId == null ? "Unassigned" : `Actor #${current.ownerActorId}`}</dd></div>
+        <div><dt className="text-muted">Case Assignment</dt><dd>{caseAssignment(current.ownerActorId)}</dd></div>
         <div><dt className="text-muted">Creation Source</dt><dd>{current.decisionSource === "system_policy" ? "System Policy" : `Analyst #${current.createdByActorId}`}</dd></div>
         <div><dt className="text-muted">Created</dt><dd>{current.createdAt}</dd></div>
         <div><dt className="text-muted">Operational Priority at Creation</dt><dd>{snapshot.triage.priorityBand ?? "Unassigned"} / {snapshot.triage.operationalPriority ?? "Not assigned"}</dd></div>
         <div><dt className="text-muted">Policy at Creation</dt><dd>{snapshot.triage.triagePolicyVersion ?? "Not applied"}</dd></div>
       </dl>
+      <p className="text-xs text-muted">Tier 2 V1 supports collaborative investigation; it does not implement automatic case assignment or workload balancing.</p>
       <p className="text-sm">System Attack Classification: {systemCategoryLabel(current.systemAttackClassification)}</p>
       {current.latestConclusion && <section aria-label="Latest Human Investigation Conclusion" className="space-y-2 border-t border-border pt-3">
         <h2 className="text-base font-semibold">Latest Human Investigation Conclusion</h2>
@@ -166,16 +170,12 @@ export function CaseInvestigation({ initial, refresh }: { initial: Case; refresh
       <p className="text-xs text-muted">{snapshot.routingDecision.eventType} by {snapshot.routingDecision.decisionSource === "system_policy" ? "System Policy" : `actor #${snapshot.routingDecision.actorId}`}</p>
       <ul className="space-y-1 text-sm">{snapshot.triage.tier2RecommendationReasons.map((text,i) => <li key={i}>{text}</li>)}</ul>
     </section>
-    <section className="space-y-2 border-t border-border pt-4" aria-label="Detector evidence">
-      <h2 className="text-base font-semibold">Detector Evidence</h2>
-      <p className="text-sm">Detector: {detector.detectorName} ({detector.detectorSource})</p>
-      <p className="text-sm">Native Severity: {detector.nativeSeverity ?? "Not provided"}</p>
-      <p className="text-sm">Confidence: {detector.detectorConfidence === null ? "Not provided" : detector.detectorConfidence}</p>
-      <p className="break-words text-sm">{detector.detectionTitle} / {detector.detectionCategory ?? "Not provided"}</p>
-      <p className="break-all text-sm">Source: {detector.sourceIp} / Port: {detector.sourcePort ?? "Not provided"}</p>
-      <p className="break-all text-sm">Destination: {detector.destinationIp} / Port: {detector.destinationPort ?? "Not provided"}</p>
+    <section className="space-y-3 border-t border-border pt-4" aria-label="Primary Alert Evidence">
+      <h2 className="text-base font-semibold">Primary Alert Evidence</h2>
+      <p className="break-all font-mono text-xs">{current.primaryOperationalAlertRef}</p>
+      <p className="text-xs text-muted">Immutable detector evidence captured when this Case was created.</p>
+      <OperationalEvidence alert={detector} />
       <Link className="inline-block text-sm text-accent underline" to={(session?.role === "security_analyst" ? "/analyst/operations" : prefixFor(session?.role) + "/v2-triage") + "?alertRef=" + current.primaryOperationalAlertRef}>Primary alert</Link>
-      <details><summary className="cursor-pointer text-sm">Immutable detector snapshot</summary><pre className="max-h-80 overflow-auto whitespace-pre-wrap break-all p-2 text-xs">{JSON.stringify(detector.detectorEvidence,null,2)}</pre></details>
     </section>
     <section className="space-y-4 border-t border-border pt-4">
       <div className="flex flex-wrap gap-2" role="tablist" aria-label="Case investigation">

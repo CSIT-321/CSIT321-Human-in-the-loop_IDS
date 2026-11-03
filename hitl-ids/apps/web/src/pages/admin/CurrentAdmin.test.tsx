@@ -96,6 +96,10 @@ describe("current Admin surface", () => {
     expect(screen.getByText("Conflict Review lessons")).toBeVisible();
     expect(screen.getByText("suricata-classification-v3")).toBeVisible();
     expect(screen.getByText("Suricata")).toBeVisible();
+    expect(screen.getByText("Database availability")).toBeVisible();
+    expect(screen.getByText("Workspace availability")).toBeVisible();
+    expect(screen.getAllByText("Available").length).toBeGreaterThanOrEqual(2);
+    expect(screen.queryByText("Workspace readiness")).toBeNull();
     expect(seen.some(request => new URL(request.url).pathname.startsWith("/api/dashboard/"))).toBe(false);
     expect(seen.some(request => new URL(request.url).pathname === "/api/detection/run")).toBe(false);
   });
