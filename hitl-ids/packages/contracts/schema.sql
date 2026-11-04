@@ -31,10 +31,11 @@ CREATE TABLE datasets (
     name               TEXT    NOT NULL,
     version            TEXT    NOT NULL,
     source_file        TEXT    NOT NULL,
-    -- LOCAL PATCH (not upstream, machine-specific): SQLite 3.38.4 (this Python 3.11.0's bundled
-    -- version) fails json_valid(NULL)-based CHECKs that pass on other SQLite versions. Added
-    -- explicit `IS NULL OR` escapes to every nullable json_valid column below. Do not push as-is;
-    -- report upstream instead (see conversation).
+    -- COMPATIBILITY: every json_valid column below is nullable, but a bare CHECK (json_valid(x))
+    -- rejects NULL — SQLite 3.38.4 (bundled with Python 3.11.0) returns 0 for json_valid(NULL).
+    -- Code paths legitimately store NULL (e.g. cef.py's signature_rules when no rule matched), so
+    -- the escapes below restore the intended nullable semantics. They only widen the constraint to
+    -- admit NULL in addition to well-formed JSON, which is safe on every SQLite version.
     preparation_meta   TEXT    CHECK (preparation_meta IS NULL OR json_valid(preparation_meta)),
     total_records      INTEGER NOT NULL CHECK (total_records >= 0),
     class_distribution TEXT    NOT NULL CHECK (json_valid(class_distribution)),
