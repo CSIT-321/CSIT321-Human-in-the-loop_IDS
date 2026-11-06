@@ -62,10 +62,12 @@ def load_flow_routing_policy(path: Path = DEFAULT_POLICY) -> FlowRoutingPolicy:
 
 
 @dataclass(frozen=True)
-class FlowRoute:
+class GroupRoute:
     classification: AttackClassification
     decision: SystemRoutingDecision
     tier2_reasons: tuple[str, ...]
+    qualifying_member: int | None = None
+    limit_downgraded: bool = False
 
 
 def classify_flow(alert: m.Alert, policy: FlowRoutingPolicy) -> AttackClassification:
@@ -100,50 +102,96 @@ def _e1(alert: m.Alert, policy: FlowRoutingPolicy, suricata_severity: int | None
     return met
 
 
-def evaluate_flow_route(alert: m.Alert, classification: AttackClassification, policy: FlowRoutingPolicy,
-                        chart: SeverityChart, *, suricata_severity: int | None = None) -> FlowRoute:
+def route_group(members: list[m.Alert], policy: FlowRoutingPolicy, chart: SeverityChart, *,
+                suricata_severity_by_legacy_id: dict[int, int] | None = None,
+                escalated_groups_this_minute: int = 0) -> GroupRoute:
+    """One route for a whole group: the strongest member outcome wins, the strongest member is marked.
+
+    Any member that meets an enabled E1 branch escalates the whole group. Otherwise the first member whose
+    candidate rules apply makes the group a candidate. A group that escalates past the per-minute limit of new
+    groups is downgraded to a candidate with the reason; the alert is never closed or lost.
+    """
+    severity_by_id = suricata_severity_by_legacy_id or {}
     try:
-        e1 = _e1(alert, policy, suricata_severity)
-        enabled = [reason for reason, on in e1 if on]
-        if enabled:
-            return FlowRoute(classification, SystemRoutingDecision(route_class="CRITICAL_ESCALATION",
-                route="tier2_case", policy_version=policy.version, reasons=tuple(enabled)), ())
-        candidates = [f"{reason} This rule is switched off, so the alert waits for Tier 1." for reason, _ in e1]
-        if classification.attack_category == "unknown_needs_expert":
-            candidates.append("The detectors disagree on the attack class: " + " ".join(classification.reasons))
-        attack = alert.attack_category or alert.ml_predicted_class
-        severity = chart.severity(attack) if attack not in (None, "Benign") else 0.0
-        if alert.combined_score >= policy.e3_minimum_score and severity >= policy.e3_minimum_attack_severity:
-            candidates.append(f"E3: score {alert.combined_score:g} and {attack} has attack severity {severity:g}. "
-                              "A Tier 1 analyst confirms before escalation.")
+        for i, alert in enumerate(members):
+            e1 = _e1(alert, policy, severity_by_id.get(alert.id))
+            enabled = [reason for reason, on in e1 if on]
+            if not enabled:
+                continue
+            escalation_reasons = list(enabled)
+            if len(members) > 1:
+                escalation_reasons.append(f"The whole group of {len(members)} alerts is escalated; "
+                                          f"member {i + 1} of {len(members)} qualified.")
+            classification = classify_flow(alert, policy)
+            if escalated_groups_this_minute >= policy.new_groups_per_minute:
+                reason = (f"New-group limit: {policy.new_groups_per_minute} new escalated groups per minute already "
+                          f"reached; the group waits for a Tier 1 analyst.")
+                return GroupRoute(classification, SystemRoutingDecision(
+                    route_class="ROUTINE_REVIEW", route="tier1_review", policy_version=policy.version,
+                    reasons=(reason,)), tuple(escalation_reasons) + (reason,), i, True)
+            return GroupRoute(classification, SystemRoutingDecision(
+                route_class="CRITICAL_ESCALATION", route="tier2_case", policy_version=policy.version,
+                reasons=tuple(escalation_reasons)), (), i)
+        candidates, candidate_member = [], None
+        classification = None
+        for i, alert in enumerate(members):
+            classification = classification or classify_flow(alert, policy)
+            switched = [f"{reason} This rule is switched off, so the alert waits for Tier 1."
+                        for reason, on in _e1(alert, policy, severity_by_id.get(alert.id)) if not on]
+            if classification.attack_category == "unknown_needs_expert":
+                switched.append("The detectors disagree on the attack class: " + " ".join(classification.reasons))
+            attack = alert.attack_category or alert.ml_predicted_class
+            severity = chart.severity(attack) if attack not in (None, "Benign") else 0.0
+            if alert.combined_score >= policy.e3_minimum_score and severity >= policy.e3_minimum_attack_severity:
+                switched.append(f"E3: score {alert.combined_score:g} and {attack} has attack severity {severity:g}. "
+                                "A Tier 1 analyst confirms before escalation.")
+            if switched:
+                candidates.extend(switched)
+                candidate_member = candidate_member if candidate_member is not None else i
     except Exception as error:  # fail-safe: never escalate or close on a failure
-        return FlowRoute(classification, SystemRoutingDecision(route_class="ROUTINE_REVIEW", route="tier1_review",
-            policy_version=policy.version, reasons=(f"Routing could not be evaluated ({type(error).__name__}); "
-                                                    "routine Tier 1 review.",)), ())
+        return GroupRoute(AttackClassification(attack_category=None, status="informational_policy_signal",
+            reasons=("Routing could not be evaluated.",), policy_version=CLASSIFIER_VERSION),
+            SystemRoutingDecision(route_class="ROUTINE_REVIEW", route="tier1_review", policy_version=policy.version,
+                reasons=(f"Routing could not be evaluated ({type(error).__name__}); routine Tier 1 review.",)), ())
+    classification = classification or AttackClassification(attack_category=None, status="informational_policy_signal",
+        reasons=("No detector asserts an attack class.",), policy_version=CLASSIFIER_VERSION)
     if candidates:
-        return FlowRoute(classification, SystemRoutingDecision(route_class="ROUTINE_REVIEW", route="tier1_review",
-            policy_version=policy.version, reasons=("Tier 2 candidate; a Tier 1 analyst decides.",)), tuple(candidates))
-    return FlowRoute(classification, SystemRoutingDecision(route_class="ROUTINE_REVIEW", route="tier1_review",
+        return GroupRoute(classification, SystemRoutingDecision(route_class="ROUTINE_REVIEW", route="tier1_review",
+            policy_version=policy.version, reasons=("Tier 2 candidate; a Tier 1 analyst decides.",)),
+            tuple(candidates), candidate_member)
+    return GroupRoute(classification, SystemRoutingDecision(route_class="ROUTINE_REVIEW", route="tier1_review",
         policy_version=policy.version, reasons=("No automatic or candidate rule applies. Routine Tier 1 review.",)), ())
 
 
 def route_flow_alert(conn, operational_id: int, *, policy: FlowRoutingPolicy, chart: SeverityChart,
-                     suricata_severity: int | None = None) -> str:
-    """Write one system routing decision for a projected flow alert. Caller owns the transaction."""
+                     group_members: list[m.Alert] | None = None,
+                     suricata_severity_by_legacy_id: dict[int, int] | None = None,
+                     escalated_groups_this_minute: int = 0,
+                     qualifying_member_alert_id: int | None = None) -> tuple[str, int | None]:
+    """Write one system routing decision for a projected flow group. Caller owns the transaction.
+
+    ``group_members`` are the group's legacy alerts in arrival order; when absent the projected alert is the
+    whole group. Returns the outcome and the qualifying member's legacy alert id.
+    """
     if not conn.in_transaction or not conn.execute("PRAGMA foreign_keys").fetchone()[0]:
         raise ValueError("flow routing requires a transaction and foreign keys")
     alert_v2 = read_projection(conn, operational_id)
     before = read_triage(conn, operational_id)
     if alert_v2.source_kind != "legacy_flow_alert" or (before.handling_route, before.workflow_stage) != ("unassigned", "staged"):
         raise ValueError("flow routing requires a fresh projected flow alert")
-    legacy = db.get(conn, m.Alert, alert_v2.legacy_alert_id)
-    route = evaluate_flow_route(legacy, classify_flow(legacy, policy), policy, chart, suricata_severity=suricata_severity)
+    members = group_members if group_members is not None else [db.get(conn, m.Alert, alert_v2.legacy_alert_id)]
+    route = route_group(members, policy, chart,
+                        suricata_severity_by_legacy_id=suricata_severity_by_legacy_id,
+                        escalated_groups_this_minute=escalated_groups_this_minute)
     decision = route.decision
+    qualifying_id = qualifying_member_alert_id if qualifying_member_alert_id is not None \
+        else members[route.qualifying_member].id if route.qualifying_member is not None else None
     priority_policy = load_triage_policy()
     moment = max(m.utc_now(), before.updated_at + timedelta(microseconds=1))
     provenance = resolved_for(conn, alert_v2.operational_alert_ref, moment)
     priority = evaluate_triage(alert_v2, provenance.context, priority_policy)
     reason = " ".join(decision.reasons + route.tier2_reasons)
+    reason_audit = reason if len(reason) <= 2000 else reason[:1970] + " ... (reasons truncated)"
     after = OperationalTriageStateV2(operational_alert_id=operational_id,
         operational_priority=priority.final_operational_priority, priority_band=priority.priority_band,
         priority_band_scheme="p1_p4", handling_route=decision.route,
@@ -173,7 +221,7 @@ def route_flow_alert(conn, operational_id: int, *, policy: FlowRoutingPolicy, ch
     routing_id = conn.execute("INSERT INTO operational_routing_audit "
         "(operational_alert_id,actor_id,decision_source,request_id,action,event_type,expected_state_version,reason,"
         "before_state,after_state,created_at) VALUES (?,NULL,'system_policy',?,'system_route','V2_SYSTEM_ROUTED',?,?,?,?,?)",
-        (operational_id, str(request_id), state_version(before), reason, _snapshot(before), _snapshot(after),
+        (operational_id, str(request_id), state_version(before), reason_audit, _snapshot(before), _snapshot(after),
          stamp)).lastrowid
     case_ref = None
     if decision.route == "tier2_case":
@@ -194,7 +242,7 @@ def route_flow_alert(conn, operational_id: int, *, policy: FlowRoutingPolicy, ch
         conn.execute("INSERT INTO tier2_case_events "
             "(case_id,actor_id,decision_source,request_id,action,event_type,request_payload,reason,before_state,after_state,created_at) "
             "VALUES (?,NULL,'system_policy',?,'create','V2_TIER2_CASE_CREATED',?,?,?,?,?)",
-            (case_id, str(uuid5(NAMESPACE_URL, f"flow-case:{request_id}")), _snapshot(decision), reason,
+            (case_id, str(uuid5(NAMESPACE_URL, f"flow-case:{request_id}")), _snapshot(decision), reason_audit,
              _snapshot(before), _snapshot(after), stamp))
     conn.execute("INSERT INTO operational_system_routing "
         "(operational_alert_id,classification,classification_policy,routing_decision,routing_policy,context_provenance,"
@@ -204,8 +252,9 @@ def route_flow_alert(conn, operational_id: int, *, policy: FlowRoutingPolicy, ch
          _snapshot(decision), _snapshot(policy), _snapshot(provenance), routing_id, policy_id, case_ref, stamp))
     if read_triage(conn, operational_id) != after:
         raise ValueError("flow routing storage round-trip mismatch")
-    return "auto_escalated" if decision.route == "tier2_case" else "candidate" if route.tier2_reasons else "routine"
+    return ("auto_escalated" if decision.route == "tier2_case" else "candidate" if route.tier2_reasons else "routine",
+            qualifying_id)
 
 
-__all__ = ["FlowRoutingPolicy", "FlowRoute", "classify_flow", "evaluate_flow_route", "load_flow_routing_policy",
+__all__ = ["FlowRoutingPolicy", "GroupRoute", "classify_flow", "route_group", "load_flow_routing_policy",
            "load_severity_chart", "route_flow_alert"]

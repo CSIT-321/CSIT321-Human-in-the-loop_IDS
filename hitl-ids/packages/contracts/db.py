@@ -170,6 +170,8 @@ MIGRATIONS += ((20, "system-attributed automatic human learning and activation",
                 Path(__file__).with_name("safe_memory_auto_activation.sql").read_text(encoding="utf-8")),)
 MIGRATIONS += ((21, "shared Tier 1 work and database-backed exclusive claim arbitration",
                 Path(__file__).with_name("analyst_work.sql").read_text(encoding="utf-8")),)
+MIGRATIONS += ((22, "grouped Tier 1 queue items (method B) with append-only membership",
+                Path(__file__).with_name("alert_groups.sql").read_text(encoding="utf-8")),)
 SCHEMA_VERSION = MIGRATIONS[-1][0]
 
 

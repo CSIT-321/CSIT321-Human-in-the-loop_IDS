@@ -229,7 +229,7 @@ def test_migration_21_preserves_populated_schema20_and_atomic_failure(tmp_path,m
             broken.setattr(db,'MIGRATIONS',migrations[:20]+((21,'broken',migrations[20][2]+'\nSELECT * FROM deliberately_missing;'),))
             with pytest.raises(sqlite3.OperationalError):db.migrate(c)
         assert '\n'.join(c.iterdump())==dump
-        assert db.migrate(c)==[21] and db.migrate(c)==[]
+        assert db.migrate(c)==[21, 22] and db.migrate(c)==[]
         assert {t:[tuple(r) for r in c.execute('SELECT * FROM '+t)] for t in tables}==before
         assert work.read_work(c,aa[0].id,1).status=='completed'
         assert work.read_work(c,aa[1].id,1).status=='escalated'
