@@ -1,0 +1,11 @@
+{
+  "version": "flow-routing-v1",
+  "e1FlowRuleEnabled": true,
+  "e1SuricataEnabled": true,
+  "e1MinimumScore": 80,
+  "e1SuricataMaximumSeverity": 2,
+  "e3MinimumScore": 90,
+  "e3MinimumAttackSeverity": 7.0,
+  "newGroupsPerMinute": 5,
+  "groupWindowMinutes": 30
+}
