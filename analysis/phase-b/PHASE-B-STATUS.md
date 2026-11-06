@@ -1,52 +1,43 @@
-# Phase B — status and the grouping design (2026-11-06)
+# Phase B — status (2026-11-06, updated after grouping)
 
-## Done (commit pending full suite)
+## Done
 
-- `packages/detection/flow_routing.py`, `config/flow-routing-v1.json`, `scripts/materialize_flow_queue.py`
-  (`route_flagged`). Every projected flow alert gets one system routing decision in LCK's own tables
-  (`operational_triage_state_v2`, `operational_routing_audit`, `operational_triage_policy_audit`,
-  `operational_system_routing`, `tier2_cases`). No schema change.
-- Routed flow alerts in Tier 1 are now claimable (`is_tier1_work` is true), which closes review findings S2-01,
-  S3-01, S4-01, S6-02 (backend part), and S3-02 for flow alerts (the candidate flag and reasons are stored).
-- Tests: `tests/test_flow_routing.py`, 14 tests; red check `analysis/phase-b/red_check.sh` — the candidate flag
-  hard-coded False (LCK's defect), the fail-safe removed, and the Admin switch ignored each fail at least one test.
+- **Routing core** (commit `9d210ea`): `packages/detection/flow_routing.py`, `config/flow-routing-v1.json`,
+  `scripts/materialize_flow_queue.py`. Every flow alert/group gets one system routing decision in LCK's own tables.
+- **Grouping, method B** (commit `82263b2`): migration 22 adds `alert_groups` + `alert_group_members` (append-only
+  except the growing `last_seen_at`/`member_count` and one-time `representative`/`qualifying`/`case_ref` links).
+  Each group = one operational alert (its first member in arrival order). Unflagged flows join no group.
+- Routed Tier 1 groups are claimable (`is_tier1_work`). Candidate flag + reasons stored (review findings S2-01,
+  S3-01, S3-02, S4-01, S6-02 backend part closed).
+- Tests: 22 in `test_flow_queue.py` / `test_flow_routing.py` / `test_flow_routing_rules.py` + fixture
+  `flow_group_fixture.py` (4 known groups: two E1 in the same minute, two Botnet candidates 41 min apart).
+  Red checks (`red_check.sh`, `red_check_grouping.sh`): candidate-flag off, fail-safe removed, switch ignored,
+  window ignored, unflagged join groups, limit ignored — each fails at least one test, restore passes all.
 
-## Measured on copies (`analysis/phase-b/routing_truth.py`)
+## Measured on copies
 
-| Database | Auto-escalated (wrong) | Candidates (wrong) | Routine (wrong) |
-|---|---|---|---|
-| `demo.db` (996 flagged) | 200 (0) | 444 (1 = `AL-00478`) | 352 (1 = `AL-02717`) |
-| `stress.db` (1,346 flagged) | 148 (0) | 700 (342) | 498 (258) |
+| Database | Alerts | Groups | Escalated | Candidate | Routine | Time |
+|---|---|---|---|---|---|---|
+| `demo.db` | 996 flagged | **81** | 3 | 74 | 4 | 5.7 s |
+| `stress.db` | 1,346 flagged | 676 | 3 | 420 | 253 | 18.8 s |
 
-10.4 s for 996 alerts; a second run routes 0.
+Escalated demo groups = the 3 brute-force sources (18.221.219.4 ×80, 13.58.98.64 ×54, 13.59.126.31 ×66) — the
+same 200 E1 flows measured before, now 3 queue items. Second run: 0 new. The 4 "routine" demo groups hold the
+miscellaneous flagged singles.
 
-## Not done in this step
+## Traps found and fixed during this step
 
-- **E1-suricata is evaluated but not fed** in the batch path: `demo.db` has no Suricata alerts linked to flows.
-  The replay source (next step) passes the linked Suricata severity.
-- **Admin switch** exists in the policy file only; no Governance control yet (Phase C).
-- **New-groups limit (M = 5/min)** is in the policy file but not enforced: it acts on groups, which do not exist yet.
+1. Routing reasons on large groups exceed the audit `reason` column's 2000-char CHECK — cap `reason_audit` to
+   1970 + marker before the routing-audit and case-event inserts (the triage state keeps the full text).
+2. A test helper keyed groups by source IP; one IP legitimately owns several groups (10.0.0.66 twice in the
+   fixture, `18.218.*` many times on `demo.db`). Key by group id.
+3. Adding migration 22 breaks hard-coded `db.migrate()` expectations in 5 test files (`[20,21]` etc.).
+
+## Not done yet
+
+- **E1-suricata** is evaluated but not fed: `demo.db` has no Suricata alerts linked to flows. The replay source
+  (next step) passes the linked severity.
+- **Governance switches**: the policy file has them; no Admin UI yet (Phase C).
 - B5 (re-evaluate on a trusted fact), B6 (one eligibility predicate), B7 (immutability triggers), B8 (one severity
-  config) — not started.
-
-## Grouping needs a schema change (migration 22)
-
-Two constraints in LCK's schema block grouping as decided (D3b):
-
-1. `tier2_cases.primary_operational_alert_id` is UNIQUE — one case per alert.
-2. `tier2_case_events` CHECK allows the system (`decision_source='system_policy'`) only the `create` action — the
-   system cannot `link` a further alert into an existing case.
-
-Without grouping, the replay window would open **16,713** Tier 2 cases (one per E1 flow).
-
-Design (migration 22, additive except one CHECK):
-
-- New `alert_groups` (group_ref, grouping key = source IP, first/last seen, case_ref nullable, created_at) and
-  `alert_group_members` (group_id, operational_alert_id UNIQUE, joined_at, reason). Both append-only.
-- Rebuild `tier2_case_events` to allow `decision_source='system_policy'` with `action='link'` (the table is already
-  rebuilt the same way in migration 14).
-- Routing: an alert joins the open group for its source IP if the group's last member is within 30 minutes; else it
-  opens a new group. The first E1 member opens the case; later members are `link`ed into it, with the qualifying
-  member marked. The new-groups limit counts new groups per minute.
-- The **one-vote tag** belongs to the verdict bridge (C1), where group verdicts are first written to
-  `feedback_events`; its red-capable test is written there.
+  config).
+- The one-vote group tag for family learning belongs to the verdict bridge (C1).
