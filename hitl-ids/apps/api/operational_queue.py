@@ -31,6 +31,16 @@ def occurred_key(value):
         return None
 
 
+def reviewed_ids(conn):
+    """Alerts with at least one persisted selective-review decision.
+
+    ``read_review`` returns ``must_review`` for every other alert (no persisted decision), so only these can be
+    deferred and only these need the full policy evaluation. Evaluating the policy for every alert cost ~17 SQL
+    statements and one config read each, and made the summary take 8.2 s with 996 alerts (review S6-01).
+    """
+    return {row[0] for row in conn.execute('SELECT DISTINCT operational_alert_id FROM selective_review_events')}
+
+
 def matching(*, handling_route=None, priority_band=None, work_scope='all',
              route_class=None, attack_category=None, q=None):
     clauses, params = [], []
@@ -63,13 +73,17 @@ def queue_page(conn, *, limit, offset, review_required=None, review_disposition=
         rows = conn.execute(f'''SELECT a.id,a.operational_alert_ref {SOURCE} {where}
             ORDER BY {VALID_PRIORITY} DESC, queue_occurred_at(a.occurred_at) DESC,
                      a.operational_alert_ref ASC''', params).fetchall()
+        reviewed = reviewed_ids(conn)
         ids = []
         for row in rows:
-            if row[0] not in reviews:
-                reviews[row[0]] = effective_review(conn, row[1])
-            review = reviews[row[0]]
-            if ((review_required is None or review.review_required == review_required)
-                    and (review_disposition is None or review.disposition == review_disposition)):
+            if row[0] in reviewed:
+                if row[0] not in reviews:
+                    reviews[row[0]] = effective_review(conn, row[1])
+                required, disposition = reviews[row[0]].review_required, reviews[row[0]].disposition
+            else:  # no persisted decision: read_review's answer is always must_review
+                required, disposition = True, 'must_review'
+            if ((review_required is None or required == review_required)
+                    and (review_disposition is None or disposition == review_disposition)):
                 ids.append(row[0])
         return len(ids), ids[offset:offset + limit]
     total = conn.execute('SELECT count(*) ' + SOURCE + where, params).fetchone()[0]
@@ -96,10 +110,14 @@ def summary(conn):
         count(CASE WHEN s.operational_alert_id IS NOT NULL AND t.handling_route='tier1_review' AND t.workflow_stage='triage' AND (w.status IS NULL OR w.status='available') THEN 1 END) AS available_work
         {SOURCE}''').fetchone()
     values.update(dict(work))
-    # Available means claim-eligible attention, not an unowned deferred item.
-    values['available_work']-=sum(effective_review(conn,item[0]).disposition=='no_immediate_review'
-        for item in conn.execute(f"SELECT a.operational_alert_ref {SOURCE} WHERE s.operational_alert_id IS NOT NULL AND t.handling_route='tier1_review' AND t.workflow_stage='triage' AND (w.status IS NULL OR w.status='available')"))
-    deferred = sum(effective_review(conn, item[0]).disposition == 'no_immediate_review'
-        for item in conn.execute('SELECT operational_alert_ref FROM operational_alerts_v2').fetchall())
+    # Available means claim-eligible attention, not an unowned deferred item. Only an alert with a persisted
+    # review decision can be deferred, so the policy runs once per such alert, never per alert in the table.
+    deferred_ids = {item[0] for item in conn.execute(
+        'SELECT DISTINCT a.id, a.operational_alert_ref FROM selective_review_events e '
+        'JOIN operational_alerts_v2 a ON a.id = e.operational_alert_id').fetchall()
+        if effective_review(conn, item[1]).disposition == 'no_immediate_review'}
+    available = {item[0] for item in conn.execute(f"SELECT a.id {SOURCE} WHERE s.operational_alert_id IS NOT NULL AND t.handling_route='tier1_review' AND t.workflow_stage='triage' AND (w.status IS NULL OR w.status='available')")}
+    values['available_work'] -= len(available & deferred_ids)
+    deferred = len(deferred_ids)
     values.update(no_immediate_review=deferred, review_required=values['total_alerts'] - deferred)
     return OperationalSummary(**values, open_tier2_cases=open_cases)
