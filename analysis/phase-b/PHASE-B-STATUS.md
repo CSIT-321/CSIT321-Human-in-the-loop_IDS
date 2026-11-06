@@ -45,3 +45,22 @@ reasons repeated once per member. All three fixed test-first; longest stored rea
 - B5 (re-evaluate on a trusted fact), B6 (one eligibility predicate), B7 (immutability triggers), B8 (one severity
   config).
 - The one-vote group tag for family learning belongs to the verdict bridge (C1).
+
+## Decision D4 (reviewed 2026-11-07): keep it, with three conditions
+
+Measured on a copy of the routed `demo.db` (`analysis/phase-b/d4_cost_probe.py`):
+
+- The 4,004 unflagged flows are all model class Benign, scores 0 to 42.77. 6 of them are real attacks
+  (5 Infiltration, 1 Web Attack). One of them, `AL-03086`, is the approved demo's missed-attack story.
+- Each unflagged flow projected and routed as a single item: 47.9 s in total (12 ms each). All 4,004 routed routine.
+- Queue: 4,085 items. The 81 flagged groups keep ranks 1-81. `AL-03086` is at rank 83.
+- `queue_page(50)` on 4,085 items: 108 ms.
+
+Conditions:
+1. Unflagged flows are never grouped. Each one is a single queue item.
+2. Unflagged flows rank below every flagged group.
+3. The Tier 1 workload count shows flagged groups and unflagged flows apart. This is a screen-layout
+   choice, so supervisors confirm it in Phase C.
+
+Not measured: cost at full-day scale (about 74,500 unflagged flows), and the summary query on 4,085 items.
+The demo script quotes "rank 998 -> 997" for `AL-03086`. That number changes and must be updated in Phase F.
