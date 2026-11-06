@@ -4,7 +4,8 @@ The operational workstation reads only ``operational_alerts_v2``. Detection writ
 detection database the workstation is empty until this runs. Method B (analysis/phase-b/GROUPING-METHOD-REVIEW.md):
 flagged alerts group by source IP - the next alert within ``group_window_minutes`` of the group's last one joins the
 group. Each group is one operational alert (its first member, the representative), so the queue lists groups, not
-flows. Unflagged flows are not queue work and join no group. The legacy workflow's tables never change.
+flows. Unflagged flows join no group: each one is its own routine queue item, below the groups (decision D4).
+The legacy workflow's tables never change.
 
     python scripts/materialize_flow_queue.py --database data/demo.db
 """
@@ -130,6 +131,48 @@ def route_flagged(conn: sqlite3.Connection, *, policy=None) -> dict[str, int]:
     return counts
 
 
+UNFLAGGED_UNPROJECTED = """SELECT a.id FROM alerts a
+                           LEFT JOIN operational_alerts_v2 o ON o.legacy_alert_id = a.id
+                           WHERE a.evidence_class = 'none' AND o.id IS NULL ORDER BY a.id"""
+UNFLAGGED_UNROUTED = """SELECT o.id, a.* FROM operational_alerts_v2 o JOIN alerts a ON a.id = o.legacy_alert_id
+                        LEFT JOIN operational_system_routing s ON s.operational_alert_id = o.id
+                        WHERE a.evidence_class = 'none' AND s.operational_alert_id IS NULL ORDER BY a.id"""
+
+
+def materialize_unflagged(conn: sqlite3.Connection) -> int:
+    """Project each unflagged flow as its own queue item (decision D4). Never grouped: grouping by source would
+    hide a missed attack among the same host's benign flows. Returns the number created; a re-run creates 0."""
+    db.migrate(conn)
+    conn.commit()
+    ids = [row[0] for row in conn.execute(UNFLAGGED_UNPROJECTED).fetchall()]
+    for legacy_id in ids:
+        materialize_source(conn, "legacy_flow_alert", legacy_id)
+    return len(ids)
+
+
+def route_unflagged(conn: sqlite3.Connection, *, policy=None) -> dict[str, int]:
+    """Give every not yet routed unflagged item its one system routing decision, as a group of one.
+
+    The routing rules are the flagged path's own (`route_group`); an unflagged flow cannot meet E1, so it never
+    counts toward the new-groups limit. One transaction per item; a second run returns all zeros.
+    """
+    policy = policy or load_flow_routing_policy()
+    chart = load_severity_chart()
+    counts = {"auto_escalated": 0, "candidate": 0, "routine": 0}
+    for row in conn.execute(UNFLAGGED_UNROUTED).fetchall():
+        operational_id = row[0]
+        alert = db.from_row(m.Alert, {key: row[key] for key in row.keys()[1:]})
+        conn.execute("BEGIN IMMEDIATE")
+        try:
+            outcome, _ = route_flow_alert(conn, operational_id, policy=policy, chart=chart, group_members=[alert])
+            counts[outcome] += 1
+            conn.commit()
+        except Exception:
+            conn.rollback()
+            raise
+    return counts
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--database", type=Path, required=True)
@@ -140,8 +183,12 @@ def main() -> int:
     with closing(db.connect(args.database)) as conn:
         members, new_groups, existing = materialize_flagged(conn)
         counts = route_flagged(conn)
+        singles = materialize_unflagged(conn)
+        single_counts = route_unflagged(conn)
     print(f"grouped {members} alerts into {new_groups} new groups, already grouped {existing}")
     print("routed: " + ", ".join(f"{k} {v}" for k, v in counts.items()))
+    print(f"projected {singles} unflagged flows as single items")
+    print("routed unflagged: " + ", ".join(f"{k} {v}" for k, v in single_counts.items()))
     return 0
 
 

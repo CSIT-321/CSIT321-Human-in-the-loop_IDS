@@ -20,7 +20,8 @@ from flow_group_fixture import GROUPS, grouped_database  # noqa: F401  (pytest f
 from test_operational_v2 import snapshot
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
-from materialize_flow_queue import materialize_flagged, route_flagged  # noqa: E402
+from materialize_flow_queue import (materialize_flagged, materialize_unflagged, route_flagged,  # noqa: E402
+                                    route_unflagged)
 
 CHART = load_severity_chart()
 IP = {"brute-a": "18.221.219.4", "brute-b": "13.58.98.64", "botnet-1": "10.0.0.66", "botnet-2": "10.0.0.66"}
@@ -181,3 +182,50 @@ def test_routine_groups_store_no_qualifying_member(grouped_database):
         route, recommended, reasons, case_ref, _, qualifying = rows[ref]
         assert (route, recommended, reasons, case_ref) == ("tier1_review", False, (), None), ref
         assert qualifying is None, ref
+
+
+# D4 (analysis/phase-b/PHASE-B-STATUS.md): every unflagged flow is a single routine Tier 1 item.
+
+def prepare_all(conn, policy=None):
+    materialize_flagged(conn)
+    route_flagged(conn, policy=policy)
+    materialize_unflagged(conn)
+    return route_unflagged(conn, policy=policy)
+
+
+def unflagged_rows(conn):
+    return conn.execute(
+        """SELECT o.id, t.handling_route, t.tier2_recommended, s.case_ref, s.routing_decision
+           FROM operational_alerts_v2 o JOIN alerts a ON a.id = o.legacy_alert_id
+           JOIN operational_triage_state_v2 t ON t.operational_alert_id = o.id
+           LEFT JOIN operational_system_routing s ON s.operational_alert_id = o.id
+           WHERE a.evidence_class = 'none'""").fetchall()
+
+
+def test_every_unflagged_item_gets_one_routine_tier1_decision(grouped_database):
+    with closing(db.connect(str(grouped_database))) as conn:
+        counts = prepare_all(conn)
+        rows = unflagged_rows(conn)
+        claimable = [is_tier1_work(conn, row[0]) for row in rows]
+    assert counts == {"auto_escalated": 0, "candidate": 0, "routine": 6}
+    assert len(rows) == 6
+    assert all(r[1] == "tier1_review" and not r[2] and r[3] is None and r[4] is not None for r in rows), rows
+    assert all(claimable)
+
+
+def test_unflagged_items_rank_below_every_group(grouped_database):
+    from apps.api import operational_queue
+    with closing(db.connect(str(grouped_database))) as conn:
+        prepare_all(conn)
+        groups = {r[0] for r in conn.execute("SELECT representative_operational_alert_id FROM alert_groups")}
+        _, order = operational_queue.queue_page(conn, limit=1000, offset=0)
+    assert set(order[:len(groups)]) == groups, order
+
+
+def test_routing_unflagged_twice_routes_nothing_new_and_keeps_the_legacy_rows(grouped_database):
+    with closing(db.connect(str(grouped_database))) as conn:
+        before = snapshot(conn)
+        prepare_all(conn)
+        again = route_unflagged(conn)
+        assert again == {"auto_escalated": 0, "candidate": 0, "routine": 0}
+        assert snapshot(conn) == before

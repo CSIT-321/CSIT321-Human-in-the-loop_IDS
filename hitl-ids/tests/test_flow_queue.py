@@ -16,7 +16,7 @@ from flow_group_fixture import GROUPS, grouped_database  # noqa: F401  (pytest f
 from test_operational_v2 import snapshot
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
-from materialize_flow_queue import materialize_flagged  # noqa: E402
+from materialize_flow_queue import materialize_flagged, materialize_unflagged  # noqa: E402
 
 SCRIPT = Path(__file__).resolve().parents[1] / "scripts/materialize_flow_queue.py"
 
@@ -98,3 +98,35 @@ def test_the_command_line_reports_what_it_did(grouped_database):
                             capture_output=True, text=True)
     assert result.returncode == 0, result.stderr
     assert "grouped 15 alerts into 4 new groups, already grouped 0" in result.stdout
+    assert "projected 6 unflagged flows as single items" in result.stdout
+
+
+# D4 (analysis/phase-b/PHASE-B-STATUS.md): unflagged flows enter the queue as single, never-grouped items.
+
+def unflagged_ids(conn):
+    return {r[0] for r in conn.execute("SELECT id FROM alerts WHERE evidence_class = 'none'")}
+
+
+def test_every_unflagged_flow_is_one_queue_item_and_joins_no_group(grouped_database):
+    with closing(db.connect(str(grouped_database))) as conn:
+        materialize_flagged(conn)
+        created = materialize_unflagged(conn)
+        expected = unflagged_ids(conn)
+        projected = {r[0] for r in conn.execute(
+            "SELECT o.legacy_alert_id FROM operational_alerts_v2 o JOIN alerts a ON a.id = o.legacy_alert_id "
+            "WHERE a.evidence_class = 'none'")}
+        grouped = {r[0] for r in conn.execute("SELECT legacy_alert_id FROM alert_group_members")}
+        total = conn.execute("SELECT count(*) FROM operational_alerts_v2").fetchone()[0]
+    assert created == len(expected) == 6
+    assert projected == expected
+    assert not projected & grouped
+    assert total == 4 + 6
+
+
+def test_unflagged_projection_leaves_the_legacy_rows_and_a_second_run_creates_nothing(grouped_database):
+    with closing(db.connect(str(grouped_database))) as conn:
+        before = snapshot(conn)
+        materialize_flagged(conn)
+        assert materialize_unflagged(conn) == 6
+        assert materialize_unflagged(conn) == 0
+        assert snapshot(conn) == before

@@ -64,3 +64,31 @@ Conditions:
 
 Not measured: cost at full-day scale (about 74,500 unflagged flows), and the summary query on 4,085 items.
 The demo script quotes "rank 998 -> 997" for `AL-03086`. That number changes and must be updated in Phase F.
+
+### D4 implemented (2026-11-07)
+
+`scripts/materialize_flow_queue.py`: `materialize_unflagged` + `route_unflagged` (a group of one through the same
+`route_flow_alert`; no routing rule changed). Tests: 5 new in `test_flow_queue.py` / `test_flow_routing.py`.
+Red check (`red_check_grouping.sh`) now has 6 defects; each fails at least one test; restored code passes 23.
+
+Measured on fresh copies:
+
+| | demo.db | stress.db |
+|---|---|---|
+| Queue items | 4,085 (81 groups + 4,004 singles) | 4,330 (676 groups + 3,654 singles) |
+| Singles routed | 4,004 routine | 3,654 routine |
+| Ranks | groups 1-81, singles 82-4,085 | groups 1-676, singles 677-4,330 |
+| Unrouted (unclaimable) items | 0 | 0 |
+| queue_page(50) / summary | 106 ms / 97 ms | 96 ms / 87 ms |
+| Full script run | about 50 s (not timed) | 2 min 54 s |
+
+Missed attacks on demo.db: `AL-03086` rank 83, `AL-04260` 84, `AL-01456` 178, `AL-03070` 1,154, `AL-01903` 1,484,
+`AL-00272` 1,490. Second run: all zeros.
+
+**Limit — condition 2 is not enforced in code.** Singles rank below groups only because their scores are lower
+(single max 42.77; group min 88.48 on demo, 60 on stress). Trusted context can add up to +25
+(`config/operational-triage-v1.json`: 10 + 10 + 5), so a single can reach 67.77 and outrank a stress.db group
+scoring 60-67.77. Today: 0 context facts on both. Enforcing it means changing the shared queue order
+(`apps/api/operational_queue.py`), which is a Phase C decision.
+
+**Summary count:** `tier1_review` is now 4,082 on demo.db. Condition 3 (show groups and singles apart) is Phase C.
