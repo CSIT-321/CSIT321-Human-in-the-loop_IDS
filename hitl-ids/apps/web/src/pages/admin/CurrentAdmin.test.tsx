@@ -79,7 +79,7 @@ describe("current Admin surface", () => {
     expect(await screen.findByRole("heading", { level: 1, name: "Overview" })).toBeVisible();
     const nav = screen.getByRole("navigation", { name: "Main" });
     expect(within(nav).getAllByRole("link").map(link => link.textContent?.trim())).toEqual([
-      "Overview", "Operational Workspace", "HITL Governance", "Users & Access", "Evaluation & Audit",
+      "Overview", "Operational Workspace", "HITL Governance", "Guardrails", "Users & Access", "Evaluation & Audit",
     ]);
     expect(ROLE_META.security_analyst.nav.map(item => item.label)).toEqual([
       "Analyst Workstation", "Tier 2 Cases", "Triage Memory", "Selective Review", "Incoming Alerts",

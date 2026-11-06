@@ -58,7 +58,7 @@ test("current Admin navigation, isolated Analyst replay, and shared frozen Evalu
   await expect(admin).toHaveURL(/\/admin\/overview$/);
   const adminNav = admin.getByRole("navigation", { name: "Main" });
   expect((await adminNav.getByRole("link").allTextContents()).map(value => value.trim())).toEqual([
-    "Overview", "Operational Workspace", "HITL Governance", "Users & Access", "Evaluation & Audit",
+    "Overview", "Operational Workspace", "HITL Governance", "Guardrails", "Users & Access", "Evaluation & Audit",
   ]);
   await expect(admin.getByRole("heading", { name: "Overview", exact: true })).toBeVisible();
   await noPageOverflow(admin);

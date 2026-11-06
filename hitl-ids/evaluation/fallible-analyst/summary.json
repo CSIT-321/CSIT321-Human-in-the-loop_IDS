@@ -1,0 +1,120 @@
+{
+  "error_model": "Every 4th attack verdict in the S15 oracle sequence is replaced by mark_false_positive; benign verdicts are unchanged. 25% of attack verdicts, deterministic, fixed before any run.",
+  "rows": [
+    {
+      "B-treatment": {
+        "attacks": 1000,
+        "attacks_below_critical_floor": 0,
+        "attacks_dropped": 0,
+        "dropped_but_never_judged": 0,
+        "guardrail_actions": {
+          "capped": 40
+        },
+        "infiltration_below_floor": 0,
+        "points_lost": 0
+      },
+      "C-guardrails-off": {
+        "attacks": 1000,
+        "attacks_below_critical_floor": 0,
+        "attacks_dropped": 0,
+        "dropped_but_never_judged": 0,
+        "guardrail_actions": {
+          "capped": 40
+        },
+        "infiltration_below_floor": 0,
+        "points_lost": 0
+      },
+      "label": "demo/oracle",
+      "verdicts": 40,
+      "wrong_dismissals": 0
+    },
+    {
+      "B-treatment": {
+        "attacks": 1000,
+        "attacks_below_critical_floor": 0,
+        "attacks_dropped": 10,
+        "dropped_but_never_judged": 0,
+        "guardrail_actions": {
+          "applied": 8,
+          "capped": 32
+        },
+        "infiltration_below_floor": 0,
+        "points_lost": 290.0
+      },
+      "C-guardrails-off": {
+        "attacks": 1000,
+        "attacks_below_critical_floor": 0,
+        "attacks_dropped": 10,
+        "dropped_but_never_judged": 0,
+        "guardrail_actions": {
+          "applied": 10,
+          "capped": 30
+        },
+        "infiltration_below_floor": 2,
+        "points_lost": 300.0
+      },
+      "label": "demo/fallible",
+      "verdicts": 40,
+      "wrong_dismissals": 10
+    },
+    {
+      "B-treatment": {
+        "attacks": 1000,
+        "attacks_below_critical_floor": 0,
+        "attacks_dropped": 5,
+        "dropped_but_never_judged": 5,
+        "guardrail_actions": {
+          "applied": 20,
+          "capped": 20
+        },
+        "infiltration_below_floor": 0,
+        "points_lost": 36.3
+      },
+      "C-guardrails-off": {
+        "attacks": 1000,
+        "attacks_below_critical_floor": 0,
+        "attacks_dropped": 5,
+        "dropped_but_never_judged": 5,
+        "guardrail_actions": {
+          "applied": 35,
+          "capped": 5
+        },
+        "infiltration_below_floor": 1,
+        "points_lost": 37.5
+      },
+      "label": "stress/oracle",
+      "verdicts": 40,
+      "wrong_dismissals": 0
+    },
+    {
+      "B-treatment": {
+        "attacks": 1000,
+        "attacks_below_critical_floor": 0,
+        "attacks_dropped": 6,
+        "dropped_but_never_judged": 5,
+        "guardrail_actions": {
+          "applied": 20,
+          "capped": 20
+        },
+        "infiltration_below_floor": 0,
+        "points_lost": 61.3
+      },
+      "C-guardrails-off": {
+        "attacks": 1000,
+        "attacks_below_critical_floor": 0,
+        "attacks_dropped": 6,
+        "dropped_but_never_judged": 5,
+        "guardrail_actions": {
+          "applied": 36,
+          "capped": 4
+        },
+        "infiltration_below_floor": 2,
+        "points_lost": 67.5
+      },
+      "label": "stress/fallible",
+      "verdicts": 40,
+      "wrong_dismissals": 1
+    }
+  ],
+  "run_id": "fallible-001"
+}

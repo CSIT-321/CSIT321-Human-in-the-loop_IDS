@@ -48,6 +48,7 @@ export const ROLE_META: Readonly<Record<Role, RoleMeta>> = {
       { to: "/admin/overview", label: "Overview" },
       { to: "/admin/workspaces", label: "Operational Workspace" },
       { to: "/admin/governance", label: "HITL Governance" },
+      { to: "/admin/guardrails", label: "Guardrails" },
       { to: "/admin/users", label: "Users & Access" },
       { to: "/admin/evaluation", label: "Evaluation & Audit" },
     ],

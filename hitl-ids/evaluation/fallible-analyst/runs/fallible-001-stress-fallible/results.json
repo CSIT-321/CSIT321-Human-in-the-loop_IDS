@@ -1,0 +1,835 @@
+{
+  "arms": [
+    {
+      "arm": "A-control",
+      "critical_floor_breaches": 0,
+      "critical_preservation_rate": 1.0,
+      "false_positives_in_top_50": 50,
+      "feedback": false,
+      "guardrail_actions": {},
+      "guardrail_pass": true,
+      "guardrails": true,
+      "mean_rank_true_positives": 1413.689,
+      "mrr_true_positives": 0.00159133,
+      "precision_at_50": 0.0,
+      "signature_override_alerts": 52,
+      "verdicts": 0
+    },
+    {
+      "arm": "B-treatment",
+      "critical_floor_breaches": 38,
+      "critical_preservation_rate": 0.970634,
+      "false_positives_in_top_50": 11,
+      "feedback": true,
+      "guardrail_actions": {
+        "applied": 20,
+        "capped": 20
+      },
+      "guardrail_pass": false,
+      "guardrails": true,
+      "mean_rank_true_positives": 1389.035,
+      "mrr_true_positives": 0.0035821,
+      "precision_at_50": 0.78,
+      "signature_override_alerts": 52,
+      "verdicts": 40
+    },
+    {
+      "arm": "C-guardrails-off",
+      "critical_floor_breaches": 38,
+      "critical_preservation_rate": 0.970634,
+      "false_positives_in_top_50": 11,
+      "feedback": true,
+      "guardrail_actions": {
+        "applied": 36,
+        "capped": 4
+      },
+      "guardrail_pass": false,
+      "guardrails": false,
+      "mean_rank_true_positives": 1389.041,
+      "mrr_true_positives": 0.00358209,
+      "precision_at_50": 0.78,
+      "signature_override_alerts": 52,
+      "verdicts": 40
+    }
+  ],
+  "baseline_database": "C:\\Users\\zayya\\CSIT321-Human-in-the-loop_IDS\\hitl-ids\\data\\stress.db",
+  "commit": "e6b4f65",
+  "deltas": {
+    "B_minus_A": {
+      "critical_floor_breaches": 38,
+      "false_positives_in_top_50": 39,
+      "macro_f1_detection": 0.0,
+      "mean_rank_true_positives": 24.654,
+      "mrr_true_positives": 0.00199077,
+      "precision_at_10": 0.1,
+      "precision_at_100": 0.88,
+      "precision_at_200": 0.435,
+      "precision_at_25": 0.6,
+      "precision_at_50": 0.78,
+      "true_positives_suppressed": 6
+    },
+    "C_minus_A": {
+      "critical_floor_breaches": 38,
+      "false_positives_in_top_50": 39,
+      "macro_f1_detection": 0.0,
+      "mean_rank_true_positives": 24.648,
+      "mrr_true_positives": 0.00199076,
+      "precision_at_10": 0.1,
+      "precision_at_100": 0.88,
+      "precision_at_200": 0.435,
+      "precision_at_25": 0.6,
+      "precision_at_50": 0.78,
+      "true_positives_suppressed": 6
+    },
+    "C_minus_B": {
+      "critical_floor_breaches": 0,
+      "false_positives_in_top_50": 0,
+      "macro_f1_detection": 0.0,
+      "mean_rank_true_positives": -0.006,
+      "mrr_true_positives": -1e-08,
+      "precision_at_10": 0.0,
+      "precision_at_100": 0.0,
+      "precision_at_200": 0.0,
+      "precision_at_25": 0.0,
+      "precision_at_50": 0.0,
+      "true_positives_suppressed": 0
+    }
+  },
+  "detection_metrics_identical_across_arms": false,
+  "full_metrics": {
+    "A-control": {
+      "detection": {
+        "alerts": 5000,
+        "attacks": 1000,
+        "flagged_vs_benign": {
+          "f1": 0.635976,
+          "fnr": 0.254,
+          "fpr": 0.15,
+          "precision": 0.554235,
+          "predicted": 1346,
+          "recall": 0.746,
+          "support": 1000
+        },
+        "macro_f1": 0.624738,
+        "per_class": {
+          "Benign": {
+            "f1": 0.888424,
+            "fnr": 0.15,
+            "fpr": 0.254,
+            "precision": 0.930487,
+            "predicted": 3654,
+            "recall": 0.85,
+            "support": 4000
+          },
+          "Botnet": {
+            "f1": 0.651429,
+            "fnr": 0.24,
+            "fpr": 0.017732,
+            "precision": 0.57,
+            "predicted": 200,
+            "recall": 0.76,
+            "support": 150
+          },
+          "Brute Force": {
+            "f1": 0.823045,
+            "fnr": 0.0,
+            "fpr": 0.017917,
+            "precision": 0.699301,
+            "predicted": 286,
+            "recall": 1.0,
+            "support": 200
+          },
+          "DDoS": {
+            "f1": 0.618357,
+            "fnr": 0.36,
+            "fpr": 0.017917,
+            "precision": 0.598131,
+            "predicted": 214,
+            "recall": 0.64,
+            "support": 200
+          },
+          "DoS": {
+            "f1": 0.647754,
+            "fnr": 0.315,
+            "fpr": 0.017917,
+            "precision": 0.61435,
+            "predicted": 223,
+            "recall": 0.685,
+            "support": 200
+          },
+          "Infiltration": {
+            "f1": 0.331126,
+            "fnr": 0.375,
+            "fpr": 0.017339,
+            "precision": 0.225225,
+            "predicted": 111,
+            "recall": 0.625,
+            "support": 40
+          },
+          "Port Scan": {
+            "f1": 0.605341,
+            "fnr": 0.32,
+            "fpr": 0.017526,
+            "precision": 0.545455,
+            "predicted": 187,
+            "recall": 0.68,
+            "support": 150
+          },
+          "Web Attack": {
+            "f1": 0.432432,
+            "fnr": 0.333333,
+            "fpr": 0.017206,
+            "precision": 0.32,
+            "predicted": 125,
+            "recall": 0.666667,
+            "support": 60
+          }
+        }
+      },
+      "queue": {
+        "attacks": 1000,
+        "attacks_below_flagged_bands": 254,
+        "by_queue_class": {
+          "ml_only": 498,
+          "none": 3654,
+          "signature_override": 52,
+          "tier2_candidate": 796
+        },
+        "false_positives_in_top_50": 50,
+        "mean_rank_true_positives": 1413.689,
+        "mrr_true_positives": 0.00159133,
+        "precision_at": {
+          "10": {
+            "attacks": 0,
+            "false_positives": 10,
+            "precision": 0.0
+          },
+          "100": {
+            "attacks": 0,
+            "false_positives": 100,
+            "precision": 0.0
+          },
+          "200": {
+            "attacks": 48,
+            "false_positives": 152,
+            "precision": 0.24
+          },
+          "25": {
+            "attacks": 0,
+            "false_positives": 25,
+            "precision": 0.0
+          },
+          "50": {
+            "attacks": 0,
+            "false_positives": 50,
+            "precision": 0.0
+          }
+        },
+        "saturation": {
+          "at_maximum_score": 1255,
+          "distinct_scores_among_flagged": 12,
+          "flagged_alerts": 1346,
+          "share_at_maximum": 0.932392
+        },
+        "worst_rank_true_positive": 4923
+      },
+      "safety": {
+        "audit_guardrail_events": {},
+        "critical_alerts": 1294,
+        "critical_floor_breaches": 0,
+        "critical_preservation_rate": 1.0,
+        "critical_preserved": 1294,
+        "feedback_events": 0,
+        "guardrail_actions": {},
+        "guardrail_codes": {},
+        "signature_override": {
+          "alerts": 52,
+          "changed": 0,
+          "note": null,
+          "preservation_rate": 1.0
+        },
+        "true_positives_suppressed": 0
+      }
+    },
+    "B-treatment": {
+      "detection": {
+        "alerts": 5000,
+        "attacks": 1000,
+        "flagged_vs_benign": {
+          "f1": 0.635976,
+          "fnr": 0.254,
+          "fpr": 0.15,
+          "precision": 0.554235,
+          "predicted": 1346,
+          "recall": 0.746,
+          "support": 1000
+        },
+        "macro_f1": 0.624738,
+        "per_class": {
+          "Benign": {
+            "f1": 0.888424,
+            "fnr": 0.15,
+            "fpr": 0.254,
+            "precision": 0.930487,
+            "predicted": 3654,
+            "recall": 0.85,
+            "support": 4000
+          },
+          "Botnet": {
+            "f1": 0.651429,
+            "fnr": 0.24,
+            "fpr": 0.017732,
+            "precision": 0.57,
+            "predicted": 200,
+            "recall": 0.76,
+            "support": 150
+          },
+          "Brute Force": {
+            "f1": 0.823045,
+            "fnr": 0.0,
+            "fpr": 0.017917,
+            "precision": 0.699301,
+            "predicted": 286,
+            "recall": 1.0,
+            "support": 200
+          },
+          "DDoS": {
+            "f1": 0.618357,
+            "fnr": 0.36,
+            "fpr": 0.017917,
+            "precision": 0.598131,
+            "predicted": 214,
+            "recall": 0.64,
+            "support": 200
+          },
+          "DoS": {
+            "f1": 0.647754,
+            "fnr": 0.315,
+            "fpr": 0.017917,
+            "precision": 0.61435,
+            "predicted": 223,
+            "recall": 0.685,
+            "support": 200
+          },
+          "Infiltration": {
+            "f1": 0.331126,
+            "fnr": 0.375,
+            "fpr": 0.017339,
+            "precision": 0.225225,
+            "predicted": 111,
+            "recall": 0.625,
+            "support": 40
+          },
+          "Port Scan": {
+            "f1": 0.605341,
+            "fnr": 0.32,
+            "fpr": 0.017526,
+            "precision": 0.545455,
+            "predicted": 187,
+            "recall": 0.68,
+            "support": 150
+          },
+          "Web Attack": {
+            "f1": 0.432432,
+            "fnr": 0.333333,
+            "fpr": 0.017206,
+            "precision": 0.32,
+            "predicted": 125,
+            "recall": 0.666667,
+            "support": 60
+          }
+        }
+      },
+      "movement": {
+        "family_untouched": {
+          "adjusted": 129,
+          "alerts": 143,
+          "attacks_promoted": 3,
+          "band_changed": 126,
+          "benign_demoted": 110,
+          "benign_promoted": 13,
+          "best_rank_reached_by_a_benign_alert": 200,
+          "demoted": 113,
+          "mean_rank_change": 66.6573,
+          "promoted": 16,
+          "rank_changed": 143,
+          "score_changed": 129
+        },
+        "judged": {
+          "adjusted": 36,
+          "alerts": 40,
+          "attacks_promoted": 0,
+          "band_changed": 36,
+          "benign_demoted": 35,
+          "benign_promoted": 0,
+          "best_rank_reached_by_a_benign_alert": null,
+          "demoted": 36,
+          "mean_rank_change": 528.65,
+          "promoted": 0,
+          "rank_changed": 40,
+          "score_changed": 36
+        },
+        "unrelated": {
+          "adjusted": 0,
+          "alerts": 4817,
+          "attacks_promoted": 0,
+          "band_changed": 0,
+          "benign_demoted": 0,
+          "benign_promoted": 0,
+          "best_rank_reached_by_a_benign_alert": null,
+          "demoted": 0,
+          "mean_rank_change": -6.3687,
+          "promoted": 0,
+          "rank_changed": 467,
+          "score_changed": 0
+        }
+      },
+      "queue": {
+        "attacks": 1000,
+        "attacks_below_flagged_bands": 254,
+        "by_queue_class": {
+          "ml_only": 594,
+          "none": 3654,
+          "signature_override": 118,
+          "tier2_candidate": 634
+        },
+        "false_positives_in_top_50": 11,
+        "mean_rank_true_positives": 1389.035,
+        "mrr_true_positives": 0.0035821,
+        "precision_at": {
+          "10": {
+            "attacks": 1,
+            "false_positives": 9,
+            "precision": 0.1
+          },
+          "100": {
+            "attacks": 88,
+            "false_positives": 12,
+            "precision": 0.88
+          },
+          "200": {
+            "attacks": 135,
+            "false_positives": 65,
+            "precision": 0.675
+          },
+          "25": {
+            "attacks": 15,
+            "false_positives": 10,
+            "precision": 0.6
+          },
+          "50": {
+            "attacks": 39,
+            "false_positives": 11,
+            "precision": 0.78
+          }
+        },
+        "saturation": {
+          "at_maximum_score": 1105,
+          "distinct_scores_among_flagged": 18,
+          "flagged_alerts": 1346,
+          "share_at_maximum": 0.820951
+        },
+        "worst_rank_true_positive": 4923
+      },
+      "safety": {
+        "audit_guardrail_events": {
+          "GUARDRAIL_INTERVENTION": 20
+        },
+        "critical_alerts": 1294,
+        "critical_floor_breaches": 38,
+        "critical_preservation_rate": 0.970634,
+        "critical_preserved": 1256,
+        "feedback_events": 40,
+        "guardrail_actions": {
+          "applied": 20,
+          "capped": 20
+        },
+        "guardrail_codes": {
+          "infiltration_alert_floor": 16,
+          "score_range_clamped": 4
+        },
+        "signature_override": {
+          "alerts": 52,
+          "changed": 0,
+          "note": null,
+          "preservation_rate": 1.0
+        },
+        "true_positives_suppressed": 6
+      }
+    },
+    "C-guardrails-off": {
+      "detection": {
+        "alerts": 5000,
+        "attacks": 1000,
+        "flagged_vs_benign": {
+          "f1": 0.652364,
+          "fnr": 0.255,
+          "fpr": 0.13475,
+          "precision": 0.580218,
+          "predicted": 1284,
+          "recall": 0.745,
+          "support": 1000
+        },
+        "macro_f1": 0.624738,
+        "per_class": {
+          "Benign": {
+            "f1": 0.888424,
+            "fnr": 0.15,
+            "fpr": 0.254,
+            "precision": 0.930487,
+            "predicted": 3654,
+            "recall": 0.85,
+            "support": 4000
+          },
+          "Botnet": {
+            "f1": 0.651429,
+            "fnr": 0.24,
+            "fpr": 0.017732,
+            "precision": 0.57,
+            "predicted": 200,
+            "recall": 0.76,
+            "support": 150
+          },
+          "Brute Force": {
+            "f1": 0.823045,
+            "fnr": 0.0,
+            "fpr": 0.017917,
+            "precision": 0.699301,
+            "predicted": 286,
+            "recall": 1.0,
+            "support": 200
+          },
+          "DDoS": {
+            "f1": 0.618357,
+            "fnr": 0.36,
+            "fpr": 0.017917,
+            "precision": 0.598131,
+            "predicted": 214,
+            "recall": 0.64,
+            "support": 200
+          },
+          "DoS": {
+            "f1": 0.647754,
+            "fnr": 0.315,
+            "fpr": 0.017917,
+            "precision": 0.61435,
+            "predicted": 223,
+            "recall": 0.685,
+            "support": 200
+          },
+          "Infiltration": {
+            "f1": 0.331126,
+            "fnr": 0.375,
+            "fpr": 0.017339,
+            "precision": 0.225225,
+            "predicted": 111,
+            "recall": 0.625,
+            "support": 40
+          },
+          "Port Scan": {
+            "f1": 0.605341,
+            "fnr": 0.32,
+            "fpr": 0.017526,
+            "precision": 0.545455,
+            "predicted": 187,
+            "recall": 0.68,
+            "support": 150
+          },
+          "Web Attack": {
+            "f1": 0.432432,
+            "fnr": 0.333333,
+            "fpr": 0.017206,
+            "precision": 0.32,
+            "predicted": 125,
+            "recall": 0.666667,
+            "support": 60
+          }
+        }
+      },
+      "movement": {
+        "family_untouched": {
+          "adjusted": 129,
+          "alerts": 143,
+          "attacks_promoted": 3,
+          "band_changed": 128,
+          "benign_demoted": 110,
+          "benign_promoted": 13,
+          "best_rank_reached_by_a_benign_alert": 200,
+          "demoted": 113,
+          "mean_rank_change": 66.4406,
+          "promoted": 16,
+          "rank_changed": 143,
+          "score_changed": 129
+        },
+        "judged": {
+          "adjusted": 36,
+          "alerts": 40,
+          "attacks_promoted": 0,
+          "band_changed": 36,
+          "benign_demoted": 35,
+          "benign_promoted": 0,
+          "best_rank_reached_by_a_benign_alert": null,
+          "demoted": 36,
+          "mean_rank_change": 529.425,
+          "promoted": 0,
+          "rank_changed": 40,
+          "score_changed": 36
+        },
+        "unrelated": {
+          "adjusted": 0,
+          "alerts": 4817,
+          "attacks_promoted": 0,
+          "band_changed": 0,
+          "benign_demoted": 0,
+          "benign_promoted": 0,
+          "best_rank_reached_by_a_benign_alert": null,
+          "demoted": 0,
+          "mean_rank_change": -6.3687,
+          "promoted": 0,
+          "rank_changed": 467,
+          "score_changed": 0
+        }
+      },
+      "queue": {
+        "attacks": 1000,
+        "attacks_below_flagged_bands": 255,
+        "by_queue_class": {
+          "ml_only": 532,
+          "none": 3716,
+          "signature_override": 118,
+          "tier2_candidate": 634
+        },
+        "false_positives_in_top_50": 11,
+        "mean_rank_true_positives": 1389.041,
+        "mrr_true_positives": 0.00358209,
+        "precision_at": {
+          "10": {
+            "attacks": 1,
+            "false_positives": 9,
+            "precision": 0.1
+          },
+          "100": {
+            "attacks": 88,
+            "false_positives": 12,
+            "precision": 0.88
+          },
+          "200": {
+            "attacks": 135,
+            "false_positives": 65,
+            "precision": 0.675
+          },
+          "25": {
+            "attacks": 15,
+            "false_positives": 10,
+            "precision": 0.6
+          },
+          "50": {
+            "attacks": 39,
+            "false_positives": 11,
+            "precision": 0.78
+          }
+        },
+        "saturation": {
+          "at_maximum_score": 1105,
+          "distinct_scores_among_flagged": 16,
+          "flagged_alerts": 1284,
+          "share_at_maximum": 0.860592
+        },
+        "worst_rank_true_positive": 4923
+      },
+      "safety": {
+        "audit_guardrail_events": {
+          "GUARDRAIL_INTERVENTION": 4
+        },
+        "critical_alerts": 1294,
+        "critical_floor_breaches": 38,
+        "critical_preservation_rate": 0.970634,
+        "critical_preserved": 1256,
+        "feedback_events": 40,
+        "guardrail_actions": {
+          "applied": 36,
+          "capped": 4
+        },
+        "guardrail_codes": {
+          "score_range_clamped": 4
+        },
+        "signature_override": {
+          "alerts": 52,
+          "changed": 0,
+          "note": null,
+          "preservation_rate": 1.0
+        },
+        "true_positives_suppressed": 6
+      }
+    }
+  },
+  "guardrails_prevented": {
+    "critical_floor_breaches_in_B": 38,
+    "critical_floor_breaches_in_C": 38,
+    "extra_breaches_without_guardrails": 0,
+    "extra_suppressions_without_guardrails": 0,
+    "guardrail_actions_in_B": {
+      "applied": 20,
+      "capped": 20
+    },
+    "guardrail_actions_in_C": {
+      "applied": 36,
+      "capped": 4
+    },
+    "guardrail_pass": {
+      "B-treatment": false,
+      "C-guardrails-off": false
+    },
+    "signature_override_changed_in_C": 0,
+    "true_positives_suppressed_in_B": 6,
+    "true_positives_suppressed_in_C": 6
+  },
+  "movement": {
+    "B-treatment": {
+      "family_untouched": {
+        "adjusted": 129,
+        "alerts": 143,
+        "attacks_promoted": 3,
+        "band_changed": 126,
+        "benign_demoted": 110,
+        "benign_promoted": 13,
+        "best_rank_reached_by_a_benign_alert": 200,
+        "demoted": 113,
+        "mean_rank_change": 66.6573,
+        "promoted": 16,
+        "rank_changed": 143,
+        "score_changed": 129
+      },
+      "judged": {
+        "adjusted": 36,
+        "alerts": 40,
+        "attacks_promoted": 0,
+        "band_changed": 36,
+        "benign_demoted": 35,
+        "benign_promoted": 0,
+        "best_rank_reached_by_a_benign_alert": null,
+        "demoted": 36,
+        "mean_rank_change": 528.65,
+        "promoted": 0,
+        "rank_changed": 40,
+        "score_changed": 36
+      },
+      "unrelated": {
+        "adjusted": 0,
+        "alerts": 4817,
+        "attacks_promoted": 0,
+        "band_changed": 0,
+        "benign_demoted": 0,
+        "benign_promoted": 0,
+        "best_rank_reached_by_a_benign_alert": null,
+        "demoted": 0,
+        "mean_rank_change": -6.3687,
+        "promoted": 0,
+        "rank_changed": 467,
+        "score_changed": 0
+      }
+    },
+    "C-guardrails-off": {
+      "family_untouched": {
+        "adjusted": 129,
+        "alerts": 143,
+        "attacks_promoted": 3,
+        "band_changed": 128,
+        "benign_demoted": 110,
+        "benign_promoted": 13,
+        "best_rank_reached_by_a_benign_alert": 200,
+        "demoted": 113,
+        "mean_rank_change": 66.4406,
+        "promoted": 16,
+        "rank_changed": 143,
+        "score_changed": 129
+      },
+      "judged": {
+        "adjusted": 36,
+        "alerts": 40,
+        "attacks_promoted": 0,
+        "band_changed": 36,
+        "benign_demoted": 35,
+        "benign_promoted": 0,
+        "best_rank_reached_by_a_benign_alert": null,
+        "demoted": 36,
+        "mean_rank_change": 529.425,
+        "promoted": 0,
+        "rank_changed": 40,
+        "score_changed": 36
+      },
+      "unrelated": {
+        "adjusted": 0,
+        "alerts": 4817,
+        "attacks_promoted": 0,
+        "band_changed": 0,
+        "benign_demoted": 0,
+        "benign_promoted": 0,
+        "best_rank_reached_by_a_benign_alert": null,
+        "demoted": 0,
+        "mean_rank_change": -6.3687,
+        "promoted": 0,
+        "rank_changed": 467,
+        "score_changed": 0
+      }
+    }
+  },
+  "pinned": {
+    "dataset_id": 1,
+    "detection_run_id": 1,
+    "fusion_weights": {
+      "agreement_bonus": 5.0,
+      "class_ceilings": {
+        "Benign": "Informational",
+        "Botnet": "Critical",
+        "Brute Force": "Medium",
+        "DDoS": "High",
+        "DoS": "Medium",
+        "Infiltration": "Critical",
+        "Port Scan": "Low",
+        "Web Attack": "High"
+      },
+      "critical_threshold": 80.0,
+      "evidence_priority": {
+        "corroborated": 0,
+        "ml_only": 2,
+        "none": 3,
+        "signature_override": 1
+      },
+      "scheme": "cef-trust-v1.8",
+      "severity_scores": {
+        "Critical": 0.95,
+        "High": 0.8,
+        "Low": 0.4,
+        "Medium": 0.6
+      }
+    },
+    "guardrail_config": {
+      "aggregation_min_agreement_ratio": 0.67,
+      "aggregation_min_feedback_count": 3.0,
+      "aggregation_strong_agreement_ratio": 0.8,
+      "critical_alert_floor": 70.0,
+      "critical_alert_threshold": 80.0,
+      "high_risk_threshold": 70.0,
+      "infiltration_alert_floor": 75.0,
+      "learned_exception_min_confidence": 60.0,
+      "learned_exception_min_occurrences": 3.0,
+      "max_feedback_increase": 20.0,
+      "max_feedback_reduction": 30.0,
+      "review_threshold": 70.0
+    },
+    "model_version": "xgb-8class-20260911",
+    "rule_set_version": "s4b-1",
+    "seed": 20260911
+  },
+  "preregistration": {
+    "escalate_at": 7.0,
+    "max_per_family": 5,
+    "min_family_size": 8,
+    "rule": "s15-preregistration-1",
+    "size": 40
+  },
+  "run_id": "fallible-001-stress-fallible",
+  "sequence_digest": "1365a917800719c21c8928d09a688274c2a1728374ad42c9b6d41bf11f85535d",
+  "sequence_length": 40
+}

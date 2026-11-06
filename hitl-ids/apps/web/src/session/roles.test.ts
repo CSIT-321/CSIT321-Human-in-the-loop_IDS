@@ -34,7 +34,7 @@ describe("roles", () => {
     expect(ROLE_META.security_analyst.nav.at(-1)?.to).toBe("/analyst/external-admission");
     expect(ROLE_META.security_analyst.nav.some(item => item.to.endsWith("/workstation") || item.to.endsWith("/v2-triage"))).toBe(false);
     expect(ROLE_META.system_admin.nav.map(item => item.label)).toEqual([
-      "Overview", "Operational Workspace", "HITL Governance", "Users & Access", "Evaluation & Audit",
+      "Overview", "Operational Workspace", "HITL Governance", "Guardrails", "Users & Access", "Evaluation & Audit",
     ]);
     expect(ROLE_META.system_admin.nav.some(item => item.to.endsWith("/v2-triage"))).toBe(false);
     expect(ROLE_META.evaluator.nav.find(item => item.to.endsWith("/v2-triage"))?.label).toBe("Alert Triage");
