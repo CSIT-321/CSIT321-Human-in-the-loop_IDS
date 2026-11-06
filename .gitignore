@@ -35,6 +35,12 @@ hitl-ids/data/processed/stress_ml_predictions.json
 # regenerable demo database - rebuild with scripts/run_detection.py (S9)
 hitl-ids/data/*.db
 hitl-ids/data/*.db-journal
+
+# packet captures and spike outputs - download with scripts/fetch_capture.py (see data/raw/PCAP-DOWNLOAD.md)
+hitl-ids/data/raw/pcap/
+hitl-ids/data/spike/
+# local detector tools (Suricata, Npcap DLLs, ET Open rules, CICFlowMeter build) - see data/raw/PCAP-DOWNLOAD.md
+hitl-ids/.tools/
 .pytest_cache/
 # pytest --basetemp scratch dir, needed when the session sandbox blocks the OS temp dir
 hitl-ids/.pytest-tmp/
