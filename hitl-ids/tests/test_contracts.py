@@ -66,6 +66,9 @@ DEVIATION_COLUMNS = {
     "flow_data": {"source_record_id"},
 }
 DEVIATION_TABLES = {
+    # Migration 22; analysis/phase-b/GROUPING-METHOD-REVIEW.md (method B: one queue item per flow group).
+    "alert_groups": {"id","group_ref","grouping_key","first_seen_at","last_seen_at","member_count","representative_operational_alert_id","qualifying_member_alert_id","case_ref","created_at"},
+    "alert_group_members": {"id","group_id","legacy_alert_id","source_ip","occurred_at","joined_at"},
     # Migration 21; docs/shared-analyst-workstation-claim.md.
     "analyst_work": {"operational_alert_id","status","revision","owner_actor_id","owner_name","claimed_at","round_ref","finished_at","finished_by_actor_id","finished_by_name","verdict_ref"},
     "analyst_claim_rounds": {"round_ref","operational_alert_id","work_revision","policy_version","window_ms","started_at","closes_at","status","finalized_at","owner_actor_id"},
@@ -325,6 +328,7 @@ def test_columns_are_tdm_names_plus_logged_deviations(conn):
 def test_every_table_model_matches_its_columns(conn):
     # The inbox uses the canonical contract and staging writer, not a legacy operational model.
     assert set(db.TABLE_MODELS) == table_names(conn) - {
+        "alert_groups", "alert_group_members",
         "analyst_work", "analyst_claim_rounds", "analyst_claim_intents", "analyst_work_events",
         "conclusion_memory_contributions", "conclusion_memory_evidence", "verdict_memory_contributions", "verdict_memory_evidence", "analyst_verdict_events", "suricata_eve_records", "operational_system_routing",
         "prospective_runs", "prospective_run_events", "prospective_decisions", "prospective_observations",
@@ -337,6 +341,10 @@ def test_every_table_model_matches_its_columns(conn):
 
 
 EXPECTED_FOREIGN_KEYS = {
+    ('alert_groups', 'representative_operational_alert_id', 'operational_alerts_v2', 'id'),
+    ('alert_groups', 'qualifying_member_alert_id', 'alerts', 'id'),
+    ('alert_group_members', 'group_id', 'alert_groups', 'id'),
+    ('alert_group_members', 'legacy_alert_id', 'alerts', 'id'),
     ('analyst_work', 'operational_alert_id', 'operational_alerts_v2', 'id'),
     ('analyst_work', 'owner_actor_id', 'users', 'id'),
     ('analyst_work', 'finished_by_actor_id', 'users', 'id'),
