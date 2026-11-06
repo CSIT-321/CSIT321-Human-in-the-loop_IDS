@@ -172,6 +172,31 @@ Real pipeline: packets -> Suricata (rule evidence) + CICFlowMeter fork (82 featu
   independent confirmations and saturate the family. Guardrails still run per member on flow-linked alerts.
 - Every grouped item shows a visible **"Grouped: N alerts"** flag and its member list (round 2).
 
+## Answers so far (round 8, after spike B, 2026-11-06)
+
+- **D3a REPLACED:** share limit dropped (blocked 277,495 of 287,591 correct E1 on real packets). New limit: at most
+  M **new groups** auto-escalated per minute; a repeat alert from an already-escalated source joins its case.
+  M set from measured data; Admin can change it.
+- **D3b EXTENDED:** flow alerts are grouped too — same source IP, 30 minutes, visible "Grouped: N alerts" flag.
+- **D7 live input:** a short replay window holding both attack runs and the `AL-00478` false positive; the full day
+  is for testing only. Measured in `spike.db` (CICFlowMeter time): FTP run 14:33:26-18:01:21 (193,384 flows),
+  SSH run 18:01:50-19:32:30 (94,207 flows), `AL-00478` at 12:40:02.
+- **Open (round 8 question):** how a group verdict counts toward family learning — see `analysis/spike/group_verdict_weight.py`.
+  Measured with the live engine (C1 + M1, gate 3 at 0.67, caps +20/-30):
+  one group decision counted once = gate shut, family moves 0; counted per member (190) = gate open, family
+  +20 pts / -5 bands (confirm) or -30 pts / +5 bands (false positive) — one click acts like 190 analysts.
+  **Implementation trap:** D3b writes one audit/feedback row per member; `EFFECTIVE_VERDICTS`
+  (`feedback/service.py:72`) counts each row, so per-member counting happens by default unless group rows are tagged.
+- **Group vote DECIDED (by orchestrator, on the user's delegation, 2026-11-06): counted once.** Each member gets the
+  verdict (own score step, guardrails per member). Toward the family's agreement gate the group is **one vote per
+  family it touches** (a source that hits two families gives one vote to each). Implementation: tag every member's
+  feedback row with the group reference; `EFFECTIVE_VERDICTS` counts distinct group references, not rows.
+  No "apply to whole family" button. Reasons: (1) the gate exists because one verdict moving a whole family was a
+  measured failure (changelog v1.12); per-member counting reintroduces it; (2) the analyst's time is already saved by
+  the group — one click judges all N members; (3) future alerts from the same source join the same group, so family
+  learning only matters for *other* sources, where independent agreement is exactly what should be required;
+  (4) a bypass button is a guardrail change with no measurement behind it.
+
 ## Later rounds (depend on these answers)
 
 - Q6 (D5) claim release — who may release, and is click-to-claim kept? (F9)
