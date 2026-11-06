@@ -19,7 +19,9 @@ Date: 2026-11-06. Branch `feat/tier-views-auto-escalation`. Product code unchang
 
 1. **E1 is correct on real packets.** All 287,591 E1 flows involve one of the 2 known attacker IPs; **0** E1 flows
    involve any other host (`check_e1.py`; "attacker" = endpoint is `18.221.219.4` or `13.58.98.64`, inferred from
-   the labelled sample). Of the 134 labelled brute-force flows in the demo sample, 133 were matched and all 133 are
+   the labelled sample). **Correction (2026-11-06, full-day labels, `REPLAY-WINDOW.md`):** by the release's per-flow
+   labels, 40 of the 287,591 are labelled BENIGN (short failed attempts from the attackers); precision 0.99986,
+   recall 1.00000. Of the 134 labelled brute-force flows in the demo sample, 133 were matched and all 133 are
    `corroborated` + E1.
 2. **The false-positive story reproduces.** `AL-00478` comes out `ml_only`, predicted `Web Attack`, score **92.7**
    (demo: 99.89). Suricata raised no alert on it. The score differs, cause not measured (likely the missing feature
