@@ -132,22 +132,32 @@ def route_group(members: list[m.Alert], policy: FlowRoutingPolicy, chart: Severi
             return GroupRoute(classification, SystemRoutingDecision(
                 route_class="CRITICAL_ESCALATION", route="tier2_case", policy_version=policy.version,
                 reasons=tuple(escalation_reasons)), (), i)
-        candidates, candidate_member = [], None
-        classification = None
+        # Candidate reasons are summarised per rule (one sentence with a member count), not one per member.
+        found: dict[str, list] = {}  # rule key -> [first sentence, member count]
+        candidate_member, classification = None, None
         for i, alert in enumerate(members):
-            classification = classification or classify_flow(alert, policy)
-            switched = [f"{reason} This rule is switched off, so the alert waits for Tier 1."
-                        for reason, on in _e1(alert, policy, severity_by_id.get(alert.id)) if not on]
-            if classification.attack_category == "unknown_needs_expert":
-                switched.append("The detectors disagree on the attack class: " + " ".join(classification.reasons))
+            member_class = classify_flow(alert, policy)
+            classification = classification or member_class
+            sentences = [(f"off:{reason}", f"{reason} This rule is switched off, so the alert waits for Tier 1.")
+                         for reason, on in _e1(alert, policy, severity_by_id.get(alert.id)) if not on]
+            if member_class.attack_category == "unknown_needs_expert":
+                sentences.append(("conflict", "The detectors disagree on the attack class: "
+                                  + " ".join(member_class.reasons)))
             attack = alert.attack_category or alert.ml_predicted_class
             severity = chart.severity(attack) if attack not in (None, "Benign") else 0.0
             if alert.combined_score >= policy.e3_minimum_score and severity >= policy.e3_minimum_attack_severity:
-                switched.append(f"E3: score {alert.combined_score:g} and {attack} has attack severity {severity:g}. "
-                                "A Tier 1 analyst confirms before escalation.")
-            if switched:
-                candidates.extend(switched)
-                candidate_member = candidate_member if candidate_member is not None else i
+                sentences.append((f"e3:{attack}", f"E3: score {alert.combined_score:g} and {attack} has attack "
+                                  f"severity {severity:g}. A Tier 1 analyst confirms before escalation."))
+            for key, sentence in sentences:
+                if key.startswith("off:"):  # the E1 sentence holds the score; key it by branch
+                    key = "off:" + sentence.split(":", 1)[0]
+                found.setdefault(key, [sentence, 0])[1] += 1
+            if sentences and candidate_member is None:
+                candidate_member = i
+        candidates = []
+        for sentence, count in found.values():
+            candidates.append(sentence if len(members) == 1
+                              else f"{sentence} ({count} of {len(members)} members; first shown.)")
     except Exception as error:  # fail-safe: never escalate or close on a failure
         return GroupRoute(AttackClassification(attack_category=None, status="informational_policy_signal",
             reasons=("Routing could not be evaluated.",), policy_version=CLASSIFIER_VERSION),
@@ -166,8 +176,7 @@ def route_group(members: list[m.Alert], policy: FlowRoutingPolicy, chart: Severi
 def route_flow_alert(conn, operational_id: int, *, policy: FlowRoutingPolicy, chart: SeverityChart,
                      group_members: list[m.Alert] | None = None,
                      suricata_severity_by_legacy_id: dict[int, int] | None = None,
-                     escalated_groups_this_minute: int = 0,
-                     qualifying_member_alert_id: int | None = None) -> tuple[str, int | None]:
+                     escalated_groups_this_minute: int = 0) -> tuple[str, int | None]:
     """Write one system routing decision for a projected flow group. Caller owns the transaction.
 
     ``group_members`` are the group's legacy alerts in arrival order; when absent the projected alert is the
@@ -184,8 +193,7 @@ def route_flow_alert(conn, operational_id: int, *, policy: FlowRoutingPolicy, ch
                         suricata_severity_by_legacy_id=suricata_severity_by_legacy_id,
                         escalated_groups_this_minute=escalated_groups_this_minute)
     decision = route.decision
-    qualifying_id = qualifying_member_alert_id if qualifying_member_alert_id is not None \
-        else members[route.qualifying_member].id if route.qualifying_member is not None else None
+    qualifying_id = members[route.qualifying_member].id if route.qualifying_member is not None else None
     priority_policy = load_triage_policy()
     moment = max(m.utc_now(), before.updated_at + timedelta(microseconds=1))
     provenance = resolved_for(conn, alert_v2.operational_alert_ref, moment)

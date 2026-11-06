@@ -153,3 +153,31 @@ def test_a_group_escalates_when_a_later_member_meets_e1():
     result = flow_routing.route_group([a1, a2], policy, CHART)
     assert result.decision.route == "tier2_case" and result.qualifying_member == 1
     assert any("member" in reason for reason in result.decision.reasons)
+
+
+def test_the_stored_qualifying_member_is_the_member_that_met_e1_not_the_first(grouped_database, monkeypatch):
+    # review 2026-11-06: route_flagged passed members[0] as the qualifying member for every group
+    real_e1 = flow_routing._e1
+    with closing(db.connect(str(grouped_database))) as conn:
+        materialize_flagged(conn)
+        third = conn.execute("SELECT alert_id FROM flow_data WHERE source_record_id='AL-0003'").fetchone()[0]
+        monkeypatch.setattr(flow_routing, "_e1",
+                            lambda alert, policy, sev: real_e1(alert, policy, sev) if alert.id == third else [])
+        route_flagged(conn)
+        rows = grouped(conn)
+    route, _, _, case_ref, _, qualifying = rows["brute-a"]
+    assert route == "tier2_case" and case_ref is not None
+    assert qualifying == "AL-0003"
+
+
+def test_routine_groups_store_no_qualifying_member(grouped_database):
+    # review 2026-11-06: routine groups were stored with their first member as "qualifying"
+    policy = flow_routing.load_flow_routing_policy().model_copy(update={"version": "flow-routing-test-routine",
+                                                                        "e3_minimum_score": 101.0})
+    with closing(db.connect(str(grouped_database))) as conn:
+        prepare(conn, policy=policy)
+        rows = grouped(conn)
+    for ref in ("botnet-1", "botnet-2"):
+        route, recommended, reasons, case_ref, _, qualifying = rows[ref]
+        assert (route, recommended, reasons, case_ref) == ("tier1_review", False, (), None), ref
+        assert qualifying is None, ref

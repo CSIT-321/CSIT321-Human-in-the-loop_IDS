@@ -112,8 +112,7 @@ def route_flagged(conn: sqlite3.Connection, *, policy=None) -> dict[str, int]:
         try:
             outcome, qualifying = route_flow_alert(
                 conn, rep, policy=policy, chart=chart, group_members=members,
-                escalated_groups_this_minute=minute_escalations.get(minute, 0),
-                qualifying_member_alert_id=members[0].id)
+                escalated_groups_this_minute=minute_escalations.get(minute, 0))
             if outcome == "auto_escalated":
                 minute_escalations[minute] = minute_escalations.get(minute, 0) + 1
                 case_ref = conn.execute("SELECT case_ref FROM operational_system_routing WHERE operational_alert_id=?",
