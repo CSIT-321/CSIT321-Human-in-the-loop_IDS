@@ -22,8 +22,12 @@
 | `stress.db` | 1,346 flagged | 676 | 3 | 420 | 253 | 18.8 s |
 
 Escalated demo groups = the 3 brute-force sources (18.221.219.4 ×80, 13.58.98.64 ×54, 13.59.126.31 ×66) — the
-same 200 E1 flows measured before, now 3 queue items. Second run: 0 new. The 4 "routine" demo groups hold the
-miscellaneous flagged singles.
+same 200 E1 flows measured before, now 3 queue items. Second run: 0 new. The 4 routine demo groups are
+18.219.211.138 (2), 18.217.165.70 (1), 18.219.193.20 (**197**, all model-only DoS) and 172.31.64.109 (1).
+
+Review after the model fallback (commit `e6292b4`, checks in `review_grouping.py`): the qualifying member was
+always the first member (also on routine groups), a later member's detector conflict was missed, and candidate
+reasons repeated once per member. All three fixed test-first; longest stored reason on `demo.db` is now 178 chars.
 
 ## Traps found and fixed during this step
 
