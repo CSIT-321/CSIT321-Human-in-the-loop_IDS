@@ -28,7 +28,15 @@ UNFLAGGED_LAST = ("CASE WHEN EXISTS (SELECT 1 FROM alerts u WHERE u.id = a.legac
 # buried because of the detector that raised it. packages/detection/queue_severity.py holds the one scale.
 SEVERITY = ("queue_severity_rank(a.source_kind, (SELECT v.severity FROM alerts v WHERE v.id = a.legacy_alert_id), "
             "a.native_severity, a.detection_category)")
-QUEUE_ORDER = (f"{SEVERITY} DESC, {UNFLAGGED_LAST} ASC, {VALID_PRIORITY} DESC, queue_occurred_at(a.occurred_at) DESC, "
+# C1, decision D1 ("the queue re-orders"): the approved engine writes a flow alert's verdict as
+# alerts.combined_score; operational_priority is fixed at routing time. The queue score adds the verdict delta
+# (combined_score - detection_score; 0 before any verdict and for non-flow alerts), clamped to 0-100.
+# Read-only: no second score is stored, so the two stores cannot disagree. Justification: PHASE-C-STATUS.md, C1.
+ROUTING_PRIORITY = VALID_PRIORITY
+VERDICT_DELTA = ("COALESCE((SELECT d.combined_score - d.detection_score FROM alerts d "
+                 "WHERE d.id = a.legacy_alert_id), 0)")
+QUEUE_SCORE = f"max(0, min(100, ({ROUTING_PRIORITY}) + {VERDICT_DELTA}))"
+QUEUE_ORDER = (f"{SEVERITY} DESC, {UNFLAGGED_LAST} ASC, {QUEUE_SCORE} DESC, queue_occurred_at(a.occurred_at) DESC, "
                "a.operational_alert_ref ASC")
 
 

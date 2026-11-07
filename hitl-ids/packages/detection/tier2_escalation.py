@@ -67,6 +67,11 @@ def escalate_case(conn, alert_ref: UUID, *, actor_id: int, request: EscalateCase
         work=row(conn,alert.id)
         if work and work['status']=='in_review':
             escalated(conn,alert.id,actor_id,result.case.case_ref)
+        if request.action != 'recover_case':
+            # C1 (D2): a human escalation of a flow alert also records the approved 'escalate' (+15, guardrailed),
+            # in this same transaction. A recovery repeats no escalation, so it records nothing.
+            from packages.detection.verdict_bridge import bridge_escalation
+            bridge_escalation(conn, alert, actor_id=actor_id, note=request.reason)
         conn.commit()
         return result
     except Exception:

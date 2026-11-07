@@ -115,7 +115,7 @@ def test_exact_requested_scores_ties_offsets_microseconds_and_invalid_priority()
     with closing(sqlite3.connect(':memory:')) as conn:
         conn.executescript('''CREATE TABLE operational_alerts_v2(id,operational_alert_ref,occurred_at,legacy_alert_id,
                 source_kind,native_severity,detection_category);
-            CREATE TABLE alerts(id,evidence_class,severity);
+            CREATE TABLE alerts(id,evidence_class,severity,detection_score,combined_score);
             CREATE TABLE operational_triage_state_v2(operational_alert_id,operational_priority);
             CREATE TABLE operational_system_routing(operational_alert_id);
             CREATE TABLE analyst_work(operational_alert_id,status);''')

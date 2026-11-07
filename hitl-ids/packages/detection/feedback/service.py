@@ -244,6 +244,20 @@ def submit_feedback(conn: sqlite3.Connection, *, alert_id: int, user_id: int, ca
                     now: datetime | None = None) -> FeedbackResult:
     """Record one analyst verdict, re-score its alert inside the guardrails, and carry it to the
     alert's family. Commits."""
+    with conn:  # one transaction: commits on success, rolls back on any exception
+        return apply_feedback(conn, alert_id=alert_id, user_id=user_id, category=category, note=note,
+                              policy=policy, learning=learning, chart=chart, now=now)
+
+
+def apply_feedback(conn: sqlite3.Connection, *, alert_id: int, user_id: int, category: str,
+                   note: str | None = None, policy: GuardrailPolicy | None = None,
+                   learning: LearningPolicy | None = None, chart: SeverityChart | None = None,
+                   now: datetime | None = None) -> FeedbackResult:
+    """``submit_feedback`` without the commit: the caller owns the transaction.
+
+    The V2 verdict bridge (packages/detection/verdict_bridge.py, C1) calls this inside the V2 verdict's own
+    transaction, so the V2 verdict and the approved verdict are written together or not at all.
+    """
     if category not in FEEDBACK_EFFECTS:
         raise ValueError(f"unknown feedback category {category!r}; "
                          f"expected one of {sorted(FEEDBACK_EFFECTS)}")
@@ -271,32 +285,31 @@ def submit_feedback(conn: sqlite3.Connection, *, alert_id: int, user_id: int, ca
     # I3: a disputed rule's verdict goes to the administrator; it teaches its family nothing.
     teaches = alert.family_key is not None and alert.evidence_class != "signature_override"
 
-    with conn:  # one transaction: commits on success, rolls back on any exception
-        feedback_id = db.insert(conn, event)
-        conn.execute("UPDATE alerts SET combined_score = ?, severity = ?, requires_review = ?, "
-                     "queue_class = ?, queue_priority = ?, updated_at = ? WHERE id = ?",
-                     (outcome.score_after,
-                      severity_for(outcome.score_after, alert.attack_category,
-                                   ceilings_from_chart(chart),
-                                   critical_threshold=policy.critical_alert_threshold),
-                      int(requires_review), band, m.QUEUE_PRIORITY[band],
-                      db.format_timestamp(now), alert_id))
-        writer = AuditWriter(conn)
-        audit = [writer.feedback(user_id, alert_id, feedback_id, category=category,
-                                 rationale=note)]
-        if outcome.interventions:
-            audit.append(writer.guardrail(outcome, alert_id=alert_id, feedback_id=feedback_id,
-                                          actor_id=user_id))
-        refresh = None
-        if teaches:
-            refresh = refresh_family(conn, alert.family_key, policy=policy, learning=learning,
-                                     chart=chart, now=now)
-            if refresh.changed:
-                audit.append(writer.similar_alert_learning(
-                    refresh.after, before=refresh.before, actor_id=user_id, alert_id=alert_id,
-                    feedback_id=feedback_id, members_moved=refresh.members_moved,
-                    guardrail_interventions=refresh.guardrail_interventions,
-                    moves=refresh.moves))
+    feedback_id = db.insert(conn, event)
+    conn.execute("UPDATE alerts SET combined_score = ?, severity = ?, requires_review = ?, "
+                 "queue_class = ?, queue_priority = ?, updated_at = ? WHERE id = ?",
+                 (outcome.score_after,
+                  severity_for(outcome.score_after, alert.attack_category,
+                               ceilings_from_chart(chart),
+                               critical_threshold=policy.critical_alert_threshold),
+                  int(requires_review), band, m.QUEUE_PRIORITY[band],
+                  db.format_timestamp(now), alert_id))
+    writer = AuditWriter(conn)
+    audit = [writer.feedback(user_id, alert_id, feedback_id, category=category,
+                             rationale=note)]
+    if outcome.interventions:
+        audit.append(writer.guardrail(outcome, alert_id=alert_id, feedback_id=feedback_id,
+                                      actor_id=user_id))
+    refresh = None
+    if teaches:
+        refresh = refresh_family(conn, alert.family_key, policy=policy, learning=learning,
+                                 chart=chart, now=now)
+        if refresh.changed:
+            audit.append(writer.similar_alert_learning(
+                refresh.after, before=refresh.before, actor_id=user_id, alert_id=alert_id,
+                feedback_id=feedback_id, members_moved=refresh.members_moved,
+                guardrail_interventions=refresh.guardrail_interventions,
+                moves=refresh.moves))
 
     return FeedbackResult(feedback=db.get(conn, m.FeedbackEvent, feedback_id),
                           alert=db.get(conn, m.Alert, alert_id), outcome=outcome, audit=audit,

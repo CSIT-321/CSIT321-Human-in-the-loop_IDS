@@ -118,6 +118,9 @@ def record_verdict(conn,ref,*,actor_id,request):
             (str(verdict.verdict_ref),alert.id,actor_id,verdict.revision,str(verdict.supersedes_ref) if verdict.supersedes_ref else None,str(request.request_id),payload,verdict.model_dump_json(by_alias=True)))
         from packages.detection.triage_memory import automatic_evidence
         automatic_evidence(conn,ref,verdict=verdict)
+        # C1 (D1, D2): a flow alert's verdict also goes to the approved engine, in this same transaction.
+        from packages.detection.verdict_bridge import bridge_verdict
+        bridge_verdict(conn,alert,actor_id=actor_id,outcome=verdict.outcome,note=verdict.reason)
         if view.latest is None:
             from packages.detection.analyst_work import complete
             complete(conn,alert.id,actor_id,verdict)

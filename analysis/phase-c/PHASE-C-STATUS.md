@@ -82,3 +82,73 @@ Checks:
 
 Not checked: no Suricata alert is in the routed demo database (source_kind is legacy_flow_alert for all 4,085), so
 the mixed-source order is proven by tests only, not on real data.
+
+## C1 verdict bridge (D1, D2) — done, local (2026-11-08)
+
+Approval rule (user, 2026-11-07): C1 proceeds under D1/D2, which the user owns. Every screen layout still waits
+for the user's approval. Earlier replies said C1-C6 needed FYP supervisor approval; the written record does not
+say that (REVIEW-AND-PLAN.md 5b).
+
+What C1 does:
+- `packages/detection/verdict_bridge.py`: a V2 Tier 1 verdict on a flow alert records the mapped approved verdict
+  (D2 table: confirmed_malicious -> confirm_true_positive, suspicious -> needs_investigation, expected_activity ->
+  mark_expected_activity, false_positive -> mark_false_positive). A human Tier 2 escalation of a flow alert records
+  the approved 'escalate' (+15). Suricata alerts: nothing written (no approved-engine row).
+- Group verdict (user): the representative's legacy alert only; approved family learning carries it.
+  Measured on the routed demo copy (`c1_facts.py`): 77 of 81 groups have every member in the representative's
+  family. The 4 others are Tier 1 groups of 38-57 members across 34-42 families; their other families do not learn.
+- One transaction: `feedback/service.py` split into `apply_feedback` (no commit) and `submit_feedback` (commits,
+  unchanged behaviour for the approved API). The bridge calls `apply_feedback` inside `record_verdict` and
+  `escalate_case`, before their commit.
+- Verdict reason -> approved `note` (no length limit on `note`). The approved audit row names the analyst.
+
+### Queue score decision, for final product review
+
+Problem (measured in code): D1 says "the queue re-orders" after a verdict. The V2 queue sorted on
+`operational_triage_state_v2.operational_priority`, fixed at routing time from the immutable `detection_score`
+(`triage_policy.py:94`). The approved engine writes `alerts.combined_score` and `alerts.severity`. So after a
+verdict the V2 queue moved only if the severity level changed.
+
+Options:
+1. Queue score = routing `operational_priority` + verdict delta (`combined_score - detection_score`), clamped 0-100.
+   Computed when the queue is read; nothing new stored.
+2. Keep the score frozen; only severity moves.
+3. The bridge also rewrites `operational_priority`, with a triage policy audit row.
+
+Chosen: option 1 (user asked for the recommended option, 2026-11-07). Justification:
+- It meets D1: every verdict and every family move changes the queue, not only those that cross a severity level.
+  Proven by `test_the_verdict_delta_moves_an_item_inside_its_severity_level` (-15 keeps Critical, still moves).
+- One writer, one stored score. The approved engine stays the only writer of the verdict effect (D1); the queue
+  reads it. Option 3 would store the same fact twice — the "two stores can disagree" risk D1 option B rejected.
+- The routing context stays. Trusted context (up to +25) is in `operational_priority`, not in `detection_score`.
+  Sorting on `combined_score` alone would drop it (planted defect 7 in `red_check_c1.sh` proves the test catches it).
+- The guardrails stay the limit. The delta is the guardrailed `actual_delta`, so the queue cannot move further
+  than the approved engine allowed.
+- No verdict, no change: `combined_score == detection_score` for all 5,000 alerts on the routed demo copy
+  (`c1_delta_precheck.py`), so the order before any verdict is the same as before C1 (tested).
+- Read-only and no migration.
+Cost (measured, `c1_live_check.py`, routed demo copy, 4,085 items, 3 runs): first page of 50 took 115-126 ms with
+the old key and 123-131 ms with the new key (about +5 to +15 ms; timings vary on this PC).
+Limit: the shown "Operational Priority" number on the screen is still the routing-time value; the queue order uses
+the adjusted score. A screen change to show both needs the user's layout approval.
+
+### C1 evidence
+
+- Tests: `tests/test_verdict_bridge.py` 19/19 (mapping, representative only, audit actor, rollback when the
+  approved write fails, rollback when a later step fails, retry writes once, correction amends, Suricata writes
+  nothing, refuses outside a transaction, escalate +15, failed escalate leaves no case, queue moves by severity,
+  queue moves by score inside a severity level, routing context kept, no verdict no change).
+- Red check `red_check_c1.sh`: 9 planted defects, each fails >= 1 test; restored code passes 19/19. Defect 7
+  (sort on combined_score alone) first passed every test; `test_the_queue_score_keeps_the_routing_context` added.
+- Hand-made queue test databases (`test_queue_severity.py`, `test_operational_queue.py`) got `detection_score` and
+  `combined_score` columns with equal values (delta 0); no expected order changed. C9 red check re-run: 6/6 defects
+  still fail, 52/52 pass restored.
+- Live check through the real API (`c1_live_check.py`, routed demo copy): g.ang claims the top Tier 1 group, POST
+  verdict `false_positive` -> 200. Approved row: `mark_false_positive`, requested -30, actual -30, `applied`, note
+  kept, user 1. Approved audit: `FEEDBACK` and `SIMILAR_ALERT_LEARNING`, both actor 1. Legacy score 100 -> 70,
+  severity -> High. Queue position 1 -> 75. Family learning gate stayed closed ("1 of 3 required"), so no other
+  member moved: approved behaviour, not a defect.
+- Web: `AnalystVerdict.tsx` already sends the 4 D2 outcomes; no screen change in C1.
+
+Not covered by C1: the existing approved API `POST /api/alerts/{id}/feedback` still works on its own; a direct
+approved verdict does not create a V2 verdict (one direction only, as D1 states).

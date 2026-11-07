@@ -48,7 +48,7 @@ def _queue(rows):
     with closing(sqlite3.connect(":memory:")) as conn:
         conn.executescript('''CREATE TABLE operational_alerts_v2(id,operational_alert_ref,occurred_at,legacy_alert_id,
                 source_kind,native_severity,detection_category);
-            CREATE TABLE alerts(id,evidence_class,severity);
+            CREATE TABLE alerts(id,evidence_class,severity,detection_score,combined_score);
             CREATE TABLE operational_triage_state_v2(operational_alert_id,operational_priority);
             CREATE TABLE operational_system_routing(operational_alert_id);
             CREATE TABLE analyst_work(operational_alert_id,status);''')
@@ -57,7 +57,7 @@ def _queue(rows):
             conn.execute("INSERT INTO operational_alerts_v2 VALUES (?,?,?,?,?,?,?)",
                          (i, ref, when, legacy, kind, native, category))
             if legacy:
-                conn.execute("INSERT INTO alerts VALUES (?,?,?)", (i, evidence, sev))
+                conn.execute("INSERT INTO alerts VALUES (?,?,?,?,?)", (i, evidence, sev, 50, 50))  # no verdict: delta 0
             conn.execute("INSERT INTO operational_triage_state_v2 VALUES (?,?)", (i, priority))
         return operational_queue.queue_page(conn, limit=50, offset=0)[1]
 
