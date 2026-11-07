@@ -149,3 +149,17 @@ Checks:
 Not moved on purpose: `packages/evaluation/*` (frozen research code), `selective_review_policy.py`
 UNSUPPORTED_WORKFLOW (part of the recorded review input hash), `triage_policy_service.py` (a different question:
 which states the policy may overwrite).
+
+## E1-suricata feed: measured before building (2026-11-07)
+
+`analysis/phase-b/e1_suricata_value.py` on the replay window (27,516 flows, 4,270 linked Suricata alerts):
+
+- 27 flows link to a Suricata alert of severity <= 2 (the E1-suricata threshold).
+- 6 are the SSH attacker (`ET SCAN Potential SSH Scan`, model Brute Force). E1-flow-rule already escalates all 6.
+- 21 are severity 1-2 alerts (ETERNALBLUE probe, Java, *.pw DNS, Cobalt Strike, ...) on flows the model calls
+  Benign. E1-suricata needs the model to agree, so none of them escalates.
+- **E1-suricata escalations that E1-flow-rule does not already make: 0.** Full day (SPIKE-RESULT.md finding 6):
+  46 E1-suricata flows, all also E1-flow-rule.
+
+So feeding Suricata severity into flow routing changes no route on the real data. It would add the
+"E1-suricata" reason line to the SSH group. Decision needed before building.
