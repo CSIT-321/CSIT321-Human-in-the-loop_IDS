@@ -124,3 +124,28 @@ scoring 60-67.77. Today: 0 context facts on both. Enforcing it means changing th
   records. Under the shared rule they lose all Tier 1 actions. Review S3-10 says current staging always emits a
   bundle, so the branch is unreachable for new data; 0 such rows on the routed demo copy. The change is saved as
   `analysis/phase-b/b6-shared-predicate.patch` (applies cleanly); the tree is back to green.
+
+## B6 done, option 1 (2026-11-07)
+
+`beb257b`: `packages/detection/tier1_eligibility.py` owns the rule, with three results.
+
+| Result | Meaning | Claim / verdict | Selective review / routing actions |
+|---|---|---|---|
+| current | tier1_review / triage + a system routing row | yes | yes |
+| historical | tier1_review / triage, no routing row (non-bundle admission path) | no | yes ("Historical ..." labels) |
+| none | any other route or stage | no | no (staged alerts keep `admit_tier1`) |
+
+Callers moved onto it: `analyst_work.is_tier1_work`, `analyst_verdict._eligible`, `selective_review.read_review`,
+`routing.allowed_actions` (status now required) and `route_alert`, `apps/api/routing_routes._view`, and the two
+summary queries in `apps/api/operational_queue.py` (`CURRENT_TIER1_SQL`).
+
+Checks:
+- Behaviour baseline `b6_baseline.py`: 5 answers for 16 alerts of all three kinds + summary + review metrics;
+  before and after byte-identical.
+- Live API `b6_live_check.py` (old code from a git worktree vs the branch, real claim on a copy): identical.
+- `tests/test_tier1_eligibility.py` (7). Red check `red_check_b6.sh`: 5 planted defects each fail a test.
+- 438 tests in the 18 affected files; 117 web tests; OpenAPI unchanged.
+
+Not moved on purpose: `packages/evaluation/*` (frozen research code), `selective_review_policy.py`
+UNSUPPORTED_WORKFLOW (part of the recorded review input hash), `triage_policy_service.py` (a different question:
+which states the policy may overwrite).
