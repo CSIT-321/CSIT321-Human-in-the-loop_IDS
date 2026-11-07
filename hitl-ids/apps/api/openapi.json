@@ -12274,6 +12274,11 @@
             "title": "Canmutate",
             "type": "boolean"
           },
+          "canRelease": {
+            "default": false,
+            "title": "Canrelease",
+            "type": "boolean"
+          },
           "claimedAt": {
             "anyOf": [
               {
@@ -12326,6 +12331,11 @@
             "default": null,
             "title": "Finishedbyname"
           },
+          "idle": {
+            "default": false,
+            "title": "Idle",
+            "type": "boolean"
+          },
           "isOwner": {
             "default": false,
             "title": "Isowner",
@@ -12354,6 +12364,11 @@
             ],
             "default": null,
             "title": "Ownername"
+          },
+          "releaseReasonRequired": {
+            "default": false,
+            "title": "Releasereasonrequired",
+            "type": "boolean"
           },
           "revision": {
             "title": "Revision",

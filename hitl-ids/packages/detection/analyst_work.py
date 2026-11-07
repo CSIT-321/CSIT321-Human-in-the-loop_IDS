@@ -37,6 +37,10 @@ class WorkView(V2Contract):
     is_owner: bool = False
     can_claim: bool = False
     can_mutate: bool = False
+    # C7 screen: the same rule as release(). The web shows the Release button only from these.
+    can_release: bool = False
+    release_reason_required: bool = False
+    idle: bool = False
     explanation: str
 
 class ClaimResult(V2Contract):
@@ -124,8 +128,12 @@ def read_work(conn,alert_id,actor_id=None,review=None):
         'Available for Review. Selecting this alert starts your review.' if claimable else 'Tier 1 claiming does not apply to this workflow.')
     fields={k:work[k] for k in ('revision','owner_actor_id','owner_name','claimed_at','round_ref','finished_at','finished_by_actor_id','finished_by_name','verdict_ref')} if work else {'revision':0}
     latest=conn.execute('SELECT snapshot FROM analyst_verdict_events WHERE operational_alert_id=? ORDER BY revision DESC LIMIT 1',(alert_id,)).fetchone()
+    in_review=bool(work and work['status']=='in_review')
+    admin_release=bool(permitted and in_review and not owned and actor.role=='system_admin')
     return WorkView(status=status,**fields,is_owner=owned,can_claim=permitted and claimable,
-        can_mutate=permitted and owned and tier1,verdict_outcome=json.loads(latest[0])['outcome'] if latest else None,explanation=explanation)
+        can_mutate=permitted and owned and tier1,can_release=permitted and in_review and (owned or admin_release),
+        release_reason_required=admin_release,idle=in_review and _idle(work),
+        verdict_outcome=json.loads(latest[0])['outcome'] if latest else None,explanation=explanation)
 
 def require_owner(conn,alert_id,actor_id):
     work=row(conn,alert_id)

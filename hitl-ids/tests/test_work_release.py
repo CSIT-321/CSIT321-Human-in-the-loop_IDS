@@ -194,3 +194,60 @@ def test_the_sweep_releases_only_idle_claims(setup, monkeypatch):
         assert work.read_work(c, alerts[0].id, 1).status == 'available'
         assert work.read_work(c, alerts[1].id, 2).is_owner
         assert work.expire_idle_claims(c) == 0
+
+# Release button (C7 screen, layout approved 2026-11-08): the server says who may release, so the web never
+# guesses from the role. The rule must match `release()` exactly.
+
+def test_the_work_view_says_who_may_release(setup):
+    path, alerts = setup
+    a = alerts[0]
+    with closing(db.connect(path)) as c:
+        before = work.read_work(c, a.id, 1)
+        assert not before.can_release, 'nothing to release before a claim'
+        claim_work(c, a, actor_id=1)
+        owner, other, evaluator, admin = (work.read_work(c, a.id, actor) for actor in (1, 2, 4, 5))
+        assert owner.can_release and not owner.release_reason_required
+        assert not other.can_release and not evaluator.can_release
+        assert admin.can_release and admin.release_reason_required
+        release(c, a, 1)
+        assert not work.read_work(c, a.id, 1).can_release and not work.read_work(c, a.id, 5).can_release
+
+
+def test_the_view_matches_what_release_accepts(setup):
+    """Every actor the view offers the button to succeeds; every other actor is refused."""
+    path, alerts = setup
+    with closing(db.connect(path)) as c:
+        for alert, actor in zip(alerts, (1, 2, 4, 5)):
+            claim_work(c, alert, actor_id=3)
+            view = work.read_work(c, alert.id, actor)
+            try:
+                release(c, alert, actor, reason='Shift change' if view.release_reason_required else None)
+                accepted = True
+            except (work.WorkConflict, PermissionError):
+                accepted = False
+            assert accepted == view.can_release, (actor, view)
+
+
+def test_the_view_reports_an_idle_claim(setup, monkeypatch):
+    path, alerts = setup
+    a = alerts[0]
+    with closing(db.connect(path)) as c:
+        claim_work(c, a, actor_id=1)
+        assert not work.read_work(c, a.id, 5).idle
+        later(monkeypatch, 16)
+        assert work.read_work(c, a.id, 5).idle and work.read_work(c, a.id, 1).idle
+        release(c, a, 1)
+        assert not work.read_work(c, a.id, 5).idle
+
+
+def test_the_api_work_view_carries_the_release_fields(setup):
+    path, alerts = setup
+    a = alerts[0]
+    with closing(db.connect(path)) as c:
+        claim_work(c, a, actor_id=1)
+    url = f'/api/v2/alerts/{a.operational_alert_ref}/work'
+    with TestClient(create_app(path)) as client:
+        owner = client.get(url, headers=headers(path, 1)).json()
+        admin = client.get(url, headers=headers(path, 5)).json()
+    assert (owner['canRelease'], owner['releaseReasonRequired'], owner['idle']) == (True, False, False)
+    assert (admin['canRelease'], admin['releaseReasonRequired']) == (True, True)

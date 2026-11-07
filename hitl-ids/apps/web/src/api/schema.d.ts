@@ -6880,6 +6880,11 @@ export interface components {
              */
             canMutate: boolean;
             /**
+             * Canrelease
+             * @default false
+             */
+            canRelease: boolean;
+            /**
              * Claimedat
              * @default null
              */
@@ -6902,6 +6907,11 @@ export interface components {
              */
             finishedByName: string | null;
             /**
+             * Idle
+             * @default false
+             */
+            idle: boolean;
+            /**
              * Isowner
              * @default false
              */
@@ -6916,6 +6926,11 @@ export interface components {
              * @default null
              */
             ownerName: string | null;
+            /**
+             * Releasereasonrequired
+             * @default false
+             */
+            releaseReasonRequired: boolean;
             /** Revision */
             revision: number;
             /**

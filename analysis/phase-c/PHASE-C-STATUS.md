@@ -171,3 +171,13 @@ Build order: C4, Release, C6, C3, C2 + D4 condition 3, C5.
 - Tests: `OperationalEvidenceFlow.test.tsx` 10/10. Red check `red_check_c4.sh`: 7/7 defects caught. Web 127/127 (18 files). tsc clean.
 - Live (demo copy, ports 8011/5181, g.ang): AL-01958 shows `· AL-01958`, Confidence 100.0%, "Rule and model agree", the explanation, and the 5-clause table.
 - Open: the Historical XGBoost Evidence card still shows "Supplied confidence: Not provided" for corroborated alerts (canonical confidence is null). It conflicts with 100.0% in the provenance block. Needs a decision.
+
+## Release button (C7 screen) — built, local (2026-11-08)
+
+- Server: `WorkView` gets `canRelease`, `releaseReasonRequired`, `idle` (same rule as `release()`). Web never decides from the role.
+- Web: `AnalystWork.tsx` Release claim / Release (admin), inline confirm, reason optional for the owner, required for admin. Same request id on retry. Idle mark.
+- Tests: `tests/test_work_release.py` 14/14 (4 new); `AnalystWorkRelease.test.tsx` 7/7; `AutoClaimWorkstation.test.tsx` + `AnalystWork.test.tsx` 20/20 (1 new page test).
+- Red check: `analysis/phase-c/red_check_release.sh` — 9 of 9 planted defects fail at least one test; restored code passes.
+- Live API check (`release_live_check.py`, demo copy): owner canRelease, no reason; admin canRelease, reason required; admin without reason 400 RELEASE_REASON_REQUIRED; with reason 200, event releasedBy=administrator, previousOwner=1.
+- Live browser check (Camoufox, demo copy, g.ang): row click claims; Release claim opens the form; Release frees the alert; button gone; database shows WORK_RELEASED by actor 1 and 0 claims in review; no new claim.
+- **Gap:** an admin cannot open `/analyst/*` (`App.tsx:54`), and no admin page shows the work panel. The admin button is not reachable on screen. Admin release works through the API only. Needs a user decision.

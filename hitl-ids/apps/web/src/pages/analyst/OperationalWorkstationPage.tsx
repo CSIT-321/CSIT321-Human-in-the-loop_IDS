@@ -144,7 +144,8 @@ function AlertWorkspace({ view, onChanged, refresh, onReview, starting }: { view
         onClick={() => setTab(name)} className={`border-b-2 px-3 py-2 text-xs ${tab === name ? "border-primary text-text" : "border-transparent text-muted hover:text-text"}`}>{name}</button>)}
     </div>
     <div id="ops-alert-panel" role="tabpanel" aria-label={tab} className="min-h-0 flex-1 space-y-4 overflow-auto p-4">
-      {view.work&&<AnalystWorkPanel work={view.work} starting={starting}/>}
+      {view.work&&<AnalystWorkPanel work={view.work} starting={starting} alertRef={view.operationalAlertRef}
+        onReleased={work=>{onChanged({...view,work});refresh();}}/>}
       {(tab === "Overview" || tab === "Evidence") && <>
         {view.classification && <p className="text-sm capitalize">{view.classification.status === "informational_policy_signal" ? "Classification" : "Attack Category"}: <strong>{attackLabel(view.classification.attackCategory)}</strong></p>}
         {evidence.status === "loading" && <LoadingState label="Loading canonical evidence…" />}

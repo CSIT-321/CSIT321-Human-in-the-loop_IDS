@@ -5,7 +5,7 @@ import type { Schemas } from "../../api/client";
 import { AnalystWorkPanel } from "./AnalystWork";
 
 const available: Schemas["WorkView"] = {
-  status: "available", revision: 0, canClaim: true, canMutate: false, isOwner: false,
+  status: "available", revision: 0, canClaim: true, canMutate: false, isOwner: false, canRelease: false, releaseReasonRequired: false, idle: false,
   explanation: "Available for Review. Selecting this alert starts your review.",
   claimedAt: null, finishedAt: null, finishedByActorId: null, finishedByName: null,
   ownerActorId: null, ownerName: null, roundRef: null, verdictRef: null, verdictOutcome: null,

@@ -10,6 +10,7 @@ const first = "fe130e6f-af86-4fc6-89f2-bc76b6cad68b";
 const second = "fe130e6f-af86-4fc6-89f2-bc76b6cad68c";
 const third = "fe130e6f-af86-4fc6-89f2-bc76b6cad68d";
 const work: Schemas["WorkView"] = { status: "available", revision: 0, canClaim: true, canMutate: false, isOwner: false,
+  canRelease: false, releaseReasonRequired: false, idle: false,
   explanation: "Available for Review. Selecting this alert starts your review.", claimedAt: null, finishedAt: null,
   finishedByActorId: null, finishedByName: null, ownerActorId: null, ownerName: null, roundRef: null,
   verdictRef: null, verdictOutcome: null };
@@ -46,8 +47,8 @@ function setup(scenario: Scenario) {
     if (path === "/api/v2/alerts/summary") return jsonResponse(scenario.arrived
       ? { ...summary, totalAlerts: 3, activeAlerts: 3, tier1Review: 3 } : summary);
     const currentWork = (ref: string) => scenario.claimed === ref
-      ? { ...work, status: "in_review", revision: 1, canClaim: false, canMutate: true,
-        isOwner: true, ownerName: "Glenn Ang", ownerActorId: 1, explanation: "In Review — You" }
+      ? { ...work, status: "in_review", revision: 1, canClaim: false, canMutate: true, canRelease: true,
+            isOwner: true, ownerName: "Glenn Ang", ownerActorId: 1, explanation: "In Review — You" }
       : { ...work, ...scenario.overrideWork };
     const record = (ref: string) => ({ ...base, operationalAlertRef: ref,
       title: ref === first ? "First available alert" : ref === second ? "Second available alert" : "Newly arrived alert", work: currentWork(ref),
@@ -81,6 +82,11 @@ function setup(scenario: Scenario) {
       scenario.claimed = path.includes(second) ? second : first;
       return jsonResponse({ outcome: "claimed", work: currentWork(scenario.claimed) });
     }
+    if (path.endsWith("/work/release") && request.method === "POST") {
+      scenario.posts.push({ path, body: await request.json(), workspace: null });
+      scenario.claimed = undefined;
+      return jsonResponse({ replayed: false, work: { ...work } });
+    }
     return jsonResponse({ error: { code: "NOT_FOUND", message: path } }, 404);
   });
 }
@@ -89,6 +95,22 @@ const claims = (seen: Request[]) => seen.filter(request => request.method === "P
   new URL(request.url).pathname.endsWith("/work/claim"));
 
 describe("intentional queue selection auto-claim", () => {
+  it("Release claim frees the alert and does not start a new claim by itself", async () => {
+    const scenario: Scenario = { posts: [], claimed: first };
+    const seen = setup(scenario);
+    const user = userEvent.setup();
+    renderApp("/analyst/operations?alertRef=" + first, { session: analyst });
+    const panel = await screen.findByRole("region", { name: "Human work status" });
+    await user.click(within(panel).getByRole("button", { name: "Release claim" }));
+    await user.click(within(panel).getByRole("button", { name: "Release" }));
+    await waitFor(() => expect(within(screen.getByRole("region", { name: "Human work status" }))
+      .getByText("Available for Review")).toBeVisible());
+    const release = scenario.posts.find(post => post.path.endsWith("/work/release"));
+    expect(release?.body).toMatchObject({ expectedRevision: 1 });
+    expect(claims(seen)).toHaveLength(0);
+    expect(within(screen.getByRole("region", { name: "Human work status" })).queryByRole("button", { name: /Release/ })).toBeNull();
+  });
+
   it("keeps one mounted Workstation and SSE stream across Analyst routes", async () => {
     let controller!: ReadableStreamDefaultController<Uint8Array>;
     const scenario: Scenario = { posts: [], stream: new ReadableStream({ start(value) { controller = value; } }),
