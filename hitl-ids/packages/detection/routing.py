@@ -11,6 +11,7 @@ from pydantic import Field, field_validator
 from packages.contracts import db, models as m
 from packages.contracts.operational_v2 import OperationalTriageStateV2, V2Contract
 from packages.detection.adapters.operational_v2 import read_triage
+from packages.detection.tier1_eligibility import Tier1Status
 
 RoutingAction = Literal['admit_tier1', 'approve_tier2', 'reject_tier2', 'manual_escalate']
 EVENTS = {'admit_tier1': 'V2_TIER1_ADMITTED', 'approve_tier2': 'V2_TIER2_APPROVED',
@@ -64,10 +65,12 @@ def decode_audit(row) -> RoutingAudit:
     return RoutingAudit.model_validate(values)
 
 
-def allowed_actions(state: OperationalTriageStateV2) -> tuple[RoutingAction, ...]:
+def allowed_actions(state: OperationalTriageStateV2, status: Tier1Status) -> tuple[RoutingAction, ...]:
+    """``status`` is `tier1_eligibility.tier1_status` for this alert (B6). Current and historical Tier 1 alerts
+    get the same actions; the console labels approve/reject as "Historical ..."."""
     if (state.handling_route, state.workflow_stage) == ('unassigned', 'staged'):
         return ('admit_tier1',)
-    if (state.handling_route, state.workflow_stage) == ('tier1_review', 'triage'):
+    if status in ('current', 'historical'):
         return (('approve_tier2', 'reject_tier2', 'manual_escalate') if state.tier2_recommended
                 else ('manual_escalate',))
     return ()
@@ -108,8 +111,9 @@ def route_alert(conn: sqlite3.Connection, alert_id: int, *, actor_id: int,
                 conn.commit()
             return decode_audit(prior), True
         before = read_triage(conn, alert_id)
-        from packages.detection.analyst_work import is_tier1_work
-        if is_tier1_work(conn,alert_id):
+        from packages.detection.tier1_eligibility import tier1_status
+        status = tier1_status(conn, alert_id, before)
+        if status == 'current':
             from packages.detection.analyst_work import require_owner, row, WorkConflict
             work=row(conn,alert_id)
             # A completed historical judgment may still be explicitly handed to Tier 2.
@@ -119,10 +123,9 @@ def route_alert(conn: sqlite3.Connection, alert_id: int, *, actor_id: int,
                 except WorkConflict as exc: raise RoutingConflict(str(exc)) from exc
         if state_version(before) != request.expected_state_version:
             raise RoutingConflict('V2 state changed; refresh and review before deciding again')
-        if action not in allowed_actions(before):
+        if action not in allowed_actions(before, status):
             raise RoutingConflict('action is not allowed for the current route, stage and recommendation')
-        if action in ('manual_escalate', 'approve_tier2') and not _case_transaction and conn.execute(
-                'SELECT 1 FROM operational_system_routing WHERE operational_alert_id=?', (alert_id,)).fetchone():
+        if action in ('manual_escalate', 'approve_tier2') and not _case_transaction and status == 'current':
             raise RoutingConflict('current system-routed alerts require atomic tier2/escalate-case; standalone Candidate routing is historical only')
         moment = max(m.utc_now(), before.updated_at + timedelta(microseconds=1))
         route, stage = (('tier1_review', 'triage') if action in ('admit_tier1', 'reject_tier2')

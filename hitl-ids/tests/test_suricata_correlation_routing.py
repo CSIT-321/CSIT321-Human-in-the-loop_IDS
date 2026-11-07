@@ -237,7 +237,8 @@ def test_migration_fourteen_preserves_populated_history_and_constraints(tmp_path
         with monkeypatch.context() as patch:
             patch.setattr('packages.detection.tier2_cases.system_classification',lambda *args:None)
             patch.setattr('packages.detection.analyst_work.row',lambda *args:None)
-            patch.setattr('packages.detection.analyst_work.is_tier1_work',lambda *args:False)
+            # Schema 13 has no operational_system_routing table: the alert is historical Tier 1 work (B6 rule).
+            patch.setattr('packages.detection.tier1_eligibility.has_system_route',lambda *args:False)
             created=escalate_case(connection,alert.operational_alert_ref,actor_id=1,request=EscalateCaseRequest(
                 request_id=uuid4(),expected_state_version=state_version(state),reason='Historical manual escalation'))
         tables=[r[0] for r in connection.execute("SELECT name FROM sqlite_master WHERE type='table' AND name!='sqlite_sequence'")]

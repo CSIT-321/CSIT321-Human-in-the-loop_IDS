@@ -4,6 +4,7 @@ from datetime import datetime, timezone
 from apps.api.contract.routing import OperationalSummary
 from packages.contracts.operational_v2 import POLICY_BAND_STORAGE
 from packages.detection.selective_review import effective_review
+from packages.detection.tier1_eligibility import CURRENT_TIER1_SQL
 
 
 SOURCE = '''FROM operational_alerts_v2 a
@@ -107,7 +108,7 @@ def summary(conn):
         count(CASE WHEN w.status='completed' THEN 1 END) AS completed_work,
         count(CASE WHEN w.status='escalated' THEN 1 END) AS escalated_work,
         count(CASE WHEN w.status='in_review' THEN 1 END) AS in_review_work,
-        count(CASE WHEN s.operational_alert_id IS NOT NULL AND t.handling_route='tier1_review' AND t.workflow_stage='triage' AND (w.status IS NULL OR w.status='available') THEN 1 END) AS available_work
+        count(CASE WHEN {CURRENT_TIER1_SQL} AND (w.status IS NULL OR w.status='available') THEN 1 END) AS available_work
         {SOURCE}''').fetchone()
     values.update(dict(work))
     # Available means claim-eligible attention, not an unowned deferred item. Only an alert with a persisted
@@ -116,7 +117,7 @@ def summary(conn):
         'SELECT DISTINCT a.id, a.operational_alert_ref FROM selective_review_events e '
         'JOIN operational_alerts_v2 a ON a.id = e.operational_alert_id').fetchall()
         if effective_review(conn, item[1]).disposition == 'no_immediate_review'}
-    available = {item[0] for item in conn.execute(f"SELECT a.id {SOURCE} WHERE s.operational_alert_id IS NOT NULL AND t.handling_route='tier1_review' AND t.workflow_stage='triage' AND (w.status IS NULL OR w.status='available')")}
+    available = {item[0] for item in conn.execute(f"SELECT a.id {SOURCE} WHERE {CURRENT_TIER1_SQL} AND (w.status IS NULL OR w.status='available')")}
     values['available_work'] -= len(available & deferred_ids)
     deferred = len(deferred_ids)
     values.update(no_immediate_review=deferred, review_required=values['total_alerts'] - deferred)

@@ -62,9 +62,8 @@ def _alert(conn,ref):
     return read_projection(conn,row[0])
 
 def _eligible(conn,alert):
-    state=read_triage(conn,alert.id)
-    return ((state.handling_route,state.workflow_stage)==('tier1_review','triage') and
-            conn.execute('SELECT 1 FROM operational_system_routing WHERE operational_alert_id=?',(alert.id,)).fetchone() is not None)
+    from packages.detection.tier1_eligibility import tier1_status
+    return tier1_status(conn,alert.id)=='current'
 
 def _decode(row):
     return AnalystVerdict.model_validate_json(row['snapshot']) if row else None

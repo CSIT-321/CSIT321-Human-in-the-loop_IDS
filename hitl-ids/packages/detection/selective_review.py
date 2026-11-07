@@ -194,11 +194,14 @@ def read_review(conn,ref):
         disposition='must_review';codes=['HUMAN_REVIEW_OVERRIDE']
         explanation='An authenticated human required review: '+last.reason
     recalled=bool(last and last.snapshot.result.disposition=='no_immediate_review' and disposition!='no_immediate_review')
+    from packages.detection.tier1_eligibility import tier1_status
     return ReviewView(operational_alert_ref=ref,title=snapshot.inputs.alert.detection_title,
         version=_hash(dict(input=snapshot.input_version,last=last.id if last else None)),disposition=disposition,
         reason_codes=list(dict.fromkeys(codes)),explanation=explanation,priority=snapshot.inputs.triage.operational_priority,
         route=snapshot.inputs.triage.handling_route,policy_evaluation=snapshot,last_decision=last,
-        human_override=snapshot.inputs.human_override,eligible_alert=(snapshot.inputs.triage.handling_route,snapshot.inputs.triage.workflow_stage)==('tier1_review','triage'),recalled=recalled)
+        # B6: selective review accepts current and historical Tier 1 alerts (tier1_eligibility.py)
+        human_override=snapshot.inputs.human_override,
+        eligible_alert=tier1_status(conn,aid,snapshot.inputs.triage)!='none',recalled=recalled)
 
 
 def decide_review(conn,ref,*,actor_id,action,request:ReviewCommand):

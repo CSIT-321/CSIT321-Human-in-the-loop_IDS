@@ -81,9 +81,9 @@ def row(conn,alert_id):
     return conn.execute('SELECT * FROM analyst_work WHERE operational_alert_id=?',(alert_id,)).fetchone()
 
 def is_tier1_work(conn,alert_id):
-    state=read_triage(conn,alert_id)
-    return ((state.handling_route,state.workflow_stage)==('tier1_review','triage') and
-        conn.execute('SELECT 1 FROM operational_system_routing WHERE operational_alert_id=?',(alert_id,)).fetchone() is not None)
+    """Claimable Tier 1 work: `tier1_eligibility.tier1_status` is "current" (B6)."""
+    from packages.detection.tier1_eligibility import tier1_status
+    return tier1_status(conn,alert_id)=='current'
 
 def read_work(conn,alert_id,actor_id=None,review=None):
     work=row(conn,alert_id);tier1=is_tier1_work(conn,alert_id)

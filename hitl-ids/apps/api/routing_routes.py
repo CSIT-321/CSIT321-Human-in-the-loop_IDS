@@ -19,6 +19,7 @@ from packages.contracts.operational_v2 import OperationalAlertV2, HandlingRouteV
 from packages.contracts.suricata_bundle import AttackCategory
 from packages.detection.selective_review import Disposition, effective_review
 from packages.detection.analyst_work import read_work, Scope
+from packages.detection.tier1_eligibility import tier1_status
 from packages.detection.routing import (
     RoutingRequest, RoutingAction, RoutingConflict, allowed_actions, decode_audit,
     route_alert, state_version,
@@ -47,7 +48,7 @@ def _view(conn, alert_id, principal, review=None):
     bundle = json.loads(row['detector_evidence']).get('structured_evidence', {}).get('suricataBundle')
     attention=review or effective_review(conn,row['operational_alert_ref'])
     work=read_work(conn,alert_id,principal.user_id,attention)
-    actions=list(allowed_actions(state)) if principal.role in ('security_analyst','system_admin') else []
+    actions=list(allowed_actions(state, tier1_status(conn, alert_id, state))) if principal.role in ('security_analyst','system_admin') else []
     if system and state.handling_route=='tier1_review' and work.status!='completed' and not work.can_mutate: actions=[]
     return RoutingView(effective_review=attention,
         classification=json.loads(system['classification']) if system else None,
