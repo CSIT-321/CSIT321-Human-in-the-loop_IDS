@@ -222,6 +222,27 @@ def test_unflagged_items_rank_below_every_group(grouped_database):
     assert set(order[:len(groups)]) == groups, order
 
 
+def test_a_high_scoring_unflagged_item_still_ranks_below_every_group(grouped_database):
+    """D4 condition 2 as a rule, not as an accident of the scores. Trusted context can add up to +25
+    (config/operational-triage-v1.json), so a single can outscore a group. Here one single gets 100."""
+    from apps.api import operational_queue
+    with closing(db.connect(str(grouped_database))) as conn:
+        prepare_all(conn)
+        groups = {r[0] for r in conn.execute("SELECT representative_operational_alert_id FROM alert_groups")}
+        single = unflagged_rows(conn)[0][0]
+        conn.execute("UPDATE operational_triage_state_v2 SET operational_priority = 100 WHERE operational_alert_id = ?",
+                     (single,))
+        low = conn.execute("SELECT min(operational_priority) FROM operational_triage_state_v2 "
+                           "WHERE operational_alert_id IN (%s)" % ",".join("?" * len(groups)), list(groups)).fetchone()[0]
+        assert low < 100, "the fixture must have the single outscore at least one group"
+        _, order = operational_queue.queue_page(conn, limit=1000, offset=0)
+        _, filtered = operational_queue.queue_page(conn, limit=1000, offset=0, review_required=True)
+        _, second_page = operational_queue.queue_page(conn, limit=2, offset=2)
+    assert set(order[:len(groups)]) == groups and order[len(groups)] == single, order
+    assert set(filtered[:len(groups)]) == groups, "the review-filtered path sorts the same way"
+    assert second_page == order[2:4], "pagination follows the same order"
+
+
 def test_routing_unflagged_twice_routes_nothing_new_and_keeps_the_legacy_rows(grouped_database):
     with closing(db.connect(str(grouped_database))) as conn:
         before = snapshot(conn)

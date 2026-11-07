@@ -113,7 +113,8 @@ def test_default_priority_time_and_reference_order_and_unassigned_last(api):
 def test_exact_requested_scores_ties_offsets_microseconds_and_invalid_priority():
     # Minimal read-query tables isolate ordering from immutable evidence construction.
     with closing(sqlite3.connect(':memory:')) as conn:
-        conn.executescript('''CREATE TABLE operational_alerts_v2(id,operational_alert_ref,occurred_at);
+        conn.executescript('''CREATE TABLE operational_alerts_v2(id,operational_alert_ref,occurred_at,legacy_alert_id);
+            CREATE TABLE alerts(id,evidence_class);
             CREATE TABLE operational_triage_state_v2(operational_alert_id,operational_priority);
             CREATE TABLE operational_system_routing(operational_alert_id);
             CREATE TABLE analyst_work(operational_alert_id,status);''')
@@ -121,7 +122,7 @@ def test_exact_requested_scores_ties_offsets_microseconds_and_invalid_priority()
                 (2,95,'2026-10-31T04:00:00.000002Z','b'), (3,72,'2026-11-01T00:00:00Z','c'),
                 (4,60,'2026-11-02T00:00:00Z','d'), (5,40,'2026-11-03T00:00:00Z','e'),
                 (6,95,'2026-10-31T04:00:00.000002Z','a'), (7,None,'invalid','g'), (8,'invalid','invalid','h')]:
-            conn.execute('INSERT INTO operational_alerts_v2 VALUES (?,?,?)',(i,ref,stamp))
+            conn.execute('INSERT INTO operational_alerts_v2 VALUES (?,?,?,NULL)',(i,ref,stamp))
             conn.execute('INSERT INTO operational_triage_state_v2 VALUES (?,?)',(i,score))
         assert operational_queue.queue_page(conn,limit=50,offset=0) == (8,[6,2,1,3,4,5,7,8])
 

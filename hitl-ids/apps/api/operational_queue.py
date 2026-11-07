@@ -17,6 +17,12 @@ EXPERT = f"({ROUTE_CLASS}='EXPERT_REVIEW_REQUIRED' OR {CATEGORY}='unknown_needs_
 # Storage uses 'critical' for both legacy critical and the explicitly tagged P1 band.
 CRITICAL = "t.priority_band='critical'"
 VALID_PRIORITY = "CASE WHEN typeof(t.operational_priority) IN ('integer','real') AND t.operational_priority BETWEEN 0 AND 100 THEN t.operational_priority END"
+# Decision D4, condition 2: an unflagged flow (no rule and no model flag; projected as a single routine item) ranks
+# below every other item, whatever its score. Trusted context can add up to +25 to a score, so the score alone does
+# not keep it below the flagged groups. External NIDS alerts have no legacy alert, so they stay in the upper tier.
+UNFLAGGED_LAST = ("CASE WHEN EXISTS (SELECT 1 FROM alerts u WHERE u.id = a.legacy_alert_id AND u.evidence_class = 'none') "
+                  "THEN 1 ELSE 0 END")
+QUEUE_ORDER = f"{UNFLAGGED_LAST} ASC, {VALID_PRIORITY} DESC, queue_occurred_at(a.occurred_at) DESC, a.operational_alert_ref ASC"
 
 
 def occurred_key(value):
@@ -72,8 +78,7 @@ def queue_page(conn, *, limit, offset, review_required=None, review_disposition=
         # is deliberate at FYP scale; no stale persisted deferral cache or SQL policy.
         reviews = reviews if reviews is not None else {}
         rows = conn.execute(f'''SELECT a.id,a.operational_alert_ref {SOURCE} {where}
-            ORDER BY {VALID_PRIORITY} DESC, queue_occurred_at(a.occurred_at) DESC,
-                     a.operational_alert_ref ASC''', params).fetchall()
+            ORDER BY {QUEUE_ORDER}''', params).fetchall()
         reviewed = reviewed_ids(conn)
         ids = []
         for row in rows:
@@ -89,8 +94,7 @@ def queue_page(conn, *, limit, offset, review_required=None, review_disposition=
         return len(ids), ids[offset:offset + limit]
     total = conn.execute('SELECT count(*) ' + SOURCE + where, params).fetchone()[0]
     ids = conn.execute(f'''SELECT a.id {SOURCE} {where}
-        ORDER BY {VALID_PRIORITY} DESC, queue_occurred_at(a.occurred_at) DESC,
-                 a.operational_alert_ref ASC LIMIT ? OFFSET ?''', [*params, limit, offset]).fetchall()
+        ORDER BY {QUEUE_ORDER} LIMIT ? OFFSET ?''', [*params, limit, offset]).fetchall()
     return total, [row[0] for row in ids]
 
 

@@ -356,7 +356,7 @@ export function OperationalWorkstationPage({ active = true }: { active?: boolean
           </select>
           <label htmlFor="ops-search" className="sr-only">Search operational alerts</label>
           <input id="ops-search" maxLength={200} value={filter} onChange={event => setFilter("q", event.target.value, true)} placeholder="Search operational alerts…" className="w-full min-w-0 rounded-sm border border-border bg-bg p-2 text-xs" />
-          <p className="text-[10px] text-muted">Operational Priority ↓ · newest first on ties</p>
+          <p className="text-[10px] text-muted">Flagged first · Operational Priority ↓ · newest first on ties</p>
         </div>
         <div id="operational-queue-panel" role="tabpanel" aria-labelledby={"queue-view-" + activeView.key} className="min-h-0 flex-1 overflow-y-auto">
           {queue.status === "loading" && <p role="status" className="p-3 text-xs">Loading operational alerts…</p>}
