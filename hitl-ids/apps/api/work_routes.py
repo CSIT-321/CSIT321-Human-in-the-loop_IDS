@@ -8,6 +8,7 @@ from apps.api.routing_routes import Conn, Principal, MutationRole, _id
 from apps.api.read_only import ReadConn, ReadPrincipal
 from packages.detection.analyst_work import ClaimCommand, ClaimResult, WorkView, WorkEvent, WorkConflict, claim, read_work, history
 from packages.detection.analyst_work import ReleaseCommand, ReleaseResult, release
+from packages.detection.alert_notes import Note, NoteCommand, NoteResult, add_note, list_notes
 
 router=APIRouter(prefix='/api/v2/alerts',tags=['Shared analyst work'])
 
@@ -53,3 +54,19 @@ def post_release(alertRef:UUID,body:ReleaseCommand,conn:Conn,principal:Principal
     except LookupError as exc: raise ApiError(404,'NOT_FOUND',str(exc)) from exc
     except WorkConflict as exc: raise ApiError(409,'WORK_CONFLICT',str(exc)) from exc
     except ValueError as exc: raise ApiError(400,'RELEASE_REASON_REQUIRED',str(exc)) from exc
+
+
+# C6 (decision Q7 option A): Tier 1 notes. Everyone with read access reads; only the claim owner adds.
+@router.get('/{alertRef}/notes',response_model=list[Note],operation_id='listOperationalAlertNotes')
+def get_notes(alertRef:UUID,conn:ReadConn,principal:ReadPrincipal):
+    with conn:
+        conn.execute('BEGIN')
+        return list_notes(conn,_id(conn,alertRef))
+
+@router.post('/{alertRef}/notes',response_model=NoteResult,dependencies=[MutationRole],operation_id='addOperationalAlertNote')
+def post_note(alertRef:UUID,body:NoteCommand,conn:Conn,principal:Principal):
+    try:
+        return add_note(conn,alertRef,actor_id=principal.user_id,request=body)
+    except PermissionError as exc: raise ApiError(403,'FORBIDDEN_ROLE',str(exc)) from exc
+    except LookupError as exc: raise ApiError(404,'NOT_FOUND',str(exc)) from exc
+    except WorkConflict as exc: raise ApiError(409,'WORK_CONFLICT',str(exc)) from exc

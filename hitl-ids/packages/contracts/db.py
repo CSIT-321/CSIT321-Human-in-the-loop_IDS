@@ -176,6 +176,8 @@ MIGRATIONS += ((23, "immutable alert detection fields and undeletable V2 triage 
                 Path(__file__).with_name("integrity_guards.sql").read_text(encoding="utf-8")),)
 MIGRATIONS += ((24, "audited release of a claimed Tier 1 item (owner, administrator, idle expiry)",
                 Path(__file__).with_name("work_release.sql").read_text(encoding="utf-8")),)
+MIGRATIONS += ((25, "append-only, owner-guarded Tier 1 notes on V2 operational alerts (C6)",
+                Path(__file__).with_name("operational_alert_notes.sql").read_text(encoding="utf-8")),)
 SCHEMA_VERSION = MIGRATIONS[-1][0]
 
 

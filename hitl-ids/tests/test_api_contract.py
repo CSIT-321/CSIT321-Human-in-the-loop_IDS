@@ -59,6 +59,8 @@ REQUIRED_OPERATIONS = {
     ("/api/v2/alerts/{alertRef}/work/events", "get"),
     ("/api/v2/alerts/{alertRef}/work/claim", "post"),
     ("/api/v2/alerts/{alertRef}/work/release", "post"),  # C7, decision D5
+    ("/api/v2/alerts/{alertRef}/notes", "get"),  # C6, decision Q7 option A
+    ("/api/v2/alerts/{alertRef}/notes", "post"),  # C6, decision Q7 option A
     ('/api/v2/alerts/{alertRef}/triage-memory/from-verdict','post'),
     ('/api/v2/alerts/{alertRef}/triage-memory/verdict-state','get'),
     ('/api/v2/alerts/{alertRef}/verdict','get'),

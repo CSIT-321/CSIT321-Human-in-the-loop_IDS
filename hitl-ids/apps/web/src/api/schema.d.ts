@@ -818,6 +818,24 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v2/alerts/{alertRef}/notes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Read append-only Tier 1 notes, oldest first (C6) */
+        get: operations["listOperationalAlertNotes"];
+        put?: never;
+        /** Add a Tier 1 note; only the claim owner; append-only, idempotent by requestId (C6) */
+        post: operations["addOperationalAlertNote"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v2/alerts/{alertRef}/selective-review": {
         parameters: {
             query?: never;
@@ -5047,6 +5065,29 @@ export interface components {
             /** Scorechanged */
             scoreChanged: number;
         };
+        /** Note */
+        Note: {
+            /** Actorid */
+            actorId: number;
+            /** Actorname */
+            actorName: string;
+            /** Body */
+            body: string;
+            /** Createdat */
+            createdAt: string;
+            /** Id */
+            id: number;
+        };
+        /** NoteCommand */
+        NoteCommand: {
+            /** Body */
+            body: string;
+            /**
+             * Requestid
+             * Format: uuid
+             */
+            requestId: string;
+        };
         /** NoteOut */
         NoteOut: {
             author: components["schemas"]["Actor"];
@@ -5067,6 +5108,12 @@ export interface components {
         NoteRequest: {
             /** Body */
             body: string;
+        };
+        /** NoteResult */
+        NoteResult: {
+            note: components["schemas"]["Note"];
+            /** Replayed */
+            replayed: boolean;
         };
         /** ObservationRequest */
         ObservationRequest: {
@@ -9913,6 +9960,123 @@ export interface operations {
             };
             /** @description Not found */
             404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Database unavailable or schema unsupported; read-only requests never migrate */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    listOperationalAlertNotes: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description `Bearer <token>` from POST /api/auth/login */
+                Authorization?: string;
+            };
+            path: {
+                alertRef: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Notes */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Note"][];
+                };
+            };
+            /** @description Not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Database unavailable or schema unsupported; read-only requests never migrate */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    addOperationalAlertNote: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description `Bearer <token>` from POST /api/auth/login */
+                Authorization?: string;
+            };
+            path: {
+                alertRef: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["NoteCommand"];
+            };
+        };
+        responses: {
+            /** @description The new note, or the replayed note */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NoteResult"];
+                };
+            };
+            /** @description Validation failed */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Role not permitted */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
                 headers: {
                     [name: string]: unknown;
                 };

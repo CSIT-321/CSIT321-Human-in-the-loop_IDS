@@ -31,6 +31,7 @@ from packages.detection.tier2_escalation import EscalateCaseRequest
 from packages.detection.investigation_assistance import InvestigationAssistance
 from packages.detection.analyst_verdict import VerdictCommand,VerdictView,VerdictHistory,VerdictMutation
 from packages.detection.analyst_work import ClaimCommand,ClaimResult,WorkView,WorkEvent,ReleaseCommand,ReleaseResult
+from packages.detection.alert_notes import Note,NoteCommand,NoteResult
 from packages.detection.routing import RoutingRequest
 from packages.contracts.operational_v2 import OperationalAlertV2, HandlingRouteV2, PriorityBandV2
 from packages.contracts.suricata_bundle import AttackCategory
@@ -75,6 +76,7 @@ MODELS: tuple[type[BaseModel], ...] = (
     VerdictMemoryRequest,VerdictMemoryState,ConclusionMemoryRequest,ConclusionMemoryState,
     VerdictCommand,VerdictView,VerdictHistory,VerdictMutation,
     ClaimCommand,ClaimResult,WorkView,WorkEvent,ReleaseCommand,ReleaseResult,
+    Note,NoteCommand,NoteResult,
     RunCreate,RunView,RunPage,RunCommand,ObservationRequest,RecordedArchive,CollectionDocument,
     FactRequest,FactPage,FactMutation,ResolvedTrustedContext,
     ReviewCommand,ReviewView,ReviewMutation,ReviewEvent,ReviewMetrics,
@@ -807,6 +809,14 @@ def _paths() -> dict[str, Any]:
         'parameters':[AUTH_PARAMETER,alert_ref],
         'requestBody':{'required':True,**_json(ReleaseCommand)},
         'responses':{'200':{'description':'Work returned to available, or the replayed release',**_json(ReleaseResult)},**_errors(400,403,404,409,503)}}}
+    paths['/api/v2/alerts/{alertRef}/notes']={
+        'get':{'operationId':'listOperationalAlertNotes','summary':'Read append-only Tier 1 notes, oldest first (C6)','tags':['Shared analyst work'],
+            'parameters':[AUTH_PARAMETER,alert_ref],
+            'responses':{'200':{'description':'Notes','content':{'application/json':{'schema':{'type':'array','items':{'$ref':'#/components/schemas/Note'}}}}},**_errors(404,503)}},
+        'post':{'operationId':'addOperationalAlertNote','summary':'Add a Tier 1 note; only the claim owner; append-only, idempotent by requestId (C6)','tags':['Shared analyst work'],
+            'parameters':[AUTH_PARAMETER,alert_ref],
+            'requestBody':{'required':True,**_json(NoteCommand)},
+            'responses':{'200':{'description':'The new note, or the replayed note',**_json(NoteResult)},**_errors(400,403,404,409,503)}}}
     paths['/api/v2/alerts/{alertRef}/verdict-history'] = {'get': {
         'operationId':'getAnalystVerdictHistory','summary':'Read append-only human verdict history','tags':['Analyst verdict'],
         'parameters':[AUTH_PARAMETER,alert_ref,

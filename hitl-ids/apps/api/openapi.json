@@ -7689,6 +7689,61 @@
         "title": "MovementGroup",
         "type": "object"
       },
+      "Note": {
+        "additionalProperties": false,
+        "properties": {
+          "actorId": {
+            "title": "Actorid",
+            "type": "integer"
+          },
+          "actorName": {
+            "title": "Actorname",
+            "type": "string"
+          },
+          "body": {
+            "title": "Body",
+            "type": "string"
+          },
+          "createdAt": {
+            "title": "Createdat",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "id",
+          "actorId",
+          "actorName",
+          "body",
+          "createdAt"
+        ],
+        "title": "Note",
+        "type": "object"
+      },
+      "NoteCommand": {
+        "additionalProperties": false,
+        "properties": {
+          "body": {
+            "maxLength": 2000,
+            "title": "Body",
+            "type": "string"
+          },
+          "requestId": {
+            "format": "uuid",
+            "title": "Requestid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "requestId",
+          "body"
+        ],
+        "title": "NoteCommand",
+        "type": "object"
+      },
       "NoteOut": {
         "additionalProperties": false,
         "properties": {
@@ -7733,6 +7788,24 @@
           "body"
         ],
         "title": "NoteRequest",
+        "type": "object"
+      },
+      "NoteResult": {
+        "additionalProperties": false,
+        "properties": {
+          "note": {
+            "$ref": "#/components/schemas/Note"
+          },
+          "replayed": {
+            "title": "Replayed",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "replayed",
+          "note"
+        ],
+        "title": "NoteResult",
         "type": "object"
       },
       "ObservationRequest": {
@@ -17951,6 +18024,171 @@
         "summary": "Read immutable canonical detector evidence",
         "tags": [
           "V2 routing"
+        ]
+      }
+    },
+    "/api/v2/alerts/{alertRef}/notes": {
+      "get": {
+        "operationId": "listOperationalAlertNotes",
+        "parameters": [
+          {
+            "description": "`Bearer <token>` from POST /api/auth/login",
+            "in": "header",
+            "name": "Authorization",
+            "required": false,
+            "schema": {
+              "example": "Bearer eyJhbGciOiJIUzI1NiJ9...",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "alertRef",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/Note"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Notes"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not found"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Database unavailable or schema unsupported; read-only requests never migrate"
+          }
+        },
+        "summary": "Read append-only Tier 1 notes, oldest first (C6)",
+        "tags": [
+          "Shared analyst work"
+        ]
+      },
+      "post": {
+        "operationId": "addOperationalAlertNote",
+        "parameters": [
+          {
+            "description": "`Bearer <token>` from POST /api/auth/login",
+            "in": "header",
+            "name": "Authorization",
+            "required": false,
+            "schema": {
+              "example": "Bearer eyJhbGciOiJIUzI1NiJ9...",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "alertRef",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NoteCommand"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NoteResult"
+                }
+              }
+            },
+            "description": "The new note, or the replayed note"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Validation failed"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Role not permitted"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Database unavailable or schema unsupported; read-only requests never migrate"
+          }
+        },
+        "summary": "Add a Tier 1 note; only the claim owner; append-only, idempotent by requestId (C6)",
+        "tags": [
+          "Shared analyst work"
         ]
       }
     },

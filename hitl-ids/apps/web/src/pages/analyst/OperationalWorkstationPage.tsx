@@ -1,4 +1,5 @@
 import { AnalystVerdictPanel, AnalystVerdictHistory } from "../../features/alert/AnalystVerdict";
+import { AlertNotes } from "../../features/alert/AlertNotes";
 import { AnalystWorkPanel } from "../../features/alert/AnalystWork";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { createSearchParams, Link, useSearchParams } from "react-router";
@@ -163,6 +164,7 @@ function AlertWorkspace({ view, onChanged, refresh, onReview, starting }: { view
       {tab === "Context & Review" && <SelectiveReviewPanel key={view.stateVersion} alertRef={view.operationalAlertRef} readOnly={view.work?.status==='in_review'&&!view.work.isOwner} onReview={onReview} />}
       {tab === "Triage Memory" && <AlertMemoryPanel key={view.stateVersion} view={view} onVerdict={()=>setTab("Analyst Verdict")} onContributed={refresh} />}
       {tab === "History & Notes" && <section className="space-y-3" aria-label="Operational decision history">
+        <AlertNotes key={view.operationalAlertRef} alertRef={view.operationalAlertRef} work={view.work} />
         <AnalystVerdictHistory alertRef={view.operationalAlertRef}/>
         <h3 className="label-mono">Latest routing decision</h3>
         {view.latestDecision ? <>
@@ -170,8 +172,7 @@ function AlertWorkspace({ view, onChanged, refresh, onReview, starting }: { view
           <p className="whitespace-pre-wrap break-words text-sm">{view.latestDecision.reason}</p>
           <p className="text-xs text-muted">{view.latestDecision.createdAt}</p>
         </> : <p className="text-sm text-muted">No routing decision recorded.</p>}
-        {view.caseRef ? <Link className="text-accent underline" to={"/analyst/tier2-cases/" + view.caseRef}>Open case notes and timeline</Link>
-          : <p className="text-sm text-muted">Investigation notes and the full case timeline become available in the Tier 2 Case after escalation.</p>}
+        {view.caseRef && <Link className="text-accent underline" to={"/analyst/tier2-cases/" + view.caseRef}>Open case notes and timeline</Link>}
       </section>}
       {tab === "Technical" && <section className="space-y-3" aria-label="Operational technical snapshots">
         <h3 className="label-mono">Read-only snapshots</h3>

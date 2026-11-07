@@ -228,7 +228,7 @@ def test_migration_19_preserves_populated_event_ids_memory_and_response_foreign_
                 with pytest.raises(sqlite3.OperationalError):db.migrate(c)
             assert '\n'.join(c.iterdump())==snapshot
             assert c.execute('PRAGMA foreign_keys').fetchone()[0]==1
-            assert db.migrate(c)==[20,21,22,23,24] and db.migrate(c)==[]
+            assert db.migrate(c)==[20,21,22,23,24,25] and db.migrate(c)==[]
             assert {t:[tuple(r) for r in c.execute('SELECT '+','.join(columns[t])+' FROM '+t+' ORDER BY rowid')] for t in tables}==before
             assert c.execute('PRAGMA foreign_keys').fetchone()[0]==1
             assert c.execute('PRAGMA foreign_key_check').fetchall()==[]

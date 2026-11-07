@@ -74,6 +74,8 @@ DEVIATION_TABLES = {
     "analyst_claim_rounds": {"round_ref","operational_alert_id","work_revision","policy_version","window_ms","started_at","closes_at","status","finalized_at","owner_actor_id"},
     "analyst_claim_intents": {"request_id","round_ref","actor_id","actor_name","request_payload","created_at"},
     "analyst_work_events": {"id","operational_alert_id","event_type","actor_id","decision_source","round_ref","created_at","detail"},
+    # Migration 25 (C6, decision Q7 option A): append-only, owner-guarded Tier 1 notes.
+    "operational_alert_notes": {"id","operational_alert_id","actor_id","actor_name","body","request_id","created_at"},
     "conclusion_memory_contributions": {"id","source_alert_id","source_case_id","conclusion_event_id","actor_id","scope","primary_lesson_id","request_id","request_payload","decision_source","policy_version"},
     "conclusion_memory_evidence": {"id","contribution_id","lesson_id","evidence_snapshot"},
     "verdict_memory_contributions": {"id","source_alert_id","source_verdict_ref","actor_id","scope","primary_lesson_id","request_id","request_payload","decision_source","policy_version"},
@@ -329,7 +331,7 @@ def test_every_table_model_matches_its_columns(conn):
     # The inbox uses the canonical contract and staging writer, not a legacy operational model.
     assert set(db.TABLE_MODELS) == table_names(conn) - {
         "alert_groups", "alert_group_members",
-        "analyst_work", "analyst_claim_rounds", "analyst_claim_intents", "analyst_work_events",
+        "analyst_work", "analyst_claim_rounds", "analyst_claim_intents", "analyst_work_events", "operational_alert_notes",
         "conclusion_memory_contributions", "conclusion_memory_evidence", "verdict_memory_contributions", "verdict_memory_evidence", "analyst_verdict_events", "suricata_eve_records", "operational_system_routing",
         "prospective_runs", "prospective_run_events", "prospective_decisions", "prospective_observations",
         "external_alert_inbox", "operational_alerts_v2", "operational_triage_state_v2",
@@ -357,6 +359,8 @@ EXPECTED_FOREIGN_KEYS = {
     ('analyst_work_events', 'operational_alert_id', 'analyst_work', 'operational_alert_id'),
     ('analyst_work_events', 'actor_id', 'users', 'id'),
     ('analyst_work_events', 'round_ref', 'analyst_claim_rounds', 'round_ref'),
+    ('operational_alert_notes', 'operational_alert_id', 'operational_alerts_v2', 'id'),
+    ('operational_alert_notes', 'actor_id', 'users', 'id'),
 
     ('conclusion_memory_contributions','source_alert_id','operational_alerts_v2','id'),
     ('conclusion_memory_contributions','source_case_id','tier2_cases','id'),

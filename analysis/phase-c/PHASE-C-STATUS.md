@@ -190,3 +190,12 @@ Build order: C4, Release, C6, C3, C2 + D4 condition 3, C5.
 - Tests: `test_work_release.py` 15/15 (1 new); `ClaimedAlerts.test.tsx` 5/5; full web 275/275; related Python files 107/107 incl. `test_api_contract.py`.
 - Red check: `analysis/phase-c/red_check_claimed_list.sh` — 6 of 6 planted defects fail; restored code passes.
 - Live browser check (Camoufox, demo copy `claimed-ui.db`, admin): 2 claims by g.ang listed; Release stays off with no reason; with reason the row goes, In Review tile 2 -> 1; event releasedBy=administrator, previousOwner=1, reason kept.
+
+## C6 Tier 1 notes — built, local (2026-11-08)
+
+- Decision Q7 option A (approved 2026-11-08). Migration 25 adds `operational_alert_notes` (`packages/contracts/operational_alert_notes.sql`): append-only (update, delete and replace refused by triggers); owner-guarded in the database (insert refused unless the actor holds the claim In Review); body 1-2000 characters; `request_id` unique.
+- `packages/detection/alert_notes.py`: `add_note` (owner check, trimmed body, retry with the same request id replays) and `list_notes` (oldest first). Routes: `GET` and `POST /api/v2/alerts/{alertRef}/notes`. Every reader reads; only the claim owner adds (403 evaluator, 409 other analyst or administrator).
+- Web: `AlertNotes` in History & Notes. Add form only for the owner; others see "Only the analyst who owns this alert can add a note." A failed add keeps the text and the request id. Notes stay after the claim ends.
+- Tests: `tests/test_alert_notes_v2.py` 10/10; `AlertNotes.test.tsx` 7/7. Schema lists in 9 existing tests updated for migration 25 and the 2 routes. Full Python run: 1,735 passed, 12 failed; after the list updates, the 7 new failures pass (380/380 in their files); the other 5 are the known failures. Web: 282/282, TypeScript 0 errors.
+- Red check (`red_check_notes.sh`): 10 planted defects. 9 failed at least one test on the first run; defect 8 (request id kept after success) did not. Added a test ("a second note with the same text is a new note"); defect 8 now fails it.
+- Live check (Camoufox, demo copy `notes-ui.db`, real `data/demo.db` untouched): g.ang added 3 notes on screen; after release, the notes stay and the add form is gone; database shows 3 notes by actor 1 and the work `available`. Admin view of the notes was NOT checked in the browser: admins cannot open the analyst workstation (App.tsx). The API test covers admin read (200) and admin add (409).

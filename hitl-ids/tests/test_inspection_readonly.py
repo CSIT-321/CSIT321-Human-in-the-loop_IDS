@@ -27,6 +27,7 @@ INSPECTION_ROUTES = (
     '/api/workspace/current',
     '/api/v2/alerts/{alertRef}/work',
     '/api/v2/alerts/{alertRef}/work/events',
+    '/api/v2/alerts/{alertRef}/notes',
     '/api/v2/alerts/{alertRef}/triage-memory/verdict-state',
     '/api/v2/alerts/{alertRef}/verdict',
     '/api/v2/alerts/{alertRef}/verdict-history',
