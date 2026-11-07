@@ -111,3 +111,16 @@ scoring 60-67.77. Today: 0 context facts on both. Enforcing it means changing th
 - **B6** Four modules define "is Tier 1 work": claim and verdict need a routing row; selective review and the
   routing actions do not. Every flow item now has a routing row (0 unrouted), so the gap is only the historical
   non-bundle Suricata path, used by 8 test files (`legacy_suricata_fixture`).
+
+## B5 done (scoped), B6 stopped (2026-11-07)
+
+- **B5** `cac29b6`: flow routing keeps the triage policy's context recommendations as candidate reasons
+  ("Context: ..."); they never change the route. Test-first (a trusted fact made no candidate before).
+  The System Routing panel shows "Why Tier 2 is recommended" and states that context is read once.
+- **B6 stopped before commit.** The shared rule (routing row required) breaks 11 tests in 5 files. They are not
+  test-only scaffolding: they cover a live, labelled product path. `external_admission.py:173-186` (non-bundle
+  branch) admits with `admit_tier1` and writes no routing row; the console labels its approve/reject actions
+  "Historical Tier 2 candidate approval/rejection"; selective review and prospective collection run on those
+  records. Under the shared rule they lose all Tier 1 actions. Review S3-10 says current staging always emits a
+  bundle, so the branch is unreachable for new data; 0 such rows on the routed demo copy. The change is saved as
+  `analysis/phase-b/b6-shared-predicate.patch` (applies cleanly); the tree is back to green.
