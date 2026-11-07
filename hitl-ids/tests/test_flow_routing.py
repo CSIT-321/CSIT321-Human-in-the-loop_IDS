@@ -229,3 +229,36 @@ def test_routing_unflagged_twice_routes_nothing_new_and_keeps_the_legacy_rows(gr
         again = route_unflagged(conn)
         assert again == {"auto_escalated": 0, "candidate": 0, "routine": 0}
         assert snapshot(conn) == before
+
+
+# B5, scoped (analysis/phase-b/PHASE-B-STATUS.md): context is read once, at routing. The triage policy's own
+# Tier 2 recommendations from that context must reach the stored candidate flag; they used to be dropped.
+
+def test_a_trusted_fact_present_at_routing_makes_a_routine_group_a_candidate(grouped_database):
+    from datetime import timedelta
+    from uuid import uuid4
+    from apps.api import auth
+    from packages.detection.context_store import FactRequest, collect_fact, revision
+    policy = flow_routing.load_flow_routing_policy().model_copy(update={"version": "flow-routing-test-routine",
+                                                                        "e3_minimum_score": 101.0})
+    with closing(db.connect(str(grouped_database))) as conn:
+        auth.ensure_demo_accounts(conn)
+        conn.commit()
+        materialize_flagged(conn)
+        actor = conn.execute("SELECT id FROM users WHERE username='g.ang'").fetchone()[0]
+        ref = conn.execute("""SELECT o.operational_alert_ref FROM alert_groups g
+                              JOIN operational_alerts_v2 o ON o.id = g.representative_operational_alert_id
+                              WHERE g.grouping_key = '10.0.0.66' ORDER BY g.first_seen_at LIMIT 1""").fetchone()[0]
+        now = m.utc_now()
+        collect_fact(conn, actor_id=actor, request=FactRequest(
+            request_id=uuid4(), expected_revision=revision(conn), subject_type="operational_alert",
+            subject_value=str(ref), context_key="analystEscalated", value=True,
+            observed_at=now - timedelta(seconds=1), valid_from=now - timedelta(minutes=1),
+            expires_at=now + timedelta(hours=1), reason="SYNTHETIC analyst escalation", source_reference="synthetic:b5"))
+        route_flagged(conn, policy=policy)
+        rows = grouped(conn)
+    route, recommended, reasons, case_ref, _, _ = rows["botnet-1"]
+    assert (route, case_ref) == ("tier1_review", None)
+    assert recommended and "Context: Analyst explicitly requested escalation." in reasons, reasons
+    # the group without the fact stays routine
+    assert rows["botnet-2"][:4] == ("tier1_review", False, (), None)

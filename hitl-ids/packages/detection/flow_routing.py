@@ -198,19 +198,25 @@ def route_flow_alert(conn, operational_id: int, *, policy: FlowRoutingPolicy, ch
     moment = max(m.utc_now(), before.updated_at + timedelta(microseconds=1))
     provenance = resolved_for(conn, alert_v2.operational_alert_ref, moment)
     priority = evaluate_triage(alert_v2, provenance.context, priority_policy)
-    reason = " ".join(decision.reasons + route.tier2_reasons)
+    # B5 (scoped): the triage policy's own Tier 2 recommendations from trusted context (analyst escalated,
+    # confirmed malicious + response, critical asset at high priority, campaign) join the candidate reasons.
+    # They never change the route: only E1 auto-escalates. Context is read once, here; a later fact does not
+    # re-route (analysis/phase-b/PHASE-B-STATUS.md).
+    tier2_reasons = tuple(dict.fromkeys(route.tier2_reasons + tuple(
+        f"Context: {reason}" for reason in priority.tier2_recommendation_reasons)))
+    reason = " ".join(decision.reasons + tier2_reasons)
     reason_audit = reason if len(reason) <= 2000 else reason[:1970] + " ... (reasons truncated)"
     after = OperationalTriageStateV2(operational_alert_id=operational_id,
         operational_priority=priority.final_operational_priority, priority_band=priority.priority_band,
         priority_band_scheme="p1_p4", handling_route=decision.route,
         workflow_stage="investigation" if decision.route == "tier2_case" else "triage",
-        review_required=True, review_reason=reason, tier2_recommended=bool(route.tier2_reasons),
-        tier2_recommendation_reasons=route.tier2_reasons, decision_source="system_policy",
+        review_required=True, review_reason=reason, tier2_recommended=bool(tier2_reasons),
+        tier2_recommendation_reasons=tier2_reasons, decision_source="system_policy",
         triage_policy_version=priority.policy_version, updated_at=moment)
     stamp = db.format_timestamp(moment)
     values = after.model_dump(mode="json", exclude={"operational_alert_id"})
     values.update(priority_band=POLICY_BAND_STORAGE[after.priority_band],
-                  tier2_recommendation_reasons=json.dumps(list(route.tier2_reasons)), updated_at=stamp)
+                  tier2_recommendation_reasons=json.dumps(list(tier2_reasons)), updated_at=stamp)
     conn.execute("UPDATE operational_triage_state_v2 SET " + ",".join(f"{k}=?" for k in values) +
                  " WHERE operational_alert_id=?", [*values.values(), operational_id])
     scoring = priority.model_dump(mode="json", by_alias=True, include={
@@ -260,7 +266,7 @@ def route_flow_alert(conn, operational_id: int, *, policy: FlowRoutingPolicy, ch
          _snapshot(decision), _snapshot(policy), _snapshot(provenance), routing_id, policy_id, case_ref, stamp))
     if read_triage(conn, operational_id) != after:
         raise ValueError("flow routing storage round-trip mismatch")
-    return ("auto_escalated" if decision.route == "tier2_case" else "candidate" if route.tier2_reasons else "routine",
+    return ("auto_escalated" if decision.route == "tier2_case" else "candidate" if tier2_reasons else "routine",
             qualifying_id)
 
 

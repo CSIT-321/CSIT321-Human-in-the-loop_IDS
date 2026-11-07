@@ -50,6 +50,20 @@ describe("V2 routing", () => {
     expect(seen).toHaveLength(1);
   });
 
+  it("shows the candidate reasons and states that context is read once, at routing (B5 scope)", () => {
+    stubFetch(() => { throw new Error("No writes expected"); });
+    render(<MemoryRouter><RoutingDetail initial={view} refresh={vi.fn()} /></MemoryRouter>);
+    expect(screen.getByRole("region", { name: "Tier 2 candidate reasons" })).toHaveTextContent("Unresolved by Tier 1");
+    expect(screen.getByText(/Context is read once, when the alert is routed\. A fact recorded later does not change this recommendation\./)).toBeTruthy();
+  });
+
+  it("shows no candidate section when nothing recommends Tier 2", () => {
+    stubFetch(() => { throw new Error("No writes expected"); });
+    render(<MemoryRouter><RoutingDetail initial={{ ...view, state: { ...view.state, tier2Recommended: false,
+      tier2RecommendationReasons: [] } }} refresh={vi.fn()} /></MemoryRouter>);
+    expect(screen.queryByRole("region", { name: "Tier 2 candidate reasons" })).toBeNull();
+  });
+
   it("keeps historical candidate state read-only without recovery or admission controls", () => {
     const seen = stubFetch(() => { throw new Error("No writes expected"); });
     render(<RoutingDetail initial={{...view, systemRouting:null, state:{...view.state, handlingRoute:"tier2_candidate",workflowStage:"assessment"}}} refresh={vi.fn()} />);
