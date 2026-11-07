@@ -15,7 +15,6 @@ import { Card, SeverityBadge } from "../../components/ui";
 import { formatNumber } from "../../design/format";
 
 type SignaturePanel = Schemas["SignaturePanel"];
-type RuleMatchPanel = Schemas["RuleMatchPanel"];
 type Condition = { [key: string]: unknown };
 
 const EMPTY_HINT =
@@ -45,13 +44,13 @@ function renderObserved(value: unknown): string {
   return "—";
 }
 
-function ConditionTable({ rule }: { rule: RuleMatchPanel }) {
-  const conditions = rule.matchedConditions ?? [];
+/** Also used by the V2 evidence view (C4), which supplies the snake_case `matched_conditions`. */
+export function ConditionTable({ conditions, label }: { conditions: readonly Condition[]; label?: string }) {
   if (conditions.length === 0) return null;
 
   return (
     <div className="mt-3 overflow-x-auto">
-      <table className="w-full text-left text-sm">
+      <table aria-label={label} className="w-full text-left text-sm">
         <thead>
           <tr className="text-muted">
             <th scope="col" className="px-3 py-2 font-medium">
@@ -117,7 +116,7 @@ export function SignaturePanelCard({ signature }: { signature: SignaturePanel })
               )}
             </div>
             {rule.rationale !== null && <p className="mt-2 text-sm text-muted">{rule.rationale}</p>}
-            <ConditionTable rule={rule} />
+            <ConditionTable conditions={rule.matchedConditions ?? []} />
           </li>
         ))}
       </ul>

@@ -1,0 +1,282 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Phase C screen review pack (C2–C6, Release, D4 condition 3)</title>
+<style>
+  :root { --bg:#0e1116; --surface:#161b22; --raised:#1f2630; --border:#2d3643; --text:#e6edf3; --muted:#8b98a8;
+          --primary:#4c8dff; --accent:#d2a8ff; --danger:#ff6b6b; --warn:#f0b429; --ok:#3fb950; --new:#2ea043; }
+  * { box-sizing:border-box; }
+  body { margin:0; padding:24px 32px 64px; background:var(--bg); color:var(--text); font:14px/1.5 system-ui,Segoe UI,sans-serif; }
+  h1 { font-size:22px; margin:0 0 4px; } h2 { font-size:18px; margin:40px 0 6px; border-top:1px solid var(--border); padding-top:20px; }
+  h3 { font-size:12px; text-transform:uppercase; letter-spacing:.06em; color:var(--muted); margin:14px 0 6px; }
+  p, li { max-width:900px; } .muted { color:var(--muted); } code { font:12px Consolas,monospace; color:var(--accent); }
+  .row { display:flex; gap:24px; align-items:flex-start; flex-wrap:wrap; }
+  .notes { flex:1 1 360px; min-width:320px; }
+  .mock { flex:0 0 auto; border:1px solid var(--border); background:var(--surface); border-radius:6px; overflow:hidden; font-size:12px; }
+  .mock .bar { background:var(--raised); padding:6px 10px; color:var(--muted); font-size:11px; border-bottom:1px solid var(--border); }
+  .pad { padding:10px; }
+  .tabs { display:flex; flex-wrap:wrap; gap:4px; }
+  .tab { border:1px solid var(--border); border-radius:3px; padding:2px 6px; font-size:10px; color:var(--muted); white-space:nowrap; }
+  .tab.on { border-color:var(--primary); color:var(--text); background:var(--raised); }
+  .tab.new, .new-box { outline:2px dashed var(--new); outline-offset:1px; }
+  .tag-new { color:var(--new); font-weight:600; font-size:10px; }
+  .item { border-bottom:1px solid var(--border); padding:8px 10px; }
+  .item .top { display:flex; justify-content:space-between; }
+  .band { font-size:10px; font-weight:600; text-transform:uppercase; color:var(--muted); }
+  .band.crit { color:var(--danger); }
+  .prio { font:600 24px Consolas,monospace; text-align:right; line-height:1; }
+  .prio small { display:block; font:9px system-ui; color:var(--muted); }
+  .mono { font-family:Consolas,monospace; font-size:10px; }
+  .btn { display:inline-block; border:1px solid var(--border); border-radius:3px; padding:3px 8px; font-size:11px; background:var(--raised); }
+  .btn.pri { border-color:var(--primary); color:#fff; background:#1f4fa8; }
+  .btn.warn { border-color:var(--warn); }
+  textarea, .input { width:100%; background:var(--bg); border:1px solid var(--border); border-radius:3px; color:var(--muted); padding:5px; font-size:11px; }
+  table { border-collapse:collapse; width:100%; font-size:11px; } td, th { border-bottom:1px solid var(--border); padding:3px 6px; text-align:left; }
+  th { color:var(--muted); font-weight:500; }
+  .decision { border-left:3px solid var(--warn); background:#1d1a10; padding:8px 12px; margin:10px 0; max-width:900px; }
+  .fact { border-left:3px solid var(--primary); background:#111a2a; padding:8px 12px; margin:10px 0; max-width:900px; }
+  .pill { display:inline-block; border:1px solid var(--border); border-radius:10px; padding:0 6px; font-size:10px; }
+  .kpi { display:inline-block; padding:4px 10px; } .kpi b { display:block; font:600 20px Consolas,monospace; }
+  .kpi span { font-size:9px; text-transform:uppercase; color:var(--muted); }
+</style>
+</head>
+<body>
+<h1>Phase C screen review pack</h1>
+<p class="muted">C2–C6, the Release button (C7) and D4 condition 3. Prepared 2026-11-08 for Glenn's layout approval.
+Counts are measured on a copy of the routed demo database (4,085 operational alerts). Green dashed outlines mark new parts.
+Nothing on this page is built yet.</p>
+
+<div class="fact"><b>Plan items that the code has overtaken.</b> These change what C2, C3 and C5 should build:
+<ul>
+<li>C2: the queue already has 10 tabs, including <code>Tier 2</code> (route <code>tier2_case</code>) and <code>Tier 1</code>. The plan's "Incoming" is the existing <code>Active</code> tab.</li>
+<li>C3: <code>routing.py:128</code> blocks a standalone <code>approve_tier2</code> on a current alert. Escalation must use the atomic <code>tier2/escalate-case</code>, which C1 already bridges (+15). <code>reject_tier2</code> is still allowed when <code>tier2_recommended</code> is set.</li>
+<li>C5: the "5-category verdict form" in the list of 9 missing items is replaced by D2 (4 outcomes, already on screen). "Tier 1 investigation notes" is C6. So C5 has 7 cards, not 9.</li>
+</ul></div>
+
+<!-- ===================================================== C2 + D4 -->
+<h2>1. Queue panel — C2 (Tier 2 candidates, auto-escalated, reasons on rows) and D4 condition 3 (groups and singles apart)</h2>
+<div class="row">
+  <div class="mock" style="width:330px">
+    <div class="bar">Operational Alerts (left column)</div>
+    <div class="pad">
+      <div class="tabs">
+        <span class="tab on">Active 4,082</span><span class="tab">Completed 0</span><span class="tab">Escalated 0</span><span class="tab">All 4,085</span>
+        <span class="tab">Tier 2 3</span><span class="tab new">Auto-escalated 3</span>
+        <span class="tab">Tier 1 <span class="new-box">78 groups · 4,004 single</span></span>
+        <span class="tab new">Tier 2 candidates 74</span>
+        <span class="tab">Expert Review</span><span class="tab">Critical</span><span class="tab">Needs Review</span><span class="tab">No Immediate Review</span>
+      </div>
+      <p class="muted" style="font-size:10px;margin:8px 0 0">Severity first · flagged first · Operational Priority ↓ · newest first on ties</p>
+    </div>
+    <div class="item">
+      <div class="top"><span class="band crit">Critical · Tier 1<br><span class="muted" style="font-weight:400">Routine Review</span></span><span class="prio">100<small>Operational Priority</small></span></div>
+      <b>Botnet — 5 flows from 172.31.69.x</b>
+      <div class="new-box" style="margin:4px 0;padding:3px 5px;border-radius:3px;background:#1d1a10">
+        <span style="color:var(--warn);font-weight:600;font-size:10px">TIER 2 RECOMMENDED</span><br>
+        <span style="font-size:10px">E3: score 100 and Botnet has attack severity 9. A Tier 1 analyst confirms before escalation.</span>
+      </div>
+      <div class="muted">Botnet / C2</div>
+      <div class="mono">172.31.69.25 → 18.219.211.138:8080</div>
+      <div class="muted" style="font-size:10px">Legacy Flow Detector · <span class="new-box">Group of 5</span></div>
+    </div>
+    <div class="item">
+      <div class="top"><span class="band">High · Tier 1</span><span class="prio">72<small>Operational Priority</small></span></div>
+      <b>Single flow — DoS-Hulk pattern</b><div class="muted">DoS</div>
+    </div>
+  </div>
+  <div class="notes">
+    <h3>Proposal</h3>
+    <ul>
+      <li>Keep the 10 existing tabs. Add 2 tabs: <b>Tier 2 candidates</b> (filter <code>tier2Recommended=true</code>, new SQL filter) and <b>Auto-escalated</b> (route <code>tier2_case</code> and decision source <code>system_policy</code>).</li>
+      <li>Tier 1 tab and the "Active Tier 1" KPI show <b>groups and singles apart</b> (D4 condition 3). Demo: 78 groups, 4,004 single.</li>
+      <li>A candidate row shows a <b>TIER 2 RECOMMENDED</b> strip with the first reason. A group row shows "Group of N".</li>
+    </ul>
+    <h3>Measured</h3>
+    <ul>
+      <li>74 alerts have <code>tier2_recommended = 1</code>. All 74 are Tier 1 group representatives. All reasons are rule E3 (Botnet or DDoS at score 100).</li>
+      <li>3 alerts are on route <code>tier2_case</code>. All 3 came from system routing (only <code>system_route</code> audit actions exist).</li>
+      <li>The "Tier 1" tab count uses <code>workScope=active</code>. The split count must use the same filter; the 78 / 4,004 above is route-only.</li>
+    </ul>
+    <div class="decision"><b>Decision Q1.</b> Add 2 tabs to the 10 (shown), or cut to the plan's 3 tabs (Incoming · Tier 2 candidates · Auto-escalated) and hide the rest behind a "More views" menu?<br>
+    <b>Decision Q2.</b> Show the group/single split in the tab label (shown), or only in the KPI strip?</div>
+  </div>
+</div>
+
+<!-- ===================================================== Release -->
+<h2>2. Work panel — Release button (C7, backend done in <code>4056528</code>)</h2>
+<div class="row">
+  <div class="mock" style="width:420px">
+    <div class="bar">Alert workspace → work panel (top of every tab)</div>
+    <div class="pad">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <span><b>In review</b> · claimed by you · 6 min ago</span>
+        <span class="btn new-box">Release claim</span>
+      </div>
+      <div class="new-box" style="margin-top:8px;padding:8px;border-radius:3px;background:var(--bg)">
+        <div style="font-size:11px;margin-bottom:4px">Release this alert back to the queue?</div>
+        <div class="input">Reason (optional for your own claim)</div>
+        <div style="margin-top:6px"><span class="btn pri">Release</span> <span class="btn">Cancel</span></div>
+      </div>
+      <h3>Admin view of another analyst's claim</h3>
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <span><b>In review</b> · claimed by g.ang · <span style="color:var(--warn)">idle 22 min</span></span>
+        <span class="btn warn new-box">Release (admin)</span>
+      </div>
+      <div class="muted" style="font-size:10px;margin-top:4px">Admin release requires a reason. The release is audited.</div>
+    </div>
+  </div>
+  <div class="notes">
+    <h3>Proposal</h3>
+    <ul>
+      <li>Owner: a "Release claim" button opens an inline form. The reason is optional (decision D5).</li>
+      <li>Admin on another analyst's claim: "Release (admin)". The reason is required (D5).</li>
+      <li>Show "idle N min" after 15 minutes. That is when the claim expires on the next claim attempt (<code>config/analyst-work-expiry-v1.json</code>).</li>
+      <li>Other analysts see no button.</li>
+    </ul>
+    <div class="decision"><b>Decision Q3.</b> Inline confirm form (shown), or a modal dialog?</div>
+  </div>
+</div>
+
+<!-- ===================================================== C3 -->
+<h2>3. "Why Tier 2" panel — C3</h2>
+<div class="row">
+  <div class="mock" style="width:420px">
+    <div class="bar">Alert workspace → Overview tab, above Analyst Verdict (only when Tier 2 is recommended)</div>
+    <div class="pad new-box" style="margin:8px;border-radius:3px">
+      <div style="color:var(--warn);font-weight:600;font-size:11px">WHY TIER 2 IS RECOMMENDED</div>
+      <ul style="margin:6px 0 8px 16px;padding:0">
+        <li>E3: score 100 and Botnet has attack severity 9. A Tier 1 analyst confirms before escalation.</li>
+        <li class="muted">5 of 5 members meet the rule.</li>
+      </ul>
+      <div class="input" style="margin-bottom:6px">Reason (required for Escalate and Keep in Tier 1)</div>
+      <span class="btn pri">Escalate to Tier 2</span>
+      <span class="btn">Keep in Tier 1</span>
+      <span class="btn">Record verdict ↓</span>
+      <div class="muted" style="font-size:10px;margin-top:6px">Escalate opens a Tier 2 case and records the approved "escalate" (+15). Keep in Tier 1 clears the recommendation and stays on your queue.</div>
+    </div>
+  </div>
+  <div class="notes">
+    <h3>Proposal</h3>
+    <ul>
+      <li><b>Escalate to Tier 2</b> calls the existing atomic <code>tier2/escalate-case</code>. C1 already records the approved +15.</li>
+      <li><b>Keep in Tier 1</b> calls <code>reject_tier2</code> with the reason. It is only shown when the action is allowed.</li>
+      <li><b>Record verdict</b> scrolls to the existing verdict form. No new verdict path.</li>
+      <li>The panel needs the claim: buttons are disabled unless you own the work (same rule as the verdict form).</li>
+    </ul>
+    <h3>To check during the build</h3>
+    <ul><li>Whether <code>reject_tier2</code> clears <code>tier2_recommended</code> or a later system re-route sets it again. If it does not stay cleared, the row strip would come back.</li>
+    <li>Whether "Keep in Tier 1" should also write an approved verdict. The plan does not say. I propose no: it is a routing choice, not a verdict.</li></ul>
+    <div class="decision"><b>Decision Q4.</b> Panel placement: Overview tab above the verdict form (shown), or a separate "Tier 2" tab?</div>
+  </div>
+</div>
+
+<!-- ===================================================== C4 -->
+<h2>4. Evidence tab — C4 (4 items already in the API, plus the confidence fix)</h2>
+<div class="row">
+  <div class="mock" style="width:440px">
+    <div class="bar">Alert workspace → header and Evidence tab</div>
+    <div class="pad">
+      <div class="mono" style="color:var(--accent)">107a0cf6-a827-4593-98c0-d340d154933d <span class="new-box" style="color:var(--text)">· AL-01958</span></div>
+      <h3>Detector provenance</h3>
+      <div>Supplied confidence: <b class="new-box">100.0%</b> <span class="muted" style="text-decoration:line-through">Not provided</span></div>
+      <div class="new-box" style="margin-top:4px">Signature and ML agreement: <span class="pill">Agree — both flag Botnet</span></div>
+      <h3>Signature rules</h3>
+      <table class="new-box">
+        <tr><th>Rule</th><th>Condition</th><th>Value</th></tr>
+        <tr><td>BOT-01</td><td>dst_port == 8080</td><td>8080</td></tr>
+        <tr><td></td><td>flow_duration &lt; 2 s</td><td>0.41 s</td></tr>
+      </table>
+      <h3>Combined explanation</h3>
+      <div class="new-box" style="padding:4px">Rule BOT-01 and the ML model both flag Botnet; corroborated evidence.</div>
+    </div>
+  </div>
+  <div class="notes">
+    <h3>Proposal</h3>
+    <ul>
+      <li>Header: add the <code>AL-xxxxx</code> short name (<code>detectorEvidence.sourceRecordReference</code>).</li>
+      <li>Rule table: render <code>signatureRules[].matchedConditions</code>. Reuse the table from the orphaned <code>SignaturePanelCard</code>.</li>
+      <li>Combined explanation and agreement: render the fields already in the evidence payload.</li>
+      <li>Confidence: read <code>sourceProvenance.legacyFusionConfidence</code> for a legacy flow alert (S7-05 bug). Suricata alerts keep the current field.</li>
+    </ul>
+    <p class="muted">Values in the mock-up are examples. The field paths come from the review (slice-7, S7-03, S7-05); I will confirm each path in the build.</p>
+    <div class="decision"><b>Decision Q5.</b> None on layout — these fit the existing Evidence tab. Approve as shown?</div>
+  </div>
+</div>
+
+<!-- ===================================================== C5 -->
+<h2>5. Flow alert cards — C5 (7 approved cards for <code>legacy_flow_alert</code>)</h2>
+<div class="row">
+  <div class="mock" style="width:440px">
+    <div class="bar">Alert workspace → tabs: Overview · Evidence · <span class="tag-new">Flow &amp; Score</span> · Analyst Verdict · …</div>
+    <div class="pad new-box" style="margin:8px;border-radius:3px">
+      <h3 style="margin-top:0">Score chain</h3>
+      <table>
+        <tr><td>Detection score</td><td class="mono">100</td></tr>
+        <tr><td>Verdict: false positive (g.ang)</td><td class="mono">−30 applied</td></tr>
+        <tr><td>Family learning</td><td class="mono">gate closed (1 of 3)</td></tr>
+        <tr><th>Operational score</th><th class="mono">70 · High · queue band B</th></tr>
+      </table>
+      <h3>Flow</h3>
+      <div>Duration 0.41 s · 2,314 bytes · 12 packets <span class="btn" style="font-size:10px">88 features ▸</span></div>
+      <h3>Family</h3>
+      <div class="mono">["Botnet", 8080, "tcp", "-"] · 150 alerts · 1 verdict</div>
+      <h3>Fusion</h3>
+      <div>Scheme: corroborated · confidence 100.0%</div>
+      <h3>Feedback history</h3>
+      <div>2026-11-08 · g.ang · False positive · "known scanner" · −30</div>
+    </div>
+  </div>
+  <div class="notes">
+    <h3>Proposal</h3>
+    <ul>
+      <li>One new tab, <b>Flow &amp; Score</b>, shown only for flow alerts. One extra GET to the approved alert API (the flow alert's operational ref is its legacy <code>alert_ref</code>).</li>
+      <li>Cards: score chain, operational score, flow (duration, bytes, 88 features folded), queue band, fusion scheme, family, feedback history.</li>
+      <li>Reuse <code>FlowPanelCard</code>, <code>FamilyPanelCard</code>, <code>FeedbackHistoryCard</code> from commit <code>f1b74b6</code>. The API types still exist.</li>
+      <li>Read only. Verdicts still go through the one verdict form (D2).</li>
+    </ul>
+    <div class="decision"><b>Decision Q6.</b> A new "Flow &amp; Score" tab (shown), or add the cards at the bottom of the Evidence tab?</div>
+  </div>
+</div>
+
+<!-- ===================================================== C6 -->
+<h2>6. Tier 1 notes — C6</h2>
+<div class="row">
+  <div class="mock" style="width:420px">
+    <div class="bar">Alert workspace → History &amp; Notes tab</div>
+    <div class="pad">
+      <h3 style="margin-top:0" class="new-box">Investigation notes</h3>
+      <div class="new-box" style="padding:4px">
+        <div style="border-bottom:1px solid var(--border);padding:4px 0"><b>g.ang</b> <span class="muted">2026-11-08 10:42</span><br>Source host is the lab scanner; asked IT to confirm.</div>
+        <div style="border-bottom:1px solid var(--border);padding:4px 0"><b>LIOW CHEE KUANG</b> <span class="muted">2026-11-08 11:05</span><br>Confirmed by IT ticket 4471.</div>
+        <textarea rows="2" style="margin-top:6px">Add a note (you own this alert)</textarea>
+        <span class="btn pri" style="margin-top:4px">Add note</span>
+        <div class="muted" style="font-size:10px">Notes cannot be edited or deleted.</div>
+      </div>
+      <h3>Verdict history</h3><div class="muted">(existing)</div>
+      <h3>Latest routing decision</h3><div class="muted">(existing)</div>
+    </div>
+  </div>
+  <div class="notes">
+    <h3>Proposal</h3>
+    <ul>
+      <li>Append-only list and an add form in the existing History &amp; Notes tab. It replaces the text "notes become available in the Tier 2 Case after escalation".</li>
+      <li>Owner-guarded: only the analyst who holds the claim can add a note. Everyone with read access can read.</li>
+    </ul>
+    <h3>Measured</h3>
+    <ul>
+      <li>No V2 note command exists. The approved API <code>/api/alerts/{alertRef}/notes</code> (routes.py:420–438) writes a separate table. It is role-gated, not owner-gated. It covers flow alerts only.</li>
+    </ul>
+    <div class="decision"><b>Decision Q7 (architecture).</b>
+      <br>A. New append-only V2 table keyed to the operational alert. It covers Suricata alerts and reuses the claim owner check. Needs a migration. <b>Recommended.</b>
+      <br>B. Reuse the approved notes table through the legacy alert. No migration, but Suricata alerts get no notes and the owner check must be added in front.</div>
+  </div>
+</div>
+
+<h2>Build order after approval</h2>
+<ol>
+  <li>C4 (render only, smallest) → Release button → C6 → C3 → C2 + D4 condition 3 → C5.</li>
+  <li>Each item: tests first, planted-defect check, full suite, then one local commit.</li>
+</ol>
+</body>
+</html>

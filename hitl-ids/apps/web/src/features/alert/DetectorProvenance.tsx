@@ -37,10 +37,15 @@ export function DetectorEvidence({ detail, layout = "workstation" }: { detail: S
   return null;
 }
 
-export function DetectorProvenance({ detector }: { detector: Schemas["CanonicalAlert"] | null | undefined }) {
+/** `confidence` overrides the detector field (C4: a flow alert's confidence is the legacy fusion confidence).
+ *  `agreement` is the rule/model agreement line for a flow alert. */
+export function DetectorProvenance({ detector, confidence, agreement }: {
+  detector: Schemas["CanonicalAlert"] | null | undefined; confidence?: number | null; agreement?: string | null;
+}) {
   if (!detector) return null;
   const kind = detectorKind(detector);
   const prediction = detector.structuredEvidence.mlPredictedClass ?? detector.structuredEvidence.predictedAttackType;
+  const shown = confidence === undefined ? detector.confidence : confidence;
   return (
     <section aria-label="Detector provenance" className="border-b border-border pb-3">
       <dl className="grid gap-2 text-xs sm:grid-cols-2">
@@ -49,7 +54,8 @@ export function DetectorProvenance({ detector }: { detector: Schemas["CanonicalA
         <div><dt className="text-muted">Detection</dt><dd className="break-words">{detector.detectionTitle}</dd></div>
         {kind === "xgboost" && <div><dt className="text-muted">Prediction</dt><dd>{typeof prediction === "string" ? prediction : "Not provided"}</dd></div>}
         <div><dt className="text-muted">Native Severity</dt><dd>{detector.detectorSeverity}</dd></div>
-        <div><dt className="text-muted">Confidence</dt><dd>{detector.confidence == null ? "Not provided" : formatPercent(detector.confidence)}</dd></div>
+        <div><dt className="text-muted">Confidence</dt><dd>{shown == null ? "Not provided" : formatPercent(shown)}</dd></div>
+        {agreement && <div><dt className="text-muted">Signature and ML agreement</dt><dd>{agreement}</dd></div>}
       </dl>
       <p className="mt-2 text-xs text-muted">Native Severity and Confidence are detector evidence, separate from Operational Priority and workflow Tier.</p>
     </section>

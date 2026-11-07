@@ -152,3 +152,22 @@ the adjusted score. A screen change to show both needs the user's layout approva
 
 Not covered by C1: the existing approved API `POST /api/alerts/{id}/feedback` still works on its own; a direct
 approved verdict does not create a V2 verdict (one direction only, as D1 states).
+
+## Screen layout approvals (user, 2026-11-08)
+
+Pack: `analysis/phase-c/SCREEN-REVIEW-PACK.html`. All approved as shown:
+- Q1 C2: add 2 tabs (Tier 2 candidates, Auto-escalated) to the existing 10.
+- Q2 D4 condition 3: groups and singles apart in the Tier 1 tab label and the KPI.
+- Q3 Release: inline confirm form.
+- Q4 C3: Why Tier 2 panel on the Overview tab, above the verdict form.
+- Q5 C4: as shown (AL short name, rule conditions, combined explanation, agreement, confidence fix).
+- Q6 C5: new Flow & Score tab, flow alerts only.
+- Q7 C6: new append-only V2 notes table (option A), owner-guarded.
+Build order: C4, Release, C6, C3, C2 + D4 condition 3, C5.
+
+## C4 evidence items — done, local (2026-11-08)
+
+- Header AL short name, rule clause table, combined explanation, rule/model agreement, S7-05 fusion confidence.
+- Tests: `OperationalEvidenceFlow.test.tsx` 10/10. Red check `red_check_c4.sh`: 7/7 defects caught. Web 127/127 (18 files). tsc clean.
+- Live (demo copy, ports 8011/5181, g.ang): AL-01958 shows `· AL-01958`, Confidence 100.0%, "Rule and model agree", the explanation, and the 5-clause table.
+- Open: the Historical XGBoost Evidence card still shows "Supplied confidence: Not provided" for corroborated alerts (canonical confidence is null). It conflicts with 100.0% in the provenance block. Needs a decision.

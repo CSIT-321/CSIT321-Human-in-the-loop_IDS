@@ -8,7 +8,7 @@ import { useApi } from "../../api/useApi";
 import { readAlertArrivals } from "../../api/alertArrivalStream";
 import { ErrorState, LoadingState } from "../../components/states";
 import { Pill } from "../../components/ui";
-import { OperationalEvidence, operationalDetector } from "../../features/alert/OperationalEvidence";
+import { OperationalEvidence, flowShortName, operationalDetector } from "../../features/alert/OperationalEvidence";
 import { SystemRouting, attackLabel, currentRouteLabel, routingSummaryLabel } from "../../features/alert/SystemRouting";
 import { RoutingDetail } from "./V2RoutingPage";
 import { AlertMemoryPanel } from "./TriageMemoryPage";
@@ -129,7 +129,8 @@ function AlertWorkspace({ view, onChanged, refresh, onReview, starting }: { view
   const evidence = useApi(signal => unwrap(api.GET("/api/v2/alerts/{alertRef}/evidence", { params: { path: { alertRef: view.operationalAlertRef } }, signal })), [view.operationalAlertRef]);
   return <section aria-label="Operational alert workspace" className="ops-detail flex min-h-0 min-w-0 flex-col bg-bg">
     <header className="shrink-0 space-y-2 border-b border-l-4 border-border border-l-primary bg-surface p-4">
-      <p className="break-all font-mono text-xs text-accent">{view.operationalAlertRef}</p>
+      <p className="break-all font-mono text-xs text-accent">{view.operationalAlertRef}
+        {evidence.status === "success" && flowShortName(evidence.data) && <span className="text-text"> · {flowShortName(evidence.data)}</span>}</p>
       <h2 className="break-words text-lg font-semibold">{view.title}</h2>
       <div className="flex flex-wrap gap-2 text-xs">
         <span>{operationalDetector(view.detectorSource, view.detectorName)}</span>
