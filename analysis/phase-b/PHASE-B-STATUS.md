@@ -163,3 +163,13 @@ which states the policy may overwrite).
 
 So feeding Suricata severity into flow routing changes no route on the real data. It would add the
 "E1-suricata" reason line to the SSH group. Decision needed before building.
+
+**Decision (user, 2026-11-07): show only.** Linked Suricata alerts appear on the flow group as evidence
+(signature, severity); no routing change. Built with the Phase C group panel. The E1-suricata rule code and its
+tests stay in `flow_routing.py` unchanged (fed by nothing today).
+
+## Phase B closed (2026-11-07)
+
+B1-B8 done (B5 in the scoped form). Carried into Phase C: the group panel (with the linked Suricata evidence),
+condition 2 of D4 (single items below groups in the queue order), condition 3 (Tier 1 count shows groups and
+singles apart), the Admin switches screen, the one-vote group tag in the verdict bridge (C1).
