@@ -92,3 +92,22 @@ scoring 60-67.77. Today: 0 context facts on both. Enforcing it means changing th
 (`apps/api/operational_queue.py`), which is a Phase C decision.
 
 **Summary count:** `tier1_review` is now 4,082 on demo.db. Condition 3 (show groups and singles apart) is Phase C.
+
+## B7 and B8 done (2026-11-07)
+
+- **B7** `e7e17f9`: migration 23 (`packages/contracts/integrity_guards.sql`). Refuses a change to
+  `alerts.detection_score`, `alert_ref`, `evidence_class`, `dataset_id`, `run_id` (same-value writes allowed), and
+  any delete from `operational_triage_state_v2`. Tests `tests/test_integrity_triggers.py` (8); with the triggers
+  off, 7 fail. 412 related tests pass (feedback, learning, detection, contracts, migrations).
+- **B8** `b900684`: `tests/test_policy_consistency.py` pins the shared policy values. Red check: changing any one
+  copy fails a test. Selective review's campaign threshold (5) is a different, more cautious rule, not pinned.
+
+## B5 and B6: need a decision
+
+- **B5** Trusted context is read once, at routing. A fact recorded later does not re-route. Also measured:
+  `flow_routing.py` uses context for the priority, but drops the triage policy's own Tier 2 recommendations
+  (`priority.tier2_recommendation_reasons`): `tier2_recommended` comes from `route.tier2_reasons` only.
+  0 trusted facts on demo.db and stress.db, so nothing is lost today.
+- **B6** Four modules define "is Tier 1 work": claim and verdict need a routing row; selective review and the
+  routing actions do not. Every flow item now has a routing row (0 unrouted), so the gap is only the historical
+  non-bundle Suricata path, used by 8 test files (`legacy_suricata_fixture`).
