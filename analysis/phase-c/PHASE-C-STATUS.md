@@ -51,3 +51,34 @@ A join instead of the sub-query gives the same order and no clear gain; kept the
 
 Screen: the queue subtitle now says "Flagged first · Operational Priority ↓ · newest first on ties". Text only, no
 layout change. Condition 3 (show groups and singles apart in the count) is still a screen decision for supervisors.
+
+## C9 severity-first queue (settled decision 8) — done (2026-11-07)
+
+Found: the served queue did not meet decision 8. On the routed demo copy, a Critical group (score 99.6) sat at
+rank 80, below 35 High/Medium groups at 99.86-100 (`c9_order_check.py`).
+
+User decisions:
+- Severity is the FIRST key for EVERY source. A severe Suricata alert must never rank lower because of its source.
+- A Suricata classtype not in the approved chart uses its rule priority: 1 = High, 2 = Medium, 3 = Low,
+  else Informational. Never Critical without a chart entry.
+
+Order now: severity -> flagged before unflagged (D4) -> Operational Priority -> newest -> ref.
+- `packages/detection/queue_severity.py`: one scale. Flow alert = `alerts.severity`. Suricata alert = chart band of
+  its classtype (`config/severity-chart.json`), else the priority fallback.
+- `config/suricata-classtypes-v1.json` (43 entries, built by `build_classtype_config.py` from the local Suricata
+  `classification.config`): EVE `alert.category` is the description; the chart keys on the classtype name.
+- `apps/api/operational_queue.py`: `QUEUE_ORDER` uses `queue_severity_rank(...)` as its first key.
+- Queue subtitle: "Severity first · flagged first · Operational Priority ↓ · newest first on ties".
+
+Checks:
+- `tests/test_queue_severity.py`: 22 tests (per-source severity, Critical above higher-score High, severe Suricata
+  above flow alerts, severity beats the flagged tier, D4 inside a level, tie-breaks).
+- Red check `red_check_c9.sh`: 6 planted defects, each fails a test. Defect 2 (severity after the flagged tier) first
+  passed all tests; a new test closed that gap.
+- 16 queue test files: 482 passed. Web 98 passed, tsc clean.
+- `c9_effect.py` on the routed demo copy: 38 of 4,085 positions change; severity inversions 36 -> 0; the Critical
+  group moves from rank 80 to within 1-44; flagged 1-81 / unflagged 82+ is unchanged. First page ~105 ms vs ~83 ms.
+- Real adapter output: fixture 'Potentially Bad Traffic' (priority 2) -> Medium; 'Misc activity' (3) -> Low.
+
+Not checked: no Suricata alert is in the routed demo database (source_kind is legacy_flow_alert for all 4,085), so
+the mixed-source order is proven by tests only, not on real data.

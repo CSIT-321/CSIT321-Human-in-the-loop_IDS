@@ -1,0 +1,222 @@
+{
+  "version": "suricata-classtypes-v1",
+  "source": "Suricata classification.config (https://raw.githubusercontent.com/OISF/suricata/master/etc/classification.config), copied from the local Suricata install",
+  "note": "EVE alert.category is the description; config/severity-chart.json keys on the classtype name.",
+  "entries": [
+    {
+      "description": "Not Suspicious Traffic",
+      "classtype": "not-suspicious",
+      "defaultPriority": 3
+    },
+    {
+      "description": "Unknown Traffic",
+      "classtype": "unknown",
+      "defaultPriority": 3
+    },
+    {
+      "description": "Potentially Bad Traffic",
+      "classtype": "bad-unknown",
+      "defaultPriority": 2
+    },
+    {
+      "description": "Attempted Information Leak",
+      "classtype": "attempted-recon",
+      "defaultPriority": 2
+    },
+    {
+      "description": "Information Leak",
+      "classtype": "successful-recon-limited",
+      "defaultPriority": 2
+    },
+    {
+      "description": "Large Scale Information Leak",
+      "classtype": "successful-recon-largescale",
+      "defaultPriority": 2
+    },
+    {
+      "description": "Attempted Denial of Service",
+      "classtype": "attempted-dos",
+      "defaultPriority": 2
+    },
+    {
+      "description": "Denial of Service",
+      "classtype": "successful-dos",
+      "defaultPriority": 2
+    },
+    {
+      "description": "Attempted User Privilege Gain",
+      "classtype": "attempted-user",
+      "defaultPriority": 1
+    },
+    {
+      "description": "Unsuccessful User Privilege Gain",
+      "classtype": "unsuccessful-user",
+      "defaultPriority": 1
+    },
+    {
+      "description": "Successful User Privilege Gain",
+      "classtype": "successful-user",
+      "defaultPriority": 1
+    },
+    {
+      "description": "Attempted Administrator Privilege Gain",
+      "classtype": "attempted-admin",
+      "defaultPriority": 1
+    },
+    {
+      "description": "Successful Administrator Privilege Gain",
+      "classtype": "successful-admin",
+      "defaultPriority": 1
+    },
+    {
+      "description": "Decode of an RPC Query",
+      "classtype": "rpc-portmap-decode",
+      "defaultPriority": 2
+    },
+    {
+      "description": "Executable code was detected",
+      "classtype": "shellcode-detect",
+      "defaultPriority": 1
+    },
+    {
+      "description": "A suspicious string was detected",
+      "classtype": "string-detect",
+      "defaultPriority": 3
+    },
+    {
+      "description": "A suspicious filename was detected",
+      "classtype": "suspicious-filename-detect",
+      "defaultPriority": 2
+    },
+    {
+      "description": "An attempted login using a suspicious username was detected",
+      "classtype": "suspicious-login",
+      "defaultPriority": 2
+    },
+    {
+      "description": "A system call was detected",
+      "classtype": "system-call-detect",
+      "defaultPriority": 2
+    },
+    {
+      "description": "A TCP connection was detected",
+      "classtype": "tcp-connection",
+      "defaultPriority": 4
+    },
+    {
+      "description": "A Network Trojan was detected",
+      "classtype": "trojan-activity",
+      "defaultPriority": 1
+    },
+    {
+      "description": "A client was using an unusual port",
+      "classtype": "unusual-client-port-connection",
+      "defaultPriority": 2
+    },
+    {
+      "description": "Detection of a Network Scan",
+      "classtype": "network-scan",
+      "defaultPriority": 3
+    },
+    {
+      "description": "Detection of a Denial of Service Attack",
+      "classtype": "denial-of-service",
+      "defaultPriority": 2
+    },
+    {
+      "description": "Detection of a non-standard protocol or event",
+      "classtype": "non-standard-protocol",
+      "defaultPriority": 2
+    },
+    {
+      "description": "Generic Protocol Command Decode",
+      "classtype": "protocol-command-decode",
+      "defaultPriority": 3
+    },
+    {
+      "description": "access to a potentially vulnerable web application",
+      "classtype": "web-application-activity",
+      "defaultPriority": 2
+    },
+    {
+      "description": "Web Application Attack",
+      "classtype": "web-application-attack",
+      "defaultPriority": 1
+    },
+    {
+      "description": "Misc activity",
+      "classtype": "misc-activity",
+      "defaultPriority": 3
+    },
+    {
+      "description": "Misc Attack",
+      "classtype": "misc-attack",
+      "defaultPriority": 2
+    },
+    {
+      "description": "Generic ICMP event",
+      "classtype": "icmp-event",
+      "defaultPriority": 3
+    },
+    {
+      "description": "Inappropriate Content was Detected",
+      "classtype": "inappropriate-content",
+      "defaultPriority": 1
+    },
+    {
+      "description": "Potential Corporate Privacy Violation",
+      "classtype": "policy-violation",
+      "defaultPriority": 1
+    },
+    {
+      "description": "Attempt to login by a default username and password",
+      "classtype": "default-login-attempt",
+      "defaultPriority": 2
+    },
+    {
+      "description": "Targeted Malicious Activity was Detected",
+      "classtype": "targeted-activity",
+      "defaultPriority": 1
+    },
+    {
+      "description": "Exploit Kit Activity Detected",
+      "classtype": "exploit-kit",
+      "defaultPriority": 1
+    },
+    {
+      "description": "Device Retrieving External IP Address Detected",
+      "classtype": "external-ip-check",
+      "defaultPriority": 2
+    },
+    {
+      "description": "Domain Observed Used for C2 Detected",
+      "classtype": "domain-c2",
+      "defaultPriority": 1
+    },
+    {
+      "description": "Possibly Unwanted Program Detected",
+      "classtype": "pup-activity",
+      "defaultPriority": 2
+    },
+    {
+      "description": "Successful Credential Theft Detected",
+      "classtype": "credential-theft",
+      "defaultPriority": 1
+    },
+    {
+      "description": "Possible Social Engineering Attempted",
+      "classtype": "social-engineering",
+      "defaultPriority": 2
+    },
+    {
+      "description": "Crypto Currency Mining Activity Detected",
+      "classtype": "coin-mining",
+      "defaultPriority": 2
+    },
+    {
+      "description": "Malware Command and Control Activity Detected",
+      "classtype": "command-and-control",
+      "defaultPriority": 1
+    }
+  ]
+}

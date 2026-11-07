@@ -4,6 +4,7 @@ from datetime import datetime, timezone
 from apps.api.contract.routing import OperationalSummary
 from packages.contracts.operational_v2 import POLICY_BAND_STORAGE
 from packages.detection.selective_review import effective_review
+from packages.detection.queue_severity import severity_rank
 from packages.detection.tier1_eligibility import CURRENT_TIER1_SQL
 
 
@@ -18,11 +19,17 @@ EXPERT = f"({ROUTE_CLASS}='EXPERT_REVIEW_REQUIRED' OR {CATEGORY}='unknown_needs_
 CRITICAL = "t.priority_band='critical'"
 VALID_PRIORITY = "CASE WHEN typeof(t.operational_priority) IN ('integer','real') AND t.operational_priority BETWEEN 0 AND 100 THEN t.operational_priority END"
 # Decision D4, condition 2: an unflagged flow (no rule and no model flag; projected as a single routine item) ranks
-# below every other item, whatever its score. Trusted context can add up to +25 to a score, so the score alone does
-# not keep it below the flagged groups. External NIDS alerts have no legacy alert, so they stay in the upper tier.
+# below every flagged item of the same severity, whatever its score. Trusted context can add up to +25 to a score,
+# so the score alone does not keep it below the flagged groups. External NIDS alerts have no legacy alert, so they
+# count as flagged.
 UNFLAGGED_LAST = ("CASE WHEN EXISTS (SELECT 1 FROM alerts u WHERE u.id = a.legacy_alert_id AND u.evidence_class = 'none') "
                   "THEN 1 ELSE 0 END")
-QUEUE_ORDER = f"{UNFLAGGED_LAST} ASC, {VALID_PRIORITY} DESC, queue_occurred_at(a.occurred_at) DESC, a.operational_alert_ref ASC"
+# C9, settled decision 8 (user decision 2026-11-07): severity first, for every source, so a severe alert is never
+# buried because of the detector that raised it. packages/detection/queue_severity.py holds the one scale.
+SEVERITY = ("queue_severity_rank(a.source_kind, (SELECT v.severity FROM alerts v WHERE v.id = a.legacy_alert_id), "
+            "a.native_severity, a.detection_category)")
+QUEUE_ORDER = (f"{SEVERITY} DESC, {UNFLAGGED_LAST} ASC, {VALID_PRIORITY} DESC, queue_occurred_at(a.occurred_at) DESC, "
+               "a.operational_alert_ref ASC")
 
 
 def occurred_key(value):
@@ -73,6 +80,7 @@ def matching(*, handling_route=None, priority_band=None, work_scope='all',
 def queue_page(conn, *, limit, offset, review_required=None, review_disposition=None, reviews=None, **filters):
     where, params = matching(**filters)
     conn.create_function('queue_occurred_at', 1, occurred_key, deterministic=True)
+    conn.create_function('queue_severity_rank', 4, severity_rank, deterministic=True)
     if review_required is not None or review_disposition is not None:
         # Attention is derived before pagination. O(matching alerts * review lookup)
         # is deliberate at FYP scale; no stale persisted deferral cache or SQL policy.
