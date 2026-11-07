@@ -1,0 +1,4 @@
+{
+  "version": "analyst-work-expiry-v1",
+  "claimIdleExpiryMinutes": 15
+}

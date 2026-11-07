@@ -104,7 +104,7 @@ def _operational_events(items: list[CurrentAuditEvent], conn: sqlite3.Connection
         action = {'CLAIM_ROUND_STARTED': 'Claim round started', 'CLAIM_INTENT': 'Review requested',
             'CLAIM_FINALIZED': 'Review started', 'CLAIM_CONTENTION': 'Claim conflict',
             'CLAIM_INELIGIBLE': 'Claim ineligible', 'WORK_COMPLETED': 'Work completed',
-            'WORK_ESCALATED': 'Work escalated'}.get(kind, kind)
+            'WORK_ESCALATED': 'Work escalated', 'WORK_RELEASED': 'Work released'}.get(kind, kind)
         owner_id = detail.get('ownerActorId')
         names = {actor_id: users.get(actor_id, f'User {actor_id}')
                  for actor_id in detail.get('contenderActorIds', [])}
@@ -118,6 +118,12 @@ def _operational_events(items: list[CurrentAuditEvent], conn: sqlite3.Connection
             summary = f"Alert {row['alert_ref']} completed after a Tier 1 Verdict."
         elif kind == 'WORK_ESCALATED':
             summary = f"Alert {row['alert_ref']} escalated to Tier 2 Case {detail.get('caseRef')}."
+        elif kind == 'WORK_RELEASED':
+            who = {'owner': f"{row['actor_name']} released their claim on",
+                   'administrator': f"{row['actor_name']} released {detail.get('previousOwnerName')}'s claim on",
+                   'expiry': f"System released {detail.get('previousOwnerName')}'s idle claim on"}.get(
+                       detail.get('releasedBy'), 'Claim released on')
+            summary = f"{who} alert {row['alert_ref']}." + (f" Reason: {detail['reason']}" if detail.get('reason') else '')
         else:
             summary = f"{action} for alert {row['alert_ref']}."
         _event(items, workspace, 'analyst_work_events', row['id'], row['created_at'], 'WORK', kind,

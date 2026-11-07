@@ -133,6 +133,8 @@ def test_escalation_owner_only_and_atomic_terminal_work(setup):
         assert c.execute("SELECT count(*) FROM analyst_work_events WHERE event_type='WORK_ESCALATED'").fetchone()[0]==1
 
 def test_get_never_claims_evaluator_forbidden_and_no_lease(setup,monkeypatch):
+    """No lease on a read: a GET never releases a claim, however old. Decision D5 (C7) added an idle expiry,
+    but it runs only on a POST (another claim, the sweep) and is audited; see tests/test_work_release.py."""
     path,alerts=setup;a=alerts[0]
     with closing(db.connect(path)) as c,TestClient(create_app(path)) as client:
         before='\n'.join(c.iterdump());h=headers(path,1)
@@ -148,7 +150,7 @@ def test_get_never_claims_evaluator_forbidden_and_no_lease(setup,monkeypatch):
         assert work.read_work(c,a.id,2).owner_actor_id==1
         with pytest.raises(sqlite3.IntegrityError):c.execute('DELETE FROM analyst_work_events')
         c.rollback()
-        with pytest.raises(sqlite3.IntegrityError):c.execute("UPDATE analyst_work SET status='available',revision=revision+1 WHERE operational_alert_id=?",(a.id,))
+        with pytest.raises(sqlite3.IntegrityError,match='WORK_RELEASED'):c.execute("UPDATE analyst_work SET status='available',revision=revision+1 WHERE operational_alert_id=?",(a.id,))
         c.rollback()
 
 @pytest.mark.parametrize('terminal',['verdict','escalation'])
@@ -229,7 +231,7 @@ def test_migration_21_preserves_populated_schema20_and_atomic_failure(tmp_path,m
             broken.setattr(db,'MIGRATIONS',migrations[:20]+((21,'broken',migrations[20][2]+'\nSELECT * FROM deliberately_missing;'),))
             with pytest.raises(sqlite3.OperationalError):db.migrate(c)
         assert '\n'.join(c.iterdump())==dump
-        assert db.migrate(c)==[21, 22, 23] and db.migrate(c)==[]
+        assert db.migrate(c)==[21, 22, 23, 24] and db.migrate(c)==[]
         assert {t:[tuple(r) for r in c.execute('SELECT * FROM '+t)] for t in tables}==before
         assert work.read_work(c,aa[0].id,1).status=='completed'
         assert work.read_work(c,aa[1].id,1).status=='escalated'

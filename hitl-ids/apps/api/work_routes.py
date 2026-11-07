@@ -7,6 +7,7 @@ from apps.api import workspaces
 from apps.api.routing_routes import Conn, Principal, MutationRole, _id
 from apps.api.read_only import ReadConn, ReadPrincipal
 from packages.detection.analyst_work import ClaimCommand, ClaimResult, WorkView, WorkEvent, WorkConflict, claim, read_work, history
+from packages.detection.analyst_work import ReleaseCommand, ReleaseResult, release
 
 router=APIRouter(prefix='/api/v2/alerts',tags=['Shared analyst work'])
 
@@ -41,3 +42,14 @@ def post_claim(alertRef:UUID,body:ClaimCommand,request:Request,conn:Conn,princip
                  if result.outcome=='contended' else 'This alert is no longer eligible for Tier 1 claiming. Refresh the shared queue.')
         raise ApiError(409,'CLAIM_CONTENTION' if result.outcome=='contended' else 'WORK_INELIGIBLE',message,result.model_dump(mode='json',by_alias=True))
     return result
+
+
+@router.post('/{alertRef}/work/release',response_model=ReleaseResult,dependencies=[MutationRole],operation_id='releaseAnalystWork')
+def post_release(alertRef:UUID,body:ReleaseCommand,conn:Conn,principal:Principal):
+    """Decision D5: the owner releases their claim; an administrator releases any claim with a reason."""
+    try:
+        return release(conn,alertRef,actor_id=principal.user_id,request=body)
+    except PermissionError as exc: raise ApiError(403,'FORBIDDEN_ROLE',str(exc)) from exc
+    except LookupError as exc: raise ApiError(404,'NOT_FOUND',str(exc)) from exc
+    except WorkConflict as exc: raise ApiError(409,'WORK_CONFLICT',str(exc)) from exc
+    except ValueError as exc: raise ApiError(400,'RELEASE_REASON_REQUIRED',str(exc)) from exc

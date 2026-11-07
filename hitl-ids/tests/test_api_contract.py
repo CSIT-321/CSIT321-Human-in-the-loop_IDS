@@ -58,6 +58,7 @@ REQUIRED_OPERATIONS = {
     ("/api/v2/alerts/{alertRef}/work", "get"),
     ("/api/v2/alerts/{alertRef}/work/events", "get"),
     ("/api/v2/alerts/{alertRef}/work/claim", "post"),
+    ("/api/v2/alerts/{alertRef}/work/release", "post"),  # C7, decision D5
     ('/api/v2/alerts/{alertRef}/triage-memory/from-verdict','post'),
     ('/api/v2/alerts/{alertRef}/triage-memory/verdict-state','get'),
     ('/api/v2/alerts/{alertRef}/verdict','get'),
@@ -384,3 +385,14 @@ def test_unknown_fields_are_refused():
     should surface at the boundary rather than be silently dropped."""
     with pytest.raises(ValueError):
         a.FeedbackRequest(category="mark_false_positive", nonsense=1)  # type: ignore[call-arg]
+
+
+def test_every_real_api_route_is_in_the_published_contract(document):
+    """The contract is hand-authored, so the tests above only compare it with itself. This one compares it with
+    the routes FastAPI really serves. Found missing on 2026-11-07: POST .../work/release (C7, fixed).
+    `/api/health` was already missing before; it is listed here so a new omission still fails."""
+    from apps.api.main import app
+    served = {(route.path, method.lower()) for route in app.routes if hasattr(route, "methods")
+              for method in route.methods if method not in ("HEAD", "OPTIONS") and route.path.startswith("/api")}
+    published = {(path, method) for path, methods in document["paths"].items() for method in methods}
+    assert served - published == {("/api/health", "get")}

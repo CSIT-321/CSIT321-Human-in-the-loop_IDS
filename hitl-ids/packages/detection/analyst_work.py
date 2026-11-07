@@ -57,6 +57,15 @@ class WorkEvent(V2Contract):
 class WorkConflict(ValueError):
     pass
 
+class ReleaseCommand(V2Contract):
+    request_id: UUID
+    expected_revision: int = Field(ge=0,strict=True)
+    reason: str | None = Field(default=None,max_length=500)
+
+class ReleaseResult(V2Contract):
+    replayed: bool
+    work: WorkView
+
 def now():
     return datetime.now(timezone.utc)
 
@@ -85,12 +94,18 @@ def is_tier1_work(conn,alert_id):
     from packages.detection.tier1_eligibility import tier1_status
     return tier1_status(conn,alert_id)=='current'
 
+def _idle(work):
+    """D5: a claim with no activity for claimIdleExpiryMinutes. Pure; the release is written only by a POST."""
+    if not work or work['status']!='in_review' or not work['claimed_at']: return False
+    return now()>=datetime.fromisoformat(work['claimed_at'])+timedelta(minutes=expiry_policy()['claimIdleExpiryMinutes'])
+
 def read_work(conn,alert_id,actor_id=None,review=None):
     work=row(conn,alert_id);tier1=is_tier1_work(conn,alert_id)
     status=work['status'] if work else ('available' if tier1 else None)
     actor=db.get(conn,m.User,actor_id) if actor_id is not None else None
     permitted=bool(actor and actor.status=='active' and actor.role in ('security_analyst','system_admin'))
     owned=bool(work and status=='in_review' and work['owner_actor_id']==actor_id)
+    idle_other=bool(tier1 and not owned and _idle(work))  # another analyst's idle claim: claiming releases it
     deferred=False
     if tier1 and status=='available':
         if review is None:
@@ -98,11 +113,13 @@ def read_work(conn,alert_id,actor_id=None,review=None):
             ref=conn.execute('SELECT operational_alert_ref FROM operational_alerts_v2 WHERE id=?',(alert_id,)).fetchone()[0]
             review=effective_review(conn,ref)
         deferred=review.disposition=='no_immediate_review'
-    claimable=tier1 and status=='available' and not deferred
+    claimable=tier1 and (status=='available' and not deferred or idle_other)
     if deferred: status=None  # unowned deferral is not active Tier 1 work
     explanation=('Tier 1 work completed; historical Verdict corrections remain explicit.' if status=='completed' else
         'Tier 1 work transferred to the existing Tier 2 Case.' if status=='escalated' else
-        'In Review — You' if owned else f"This alert is currently being reviewed by {work['owner_name']}." if status=='in_review' else
+        'In Review — You' if owned else
+        f"{work['owner_name']}'s claim is idle. Starting your review releases it." if idle_other else
+        f"This alert is currently being reviewed by {work['owner_name']}." if status=='in_review' else
         'Require Human Review before starting work on a No Immediate Review alert.' if deferred else
         'Available for Review. Selecting this alert starts your review.' if claimable else 'Tier 1 claiming does not apply to this workflow.')
     fields={k:work[k] for k in ('revision','owner_actor_id','owner_name','claimed_at','round_ref','finished_at','finished_by_actor_id','finished_by_name','verdict_ref')} if work else {'revision':0}
@@ -159,6 +176,8 @@ def register(conn,ref,actor_id,request):
             if previous['request_payload']!=payload: raise WorkConflict('requestId belongs to another actor or payload')
             conn.commit();return previous['round_ref'],True
         alert_id=_id(conn,ref)
+        seen=row(conn,alert_id)  # the revision the caller saw may be the idle claim's, before the release below
+        expired=_expire_if_idle(conn,alert_id)  # D5: an idle claim does not block the next analyst
         pending=conn.execute("SELECT * FROM analyst_claim_rounds WHERE operational_alert_id=? AND status='pending'",(alert_id,)).fetchone()
         if pending and now()>=datetime.fromisoformat(pending['closes_at']):
             _finalize(conn,pending);conn.commit()
@@ -170,7 +189,8 @@ def register(conn,ref,actor_id,request):
                 (str(request.request_id),work.round_ref,actor_id,actor.display_name,payload,db.format_timestamp(now())))
             conn.commit();return work.round_ref,True
         if not work.can_claim: raise WorkConflict(work.explanation)
-        if work.revision!=request.expected_revision: raise WorkConflict('Work changed; refresh the shared queue and select again.')
+        if work.revision!=request.expected_revision and not (expired and seen['revision']==request.expected_revision):
+            raise WorkConflict('Work changed; refresh the shared queue and select again.')
         pending=conn.execute("SELECT * FROM analyst_claim_rounds WHERE operational_alert_id=? AND status='pending'",(alert_id,)).fetchone()
         if not row(conn,alert_id):
             conn.execute("INSERT INTO analyst_work(operational_alert_id,status) VALUES (?,'available')",(alert_id,))
@@ -223,6 +243,72 @@ def escalated(conn,alert_id,actor_id,case_ref):
     conn.execute("UPDATE analyst_work SET status='escalated',revision=revision+1,owner_actor_id=NULL,finished_at=?,finished_by_actor_id=?,finished_by_name=? WHERE operational_alert_id=?",
         (db.format_timestamp(now()),actor_id,actor.display_name,alert_id))
     _event(conn,alert_id,'WORK_ESCALATED',actor_id,work['round_ref'],caseRef=str(case_ref))
+
+def expiry_policy():
+    value=json.loads((Path(__file__).resolve().parents[2]/'config/analyst-work-expiry-v1.json').read_text(encoding='utf-8'))
+    if value['version']!='analyst-work-expiry-v1' or not 1<=value['claimIdleExpiryMinutes']<=1440:
+        raise ValueError('invalid claim expiry policy')
+    return value
+
+def _release_row(conn,alert_id,work,actor_id,released_by,reason,request_id=None):
+    """Write the WORK_RELEASED event, then return the work to available. Caller holds BEGIN IMMEDIATE.
+    The database refuses the second write without the first (migration 24, work_release_audited)."""
+    revision=work['revision']+1
+    _event(conn,alert_id,'WORK_RELEASED',actor_id,work['round_ref'],requestId=request_id,revision=revision,
+        previousOwnerActorId=work['owner_actor_id'],previousOwnerName=work['owner_name'],claimedAt=work['claimed_at'],
+        releasedBy=released_by,reason=reason)
+    conn.execute("UPDATE analyst_work SET status='available',revision=?,owner_actor_id=NULL,owner_name=NULL,claimed_at=NULL,round_ref=NULL WHERE operational_alert_id=?",
+        (revision,alert_id))
+
+def _expire_if_idle(conn,alert_id):
+    """Decision D5: a claim with no activity for claimIdleExpiryMinutes is released by the system. Activity is the
+    claim itself; no later owner activity is recorded on the work row yet (Tier 1 notes, C6, will add some).
+    Called only from POST paths (a new claim attempt, the sweep), never from a read. Until one of those runs, the
+    owner keeps the claim: expiry frees the alert for others, it does not take work away from an active owner."""
+    work=row(conn,alert_id)
+    if not _idle(work): return False
+    minutes=expiry_policy()['claimIdleExpiryMinutes']
+    _release_row(conn,alert_id,work,None,'expiry',f'No activity for {minutes} minutes after the claim.')
+    return True
+
+def expire_idle_claims(conn):
+    """Sweep: release every idle claim. Returns the number released. One transaction."""
+    if conn.in_transaction: raise ValueError('expiry sweep requires no open transaction')
+    try:
+        conn.execute('BEGIN IMMEDIATE')
+        ids=[r[0] for r in conn.execute("SELECT operational_alert_id FROM analyst_work WHERE status='in_review'")]
+        released=sum(_expire_if_idle(conn,alert_id) for alert_id in ids)
+        conn.commit();return released
+    except Exception:
+        conn.rollback();raise
+
+def release(conn,ref,*,actor_id,request):
+    """Decision D5: the owner releases their own claim; an administrator releases any claim with a reason.
+    Audited (WORK_RELEASED), idempotent by requestId, guarded by the expected revision."""
+    request=ReleaseCommand.model_validate(request.model_dump())
+    if conn.in_transaction or not conn.execute('PRAGMA foreign_keys').fetchone()[0]:
+        raise ValueError('release requires foreign keys and no open transaction')
+    try:
+        conn.execute('BEGIN IMMEDIATE');actor=_actor(conn,actor_id);alert_id=_id(conn,ref)
+        prior=conn.execute("SELECT * FROM analyst_work_events WHERE event_type='WORK_RELEASED' AND json_extract(detail,'$.requestId')=?",
+            (str(request.request_id),)).fetchone()
+        if prior:
+            if prior['actor_id']!=actor_id or prior['operational_alert_id']!=alert_id:
+                raise WorkConflict('requestId belongs to another release')
+            result=ReleaseResult(replayed=True,work=read_work(conn,alert_id,actor_id));conn.commit();return result
+        work=row(conn,alert_id)
+        if not work or work['status']!='in_review': raise WorkConflict('Only work In Review can be released.')
+        reason=(request.reason or '').strip() or None
+        if work['owner_actor_id']==actor_id: released_by='owner'
+        elif actor.role=='system_admin':
+            if reason is None: raise ValueError('An administrator release needs a reason.')
+            released_by='administrator'
+        else: raise WorkConflict(f"This alert is currently being reviewed by {work['owner_name']}.")
+        if work['revision']!=request.expected_revision: raise WorkConflict('Work changed; refresh before releasing.')
+        _release_row(conn,alert_id,work,actor_id,released_by,reason,str(request.request_id))
+        result=ReleaseResult(replayed=False,work=read_work(conn,alert_id,actor_id));conn.commit();return result
+    except Exception:
+        conn.rollback();raise
 
 def history(conn,alert_id,limit=50,offset=0):
     return [WorkEvent(**{k:r[k] for k in ('id','event_type','actor_id','decision_source','round_ref','created_at')},detail=json.loads(r['detail']))

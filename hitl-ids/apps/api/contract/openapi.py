@@ -30,7 +30,7 @@ from apps.api.contract.routing import RoutingView, RoutingResponse, EscalateCase
 from packages.detection.tier2_escalation import EscalateCaseRequest
 from packages.detection.investigation_assistance import InvestigationAssistance
 from packages.detection.analyst_verdict import VerdictCommand,VerdictView,VerdictHistory,VerdictMutation
-from packages.detection.analyst_work import ClaimCommand,ClaimResult,WorkView,WorkEvent
+from packages.detection.analyst_work import ClaimCommand,ClaimResult,WorkView,WorkEvent,ReleaseCommand,ReleaseResult
 from packages.detection.routing import RoutingRequest
 from packages.contracts.operational_v2 import OperationalAlertV2, HandlingRouteV2, PriorityBandV2
 from packages.contracts.suricata_bundle import AttackCategory
@@ -74,7 +74,7 @@ MODELS: tuple[type[BaseModel], ...] = (
     InvestigationAssistance,
     VerdictMemoryRequest,VerdictMemoryState,ConclusionMemoryRequest,ConclusionMemoryState,
     VerdictCommand,VerdictView,VerdictHistory,VerdictMutation,
-    ClaimCommand,ClaimResult,WorkView,WorkEvent,
+    ClaimCommand,ClaimResult,WorkView,WorkEvent,ReleaseCommand,ReleaseResult,
     RunCreate,RunView,RunPage,RunCommand,ObservationRequest,RecordedArchive,CollectionDocument,
     FactRequest,FactPage,FactMutation,ResolvedTrustedContext,
     ReviewCommand,ReviewView,ReviewMutation,ReviewEvent,ReviewMetrics,
@@ -802,6 +802,11 @@ def _paths() -> dict[str, Any]:
             'schema':{'type':'string','enum':['operational','v3-1-replay']}}],
         'requestBody':{'required':True,**_json(ClaimCommand)},
         'responses':{'200':{'description':'Finalized single-actor claim',**_json(ClaimResult)},**_errors(400,403,404,409,503)}}}
+    paths['/api/v2/alerts/{alertRef}/work/release']={'post':{
+        'operationId':'releaseAnalystWork','summary':'Release a Tier 1 claim: the owner, or an administrator with a reason; audited (decision D5)','tags':['Shared analyst work'],
+        'parameters':[AUTH_PARAMETER,alert_ref],
+        'requestBody':{'required':True,**_json(ReleaseCommand)},
+        'responses':{'200':{'description':'Work returned to available, or the replayed release',**_json(ReleaseResult)},**_errors(400,403,404,409,503)}}}
     paths['/api/v2/alerts/{alertRef}/verdict-history'] = {'get': {
         'operationId':'getAnalystVerdictHistory','summary':'Read append-only human verdict history','tags':['Analyst verdict'],
         'parameters':[AUTH_PARAMETER,alert_ref,

@@ -8792,6 +8792,58 @@
         "title": "RelatedSignature",
         "type": "object"
       },
+      "ReleaseCommand": {
+        "additionalProperties": false,
+        "properties": {
+          "expectedRevision": {
+            "minimum": 0,
+            "title": "Expectedrevision",
+            "type": "integer"
+          },
+          "reason": {
+            "anyOf": [
+              {
+                "maxLength": 500,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Reason"
+          },
+          "requestId": {
+            "format": "uuid",
+            "title": "Requestid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "requestId",
+          "expectedRevision"
+        ],
+        "title": "ReleaseCommand",
+        "type": "object"
+      },
+      "ReleaseResult": {
+        "additionalProperties": false,
+        "properties": {
+          "replayed": {
+            "title": "Replayed",
+            "type": "boolean"
+          },
+          "work": {
+            "$ref": "#/components/schemas/WorkView"
+          }
+        },
+        "required": [
+          "replayed",
+          "work"
+        ],
+        "title": "ReleaseResult",
+        "type": "object"
+      },
       "ReplayAdvanceCommand": {
         "properties": {
           "count": {
@@ -19779,6 +19831,108 @@
           }
         },
         "summary": "Read immutable claim and work history",
+        "tags": [
+          "Shared analyst work"
+        ]
+      }
+    },
+    "/api/v2/alerts/{alertRef}/work/release": {
+      "post": {
+        "operationId": "releaseAnalystWork",
+        "parameters": [
+          {
+            "description": "`Bearer <token>` from POST /api/auth/login",
+            "in": "header",
+            "name": "Authorization",
+            "required": false,
+            "schema": {
+              "example": "Bearer eyJhbGciOiJIUzI1NiJ9...",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "alertRef",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReleaseCommand"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReleaseResult"
+                }
+              }
+            },
+            "description": "Work returned to available, or the replayed release"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Validation failed"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Role not permitted"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Database unavailable or schema unsupported; read-only requests never migrate"
+          }
+        },
+        "summary": "Release a Tier 1 claim: the owner, or an administrator with a reason; audited (decision D5)",
         "tags": [
           "Shared analyst work"
         ]

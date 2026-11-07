@@ -1142,6 +1142,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v2/alerts/{alertRef}/work/release": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Release a Tier 1 claim: the owner, or an administrator with a reason; audited (decision D5) */
+        post: operations["releaseAnalystWork"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v2/collection/runs": {
         parameters: {
             query?: never;
@@ -5512,6 +5529,27 @@ export interface components {
             sourceRecordRef: string;
             /** Timestamp */
             timestamp: string;
+        };
+        /** ReleaseCommand */
+        ReleaseCommand: {
+            /** Expectedrevision */
+            expectedRevision: number;
+            /**
+             * Reason
+             * @default null
+             */
+            reason: string | null;
+            /**
+             * Requestid
+             * Format: uuid
+             */
+            requestId: string;
+        };
+        /** ReleaseResult */
+        ReleaseResult: {
+            /** Replayed */
+            replayed: boolean;
+            work: components["schemas"]["WorkView"];
         };
         /** ReplayAdvanceCommand */
         ReplayAdvanceCommand: {
@@ -11141,6 +11179,80 @@ export interface operations {
             };
             /** @description Not found */
             404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Database unavailable or schema unsupported; read-only requests never migrate */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    releaseAnalystWork: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description `Bearer <token>` from POST /api/auth/login */
+                Authorization?: string;
+            };
+            path: {
+                alertRef: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReleaseCommand"];
+            };
+        };
+        responses: {
+            /** @description Work returned to available, or the replayed release */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReleaseResult"];
+                };
+            };
+            /** @description Validation failed */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Role not permitted */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
                 headers: {
                     [name: string]: unknown;
                 };

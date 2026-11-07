@@ -174,6 +174,8 @@ MIGRATIONS += ((22, "grouped Tier 1 queue items (method B) with append-only memb
                 Path(__file__).with_name("alert_groups.sql").read_text(encoding="utf-8")),)
 MIGRATIONS += ((23, "immutable alert detection fields and undeletable V2 triage state",
                 Path(__file__).with_name("integrity_guards.sql").read_text(encoding="utf-8")),)
+MIGRATIONS += ((24, "audited release of a claimed Tier 1 item (owner, administrator, idle expiry)",
+                Path(__file__).with_name("work_release.sql").read_text(encoding="utf-8")),)
 SCHEMA_VERSION = MIGRATIONS[-1][0]
 
 
