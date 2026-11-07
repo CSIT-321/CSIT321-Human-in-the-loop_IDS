@@ -9597,7 +9597,7 @@ export interface operations {
                 attackCategory?: "brute_force" | "botnet_c2" | "dos" | "ddos" | "web_attack" | "infiltration" | "reconnaissance_port_scan" | "malware_exploit" | "other_known_attack" | "unknown_needs_expert";
                 reviewDisposition?: "must_review" | "recommended_review" | "no_immediate_review";
                 reviewRequired?: boolean;
-                workScope?: "all" | "active" | "completed" | "escalated";
+                workScope?: "all" | "active" | "completed" | "escalated" | "in_review";
                 q?: string;
                 sort?: "priority_desc";
             };

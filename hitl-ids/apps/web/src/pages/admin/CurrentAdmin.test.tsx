@@ -52,6 +52,7 @@ function setup() {
   return stubFetch(request => {
     const path = new URL(request.url).pathname;
     if (path === "/api/admin/overview") return jsonResponse(overview);
+    if (path === "/api/v2/alerts") return jsonResponse({ items: [], page: { total: 0, limit: 50, offset: 0, returned: 0 } });
     if (path === "/api/admin/governance") return jsonResponse(governance);
     if (path === "/api/admin/users") return jsonResponse({ items: [
       { username: "admin", displayName: "LIOW CHEE KUANG", role: "system_admin", status: "active", lastLogin: "2026-11-03T00:00:00Z" },

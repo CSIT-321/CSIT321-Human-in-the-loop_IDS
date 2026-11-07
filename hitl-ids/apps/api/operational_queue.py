@@ -67,7 +67,7 @@ def matching(*, handling_route=None, priority_band=None, work_scope='all',
              route_class=None, attack_category=None, q=None):
     clauses, params = [], []
     if work_scope=='active': clauses.append("(w.status IS NULL OR w.status NOT IN ('completed','escalated'))")
-    elif work_scope in ('completed','escalated'):
+    elif work_scope in ('completed','escalated','in_review'):
         clauses.append('w.status=?');params.append(work_scope)
     for value, column in ((handling_route, 't.handling_route'),
                           (attack_category, CATEGORY)):

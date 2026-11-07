@@ -2,6 +2,7 @@ import { api, unwrap, type Schemas } from "../../api/client";
 import { useApi } from "../../api/useApi";
 import { ErrorState } from "../../components/states";
 import { Card, PageHeader, Pill } from "../../components/ui";
+import { ClaimedAlerts } from "./ClaimedAlerts";
 
 type Overview = Schemas["AdminOverview"];
 const shown = (value: string | number | null | undefined) => value == null ? "Not available" :
@@ -42,6 +43,7 @@ export function OverviewPage() {
         <Measure label="No Immediate Review" value={operational?.noImmediateReview} />
       </dl>
     </Card>
+    <ClaimedAlerts onReleased={resource.reload} />
     <div className="grid min-w-0 gap-4 lg:grid-cols-2">
       <Card title="HITL" subtitle="Human learning in the active workspace.">
         <dl className="grid min-w-0 gap-2 p-4 sm:grid-cols-2">

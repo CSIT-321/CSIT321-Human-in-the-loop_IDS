@@ -17485,7 +17485,8 @@
                 "all",
                 "active",
                 "completed",
-                "escalated"
+                "escalated",
+                "in_review"
               ],
               "type": "string"
             }

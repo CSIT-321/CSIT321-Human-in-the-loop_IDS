@@ -16,7 +16,7 @@ from packages.contracts.operational_v2 import V2Contract
 from packages.detection.adapters.operational_v2 import read_triage
 
 Status = Literal['available','in_review','completed','escalated']
-Scope = Literal['all','active','completed','escalated']
+Scope = Literal['all','active','completed','escalated','in_review']
 
 class ClaimCommand(V2Contract):
     request_id: UUID

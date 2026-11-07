@@ -251,3 +251,24 @@ def test_the_api_work_view_carries_the_release_fields(setup):
         admin = client.get(url, headers=headers(path, 5)).json()
     assert (owner['canRelease'], owner['releaseReasonRequired'], owner['idle']) == (True, False, False)
     assert (admin['canRelease'], admin['releaseReasonRequired']) == (True, True)
+
+
+# Admin claimed-alerts list (user decision 2026-11-08, option 2): workScope=in_review lists only claimed alerts,
+# and each row's work view tells the admin that a release is allowed and needs a reason.
+
+def test_the_in_review_scope_lists_only_claimed_alerts_for_the_admin(setup):
+    path, alerts = setup
+    with closing(db.connect(path)) as c:
+        claim_work(c, alerts[0], actor_id=1)
+        claim_work(c, alerts[1], actor_id=3)
+        claim_work(c, alerts[2], actor_id=1)
+        release(c, alerts[2], 1)
+    with TestClient(create_app(path)) as client:
+        page = client.get('/api/v2/alerts?workScope=in_review', headers=headers(path, 5)).json()
+    refs = {item['operationalAlertRef'] for item in page['items']}
+    assert refs == {str(alerts[0].operational_alert_ref), str(alerts[1].operational_alert_ref)}
+    assert page['page']['total'] == 2
+    for item in page['items']:
+        assert item['work']['status'] == 'in_review'
+        assert item['work']['canRelease'] and item['work']['releaseReasonRequired']
+        assert item['work']['ownerName']

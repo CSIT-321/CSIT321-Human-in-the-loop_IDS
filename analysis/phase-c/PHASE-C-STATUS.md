@@ -181,3 +181,12 @@ Build order: C4, Release, C6, C3, C2 + D4 condition 3, C5.
 - Live API check (`release_live_check.py`, demo copy): owner canRelease, no reason; admin canRelease, reason required; admin without reason 400 RELEASE_REASON_REQUIRED; with reason 200, event releasedBy=administrator, previousOwner=1.
 - Live browser check (Camoufox, demo copy, g.ang): row click claims; Release claim opens the form; Release frees the alert; button gone; database shows WORK_RELEASED by actor 1 and 0 claims in review; no new claim.
 - **Gap:** an admin cannot open `/analyst/*` (`App.tsx:54`), and no admin page shows the work panel. The admin button is not reachable on screen. Admin release works through the API only. Needs a user decision.
+
+## Admin claimed-alerts list — built, local (2026-11-08)
+
+- User decision 2026-11-08: option 2, a small list of claimed alerts on an admin page, with Release on each row. Closes the gap above (admin could not reach Release (admin)).
+- Server: `workScope=in_review` (3 one-line changes: `analyst_work.Scope`, `operational_queue.matching`, OpenAPI enum). Same `/api/v2/alerts` list; no new endpoint.
+- Web: `pages/admin/ClaimedAlerts.tsx` on Admin Overview under Operational Work. Reuses `ReleaseControl`. Shows owner, claim age, idle. Reloads the list and the counts after a release. States "Showing N of M" when over 50.
+- Tests: `test_work_release.py` 15/15 (1 new); `ClaimedAlerts.test.tsx` 5/5; full web 275/275; related Python files 107/107 incl. `test_api_contract.py`.
+- Red check: `analysis/phase-c/red_check_claimed_list.sh` — 6 of 6 planted defects fail; restored code passes.
+- Live browser check (Camoufox, demo copy `claimed-ui.db`, admin): 2 claims by g.ang listed; Release stays off with no reason; with reason the row goes, In Review tile 2 -> 1; event releasedBy=administrator, previousOwner=1, reason kept.

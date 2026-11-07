@@ -13,7 +13,7 @@ export function workLabel(work: Work) {
 
 /** Release (C7 screen, decision D5; layout approved 2026-11-08). Shown only when the server says canRelease.
  *  The owner's reason is optional; an administrator's reason is required (releaseReasonRequired). */
-function ReleaseControl({ work, alertRef, onReleased }: { work: Work; alertRef: string; onReleased: (work: Work) => void }) {
+export function ReleaseControl({ work, alertRef, onReleased }: { work: Work; alertRef: string; onReleased: (work: Work) => void }) {
   const [open, setOpen] = useState(false);
   const [reason, setReason] = useState("");
   const [busy, setBusy] = useState(false);

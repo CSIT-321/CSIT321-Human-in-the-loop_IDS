@@ -608,7 +608,7 @@ def _paths() -> dict[str, Any]:
                 ('attackCategory', get_args(AttackCategory)),
                 ('reviewDisposition', ['must_review', 'recommended_review', 'no_immediate_review']))],
             {'name': 'reviewRequired', 'in': 'query', 'schema': {'type': 'boolean'}},
-            {'name':'workScope','in':'query','schema':{'type':'string','enum':['all','active','completed','escalated'],'default':'all'}},
+            {'name':'workScope','in':'query','schema':{'type':'string','enum':['all','active','completed','escalated','in_review'],'default':'all'}},
             {'name': 'q', 'in': 'query', 'schema': {'type': 'string', 'maxLength': 200}},
             {'name': 'sort', 'in': 'query', 'schema': {'type': 'string', 'enum': ['priority_desc'], 'default': 'priority_desc'}}],
         'responses': {'200': {'description': 'V2 routing page', **_page_of(RoutingView)}, **_errors(400, 503)}}}
