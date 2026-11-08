@@ -271,6 +271,31 @@ def test_registration_is_idempotent(conn):
     assert conn.execute("SELECT COUNT(*) FROM datasets").fetchone()[0] == 1
 
 
+def test_x4_a_second_run_on_the_same_dataset_is_refused(conn, sample, predictions, dataset):
+    """X4 (S2-05): a second run used to double every alert (the recorded 10,000-alert incident). It is refused,
+    and the refusal stores nothing."""
+    detect(conn, sample, predictions, dataset)
+    with pytest.raises(ValueError, match="already has a completed detection run"):
+        detect(conn, sample, predictions, dataset)
+    assert conn.execute("SELECT COUNT(*) FROM alerts").fetchone()[0] == 4
+    assert conn.execute("SELECT COUNT(*) FROM detection_runs").fetchone()[0] == 1
+
+
+def test_x5_detection_applies_the_live_guardrail_policy_it_records(conn, sample, predictions, dataset):
+    """X5 (S2-04): the run row records the live guardrail_config, so the run must also apply it.
+    A live critical threshold of 60 must reach fusion (is_critical) and placement, and the run must not crash
+    on the S6/S7b agreement check."""
+    conn.execute("UPDATE guardrail_config SET config_value = 60 WHERE config_key = 'critical_alert_threshold'")
+    conn.execute("UPDATE guardrail_config SET config_value = 50 WHERE config_key = 'critical_alert_floor'")
+    conn.commit()
+    summary = detect(conn, sample, predictions, dataset)
+    run = conn.execute("SELECT guardrail_config, fusion_weights FROM detection_runs WHERE id = ?", (summary.run_id,)).fetchone()
+    assert json.loads(run[0])["critical_alert_threshold"] == 60
+    assert json.loads(run[1])["critical_threshold"] == 60          # fusion used the recorded value
+    rows = conn.execute("SELECT combined_score, is_critical FROM alerts WHERE run_id = ?", (summary.run_id,)).fetchall()
+    assert all(bool(critical) == (score >= 60) for score, critical in rows)
+
+
 def test_a_run_needs_an_enabled_rule(conn, sample, predictions, dataset):
     disabled = FTP_RULE.model_copy(update={"enabled": False})
     with pytest.raises(ValueError, match="enabled signature rule"):

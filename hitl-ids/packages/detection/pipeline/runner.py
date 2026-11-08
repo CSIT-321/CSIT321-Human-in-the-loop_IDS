@@ -86,17 +86,25 @@ def run_detection(conn: sqlite3.Connection, source: FlowSource, predictor: Predi
     versions = {rule.version for rule in rules}
     if len(versions) != 1:
         raise ValueError(f"rules span several versions {sorted(versions)}; a run records one")
-    config = config if config is not None else FusionConfig()
+    live = store.guardrail_snapshot(conn)
+    # X5 (S2-04): apply the live guardrail policy the run records, not the code defaults. Fusion takes its
+    # critical threshold from the same live value, so fusion and placement agree (runner.py agreement check).
+    policy = policy if policy is not None else GuardrailPolicy.from_rows(live)
+    config = config if config is not None else FusionConfig(critical_threshold=policy.critical_alert_threshold)
     chart = chart if chart is not None else load_severity_chart()
-    policy = policy if policy is not None else GuardrailPolicy()
     now = now if now is not None else m.utc_now()
+    # X4 (S2-05): a second run on the same dataset doubled every alert. Refuse it; start from a fresh database.
+    if conn.execute("SELECT 1 FROM detection_runs WHERE dataset_id = ? AND status = 'completed' LIMIT 1",
+                    (dataset_id,)).fetchone():
+        raise ValueError(f"dataset {dataset_id} already has a completed detection run; "
+                         "delete the database and run again to rebuild it")
 
     flows = alerts = unavailable = 0
     with conn:  # one transaction: a failed run stores nothing
         run_id = store.start_run(
             conn, dataset_id=dataset_id, model_version=predictor.version,
             rule_set_version=versions.pop(), fusion_weights=config.snapshot(),
-            guardrail_config=store.guardrail_snapshot(conn), seed=seed, now=now)
+            guardrail_config=live, seed=seed, now=now)
         for group in batched(source.flows(), batch):
             predictions = predictor.predict(group)
             for flow in group:
