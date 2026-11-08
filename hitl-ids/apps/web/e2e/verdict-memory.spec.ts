@@ -29,7 +29,10 @@ test("canonical learning: automatic Exact contribution, independent support, cor
   await expect(page.getByText(/^Verdict Author: Glenn Ang/).first()).toBeVisible();
   await page.goto(firstUrls[0]!);await detail.getByRole("tab",{name:"Analyst Verdict",exact:true}).click();
   await panel.getByLabel("Verdict outcome").selectOption("confirmed_malicious");await panel.getByLabel("Verdict reason").fill("SYNTHETIC corrected human conclusion");
-  await panel.getByRole("button",{name:"Correct Verdict",exact:true}).click();
+  // Wait for the correction to be saved before opening the learning panel: the panel reads its state once on
+  // open, then every 15 s (VerdictLearning.tsx:15,20). Clicking before the save raced that read (1 of 2 solo runs).
+  const corrected=page.waitForResponse(r=>r.url().endsWith("/verdict")&&r.request().method()==="POST");
+  await panel.getByRole("button",{name:"Correct Verdict",exact:true}).click();expect((await corrected).ok()).toBe(true);
   await panel.getByRole("button",{name:"View Human Learning",exact:true}).click();
   await expect(learning).toContainText("Automatically recorded as Exact evidence");
   await expect(learning).toContainText("Support: 2 · Conflicts: 1");await expect(learning).toContainText("Active guidance: No");

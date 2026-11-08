@@ -1,0 +1,77 @@
+<!doctype html><html lang=en><meta charset=utf-8><title>HITL IDS — SOC demo guide</title>
+<style>
+body{font:15px/1.5 system-ui,sans-serif;max-width:1100px;margin:24px auto;padding:0 16px;color:#111}
+h1{font-size:24px} h2{font-size:18px;margin:28px 0 8px}
+.shot{position:relative;border:1px solid #ccc} .shot img{display:block;width:100%}
+.box{position:absolute;border:3px solid #e8590c;border-radius:4px;box-sizing:border-box}
+.pin{position:absolute;transform:translate(-50%,-50%);background:#e8590c;color:#fff;font:700 13px/24px system-ui;
+ width:24px;height:24px;border-radius:50%;text-align:center}
+.legend{list-style:none;padding:0;display:flex;gap:16px;flex-wrap:wrap;color:#e8590c;font-weight:600}
+.legend .missing{color:#888;font-weight:400} .why{color:#444}
+</style>
+<h1>HITL IDS — SOC demo guide (Tier 1 to Tier 2)</h1>
+<p>Built from an automated run of <code>soc-flow.spec.ts</code> on a copy of the demo data. Every screenshot is
+from that run, and the run checked the database after each step. Orange boxes mark what to click or read;
+their positions were measured by the browser, not drawn by hand.</p>
+<section class=step id="s1">
+<h2>Step 1. Sign in</h2>
+<div class=shot><img src="img/00-login.png" alt="Sign in"><span class=box style="left:36.18%;top:61.61%;width:27.64%;height:4.11%"></span><span class=pin style="left:36.18%;top:61.61%">1</span></div>
+<ol class=legend><li>1. Sign in</li></ol>
+<p><b>Click:</b> Type the analyst account (g.ang / analyst-demo) and click <strong>Sign in</strong>.</p><p><b>You see:</b> The Analyst Workstation opens.</p><p class=why><b>Why (SOC):</b> Each action is recorded under your name.</p>
+</section><section class=step id="s2">
+<h2>Step 2. Pick your tier view</h2>
+<div class=shot><img src="img/01-queue-views.png" alt="Pick your tier view"><span class=box style="left:15.28%;top:42.39%;width:7.92%;height:2.78%"></span><span class=pin style="left:15.28%;top:42.39%">1</span><span class=box style="left:23.47%;top:42.39%;width:6.88%;height:2.78%"></span><span class=pin style="left:23.47%;top:42.39%">2</span><span class=box style="left:15.28%;top:39.17%;width:13.47%;height:2.78%"></span><span class=pin style="left:15.28%;top:39.17%">3</span></div>
+<ol class=legend><li>1. Tier 2 candidates</li><li>2. Auto-escalated</li><li>3. Tier 1</li></ol>
+<p><b>Click:</b> Look at the view tabs. Click <strong>Tier 2 candidates</strong> or <strong>Tier 1</strong>.</p><p><b>You see:</b> Counts per view. Tier 1 shows groups and singles apart. Auto-escalated = 3.</p><p class=why><b>Why (SOC):</b> Tier 1 and Tier 2 staff each open their own list in one click. 996 flagged alerts became 81 items.</p>
+</section><section class=step id="s3">
+<h2>Step 3. Open an alert (this claims it)</h2>
+<div class=shot><img src="img/02-claimed.png" alt="Open an alert (this claims it)"><span class=box style="left:14.44%;top:68.94%;width:19.93%;height:29.44%"></span><span class=pin style="left:14.44%;top:68.94%">1</span><span class=box style="left:35.56%;top:46.74%;width:46.67%;height:16.89%"></span><span class=pin style="left:35.56%;top:46.74%">2</span></div>
+<ol class=legend><li>1. Claimed row</li><li>2. Work status</li></ol>
+<p><b>Click:</b> Click a row in the list.</p><p><b>You see:</b> The row says <strong>In Review — You</strong>. The work panel says <strong>Your Access: Owner</strong>.</p><p class=why><b>Why (SOC):</b> Other analysts see who owns it and do not duplicate the work.</p>
+</section><section class=step id="s4">
+<h2>Step 4. Add a note</h2>
+<div class=shot><img src="img/03-note.png" alt="Add a note"><span class=box style="left:74.72%;top:41.07%;width:7.50%;height:3.78%"></span><span class=pin style="left:74.72%;top:41.07%">1</span><span class=box style="left:35.56%;top:68.13%;width:46.67%;height:6.44%"></span><span class=pin style="left:35.56%;top:68.13%">2</span></div>
+<ol class=legend><li>1. History &amp; Notes</li><li>2. Note</li></ol>
+<p><b>Click:</b> Open <strong>History &amp; Notes</strong>, type a note, click <strong>Add note</strong>.</p><p><b>You see:</b> The note shows with your name and time. It cannot be edited or deleted.</p><p class=why><b>Why (SOC):</b> A shift lead can follow the reasoning later.</p>
+</section><section class=step id="s5">
+<h2>Step 5. Read why Tier 2 is recommended, then decide</h2>
+<div class=shot><img src="img/04-why-tier2.png" alt="Read why Tier 2 is recommended, then decide"><span class=box style="left:36.74%;top:70.43%;width:44.31%;height:6.44%"></span><span class=pin style="left:36.74%;top:70.43%">1</span><span class=box style="left:36.74%;top:78.87%;width:9.31%;height:4.22%"></span><span class=pin style="left:36.74%;top:78.87%">2</span><span class=box style="left:46.60%;top:78.87%;width:7.85%;height:4.22%"></span><span class=pin style="left:46.60%;top:78.87%">3</span></div>
+<ol class=legend><li>1. Reason</li><li>2. Escalate to Tier 2</li><li>3. Keep in Tier 1</li></ol>
+<p><b>Click:</b> Read the brown panel. Type a short <strong>Reason</strong>. Click <strong>Escalate to Tier 2</strong> or <strong>Keep in Tier 1</strong>.</p><p><b>You see:</b> The reason the system gives (here: score 100, Infiltration, severity 9.5, 6 of 49 members). Escalate stays off until you type a reason.</p><p class=why><b>Why (SOC):</b> The machine recommends; a human decides and states why.</p>
+</section><section class=step id="s6">
+<h2>Step 6. The alert is escalated</h2>
+<div class=shot><img src="img/05-escalated.png" alt="The alert is escalated"><span class=box style="left:35.56%;top:46.74%;width:46.67%;height:10.00%"></span><span class=pin style="left:35.56%;top:46.74%">1</span></div>
+<ol class=legend><li>1. Work status</li></ol>
+<p><b>Click:</b> Nothing to click.</p><p><b>You see:</b> Work status <strong>Escalated</strong>. A Tier 2 case now exists. The alert leaves the Active list.</p><p class=why><b>Why (SOC):</b> Tier 1 is done with it; the expert takes over.</p>
+</section><section class=step id="s7">
+<h2>Step 7. Check the flow evidence</h2>
+<div class=shot><img src="img/06-flow-score.png" alt="Check the flow evidence"><span class=box style="left:45.35%;top:41.07%;width:6.60%;height:3.78%"></span><span class=pin style="left:45.35%;top:41.07%">1</span></div>
+<ol class=legend><li>1. Flow &amp; Score</li></ol>
+<p><b>Click:</b> Open a routine group, then the <strong>Flow &amp; Score</strong> tab.</p><p><b>You see:</b> Ports, packet counts, rule conditions and the model&#x27;s top features.</p><p class=why><b>Why (SOC):</b> The analyst judges evidence, not only a score.</p>
+</section><section class=step id="s8">
+<h2>Step 8. Record a verdict</h2>
+<div class=shot><img src="img/07-verdict.png" alt="Record a verdict"><span class=box style="left:35.56%;top:80.57%;width:46.67%;height:4.22%"></span><span class=pin style="left:35.56%;top:80.57%">1</span></div>
+<ol class=legend><li>1. Verdict outcome</li><li class=missing>2. Record Verdict (below the visible area — scroll down)</li></ol>
+<p><b>Click:</b> Open <strong>Analyst Verdict</strong>. Pick an outcome, type a reason, click <strong>Record Verdict</strong>.</p><p><b>You see:</b> Work status <strong>Completed — Reviewed by Glenn Ang</strong>.</p><p class=why><b>Why (SOC):</b> Each outcome moves the score within the guardrails. One verdict alone does not re-rank a family (3-vote gate).</p>
+</section><section class=step id="s9">
+<h2>Step 9. Tier 2: the case list</h2>
+<div class=shot><img src="img/08-case-list.png" alt="Tier 2: the case list"><span class=box style="left:16.11%;top:17.44%;width:15.14%;height:4.22%"></span><span class=pin style="left:16.11%;top:17.44%">1</span><span class=box style="left:16.11%;top:55.39%;width:82.22%;height:9.44%"></span><span class=pin style="left:16.11%;top:55.39%">2</span><span class=box style="left:16.11%;top:30.17%;width:82.22%;height:6.33%"></span><span class=pin style="left:16.11%;top:30.17%">3</span></div>
+<ol class=legend><li>1. Status filter</li><li>2. Rule case</li><li>3. Your case</li></ol>
+<p><b>Click:</b> Left menu: <strong>Tier 2 Cases</strong>.</p><p><b>You see:</b> Default filter Active. 3 cases say <strong>Rule</strong> with the rule sentence (auto-escalated). Your case shows <strong>Glenn Ang</strong> and your reason.</p><p class=why><b>Why (SOC):</b> The expert sees open work and who or what sent each case.</p>
+</section><section class=step id="s10">
+<h2>Step 10. Investigate and conclude</h2>
+<div class=shot><img src="img/09-conclusion.png" alt="Investigate and conclude"><span class=box style="left:16.11%;top:77.47%;width:82.22%;height:8.67%"></span><span class=pin style="left:16.11%;top:77.47%">1</span><span class=box style="left:16.11%;top:87.58%;width:7.71%;height:4.22%"></span><span class=pin style="left:16.11%;top:87.58%">2</span></div>
+<ol class=legend><li>1. Resolution Reason</li><li>2. Resolve Case</li></ol>
+<p><b>Click:</b> Open your case. <strong>Audit Timeline</strong>: reason, <strong>Start investigation</strong>. <strong>Investigation Conclusion</strong>: finding, class, reason, <strong>Record Investigation Conclusion</strong>.</p><p><b>You see:</b> <strong>Resolve Case</strong> stays off until a conclusion exists. Then it turns on.</p><p class=why><b>Why (SOC):</b> A case cannot close without a recorded finding.</p>
+</section><section class=step id="s11">
+<h2>Step 11. Resolve the case</h2>
+<div class=shot><img src="img/10-resolved.png" alt="Resolve the case"><span class=box style="left:16.11%;top:76.47%;width:82.22%;height:2.22%"></span><span class=pin style="left:16.11%;top:76.47%">1</span></div>
+<ol class=legend><li>1. Resolved by</li></ol>
+<p><b>Click:</b> Type a <strong>Resolution Reason</strong>. Click <strong>Resolve Case</strong>.</p><p><b>You see:</b> <strong>Resolved by: Glenn Ang</strong>. All edit buttons go. A resolved case leaves the Active list but stays under Status = Resolved.</p><p class=why><b>Why (SOC):</b> The record is fixed for audit. Approving a response plan never executes it.</p>
+</section><section class=step id="s12">
+<h2>Step 12. Release a claim</h2>
+<div class=shot><img src="img/11-release.png" alt="Release a claim"><span class=box style="left:37.08%;top:66.74%;width:4.58%;height:3.33%"></span><span class=pin style="left:37.08%;top:66.74%">1</span></div>
+<ol class=legend><li>1. Release</li></ol>
+<p><b>Click:</b> On an alert you own, click <strong>Release claim</strong>, then <strong>Release</strong>.</p><p><b>You see:</b> The alert is available to others again.</p><p class=why><b>Why (SOC):</b> Shift change or wrong pick: work returns to the queue. Idle claims also expire after 15 minutes.</p>
+</section>
+</html>

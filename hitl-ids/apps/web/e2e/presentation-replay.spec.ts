@@ -105,7 +105,8 @@ test("progressive frozen Replay reaches Analyst queue and automatic Tier 2 witho
   await newlyAvailable.click();
   await expect(analyst.getByRole("region", { name: "Human work status" })).toContainText("Your Access: Owner");
   await analyst.getByPlaceholder("Search operational alerts…").fill("");
-  await analyst.getByRole("tablist", { name: "Operational queue views" }).getByRole("tab", { name: /^Tier 2 / }).click();
+  // C2 (2026-11-08) added "Tier 2 candidates", so /^Tier 2 / matches 2 tabs; select the Tier 2 view by its id.
+  await analyst.getByRole("tablist", { name: "Operational queue views" }).locator("#queue-view-tier2").click();
   await expect(analyst.getByRole("list", { name: "Operational alerts" }).getByRole("button").first()).toBeVisible();
   await analyst.goto("/analyst/tier2-cases");
   await expect(analyst.getByRole("heading", { name: /Tier 2 Cases/ })).toBeVisible();

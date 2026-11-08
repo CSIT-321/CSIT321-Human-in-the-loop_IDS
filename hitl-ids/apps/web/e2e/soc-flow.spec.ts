@@ -1,5 +1,5 @@
 import { expect, test, type Locator, type Page } from "@playwright/test";
-import { mkdirSync } from "node:fs";
+import { mkdirSync, writeFileSync } from "node:fs";
 
 /**
  * SOC flow on the real routed demo data (soc-flow-fixture.py: a temp copy of data/demo.db, routed by
@@ -15,8 +15,12 @@ const API = "http://127.0.0.1:8040";
 test("SOC flow: queue views, claim, note, Why Tier 2, verdict, auto case, Tier 2 resolve, release", async ({ page }) => {
   test.setTimeout(300_000); page.setDefaultTimeout(20_000); mkdirSync(OUT, { recursive: true });
   const errors: string[] = []; page.on("pageerror", e => errors.push(e.message));
-  const shot = async (name: string, subject?: Locator) => {
+  // pins[name] = the boxes (CSS px in the 1440x900 shot) of what the guide tells the reader to click.
+  const pins: Record<string, { label: string; box: { x: number; y: number; width: number; height: number } | null }[]> = {};
+  const shot = async (name: string, subject?: Locator, targets: [string, Locator][] = []) => {
     if (subject) await subject.scrollIntoViewIfNeeded();
+    pins[name] = [];
+    for (const [label, target] of targets) pins[name].push({ label, box: await target.boundingBox() });
     await page.screenshot({ path: `${OUT}/${name}.png`, animations: "disabled" });
   };
   const proof = async (ref: string) => (await page.request.get(`${API}/__soc/proof/${ref}`)).json();
@@ -34,7 +38,7 @@ test("SOC flow: queue views, claim, note, Why Tier 2, verdict, auto case, Tier 2
   // 0 sign in
   await page.goto("/login");
   await page.getByLabel("Username").fill("g.ang"); await page.getByLabel("Password", { exact: true }).fill("analyst-demo");
-  await shot("00-login");
+  await shot("00-login", undefined, [["Sign in", page.getByRole("button", { name: "Sign in" })]]);
   await page.getByRole("button", { name: "Sign in" }).click();
   await expect(page).toHaveURL(/\/analyst\/operations/);
 
@@ -43,14 +47,17 @@ test("SOC flow: queue views, claim, note, Why Tier 2, verdict, auto case, Tier 2
   for (const key of ["active", "tier1", "tier2-candidates", "auto-escalated", "tier2"])
     await expect(views.locator(`#queue-view-${key}`)).toBeVisible();
   await expect(views.locator("#queue-view-auto-escalated")).toContainText("3");
-  await shot("01-queue-views");
+  await expect(page.getByRole("list", { name: "Operational alerts" }).getByRole("button").first()).toBeVisible();
+  await shot("01-queue-views", undefined, [["Tier 2 candidates", views.locator("#queue-view-tier2-candidates")],
+    ["Auto-escalated", views.locator("#queue-view-auto-escalated")], ["Tier 1", views.locator("#queue-view-tier1")]]);
 
   // 2 claim: opening a Tier 2 candidate row claims it for this analyst
   const A = picks.recommended;
   await openRow(page, A);
   await expect(work).toContainText("Your Access: Owner");
   expect((await proof(A)).work).toEqual(["in_review", "Glenn Ang", null]);
-  await shot("02-claimed");
+  await shot("02-claimed", undefined, [["Claimed row", page.getByRole("list", { name: "Operational alerts" }).locator(`button[data-alert-ref="${A}"]`)],
+    ["Work status", work]]);
 
   // 3 note: append-only, named
   await tab("History & Notes");
@@ -58,19 +65,20 @@ test("SOC flow: queue views, claim, note, Why Tier 2, verdict, auto case, Tier 2
   await workspace.getByRole("button", { name: "Add note", exact: true }).click();
   await expect(workspace.getByRole("list", { name: "Investigation notes" })).toContainText("Glenn Ang");
   expect((await proof(A)).notes).toEqual(["Glenn Ang"]);
-  await shot("03-note", workspace.getByRole("list", { name: "Investigation notes" }));
+  await shot("03-note", workspace.getByRole("list", { name: "Investigation notes" }), [["History & Notes", workspace.getByRole("tab", { name: "History & Notes", exact: true })], ["Note", workspace.getByRole("list", { name: "Investigation notes" })]]);
 
   // 4 Why Tier 2: the reasons are shown; the analyst escalates with a reason
   await tab("Overview");
   const why = workspace.getByRole("region", { name: "Why Tier 2 is recommended" });
   await expect(why).toBeVisible();
+  await expect(why.getByRole("button", { name: "Escalate to Tier 2", exact: true })).toBeDisabled(); // reason required
   await why.getByLabel(/^Reason/).fill("Repeated infiltration from one source; needs an expert.");
-  await shot("04-why-tier2", why);
+  await shot("04-why-tier2", why, [["Reason", why.getByLabel(/^Reason/)], ["Escalate to Tier 2", why.getByRole("button", { name: "Escalate to Tier 2", exact: true })], ["Keep in Tier 1", why.getByRole("button", { name: "Keep in Tier 1", exact: true })]]);
   await why.getByRole("button", { name: "Escalate to Tier 2", exact: true }).click();
   await expect.poll(async () => (await proof(A)).case?.[2]).toBe("open");
   const pA = await proof(A);
   expect(pA.work[0]).toBe("escalated"); expect(pA.case[1]).not.toBe("system_policy");
-  await shot("05-escalated", work);
+  await shot("05-escalated", work, [["Work status", work]]);
 
   // 5 routine group: verdict (claim -> verdict closes the Tier 1 work)
   const V = picks.routine;
@@ -78,7 +86,7 @@ test("SOC flow: queue views, claim, note, Why Tier 2, verdict, auto case, Tier 2
   await expect(work).toContainText("Your Access: Owner");
   await tab("Flow & Score");
   await expect(workspace.getByRole("region", { name: "Flow and score" })).toBeVisible();
-  await shot("06-flow-score");
+  await shot("06-flow-score", undefined, [["Flow & Score", workspace.getByRole("tab", { name: "Flow & Score", exact: true })]]);
   await tab("Analyst Verdict");
   const verdict = workspace.getByRole("region", { name: "Analyst Verdict", exact: true });
   await verdict.getByLabel("Verdict outcome").selectOption("confirmed_malicious");
@@ -86,7 +94,7 @@ test("SOC flow: queue views, claim, note, Why Tier 2, verdict, auto case, Tier 2
   await verdict.getByRole("button", { name: "Record Verdict", exact: true }).click();
   await expect.poll(async () => (await proof(V)).verdicts).toBe(1);
   await expect.poll(async () => (await proof(V)).work?.[0]).toBe("completed");
-  await shot("07-verdict", verdict);
+  await shot("07-verdict", verdict, [["Verdict outcome", verdict.getByLabel("Verdict outcome")], ["Record Verdict", verdict.getByRole("button", { name: /Record Verdict|Correct Verdict/ })]]);
 
   // 6 auto-escalated: the system opened the case; Tier 1 never had to claim it
   const S = picks.auto;
@@ -98,7 +106,7 @@ test("SOC flow: queue views, claim, note, Why Tier 2, verdict, auto case, Tier 2
   await expect(autoRow).toContainText("Rule");
   const manualRow = page.getByRole("row").filter({ hasText: pA.case[0].slice(0, 8) });
   await expect(manualRow).toContainText("Glenn Ang");
-  await shot("08-case-list");
+  await shot("08-case-list", undefined, [["Status filter", page.getByLabel("Status", { exact: true })], ["Rule case", autoRow], ["Your case", manualRow]]);
 
   // 7 Tier 2: start, conclude, resolve the analyst's case
   await manualRow.getByRole("link").first().click();
@@ -108,18 +116,19 @@ test("SOC flow: queue views, claim, note, Why Tier 2, verdict, auto case, Tier 2
   await page.getByLabel("Decision reason", { exact: true }).fill("Taking this case.");
   await page.getByRole("button", { name: "Start investigation", exact: true }).click();
   await expect(summary).toContainText("investigating");
+  await expect(resolution.getByRole("button", { name: "Resolve Case", exact: true })).toBeDisabled(); // no conclusion yet
   await page.getByRole("tab", { name: "Investigation Conclusion", exact: true }).click();
   await page.getByLabel("Human Investigation Finding", { exact: true }).selectOption("confirmed_malicious");
   await page.getByLabel("Human Final Attack Classification", { exact: true }).selectOption("infiltration");
   await page.getByLabel("Investigation Reason", { exact: true }).fill("Confirmed infiltration from the grouped source.");
   await page.getByRole("button", { name: "Record Investigation Conclusion", exact: true }).click();
   await expect(resolution).toContainText("Latest Finding: confirmed malicious");
-  await shot("09-conclusion", resolution);
+  await shot("09-conclusion", resolution, [["Resolution Reason", resolution.getByLabel("Resolution Reason")], ["Resolve Case", resolution.getByRole("button", { name: "Resolve Case", exact: true })]]);
   await resolution.getByLabel("Resolution Reason").fill("Confirmed and documented; no plan executed.");
   await resolution.getByRole("button", { name: "Resolve Case", exact: true }).click();
   await expect(resolution).toContainText("Resolved by: Glenn Ang");
   expect((await proof(A)).case[2]).toBe("resolved");
-  await shot("10-resolved", resolution);
+  await shot("10-resolved", resolution, [["Resolved by", resolution.getByText(/^Resolved by:/)]]);
   await page.getByRole("link", { name: "All Tier 2 cases", exact: true }).click();
   await expect(manualRow).toHaveCount(0);                 // D1: resolved leaves Active ...
   await page.getByLabel("Status", { exact: true }).selectOption("resolved");
@@ -131,9 +140,10 @@ test("SOC flow: queue views, claim, note, Why Tier 2, verdict, auto case, Tier 2
   await openRow(page, R);
   await expect(work).toContainText("Your Access: Owner");
   await workspace.getByRole("button", { name: "Release claim", exact: true }).click();
-  await shot("11-release");
+  await shot("11-release", undefined, [["Release", workspace.getByRole("button", { name: "Release", exact: true })]]);
   await workspace.getByRole("button", { name: "Release", exact: true }).click();
   await expect.poll(async () => (await proof(R)).work?.[0]).toBe("available");
 
+  writeFileSync(`${OUT}/pins.json`, JSON.stringify(pins, null, 1));
   expect(errors).toEqual([]);
 });
