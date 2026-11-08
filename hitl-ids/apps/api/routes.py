@@ -291,7 +291,9 @@ MOVED_LIMIT = 25
 
 
 @router.post("/api/alerts/{alertRef}/feedback", response_model=ca.FeedbackResponse,
-             tags=["alerts", "feedback"], operation_id="submitFeedback")
+             tags=["alerts", "feedback"], operation_id="submitFeedback",
+             # X1: a verdict moves scores, so only the roles that work alerts may record one.
+             dependencies=[Depends(auth.require_role("security_analyst", "system_admin"))])
 def post_feedback(alertRef: str, body: ca.FeedbackRequest, conn: Conn,  # noqa: N803
                   principal: Principal) -> ca.FeedbackResponse:
     """Record one analyst verdict: guardrails, family learning and audit, in one transaction."""
