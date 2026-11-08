@@ -624,6 +624,22 @@ def update_guardrail_config(body: co.GuardrailConfigUpdate, conn: Conn,
     if unknown:
         raise ApiError(400, "VALIDATION_FAILED", f"Unknown guardrail settings: {sorted(unknown)}",
                        {"allowed": sorted(known)})
+    # X3 (S8-02): the same cross-field rules GuardrailsPage enforces (features/admin/guardrails.ts:132-152),
+    # checked on the merged result, so a direct API caller cannot store a configuration the page refuses.
+    live = {entry.config_key: float(entry.config_value) for entry in store.guardrail_settings(conn)}
+    merged = {**live, **{key: float(value) for key, value in changes.items()}}
+    problems = []
+    if len(body.rationale.strip()) < 10:
+        problems.append("Give a reason of at least 10 characters")
+    if merged.get("critical_alert_floor", 0) >= merged.get("critical_alert_threshold", 100):
+        problems.append("The critical alert floor must be below the critical alert threshold")
+    for key in ("max_feedback_increase", "max_feedback_reduction"):
+        if key in changes and float(changes[key]) <= 0:
+            problems.append(f"{key} must be greater than 0")
+    if not problems and all(live.get(key) == float(value) for key, value in changes.items()):
+        problems.append("Nothing has changed")
+    if problems:
+        raise ApiError(400, "VALIDATION_FAILED", problems[0], {"problems": problems})
 
     actor_id = principal.user_id
     now = m.utc_now()

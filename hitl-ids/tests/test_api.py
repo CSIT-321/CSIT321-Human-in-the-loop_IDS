@@ -602,6 +602,35 @@ def test_changing_guardrails_without_a_rationale_is_refused(client):
     assert response.status_code == 400
 
 
+@pytest.mark.parametrize("body", [
+    {"criticalAlertFloor": 80, "rationale": "Floor equal to the threshold."},     # floor must stay below the threshold
+    {"criticalAlertThreshold": 60, "rationale": "Threshold under the live floor."},  # live floor is 70
+    {"maxFeedbackIncrease": 0, "rationale": "Turn learning off entirely."},     # caps must be positive
+    {"maxFeedbackReduction": 0, "rationale": "Turn learning off entirely."},
+    {"criticalAlertFloor": 65, "rationale": "short"},                         # reason under 10 characters
+    {"criticalAlertFloor": 65, "rationale": "         x         "},          # trimmed reason under 10 characters
+])
+def test_x3_the_api_enforces_the_cross_field_rules_the_page_shows(client, body):
+    """X3 (S8-02): GuardrailsPage says the API enforces its rules. A direct API caller must meet them too,
+    and a refused change writes no CONFIG_CHANGE row."""
+    admin = {"Authorization": f"Bearer {client.tokens['admin']}"}
+    before = client.get("/api/config/guardrails").json()
+    response = client.put("/api/config/guardrails", json=body, headers=admin)
+    assert response.status_code == 400, response.text
+    assert response.json()["error"]["code"] == "VALIDATION_FAILED"
+    assert client.get("/api/config/guardrails").json() == before
+    assert client.get("/api/audit-log", params={"eventType": ["CONFIG_CHANGE"]}).json()["page"]["total"] == 0
+
+
+def test_x3_a_change_to_the_current_values_is_refused(client):
+    admin = {"Authorization": f"Bearer {client.tokens['admin']}"}
+    live = {s["configKey"]: s["configValue"] for s in client.get("/api/config/guardrails").json()["settings"]}
+    response = client.put("/api/config/guardrails", headers=admin,
+                          json={"criticalAlertFloor": live["critical_alert_floor"], "rationale": "Nothing changes here."})
+    assert response.status_code == 400
+    assert client.get("/api/audit-log", params={"eventType": ["CONFIG_CHANGE"]}).json()["page"]["total"] == 0
+
+
 def test_an_invalid_token_is_refused_rather_than_downgraded(client):
     response = client.get("/api/alerts", headers={"Authorization": "Bearer not-a-token"})
     assert response.status_code == 401
