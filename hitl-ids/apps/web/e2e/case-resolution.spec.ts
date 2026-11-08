@@ -90,7 +90,12 @@ test("final Case lifecycle: investigated malicious case, approved plan, learning
  await page.goto(memoryHref!);await expect(page.getByRole("region",{name:"Memory evidence and audit",exact:true})).toContainText("Current human evidence");
  await page.goto(caseUrl);await expect(summary).toContainText("Resolved");
  await page.getByRole("link",{name:"All Tier 2 cases",exact:true}).click();
- await expect(page.getByRole("row").filter({hasText:"SYNTHETIC Unresolved suspicious network activity 0"})).toContainText("Resolved");
+ // D1 (approved 2026-11-08): the list opens on Active work, so a resolved case leaves it but stays findable.
+ const resolvedRow=page.getByRole("row").filter({hasText:"SYNTHETIC Unresolved suspicious network activity 0"});
+ await expect(page.getByLabel("Status",{exact:true})).toHaveValue("active");
+ await expect(resolvedRow).toHaveCount(0);
+ await page.getByLabel("Status",{exact:true}).selectOption("resolved");
+ await expect(resolvedRow).toContainText("Resolved");
  // B: Expected Activity can resolve without inventing a containment recommendation.
  await select("SYNTHETIC Unresolved suspicious network activity 1");await conclude("expected_activity","");
  await expect(resolution).toContainText("Response: None recorded");

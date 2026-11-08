@@ -179,7 +179,16 @@ test('FINAL coherent Golden Path: staged correlated EVE → human learning → s
  const before=await get(harness+'/proof');
  for(const path of ['/api/v2/alerts','/api/v2/alerts/summary','/api/v2/selective-review','/api/v2/selective-review/metrics','/api/v2/triage-memory',`/api/v2/tier2/cases/${caseRef}`,`/api/v2/tier2/cases/${caseRef}/events`,`/api/v2/tier2/cases/${caseRef}/responses`,`/api/v2/alerts/${refs.T5}/triage-memory/matches`])await get(path);
  const after=await get(harness+'/proof');expect(after.digest).toBe(before.digest);expect(after.collectionRuns).toBe(0);expect(after.foreignKeys).toBe(0);evidence.finalProof=after;evidence.finalMetrics=await get('/api/v2/selective-review/metrics');
- const queue=(await get('/api/v2/alerts?limit=200')).items;const sorted=[...queue].sort((a:any,b:any)=>(b.state.operationalPriority??-1)-(a.state.operationalPriority??-1)||b.detectionSummary.occurredAt.localeCompare(a.detectionSummary.occurredAt)||a.operationalAlertRef.localeCompare(b.operationalAlertRef));expect(queue).toEqual(sorted);evidence.queueOrder=queue.map((a:any)=>({alertRef:a.operationalAlertRef,priority:a.state.operationalPriority,occurredAt:a.detectionSummary.occurredAt}));
+ // C9 + D4 (approved 2026-11-07): severity first, then flagged before unflagged, then the queue score
+ // (routing priority + verdict delta, clamped 0-100), then newest, then ref. Keys come from source rows.
+ const keys=await get(harness+'/queue-keys');
+ const queue=(await get('/api/v2/alerts?limit=200')).items;
+ const score=(a:any)=>{const k=keys[a.operationalAlertRef];return k.priority==null?-1:Math.max(0,Math.min(100,k.priority+k.delta));};
+ const sorted=[...queue].sort((a:any,b:any)=>{const x=keys[a.operationalAlertRef],y=keys[b.operationalAlertRef];
+  return (y.severity-x.severity)||(Number(x.unflagged)-Number(y.unflagged))||(score(b)-score(a))||b.detectionSummary.occurredAt.localeCompare(a.detectionSummary.occurredAt)||a.operationalAlertRef.localeCompare(b.operationalAlertRef);});
+ expect(queue.length).toBe(Object.keys(keys).length);
+ expect(queue.map((a:any)=>a.operationalAlertRef)).toEqual(sorted.map((a:any)=>a.operationalAlertRef));
+ evidence.queueOrder=queue.map((a:any)=>({alertRef:a.operationalAlertRef,severity:keys[a.operationalAlertRef].severity,priority:a.state.operationalPriority,occurredAt:a.detectionSummary.occurredAt}));
  for(const current of Object.values(after.votes) as any[][])expect(new Set(current.map(v=>v.alertRef)).size).toBe(current.length);
  expect(writes.some(p=>/\/activate|from-conclusion|execute|collection/.test(p))).toBe(false);
  expect(writes.filter(p=>p.endsWith('/from-verdict'))).toHaveLength(1);expect(errors).toEqual([]);

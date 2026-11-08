@@ -76,6 +76,20 @@ def serve(path,manifest):
             values=safe_context().model_copy(update=body.get('changes',{}))
             seed_synthetic_facts(c,alert,values,m.utc_now()-timedelta(hours=5) if body.get('stale') else m.utc_now())
         return {'syntheticPrerequisite':True}
+    @app.get('/__golden/queue-keys')
+    def queue_keys():
+        """Read-only: each alert's C9/D4 sort facts, read from source rows, so the spec can check the API's
+        order independently (severity rank, unflagged flag, routing priority, verdict delta)."""
+        from packages.detection.queue_severity import severity_rank
+        with closing(sqlite3.connect(path.as_uri()+'?mode=ro',uri=True)) as c:
+            c.execute('PRAGMA query_only=ON')
+            rows=c.execute("""SELECT a.operational_alert_ref,a.source_kind,v.severity,a.native_severity,a.detection_category,
+                COALESCE(v.evidence_class,'')='none',t.operational_priority,COALESCE(v.combined_score-v.detection_score,0)
+                FROM operational_alerts_v2 a JOIN operational_triage_state_v2 t ON t.operational_alert_id=a.id
+                LEFT JOIN alerts v ON v.id=a.legacy_alert_id""").fetchall()
+            return {str(r[0]):{'severity':severity_rank(r[1],r[2],r[3],r[4]),'unflagged':bool(r[5]),
+                'priority':r[6] if isinstance(r[6],(int,float)) and not isinstance(r[6],bool) and 0<=r[6]<=100 else None,
+                'delta':r[7]} for r in rows}
     @app.get('/__golden/proof')
     def proof():
         with closing(sqlite3.connect(path.as_uri()+'?mode=ro',uri=True)) as c:
