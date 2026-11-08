@@ -17,7 +17,8 @@ checks only on high-risk code (routing, verdicts, guardrails, security). X8 and 
 | X1 | `f37fd81` | evaluator cannot write legacy feedback (`TriageRoles`); all 48 write routes probed — only feedback was open |
 | X2 | `b6cd3f1` | CSV formula-injection guard in audit export |
 | X3 | `5f5676f` | guardrail PUT enforces the page's cross-field rules; 7 tests; planted-defect check green |
-| X4 + X5 | `4b43370` | second run on a dataset refused; detection applies the live guardrail policy it records; fresh demo build = real `data/demo.db` on all 5,000 alerts (0 differing) || X6 | `7b696f8` | product API no longer imports `scripts/`; boundary test |
+| X4 + X5 | `4b43370` | second run on a dataset refused; detection applies the live guardrail policy it records; fresh demo build = real `data/demo.db` on all 5,000 alerts (0 differing) |
+| X6 | `7b696f8` | product API no longer imports `scripts/`; boundary test |
 | X7 | `4536f7b` | UTC audit times, error states, per-action workspace reasons, role-aware memory links |
 | E1 | `d355260` | end-to-end flow triage over HTTP (queue→claim→verdict→guardrail→family→order; escalate→case); planted-defect check green |
 | E2 | `63fe59b` | frozen-evidence checker holds on any branch; the 4 live-tree preflight tests skip by name in conftest (hashed files untouched) |
