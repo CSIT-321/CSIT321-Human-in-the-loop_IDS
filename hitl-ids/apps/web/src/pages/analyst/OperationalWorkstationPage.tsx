@@ -9,7 +9,8 @@ import { useApi } from "../../api/useApi";
 import { readAlertArrivals } from "../../api/alertArrivalStream";
 import { ErrorState, LoadingState } from "../../components/states";
 import { Pill } from "../../components/ui";
-import { OperationalEvidence, flowShortName, operationalDetector } from "../../features/alert/OperationalEvidence";
+import { OperationalEvidence, flowShortName, isFlow, operationalDetector } from "../../features/alert/OperationalEvidence";
+import { FlowScorePanel } from "../../features/alert/FlowScorePanel";
 import { SystemRouting, attackLabel, currentRouteLabel, routingSummaryLabel } from "../../features/alert/SystemRouting";
 import { RoutingDetail } from "./V2RoutingPage";
 import { Tier2RecommendationPanel } from "../../features/alert/Tier2Recommendation";
@@ -21,7 +22,7 @@ import { needsReview, reviewLabel, reviewProjection } from "../../features/alert
 
 type View = Schemas["RoutingView"];
 const button = "rounded-sm border border-border bg-raised px-2.5 py-1.5 text-xs hover:border-border-strong disabled:opacity-40";
-const tabs = ["Overview", "Evidence", "Context & Review", "Analyst Verdict", "Triage Memory", "History & Notes", "Technical"] as const;
+const tabs = ["Overview", "Evidence", "Flow & Score", "Context & Review", "Analyst Verdict", "Triage Memory", "History & Notes", "Technical"] as const;
 type Tab = typeof tabs[number];
 const routeLabel = (value: string) => value === "tier2_candidate" ? "Historical routing record" : value.replaceAll("_", " ");
 
@@ -129,6 +130,8 @@ function AlertWorkspace({ view, onChanged, refresh, onReview, starting }: { view
     return () => window.removeEventListener("analyst-tour-tab", selectTourTab);
   }, []);
   const evidence = useApi(signal => unwrap(api.GET("/api/v2/alerts/{alertRef}/evidence", { params: { path: { alertRef: view.operationalAlertRef } }, signal })), [view.operationalAlertRef]);
+  // C5: the Flow & Score tab exists only for a flow alert (its operational ref is its legacy alert_ref).
+  const flowAlert = evidence.status === "success" && isFlow(evidence.data);
   return <section aria-label="Operational alert workspace" className="ops-detail flex min-h-0 min-w-0 flex-col bg-bg">
     <header className="shrink-0 space-y-2 border-b border-l-4 border-border border-l-primary bg-surface p-4">
       <p className="break-all font-mono text-xs text-accent">{view.operationalAlertRef}
@@ -142,7 +145,7 @@ function AlertWorkspace({ view, onChanged, refresh, onReview, starting }: { view
       </div>
     </header>
     <div role="tablist" aria-label="Operational alert sections" className="flex shrink-0 overflow-x-auto whitespace-nowrap border-b border-border bg-surface px-2">
-      {tabs.map(name => <button key={name} id={"ops-tab-" + name} role="tab" aria-selected={tab === name} aria-controls="ops-alert-panel"
+      {tabs.filter(name => name !== "Flow & Score" || flowAlert).map(name => <button key={name} id={"ops-tab-" + name} role="tab" aria-selected={tab === name} aria-controls="ops-alert-panel"
         onClick={() => setTab(name)} className={`border-b-2 px-3 py-2 text-xs ${tab === name ? "border-primary text-text" : "border-transparent text-muted hover:text-text"}`}>{name}</button>)}
     </div>
     <div id="ops-alert-panel" role="tabpanel" aria-label={tab} className="min-h-0 flex-1 space-y-4 overflow-auto p-4">
@@ -165,6 +168,7 @@ function AlertWorkspace({ view, onChanged, refresh, onReview, starting }: { view
         <SystemRouting view={view} panelShown />
         <RoutingDetail initial={view} refresh={refresh} compact onChanged={onChanged} />
       </div>
+      {tab === "Flow & Score" && flowAlert && <FlowScorePanel alertRef={view.operationalAlertRef} />}
       {tab === "Context & Review" && <SelectiveReviewPanel key={view.stateVersion} alertRef={view.operationalAlertRef} readOnly={view.work?.status==='in_review'&&!view.work.isOwner} onReview={onReview} />}
       {tab === "Triage Memory" && <AlertMemoryPanel key={view.stateVersion} view={view} onVerdict={()=>setTab("Analyst Verdict")} onContributed={refresh} />}
       {tab === "History & Notes" && <section className="space-y-3" aria-label="Operational decision history">

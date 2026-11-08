@@ -19,7 +19,7 @@ const AGREEMENT: Record<string, string> = {
   ml_only: "Model only — no rule fired",
   none: "Neither the rule nor the model flagged this flow",
 };
-const isFlow = (alert: Schemas["OperationalAlertV2"]) =>
+export const isFlow = (alert: Schemas["OperationalAlertV2"]) =>
   alert.sourceKind === "legacy_flow_alert" || alert.detectorEvidence.detectorSource === "current_flow";
 
 /** The approved screens' short name (AL-01958) for a flow alert; null for any other source. */
