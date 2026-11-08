@@ -253,7 +253,7 @@ def prepare_decision(conn, run_ref, expected_revision, actor_id, action, snapsho
     if any(f.freshness_policy!=run.protocol.context_policy for field in provenance.fields for f in field.facts):
         raise CollectionConflict('referenced context configuration differs from frozen collection')
     aid=snapshot.inputs.alert.id
-    admission=conn.execute("SELECT created_at FROM operational_routing_audit WHERE operational_alert_id=? AND action='admit_tier1' ORDER BY id LIMIT 1",(aid,)).fetchone()
+    admission=conn.execute("SELECT created_at FROM operational_routing_audit WHERE operational_alert_id=? AND action IN ('admit_tier1','system_route') ORDER BY id LIMIT 1",(aid,)).fetchone()
     if admission is None: raise CollectionConflict('recorded operational admission is required')
     from datetime import datetime
     stamp=lambda s: datetime.fromisoformat(str(s).replace('Z','+00:00')) if isinstance(s,str) else s

@@ -294,7 +294,7 @@ def evaluate_recorded(archive: RecordedArchive, *, now=None):
             raise ValueError('recorded alert identity/occurrence mismatch')
         if not decision.operational_admitted_at<=decision.review_eligible_at<=decision.decision_at or not decision.availability_boundary or max(decision.availability_boundary.values())!=decision.review_eligible_at:
             raise ValueError('recorded readiness chronology mismatch')
-        admissions=[e for e in archive.admission_routing_events if e['alertRef']==str(decision.operational_alert_ref) and e['action']=='admit_tier1' and _time(e['created_at'])==decision.operational_admitted_at]
+        admissions=[e for e in archive.admission_routing_events if e['alertRef']==str(decision.operational_alert_ref) and e['action'] in ('admit_tier1','system_route') and _time(e['created_at'])==decision.operational_admitted_at]
         if len(admissions)!=1: raise ValueError('persisted operational admission evidence missing')
         if admissions[0] not in admission_evidence: admission_evidence.append(admissions[0])
         if provenance is None or provenance.evaluated_at!=decision.decision_at:

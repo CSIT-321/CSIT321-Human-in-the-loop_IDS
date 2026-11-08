@@ -25,6 +25,17 @@ def load_database(path, policies, holdout_start, holdout_end):
             contexts.append(dict(alert_ref=ref, available_at=row['created_at'], audit_id=row['id'], context=json.loads(row['context_snapshot'])))
         for row in conn.execute('SELECT * FROM operational_routing_audit ORDER BY id'):
             states.append(dict(alert_ref=refs[row['operational_alert_id']], available_at=row['created_at'], state=json.loads(row['after_state'])))
+        # E4 (S9-04): admit_system_route writes the policy audit and the routing audit with the same stamp,
+        # and both carry the same after-state. They are one admission, not two observations; keep the first
+        # state and drop exact (ref, time, state) repeats so coherent_history sees no ambiguous pair.
+        seen = set()
+        coalesced = []
+        for entry in states:
+            key = (entry['alert_ref'], entry['available_at'], json.dumps(entry['state'], sort_keys=True))
+            if key not in seen:
+                seen.add(key)
+                coalesced.append(entry)
+        states = coalesced
         lesson_refs = {}
         for row in conn.execute('SELECT * FROM triage_memory_lessons ORDER BY id'):
             lesson = MemoryLesson.model_validate_json(row['snapshot'])
