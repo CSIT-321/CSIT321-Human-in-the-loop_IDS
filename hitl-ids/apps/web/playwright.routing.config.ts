@@ -4,7 +4,9 @@ const python = process.env.HITL_PYTHON ?? "python";
 export default {
   ...base,
   testDir: path.resolve("e2e"),
-  testMatch: ["routing-workflow.spec.ts", "detector-foundation.spec.ts", "external-admission.spec.ts", "tier2-case.spec.ts", "response-approval.spec.ts", "triage-memory.spec.ts", "selective-review.spec.ts"],
+  // Base for operational-queue/pre-freeze/real-suricata/suricata. Its own old specs were retired to
+  // e2e/historical/ (2026-11-09, see analysis/phase-f/RETIRED-SPECS.md); it now runs the role surfaces.
+  testMatch: ["role-surfaces.spec.ts"],
   outputDir: path.resolve("test-results/routing-browser-artifacts"),
   use: { ...base.use, baseURL: "http://127.0.0.1:5175" },
   webServer: [

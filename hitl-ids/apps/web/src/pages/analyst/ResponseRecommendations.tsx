@@ -55,7 +55,7 @@ export function ResponseRecommendationCard({ view,caseRevision,canWrite,onChange
     {proposal.policyVersion && <p className="text-xs text-muted">Policy: {proposal.policyVersion}</p>}
     <p className="break-all text-xs text-dim">{proposal.eventType} / {proposal.recommendationRef}</p>
     {view.decision && <section className="space-y-1 border-t border-border pt-3" aria-label="Human response decision">
-      <p className="text-sm">{view.status==="approved" ? "Approved" : "Rejected"} by actor #{view.decision.actorId}</p>
+      <p className="text-sm">{view.status==="approved" ? "Approved" : "Rejected"} by {actorName(view.decision.actorId)}</p>
       <p className="text-xs text-muted">{view.decision.createdAt}</p>
       <p className="break-words whitespace-pre-wrap text-sm">{view.decision.reason}</p>
       <p className="text-xs text-dim">{view.decision.eventType}</p>

@@ -151,7 +151,7 @@ export function CaseInvestigation({ initial, refresh }: { initial: Case; refresh
       <h2 className="text-base font-semibold">{current.decisionSource === "system_policy" ? "System Routing at Creation" : "Tier 1 Handoff"}</h2>
       <p className="whitespace-pre-wrap break-words text-sm">{snapshot.tier1HandoffSummary}</p>
       <p className="break-words text-sm">Escalation: {snapshot.escalationReason}</p>
-      <p className="text-xs text-muted">{snapshot.routingDecision.eventType} by {snapshot.routingDecision.decisionSource === "system_policy" ? "System Policy" : `actor #${snapshot.routingDecision.actorId}`}</p>
+      <p className="text-xs text-muted">{snapshot.routingDecision.eventType} by {snapshot.routingDecision.decisionSource === "system_policy" ? "System Policy" : actorName(snapshot.routingDecision.actorId)}</p>
       <ul className="space-y-1 text-sm">{snapshot.triage.tier2RecommendationReasons.map((text,i) => <li key={i}>{text}</li>)}</ul>
     </section>
     <section className="space-y-3 border-t border-border pt-4" aria-label="Primary Alert Evidence">
@@ -177,7 +177,7 @@ export function CaseInvestigation({ initial, refresh }: { initial: Case; refresh
       {events.status === "success" && <div role="tabpanel" className="space-y-3">
         {events.data.items.length === 0 && <p className="text-sm">No records yet.</p>}
         {events.data.items.map(event => <article key={event.id} className="space-y-1 border-b border-border py-3">
-          <p className="text-xs text-muted">{event.eventType} / {event.decisionSource === "system_policy" ? "System Policy" : `actor #${event.actorId}`} / {event.createdAt}</p>
+          <p className="text-xs text-muted">{event.eventType} / {event.decisionSource === "system_policy" ? "System Policy" : actorName(event.actorId)} / {event.createdAt}</p>
           {event.resolution && <ResolutionDetails resolution={event.resolution} />}
           {event.conclusion ? <><h3 className="font-semibold">{event.conclusion.recordKind === "legacy_finding" ? "Historical Finding" : "Investigation Conclusion"}</h3>
             <ConclusionDetails conclusion={event.conclusion} />

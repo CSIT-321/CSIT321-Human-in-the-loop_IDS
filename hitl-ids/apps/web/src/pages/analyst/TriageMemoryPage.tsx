@@ -79,7 +79,7 @@ function MemoryDetail({view,canWrite,onChange}:{view:View;canWrite:boolean;onCha
     <details><summary className="cursor-pointer text-sm">Context snapshot</summary><pre className="overflow-auto whitespace-pre-wrap break-all text-xs">{JSON.stringify(view.lesson.contextSnapshot,null,2)}</pre></details>
     <details><summary className="cursor-pointer text-sm">Activation policy</summary><pre className="overflow-auto whitespace-pre-wrap break-all text-xs">{JSON.stringify(view.lesson.configuration,null,2)}</pre></details>
     {view.decision&&<div className="space-y-1 border-t border-border pt-3 text-sm">
-      <p>{view.decision.decisionSource==="system_policy"?`Auto-activated by System Policy · ${view.decision.policyVersion}`:`${view.decision.action==="activate"?"Activated":"Rejected"} by actor #${view.decision.actorId}`}</p>
+      <p>{view.decision.decisionSource==="system_policy"?`Auto-activated by System Policy · ${view.decision.policyVersion}`:`${view.decision.action==="activate"?"Activated":"Rejected"} by ${actorName(view.decision.actorId)}`}</p>
       <p className="break-all">{view.decision.createdAt}</p><p className="whitespace-pre-wrap break-words">{view.decision.reason}</p>
     </div>}
     {canWrite&&!view.decision&&view.status!=="expired"&&<div className="space-y-2 border-t border-border pt-3">

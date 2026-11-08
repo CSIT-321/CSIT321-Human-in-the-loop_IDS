@@ -4,6 +4,7 @@ import { api, unwrap, type Schemas } from "../../api/client";
 import { useApi } from "../../api/useApi";
 import { PageHeader, Pill } from "../../components/ui";
 import { useSession } from "../../session/SessionContext";
+import { useActorName } from "../../session/ActorNames";
 
 // openapi-fetch omits null-only fields from its response type. The wire contract fixes
 // confidence to null; this view never converts it into a numeric confidence.
@@ -13,6 +14,7 @@ const button = "rounded-sm border border-border px-3 py-2 text-sm hover:bg-raise
 export function ExternalAdmissionDetail({ initial, refresh, prefix, onUpdate }: {
   initial: View; refresh: () => void; prefix: string; onUpdate?: (view: View) => void;
 }) {
+  const actorName = useActorName();
   const [view, setView] = useState(initial);
   const [decision, setDecision] = useState<"accepted" | "held">("held");
   const [reason, setReason] = useState("");
@@ -62,11 +64,11 @@ export function ExternalAdmissionDetail({ initial, refresh, prefix, onUpdate }: 
       <div><dt className="text-muted">Original Staging Decision</dt><dd>{view.stagingDecision}</dd></div>
       <div><dt className="text-muted">Eligibility Review</dt><dd>{view.reviewDecision ?? "Not reviewed"}</dd></div>
     </dl>
-    {view.reviewReason && <p className="break-words text-sm">Review #{view.reviewId}, actor #{view.reviewActorId}: {view.reviewReason}</p>}
+    {view.reviewReason && <p className="break-words text-sm">Review #{view.reviewId}, {actorName(view.reviewActorId)}: {view.reviewReason}</p>}
     {view.operationalAlertRef && <section className="space-y-2 border-t border-border pt-4">
       <h3 className="text-sm font-semibold">Operational Alert Reference</h3>
       <p className="break-all font-mono text-xs">{view.operationalAlertRef}</p>
-      {view.admittedAt && <p className="text-sm">Admitted by actor #{view.admissionActorId} at {view.admittedAt}</p>}
+      {view.admittedAt && <p className="text-sm">Admitted by {actorName(view.admissionActorId)} at {view.admittedAt}</p>}
       <Link className="inline-block text-sm text-accent underline" to={(prefix === "/analyst" ? "/analyst/operations" : prefix + "/v2-triage") + "?alertRef=" + view.operationalAlertRef}>{prefix === "/analyst" ? "Open Analyst Workstation" : "Open Alert Triage"}</Link>
     </section>}
     {(view.canReview || view.canAdmit) && <section className="space-y-3 border-t border-border pt-4">
