@@ -10255,6 +10255,11 @@
             ],
             "default": null
           },
+          "tier2RecommendationOpen": {
+            "default": false,
+            "title": "Tier2Recommendationopen",
+            "type": "boolean"
+          },
           "title": {
             "title": "Title",
             "type": "string"

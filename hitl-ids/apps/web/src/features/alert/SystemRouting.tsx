@@ -9,7 +9,8 @@ export const routingSummaryLabel = (view: Schemas["RoutingView"]) =>
   view.state.decisionSource === "analyst" && view.state.handlingRoute === "tier2_case" ? "Manual Escalation / Override"
     : view.systemRouting ? routeClassLabel(view.systemRouting.routeClass) : "Historical routing";
 
-export function SystemRouting({ view }: { view: Schemas["RoutingView"] }) {
+/** ``panelShown``: the workstation shows the C3 "Why Tier 2" panel, so the open reasons are not repeated here. */
+export function SystemRouting({ view, panelShown = false }: { view: Schemas["RoutingView"]; panelShown?: boolean }) {
   const decision = view.systemRouting;
   const classification = view.classification;
   const candidateReasons = view.state.tier2RecommendationReasons ?? [];
@@ -23,8 +24,8 @@ export function SystemRouting({ view }: { view: Schemas["RoutingView"] }) {
     ]} />
     {view.state.decisionSource === "analyst" && decision && <p className="text-xs text-muted">Initial system route: {currentRouteLabel(decision.route)} ({routeClassLabel(decision.routeClass)}). The analyst override is recorded separately.</p>}
     {decision && <ul aria-label="Routing Reasons" className="space-y-2 text-sm">{decision.reasons.map(reason => <li key={reason}>{reason}</li>)}</ul>}
-    {decision && candidateReasons.length > 0 && <section aria-label="Tier 2 candidate reasons" className="space-y-1">
-      <h4 className="text-sm font-semibold">Why Tier 2 is recommended</h4>
+    {decision && candidateReasons.length > 0 && !(panelShown && view.tier2RecommendationOpen) && <section aria-label="Tier 2 candidate reasons" className="space-y-1">
+      <h4 className="text-sm font-semibold">{view.state.decisionSource === "analyst" ? "Earlier Tier 2 recommendation" : "Why Tier 2 is recommended"}</h4>
       <ul className="space-y-1 text-sm">{candidateReasons.map(reason => <li key={reason}>{reason}</li>)}</ul>
     </section>}
     {decision && <p className="text-xs text-muted">Context is read once, when the alert is routed. A fact recorded later does not change this recommendation.</p>}

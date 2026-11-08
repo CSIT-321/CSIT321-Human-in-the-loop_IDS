@@ -6092,6 +6092,11 @@ export interface components {
             stateVersion: string;
             /** @default null */
             systemRouting: components["schemas"]["SystemRoutingDecision"] | null;
+            /**
+             * Tier2Recommendationopen
+             * @default false
+             */
+            tier2RecommendationOpen: boolean;
             /** Title */
             title: string;
             /** @default null */

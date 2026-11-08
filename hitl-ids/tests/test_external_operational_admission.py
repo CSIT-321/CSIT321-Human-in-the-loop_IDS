@@ -203,6 +203,7 @@ def test_trusted_context_recommends_only_and_existing_approval(client, database,
         alert = read_projection(conn, result['operational_alert_id'])
     state = client.get(f'/api/v2/alerts/{alert.operational_alert_ref}/triage-state').json()
     assert state['state']['tier2Recommended'] and state['state']['handlingRoute'] == 'tier1_review'
+    assert state['tier2RecommendationOpen'] is False   # C3 panel: current (system-routed) alerts only
     for action in ('reject','approve'):
         response = client.post(f'/api/v2/alerts/{alert.operational_alert_ref}/tier2/{action}',json={
             'requestId': str(uuid4()), 'expectedStateVersion': state['stateVersion'], 'reason': 'Analyst judgement'})

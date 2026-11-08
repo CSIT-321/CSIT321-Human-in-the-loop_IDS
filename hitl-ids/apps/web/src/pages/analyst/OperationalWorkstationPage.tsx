@@ -12,6 +12,7 @@ import { Pill } from "../../components/ui";
 import { OperationalEvidence, flowShortName, operationalDetector } from "../../features/alert/OperationalEvidence";
 import { SystemRouting, attackLabel, currentRouteLabel, routingSummaryLabel } from "../../features/alert/SystemRouting";
 import { RoutingDetail } from "./V2RoutingPage";
+import { Tier2RecommendationPanel } from "../../features/alert/Tier2Recommendation";
 import { AlertMemoryPanel } from "./TriageMemoryPage";
 import { SelectiveReviewPanel } from "./SelectiveReviewPage";
 import { OperationalKpis, QueueTabs, QueueItem, queueViews, attackCategories, type QueueView } from "../../features/alert/OperationalQueue";
@@ -153,12 +154,15 @@ function AlertWorkspace({ view, onChanged, refresh, onReview, starting }: { view
         {evidence.status === "error" && <ErrorState error={evidence.error} onRetry={evidence.reload} />}
         {evidence.status === "success" && <OperationalEvidence alert={evidence.data} summaryOnly={tab === "Overview"} />}
       </>}
+      <div hidden={tab !== "Overview"}>
+        <Tier2RecommendationPanel key={view.stateVersion} view={view} onChanged={changed => { onChanged(changed); refresh(); }} />
+      </div>
       <div hidden={tab !== "Overview" && tab !== "Analyst Verdict"}>
         <AnalystVerdictPanel alertRef={view.operationalAlertRef} stateVersion={view.stateVersion+":"+view.work?.revision} onUseMemory={()=>setTab("Triage Memory")} onRecorded={refresh}/>
       </div>
       {/* Keep this mounted across tabs so draft reasons, retry IDs and success remain stable. */}
       <div hidden={tab !== "Overview"} className="space-y-4">
-        <SystemRouting view={view} />
+        <SystemRouting view={view} panelShown />
         <RoutingDetail initial={view} refresh={refresh} compact onChanged={onChanged} />
       </div>
       {tab === "Context & Review" && <SelectiveReviewPanel key={view.stateVersion} alertRef={view.operationalAlertRef} readOnly={view.work?.status==='in_review'&&!view.work.isOwner} onReview={onReview} />}

@@ -45,6 +45,7 @@ class RoutingView(ApiModel):
     review_reasons: list[str]
     latest_decision: RoutingAudit | None
     allowed_actions: list[RoutingAction]
+    tier2_recommendation_open: bool = False  # C3: the "Why Tier 2" panel shows only while this is true
     case_ref: UUID | None = None
     classification: AttackClassification | None = None
     system_routing: SystemRoutingDecision | None = None

@@ -12,7 +12,7 @@ const view: Schemas["RoutingView"] = {
   effectiveReview: null, detectionSummary: null,
   classification: null, systemRouting: {routeClass:"ROUTINE_REVIEW",route:"tier1_review",decisionSource:"system_policy",policyVersion:"system-routing-v1",reasons:["Normal review"]}, caseRef: null, operationalAlertRef: "fe130e6f-af86-4fc6-89f2-bc76b6cad68b", title: "External NIDS alert", detectorName: "Suricata", detectorSource: "suricata",
   stateVersion: "a".repeat(64), reviewReasons: ["Critical asset requires review"], latestDecision: null,
-  allowedActions: ["approve_tier2", "reject_tier2", "manual_escalate"],
+  allowedActions: ["approve_tier2", "reject_tier2", "manual_escalate"], tier2RecommendationOpen: true,
   state: { operationalAlertId: 1, operationalPriority: 85, priorityBand: "P1", priorityBandScheme: "p1_p4",
     handlingRoute: "tier1_review", workflowStage: "triage", reviewRequired: true, reviewReason: "Review required",
     tier2Recommended: true, tier2RecommendationReasons: ["Unresolved by Tier 1"], decisionSource: "system_policy",
@@ -55,6 +55,21 @@ describe("V2 routing", () => {
     render(<MemoryRouter><RoutingDetail initial={view} refresh={vi.fn()} /></MemoryRouter>);
     expect(screen.getByRole("region", { name: "Tier 2 candidate reasons" })).toHaveTextContent("Unresolved by Tier 1");
     expect(screen.getByText(/Context is read once, when the alert is routed\. A fact recorded later does not change this recommendation\./)).toBeTruthy();
+  });
+
+  it("hides the manual escalation block in the workstation while the Why Tier 2 panel is open (C3)", () => {
+    stubFetch(() => { throw new Error("No writes expected"); });
+    const { unmount } = render(<MemoryRouter><RoutingDetail initial={{ ...view, allowedActions: ["manual_escalate"] }} refresh={vi.fn()} compact /></MemoryRouter>);
+    expect(screen.queryByRole("button", { name: "Escalate to Tier 2" })).toBeNull();
+    unmount();
+    render(<MemoryRouter><RoutingDetail initial={{ ...view, allowedActions: ["manual_escalate"], tier2RecommendationOpen: false }} refresh={vi.fn()} compact /></MemoryRouter>);
+    expect(screen.getByRole("button", { name: "Escalate to Tier 2" })).toBeVisible();
+  });
+
+  it("keeps the candidate reasons on the standalone routing page, which has no Why Tier 2 panel", () => {
+    stubFetch(() => { throw new Error("No writes expected"); });
+    render(<MemoryRouter><RoutingDetail initial={view} refresh={vi.fn()} /></MemoryRouter>);
+    expect(screen.getByRole("region", { name: "Tier 2 candidate reasons" })).toHaveTextContent("Unresolved by Tier 1");
   });
 
   it("shows no candidate section when nothing recommends Tier 2", () => {

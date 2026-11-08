@@ -52,7 +52,9 @@ export function RoutingDetail({ initial, refresh, casePrefix = "/analyst", compa
     } finally { setBusy(false); }
   }
   const state = view.state;
-  const actions = view.systemRouting && state.handlingRoute==='tier1_review' ? view.allowedActions.filter((action): action is CommandAction => action==='manual_escalate') : [];
+  // C3: while the "Why Tier 2" panel is open it holds the only Escalate button on the tab (user choice 2026-11-08).
+  const actions = view.systemRouting && state.handlingRoute==='tier1_review' && !(compact && view.tier2RecommendationOpen)
+    ? view.allowedActions.filter((action): action is CommandAction => action==='manual_escalate') : [];
   return <section className="min-w-0 space-y-5 border-t border-border pt-5" aria-label="Operational alert routing">
     {!compact && <>
     <header className="space-y-1 break-words">

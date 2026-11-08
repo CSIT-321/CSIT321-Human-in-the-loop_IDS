@@ -71,9 +71,20 @@ def allowed_actions(state: OperationalTriageStateV2, status: Tier1Status) -> tup
     if (state.handling_route, state.workflow_stage) == ('unassigned', 'staged'):
         return ('admit_tier1',)
     if status in ('current', 'historical'):
-        return (('approve_tier2', 'reject_tier2', 'manual_escalate') if state.tier2_recommended
+        return (('approve_tier2', 'reject_tier2', 'manual_escalate') if recommendation_open(state, status)
                 else ('manual_escalate',))
     return ()
+
+
+def recommendation_open(state: OperationalTriageStateV2, status: Tier1Status) -> bool:
+    """C3 (user decision 2026-11-08, option A): on a current (system-routed) Tier 1 alert, a Tier 2 recommendation
+    needs a human answer only until an analyst decides its route. Keep in Tier 1 (reject_tier2) sets
+    decision_source to 'analyst', which closes it; the stored flag and reasons stay unchanged as history
+    (test_routing_workflow). Historical alerts keep the earlier rule: the flag alone decides
+    (test_external_operational_admission)."""
+    if status == 'current':
+        return state.tier2_recommended and state.decision_source != 'analyst'
+    return state.tier2_recommended and status == 'historical'
 
 
 def route_alert(conn: sqlite3.Connection, alert_id: int, *, actor_id: int,

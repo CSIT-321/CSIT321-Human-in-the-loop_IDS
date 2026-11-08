@@ -22,7 +22,7 @@ from packages.detection.analyst_work import read_work, Scope
 from packages.detection.tier1_eligibility import tier1_status
 from packages.detection.routing import (
     RoutingRequest, RoutingAction, RoutingConflict, allowed_actions, decode_audit,
-    route_alert, state_version,
+    recommendation_open, route_alert, state_version,
 )
 
 router = APIRouter(prefix='/api/v2/alerts', tags=['V2 routing'])
@@ -48,8 +48,11 @@ def _view(conn, alert_id, principal, review=None):
     bundle = json.loads(row['detector_evidence']).get('structured_evidence', {}).get('suricataBundle')
     attention=review or effective_review(conn,row['operational_alert_ref'])
     work=read_work(conn,alert_id,principal.user_id,attention)
-    actions=list(allowed_actions(state, tier1_status(conn, alert_id, state))) if principal.role in ('security_analyst','system_admin') else []
+    status=tier1_status(conn, alert_id, state)
+    actions=list(allowed_actions(state, status)) if principal.role in ('security_analyst','system_admin') else []
     if system and state.handling_route=='tier1_review' and work.status!='completed' and not work.can_mutate: actions=[]
+    # A completed judgment may still go to Tier 2 (route_alert), but "Keep in Tier 1" needs the open claim.
+    if system and work.status=='completed': actions=[a for a in actions if a!='reject_tier2']
     return RoutingView(effective_review=attention,
         classification=json.loads(system['classification']) if system else None,
         detection_summary=QueueDetectionSummary(source_ip=row['source_ip'], destination_ip=row['destination_ip'],
@@ -60,6 +63,8 @@ def _view(conn, alert_id, principal, review=None):
         detector_name=row['detector_name'], detector_source=row['detector_source'], state=state, state_version=state_version(state),
         review_reasons=[state.review_reason], latest_decision=decode_audit(audit) if audit else None,
         allowed_actions=actions, work=work,
+        # The C3 panel is for current (system-routed) alerts only; historical rows keep their read-only history.
+        tier2_recommendation_open=status=='current' and recommendation_open(state, status),
         case_ref=case['case_ref'] if case else None)
 
 
