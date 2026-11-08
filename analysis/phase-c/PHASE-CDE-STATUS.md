@@ -34,6 +34,27 @@ checks only on high-risk code (routing, verdicts, guardrails, security). X8 and 
 - Web: TypeScript 0 errors; Vitest 307/307 (40 files).
 - Frozen scripts unchanged since the 2026-11-02 freeze commits (`398fd99`, `0836502`).
 
+## Whole-triage live walk (2026-11-08, after the final gate)
+
+Script: `analysis/phase-f/walk_live_check.py` (Camoufox), proof: `analysis/phase-f/walk_db_check.py`.
+Database: fresh copy of `data/demo.db` + `materialize_flow_queue.py` (81 groups; 3 auto-escalated, 74
+candidates, 4,008 routine). Copy deleted after. Real `data/demo.db` hash `ad85a9149e380f80` before and after.
+
+| Step | Screen | Stored row |
+|---|---|---|
+| Queue tabs | Tier 1 "78 groups · 4,004 single", Tier 2 candidates 74, Auto-escalated 3 | — |
+| Row click claims alert A | "In Review — You" | `analyst_work_events` |
+| Escalate A to Tier 2 | case opens | `approve_tier2` / `analyst` routing audit; route `tier2_case`; work `escalated`; feedback `escalate` |
+| Flow & Score on alert V | 5 cards | — |
+| Verdict on V | "Completed — Reviewed by Glenn Ang" | work `completed`; feedback `confirm_true_positive` |
+| Case list | "Analyst #1" in Escalated by | case `decision_source=analyst` |
+| Start / conclude / resolve | "Case Resolved · investigating → Resolved" | 4 case events: create, start, finding (`confirmed_malicious`), resolve; status `resolved`, revision 4 |
+
+Found, not fixed (display only): 8 places show "Actor #N" / "Analyst #N" where the API has the
+display name (`Tier2CasesPage.tsx:20,55,130`, `InvestigationConclusion.tsx:19`,
+`ResponseRecommendations.tsx:46`, `SelectiveReviewPage.tsx:114`, `TriageMemoryPage.tsx:35,97,116`).
+The resolution line already shows "Glenn Ang / #1".
+
 ## Delegated decisions (recorded, not asked)
 
 - **E2 skip by name, not by file**: the 4 frozen tests fail only on the live-tree pin; a conftest
