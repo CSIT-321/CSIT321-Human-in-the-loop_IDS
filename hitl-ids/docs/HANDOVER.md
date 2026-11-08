@@ -46,12 +46,10 @@ The latest review found an unbound-override recall validation gap. See
 [consumed override integrity](prospective-unbound-override-integrity.md) for the separate metric-evidence
 validation boundary. This does not change operational overrides, collection counts or Tier 1/Tier 2 UX.
 
-**Last updated:** 2026-09-18 (rev 24 — similar-alert learning made visible: the moved members, the
-family group-by, and the similarity basis on screen; changelog v1.32. Rev 23 notes below still
-stand) · **Branch:** `feat/demo-build` — tracking
-`origin/feat/demo-build`, in sync with `origin/feat/demo-build` (**0 ahead, 0 behind** — verified 2026-09-16; the
-R4→showcase-v9 work was pushed after rev 22, so the old "11 commits ahead" is stale) · `feat/s2-contracts` and `feat/s6-fusion` pushed earlier as view-only progress
-branches ·
+**Last updated:** 2026-11-08 (rev 25 — whole-review plan executed: Tier views, workstation, fixes,
+tests, frozen-evidence checker; changelog v1.33. Rev 23 notes below still
+stand) · **Branch:** `feat/tier-views-auto-escalation` — the review-plan work lands here (C, D, X, E
+phases); base `feat/demo-build` unchanged since rev 24.
 **Phases 2–5 DONE · the S16 demo gate PASSED** (S12, S13, S14, S16 in changelog v1.21) ·
 **Console rebuild** (user request, `docs/console-rebuild-proposal.md`): R1–R6 DONE, **complete** ·
 **S18a account separation landed** (user request): real sign-in — the seeded accounts
@@ -103,7 +101,7 @@ inspection-sort tie-break fixed (v1.28):** it was a direction-blind `a.id ASC`, 
 scores all tied came back identical ascending and descending — and 4,789 of 5,000 alerts (95.8%)
 tie on their score. It now orders by evidence class, review flag, capture time and id, each
 following the requested direction ·
-**781 tests, 5 skipped** (776 passed, Python 3.11; missing optional dataset fixtures) +
+**933 tests, 5 skipped** (frozen live-tree preflight skips; missing optional dataset fixtures) +
 **198 web tests** (`apps/web`, `npm test`) +
 the browser narrative (`npm run e2e`, passes with three real sign-ins) ·
 **Python runs from `hitl-ids\.venv` (3.11) — see §0b before running anything** ·

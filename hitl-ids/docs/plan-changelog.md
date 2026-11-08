@@ -1225,7 +1225,25 @@ that is correct, not a bug.
 | Apply v0.3 + v1.0 changes to `plans/hitl-ids-demo-build.md` | none | Claude |
 | `gh` PR/CI workflow steps | `gh auth login` not run | User |
 
-## v1.32 — Similar-alert learning made visible: the moved members, and grouping by family (2026-09-18) ← **current**
+## v1.33 — Whole-review plan executed: Tier views, operational workstation, fixes, tests and the frozen-evidence checker (2026-11-08) ← **current**
+
+Phase C (Tier 1 view), Phase D (Tier 2 view), Phase X (fixes) and Phase E (tests, contract, frozen
+evidence) from `analysis/codebase-review/REVIEW-AND-PLAN.md` landed on `feat/tier-views-auto-escalation`:
+
+- **C2**: Tier 2 candidates and Auto-escalated queue tabs; the Tier 1 count splits into groups and singles.
+- **C3**: Why Tier 2 panel on the Overview tab (recommendation actions server-gated).
+- **C4**: fusion confidence and the model probability are named apart.
+- **C5**: read-only Flow & Score tab on flow alerts (approved cards restored from f1b74b6).
+- **D1–D3**: Tier 2 list filters + Escalated by; flow panels in the case; legacy `/findings` removed.
+- **X1**: the evaluator role can no longer write (legacy feedback role-gated).
+- **X2–X7**: CSV formula injection, server-side guardrail rules, double-run refusal, live guardrail policy,
+  product/scripts boundary, UI fixes.
+- **E1–E5**: end-to-end flow triage test; frozen-evidence checker (the four live-tree preflight tests skip
+  by design outside the freeze commit); routing-rehearsal fixture; system-route admission in evaluation;
+  contract roles and 401s.
+- **E7**: this entry.
+
+### v1.32 — Similar-alert learning made visible: the moved members, and grouping by family (2026-09-18)
 
 Asked by the user: *"when showcasing a verdict, the specific alert is reranked in operational score
 BUT we do not see how similar alerts are also reranked (which is the main feature of this product),
