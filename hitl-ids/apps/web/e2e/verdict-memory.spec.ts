@@ -7,6 +7,9 @@ test("canonical learning: automatic Exact contribution, independent support, cor
   const learning=detail.getByRole("region",{name:"Human Learning"});
   const panel=detail.getByRole("region",{name:"Analyst Verdict",exact:true});
   const firstUrls:string[]=[];
+  // Since 24d43c5 a completed alert leaves the default Active view (approved). The loop judges 3 of the 4
+  // alerts in turn, so it works in All, where judged alerts stay in place.
+  await page.locator("#queue-view-all").click();await expect(page).toHaveURL(/view=all/);
   for(let index=0;index<3;index++){
     await page.getByLabel("Search operational alerts",{exact:true}).fill("canonical learning");
     const rows=page.getByRole("list",{name:"Operational alerts"}).getByRole("button");await expect(rows).toHaveCount(4);await rows.nth(index).click();
@@ -22,7 +25,8 @@ test("canonical learning: automatic Exact contribution, independent support, cor
   }
   await learning.getByRole("link",{name:"Open linked Memory lesson",exact:true}).click();
   await expect(page.getByText("active",{exact:true})).toBeVisible();
-  await expect(page.getByText("Verdict Author:",{exact:false}).first()).toBeVisible();
+  // The lesson history names the Verdict author (case-sensitive: the hidden workspace line reads "Verdict author:").
+  await expect(page.getByText(/^Verdict Author: Glenn Ang/).first()).toBeVisible();
   await page.goto(firstUrls[0]!);await detail.getByRole("tab",{name:"Analyst Verdict",exact:true}).click();
   await panel.getByLabel("Verdict outcome").selectOption("confirmed_malicious");await panel.getByLabel("Verdict reason").fill("SYNTHETIC corrected human conclusion");
   await panel.getByRole("button",{name:"Correct Verdict",exact:true}).click();

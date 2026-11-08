@@ -21,7 +21,7 @@ def initial_database(_source, target):
     extra.write_text(json.dumps(json.loads((HITL / 'tests/fixtures/suricata-alerts.json').read_text())[1]), encoding='utf-8')
     with closing(db.connect(target)) as conn:
         for sensor in ('direct-manual-demo', 'direct-continue-demo'):
-            stage_file(conn, extra, sensor)
+            stage_file(conn, extra, sensor, capture_scope=f'disposable-{sensor}')
     return target
 
 

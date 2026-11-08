@@ -38,7 +38,11 @@ def build(path):
         stage(c,[event(960000+i,'SYNTHETIC expired learning SSH scan',severity=1) for i in range(4)],'expired-learning')
         expired=admit_all(c,actor);now=m.utc_now()
         with patch.object(m,'utc_now',return_value=now-timedelta(days=31)):
+            from work_claim_fixture import claim_work
             for alert in expired[:3]:
+                # Since the claim rule, a Tier 1 Verdict needs the analyst to own the alert (same step as
+                # pre_freeze_fixture.contribute_review). Without it record_verdict raises VerdictConflict.
+                claim_work(c,alert,actor)
                 view=read_verdict(c,alert.operational_alert_ref,actor)
                 record_verdict(c,alert.operational_alert_ref,actor_id=actor,request=VerdictCommand(
                     request_id=uuid4(),expected_revision=0,expected_state_version=view.source_state_version,

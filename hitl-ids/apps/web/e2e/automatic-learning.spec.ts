@@ -7,13 +7,19 @@ test("canonical UI judgments automatically learn, activate, reduce review, and w
  page.on('request',r=>{authorization=r.headers().authorization??authorization;if(r.method()==='POST')writes.push(new URL(r.url()).pathname);});
  await page.goto('/login');await page.getByLabel('Username').fill('g.ang');await page.getByLabel('Password',{exact:true}).fill('analyst-demo');await page.getByRole('button',{name:'Sign in'}).click();
  await expect(page).toHaveURL(/\/analyst\/operations$/);
+ // Take the token from the stored session (set at sign-in). Copying it from the first signed-in request raced:
+ // the URL can change before any API request is sent, so get() ran with an empty token and got 401.
+ authorization='Bearer '+await page.evaluate(()=>JSON.parse(sessionStorage.getItem('hitl-ids.session.v1')??'{}').token);
+ expect(authorization).not.toBe('Bearer undefined');
  const get=async(path:string)=>(await page.request.get(path,{headers:{Authorization:authorization}})).json();
  const all=await get('/api/v2/alerts?limit=200&q=automatic%20learning');const refs=all.items.map((a:{operationalAlertRef:string})=>a.operationalAlertRef);
  expect(refs).toHaveLength(6);
  const detail=page.getByRole('region',{name:'Operational alert workspace',exact:true});
- async function open(ref:string){await page.goto('/analyst/operations?alertRef='+ref);await expect(detail).toBeVisible();}
+ async function open(ref:string){await page.goto('/analyst/operations?view=all&q='+ref+'&alertRef='+ref);await expect(detail).toBeVisible();}
+ // A Tier 1 Verdict needs the analyst to own the alert (claim rule, 24d43c5); a row click claims it, as in final-golden-path.
+ async function claim(ref:string){await page.getByRole('list',{name:'Operational alerts'}).locator(`button[data-alert-ref="${ref}"]`).click();await expect(detail.getByRole('region',{name:'Human work status'})).toContainText('Your Access: Owner');}
  async function judgment(ref:string,outcome:string){
-  await open(ref);await detail.getByRole('tab',{name:'Analyst Verdict',exact:true}).click();
+  await open(ref);await claim(ref);await detail.getByRole('tab',{name:'Analyst Verdict',exact:true}).click();
   const panel=detail.getByRole('region',{name:'Analyst Verdict',exact:true});
   await panel.getByLabel('Verdict outcome').selectOption(outcome);await panel.getByLabel('Verdict reason').fill('SYNTHETIC browser human judgment '+outcome);
   await panel.getByRole('button',{name:'Record Verdict',exact:true}).click();await expect(panel).toContainText('Revision 1');

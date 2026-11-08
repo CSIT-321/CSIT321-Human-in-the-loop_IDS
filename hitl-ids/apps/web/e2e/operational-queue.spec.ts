@@ -16,19 +16,26 @@ test("whole-dataset operational workload, filters, priority, pagination, URL and
   await page.getByRole("button", { name: "Sign in" }).click();
   await expect(page).toHaveURL(/\/analyst\/operations$/);
   const workload = page.getByRole("region", { name: "Operational workload" });
-  for (const name of ["Critical 54", "Tier 2 54", "Expert Review 2", "Needs Review 64", "No Immediate Review 2", "Tier 1 11", "Total Alerts 66"])
+  // "Active Tier 1" counts unfinished Tier 1 work (24d43c5): 11 Tier 1 routes, 3 completed -> 8 active.
+  // C2/D4 cond. 3 (780b123) shows groups and singles apart; this fixture has no groups.
+  for (const name of ["Critical 54", "Tier 2 54", "Expert Review 2", "Needs Review 64", "No Immediate Review 2", "Active Tier 1 0 groups · 8 single", "Total Alerts 66"])
     await expect(workload.getByRole("button", { name, exact: true })).toBeVisible();
   await expect(workload.getByRole("link", { name: "Open Tier 2 Cases 54", exact: true })).toBeVisible();
   const queue = page.getByRole("list", { name: "Operational alerts" });
   const queueRegion = page.getByRole("region", { name: "Operational alert queue", exact: true });
   const views = page.getByRole("tablist", { name: "Operational queue views" });
   const scores = () => queue.locator('[aria-label^="Operational Priority:"]');
+  // The default view is Active since 24d43c5 (63 = 66 minus 3 completed). The whole-dataset checks run in All.
+  await expect(queueRegion).toContainText("1–50 of 63");
+  const allQueue = page.waitForResponse(response => new URL(response.url()).pathname === "/api/v2/alerts" && response.status() === 200);
+  await views.getByRole("tab", { name: "All 66", exact: true }).click();
   await expect(queue.getByRole("button")).toHaveCount(50);
   await expect(queueRegion).toContainText("1–50 of 66");
   await expect(scores().first()).toHaveAttribute("aria-label", "Operational Priority: 95");
   expect(await scores().first().locator("span").first().evaluate(element => parseFloat(getComputedStyle(element).fontSize))).toBeGreaterThanOrEqual(28);
   // The server response order is what the UI renders; all pages are globally ranked.
-  const initialRows = (await (await initialQueue).json()).items;
+  await initialQueue;
+  const initialRows = (await (await allQueue).json()).items;
   expect(initialRows.map((row: { state: { operationalPriority: number } }) => row.state.operationalPriority)).toEqual(Array(50).fill(95));
   expect(initialRows[0].title).toBe("SYNTHETIC Critical SQL injection 52");
   expect(await page.evaluate(() => document.documentElement.scrollHeight <= innerHeight)).toBe(true);
@@ -55,11 +62,11 @@ test("whole-dataset operational workload, filters, priority, pagination, URL and
   await expect(queue.getByRole("button")).toHaveCount(2);
   expect((await queue.getByRole("button").allTextContents()).every(text => text.includes("EXPERT") && text.includes("Unknown / Needs Expert"))).toBe(true);
   await page.screenshot({ path: "test-results/queue-expert.png", fullPage: true });
-  await views.getByRole("tab", { name: "Tier 1 11", exact: true }).click();
-  await expect(queueRegion).toContainText("1–11 of 11");
-  await expect(queue.getByRole("button")).toHaveCount(11);
+  await views.getByRole("tab", { name: "Tier 1 0 groups · 8 single", exact: true }).click();
+  await expect(queueRegion).toContainText("1–8 of 8");
+  await expect(queue.getByRole("button")).toHaveCount(8);
   expect((await queue.getByRole("button").allTextContents()).every(text => text.includes("Tier 1") && text.includes("Routine Review"))).toBe(true);
-  expect(await scores().evaluateAll(elements => elements.map(element => Number(element.getAttribute("aria-label")!.split(": ")[1])))).toEqual([85,85,40,40,40,40,40,40,40,20,20]);
+  expect(await scores().evaluateAll(elements => elements.map(element => Number(element.getAttribute("aria-label")!.split(": ")[1])))).toEqual([85,85,40,40,40,40,20,20]); // active Tier 1 only: the 3 completed 40s leave
   await views.getByRole("tab", { name: "Needs Review 64", exact: true }).click();
   await expect(queueRegion).toContainText("1–50 of 64");
   expect((await queue.getByRole("button").allTextContents()).every(text => text.includes("Review Required: Yes"))).toBe(true);

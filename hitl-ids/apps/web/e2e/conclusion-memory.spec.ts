@@ -8,7 +8,8 @@ test("expert learning: automatic Unknown, Tier 1 replacement, Inconclusive, corr
  const workspace=page.getByRole("region",{name:"Operational alert workspace",exact:true});
  const learning=page.getByRole("region",{name:"Expert Human Learning",exact:true});
  async function select(title:string,index=0){
-  await page.goto("/analyst/operations");await page.getByLabel("Search operational alerts",{exact:true}).fill(title);
+  // Since 24d43c5 the default Active view hides completed work; these steps pick judged alerts, so use All.
+  await page.goto("/analyst/operations?view=all");await page.getByLabel("Search operational alerts",{exact:true}).fill(title);
   const rows=page.getByRole("list",{name:"Operational alerts"}).getByRole("button");await expect(rows.first()).toContainText(title);
   await (index<0?rows.last():rows.nth(index)).click();await expect(workspace).toContainText(title);
  }

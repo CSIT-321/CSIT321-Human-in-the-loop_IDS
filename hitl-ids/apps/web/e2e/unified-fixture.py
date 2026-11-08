@@ -24,13 +24,13 @@ def initial_database(_source, target):
         event = json.loads((HITL / 'tests/fixtures/suricata-alerts.json').read_text())[1]
         extra.write_text(json.dumps(event), encoding='utf-8')
         for sensor in ('direct-manual-demo', 'direct-continue-demo'):
-            stage_file(conn, extra, sensor)
+            stage_file(conn, extra, sensor, capture_scope=f'disposable-{sensor}')
         event['alert']['signature'] = 'SYNTHETIC unified-workstation journey'
         extra.write_text(json.dumps(event), encoding='utf-8')
         actor = conn.execute("SELECT id FROM users WHERE username='g.ang'").fetchone()[0]
         for index in range(2):
             sensor = f'unified-journey-{index}'
-            stage_file(conn, extra, sensor)
+            stage_file(conn, extra, sensor, capture_scope=f'disposable-{sensor}')
             source_id = conn.execute('SELECT id FROM external_alert_inbox WHERE sensor_id=?', (sensor,)).fetchone()[0]
             alert = materialize_source(conn, 'external_nids_alert', source_id)
             if index:
