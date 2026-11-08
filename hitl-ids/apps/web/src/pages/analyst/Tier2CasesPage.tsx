@@ -1,9 +1,10 @@
 import { useRef, useState } from "react";
-import { Link, useNavigate, useParams } from "react-router";
+import { Link, useParams } from "react-router";
 import { api, unwrap, type Schemas } from "../../api/client";
 import { useApi } from "../../api/useApi";
 import { PageHeader, Pill } from "../../components/ui";
-import { OperationalEvidence } from "../../features/alert/OperationalEvidence";
+import { OperationalEvidence, isFlow } from "../../features/alert/OperationalEvidence";
+import { FlowScorePanel } from "../../features/alert/FlowScorePanel";
 import { useSession } from "../../session/SessionContext";
 import { ResponseRecommendations } from "./ResponseRecommendations";
 import { InvestigationAssistance } from "./InvestigationAssistance";
@@ -18,62 +19,42 @@ type Tab = "note" | "finding" | "link" | "timeline";
 const prefixFor = (role?: string) => role === "system_admin" ? "/admin" : role === "evaluator" ? "/evaluator" : "/analyst";
 const caseAssignment = (ownerActorId: number | null) => ownerActorId == null ? "Unassigned / Collaborative" : `Assigned to Actor #${ownerActorId}`;
 
-export function CreateCasePanel({ alert }: { alert: Schemas["RoutingView"] }) {
-  const { session } = useSession();
-  const navigate = useNavigate();
-  const [title, setTitle] = useState(alert.title);
-  const [handoff, setHandoff] = useState("");
-  const [reason, setReason] = useState("");
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState("");
-  const pending = useRef<{ key: string; id: string } | null>(null);
-  if (!session || session.role === "evaluator") return null;
-  async function create() {
-    if (busy || !title.trim() || !handoff.trim() || !reason.trim()) return;
-    const key = JSON.stringify([title.trim(), handoff.trim(), reason.trim(), alert.stateVersion]);
-    if (pending.current?.key !== key) pending.current = { key, id: crypto.randomUUID() };
-    setBusy(true); setError("");
-    try {
-      const result = await unwrap(api.POST("/api/v2/alerts/{alertRef}/tier2/case", {
-        params: { path: { alertRef: alert.operationalAlertRef } }, body: {
-          requestId: pending.current.id, expectedStateVersion: alert.stateVersion, title: title.trim(),
-          tier1HandoffSummary: handoff.trim(), reason: reason.trim(),
-        },
-      }));
-      navigate(prefixFor(session?.role) + "/tier2-cases/" + result.case.caseRef);
-    } catch (cause) { setError(cause instanceof Error ? cause.message : "Case creation could not be confirmed."); }
-    finally { setBusy(false); }
-  }
-  return <section className="space-y-3 border-t border-border pt-4" aria-label="Create Tier 2 case">
-    <h3 className="text-sm font-semibold">Tier 2 Case Creation</h3>
-    <label htmlFor="case-title" className="block text-sm">Case title</label>
-    <input id="case-title" className={input} maxLength={200} value={title} disabled={busy} onChange={e => setTitle(e.target.value)} />
-    <label htmlFor="case-handoff" className="block text-sm">Tier 1 handoff summary</label>
-    <textarea id="case-handoff" className={input} rows={3} maxLength={4000} value={handoff} disabled={busy} onChange={e => setHandoff(e.target.value)} />
-    <label htmlFor="case-reason" className="block text-sm">Case creation reason</label>
-    <textarea id="case-reason" className={input} rows={2} maxLength={4000} value={reason} disabled={busy} onChange={e => setReason(e.target.value)} />
-    <button className={button} disabled={busy || !title.trim() || !handoff.trim() || !reason.trim()} onClick={() => void create()}>Create Tier 2 Case</button>
-    {error && <p role="alert" className="text-sm text-danger">{error}</p>}
-  </section>;
-}
-
 export function Tier2CasesPage() {
   const { session } = useSession();
   const [offset, setOffset] = useState(0);
-  const cases = useApi(signal => unwrap(api.GET("/api/v2/tier2/cases", { params: { query: { limit: 50, offset } }, signal })), [offset]);
+  // D1: server-side filters. Default = active work (open + investigating); "all" sends no status.
+  const [status, setStatus] = useState<"active" | "open" | "investigating" | "resolved" | "all">("active");
+  const [owner, setOwner] = useState<"any" | "me" | "unassigned">("any");
+  const cases = useApi(signal => unwrap(api.GET("/api/v2/tier2/cases", { params: { query: {
+    limit: 50, offset, ...(status === "all" ? {} : { status }), ...(owner === "any" ? {} : { owner }) } }, signal })), [offset, status, owner]);
   return <div className="min-w-0 space-y-5 p-4 sm:p-6">
     <PageHeader title="Tier 2 Cases" />
+    <div className="flex flex-wrap items-end gap-3 text-sm">
+      <label className="block">Status<select className={input + " block"} aria-label="Status" value={status}
+        onChange={e => { setStatus(e.target.value as typeof status); setOffset(0); }}>
+        <option value="active">Active (open + investigating)</option><option value="open">Open</option>
+        <option value="investigating">Investigating</option><option value="resolved">Resolved</option><option value="all">All</option>
+      </select></label>
+      <label className="block">Owner<select className={input + " block"} aria-label="Owner" value={owner}
+        onChange={e => { setOwner(e.target.value as typeof owner); setOffset(0); }}>
+        <option value="any">Anyone</option><option value="me">Mine</option><option value="unassigned">Unassigned</option>
+      </select></label>
+    </div>
     {cases.status === "loading" && <p role="status">Loading cases...</p>}
     {cases.status === "error" && <div><p role="alert">{cases.error.message}</p><button className={button} onClick={cases.reload}>Retry</button></div>}
     {cases.status === "success" && <>
       {cases.data.items.length === 0 ? <p>No Tier 2 cases.</p> : <div className="overflow-x-auto">
         <table className="w-full text-left text-sm" aria-label="Tier 2 cases">
-          <thead><tr>{["Case ID", "Title", "Priority", "Status", "Case Assignment", "Created", "Primary Alert"].map(x => <th className="border-b border-border p-2" key={x}>{x}</th>)}</tr></thead>
+          <thead><tr>{["Case ID", "Title", "Priority", "Status", "Escalated by", "Case Assignment", "Created", "Primary Alert"].map(x => <th className="border-b border-border p-2" key={x}>{x}</th>)}</tr></thead>
           <tbody>{cases.data.items.map(item => <tr key={item.caseRef}>
             <td className="border-b border-border p-2"><Link className="text-accent underline" title={item.caseRef} to={prefixFor(session?.role) + "/tier2-cases/" + item.caseRef}>{item.caseRef.slice(0, 8)}</Link></td>
             <td className="min-w-48 border-b border-border p-2">{item.title}</td>
             <td className="border-b border-border p-2">{item.snapshot.triage.priorityBand ?? "Unassigned"} / {item.snapshot.triage.operationalPriority ?? "Not assigned"}</td>
-            <td className="border-b border-border p-2">{item.status === "resolved" ? "Resolved" : item.status}</td><td className="border-b border-border p-2">{caseAssignment(item.ownerActorId)}</td>
+            <td className="border-b border-border p-2">{item.status === "resolved" ? "Resolved" : item.status}</td>
+            <td className="min-w-48 border-b border-border p-2">
+              <span className="block font-semibold">{item.decisionSource === "system_policy" ? "Rule" : `Analyst #${item.createdByActorId}`}</span>
+              <span className="block text-xs text-muted">{item.snapshot.escalationReason}</span></td>
+            <td className="border-b border-border p-2">{caseAssignment(item.ownerActorId)}</td>
             <td className="border-b border-border p-2">{item.createdAt}</td>
             <td className="border-b border-border p-2"><Link className="text-accent underline" to={(session?.role === "security_analyst" ? "/analyst/operations" : prefixFor(session?.role) + "/v2-triage") + "?alertRef=" + item.primaryOperationalAlertRef}>{item.primaryOperationalAlertRef.slice(0, 8)}</Link></td>
           </tr>)}</tbody>
@@ -109,7 +90,7 @@ export function CaseInvestigation({ initial, refresh }: { initial: Case; refresh
   const [offset, setOffset] = useState(0);
   const [reason, setReason] = useState("");
   const [linkedRef, setLinkedRef] = useState("");
-  const [finding, setFinding] = useState<Schemas["FindingRequest"]["finding"]>("inconclusive");
+  const [finding, setFinding] = useState<Schemas["InvestigationConclusionRequest"]["finding"]>("inconclusive");
   const [finalCategory, setFinalCategory] = useState<FinalCategory | "">("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
@@ -177,6 +158,11 @@ export function CaseInvestigation({ initial, refresh }: { initial: Case; refresh
       <OperationalEvidence alert={detector} />
       <Link className="inline-block text-sm text-accent underline" to={(session?.role === "security_analyst" ? "/analyst/operations" : prefixFor(session?.role) + "/v2-triage") + "?alertRef=" + current.primaryOperationalAlertRef}>Primary alert</Link>
     </section>
+    {/* D2: a flow alert's live score, verdict history and family, read only (the C5 panel). */}
+    {isFlow(detector) && <section className="space-y-3 border-t border-border pt-4">
+      <h2 className="text-base font-semibold">Flow & Score (live)</h2>
+      <FlowScorePanel alertRef={current.primaryOperationalAlertRef} />
+    </section>}
     <section className="space-y-4 border-t border-border pt-4">
       <div className="flex flex-wrap gap-2" role="tablist" aria-label="Case investigation">
         {([["note","Investigation Notes"],["finding","Investigation Conclusion"],["link","Linked Alerts"],["timeline","Audit Timeline"]] as const).map(([value,label]) =>

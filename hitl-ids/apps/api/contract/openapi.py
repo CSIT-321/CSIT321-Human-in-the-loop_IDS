@@ -82,7 +82,7 @@ MODELS: tuple[type[BaseModel], ...] = (
     ReviewCommand,ReviewView,ReviewMutation,ReviewEvent,ReviewMetrics,
     MemoryReviewRequest,MemoryDecisionRequest,MemoryMutation,MemoryView,MemoryAudit,MemoryMatch,
     ResponsePage,ResponseRequest,ManualResponseRequest,ResponseDecisionRequest,ResponseMutation,
-    CaseView, CaseEvent, CaseMutation, CreateCaseRequest, CaseCommand, LinkCaseRequest, FindingRequest, InvestigationConclusionRequest,
+    CaseView, CaseEvent, CaseMutation, CreateCaseRequest, CaseCommand, LinkCaseRequest, InvestigationConclusionRequest,
     ExternalAdmissionView, ExternalAdmissionResponse, AdmissionRequest, EligibilityRequest,
     RoutingView, RoutingResponse, RoutingRequest, EscalateCaseRequest, EscalateCaseResponse, OperationalSummary,
     ErrorResponse,
@@ -680,7 +680,9 @@ def _paths() -> dict[str, Any]:
         {'name':'offset','in':'query','schema':{'type':'integer','minimum':0,'default':0}}]
     paths['/api/v2/tier2/cases'] = {'get': {
         'operationId':'listTier2Cases','summary':'List formal Tier 2 cases','tags':['Tier 2 cases'],
-        'parameters':[AUTH_PARAMETER,*paging],
+        'parameters':[AUTH_PARAMETER,*paging,
+            {'name':'status','in':'query','schema':{'type':'string','enum':['active','open','investigating','resolved']}},
+            {'name':'owner','in':'query','schema':{'type':'string','enum':['me','unassigned']}}],
         'responses':{'200':{'description':'Case page',**_page_of(CaseView)},**_errors(400)}}}
     paths['/api/v2/tier2/cases/{caseRef}'] = {'get': {
         'operationId':'getTier2Case','summary':'Read case and immutable handoff','tags':['Tier 2 cases'],
@@ -701,7 +703,6 @@ def _paths() -> dict[str, Any]:
         ('/api/v2/tier2/cases/{caseRef}/resolve','resolveTier2Case',CaseCommand,case_ref),
         ('/api/v2/tier2/cases/{caseRef}/notes','addTier2CaseNote',CaseCommand,case_ref),
         ('/api/v2/tier2/cases/{caseRef}/conclusions','recordTier2InvestigationConclusion',InvestigationConclusionRequest,case_ref),
-        ('/api/v2/tier2/cases/{caseRef}/findings','recordTier2CaseFinding',FindingRequest,case_ref),
         ('/api/v2/tier2/cases/{caseRef}/start-investigation','startTier2Investigation',CaseCommand,case_ref)]
     for path, operation, request_model, ref in case_operations:
         paths[path] = {'post': {

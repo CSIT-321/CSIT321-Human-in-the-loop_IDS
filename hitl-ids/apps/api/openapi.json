@@ -4873,45 +4873,6 @@
         "title": "FinalSummary",
         "type": "object"
       },
-      "FindingRequest": {
-        "additionalProperties": false,
-        "properties": {
-          "expectedRevision": {
-            "minimum": 1,
-            "title": "Expectedrevision",
-            "type": "integer"
-          },
-          "finding": {
-            "enum": [
-              "confirmed_malicious",
-              "suspicious",
-              "inconclusive",
-              "expected_activity"
-            ],
-            "title": "Finding",
-            "type": "string"
-          },
-          "reason": {
-            "maxLength": 4000,
-            "minLength": 1,
-            "title": "Reason",
-            "type": "string"
-          },
-          "requestId": {
-            "format": "uuid",
-            "title": "Requestid",
-            "type": "string"
-          }
-        },
-        "required": [
-          "requestId",
-          "reason",
-          "expectedRevision",
-          "finding"
-        ],
-        "title": "FindingRequest",
-        "type": "object"
-      },
       "FlowPanel": {
         "additionalProperties": false,
         "description": "Panel 1 — what the flow was.",
@@ -21851,6 +21812,30 @@
               "minimum": 0,
               "type": "integer"
             }
+          },
+          {
+            "in": "query",
+            "name": "status",
+            "schema": {
+              "enum": [
+                "active",
+                "open",
+                "investigating",
+                "resolved"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "owner",
+            "schema": {
+              "enum": [
+                "me",
+                "unassigned"
+              ],
+              "type": "string"
+            }
           }
         ],
         "responses": {
@@ -22427,112 +22412,6 @@
         "summary": "Read immutable investigation timeline",
         "tags": [
           "Tier 2 cases"
-        ]
-      }
-    },
-    "/api/v2/tier2/cases/{caseRef}/findings": {
-      "post": {
-        "operationId": "recordTier2CaseFinding",
-        "parameters": [
-          {
-            "description": "`Bearer <token>` from POST /api/auth/login",
-            "in": "header",
-            "name": "Authorization",
-            "required": false,
-            "schema": {
-              "example": "Bearer eyJhbGciOiJIUzI1NiJ9...",
-              "type": "string"
-            }
-          },
-          {
-            "in": "path",
-            "name": "caseRef",
-            "required": true,
-            "schema": {
-              "format": "uuid",
-              "type": "string"
-            }
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/FindingRequest"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/CaseMutation"
-                }
-              }
-            },
-            "description": "Audited case decision"
-          },
-          "400": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            },
-            "description": "Validation failed"
-          },
-          "401": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            },
-            "description": "Not signed in, or the token expired"
-          },
-          "403": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            },
-            "description": "Role not permitted"
-          },
-          "404": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            },
-            "description": "Not found"
-          },
-          "409": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            },
-            "description": "Conflict"
-          }
-        },
-        "summary": "recordTier2CaseFinding",
-        "tags": [
-          "Tier 2 cases"
-        ],
-        "x-required-roles": [
-          "security_analyst",
-          "system_admin"
         ]
       }
     },

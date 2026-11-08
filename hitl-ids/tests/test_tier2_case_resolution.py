@@ -102,7 +102,6 @@ def test_replay_identity_and_closed_case_new_actions_rejected(conn,api):
     before=dump(conn)
     for suffix,body in [
         ('notes',request(closed)),('start-investigation',request(closed)),
-        ('findings',FindingRequest(**request(closed).model_dump(),finding='suspicious')),
         ('conclusions',command('suspicious','infiltration',closed.revision)),
         ('alerts',LinkCaseRequest(**request(closed).model_dump(),operational_alert_ref=closed.primary_operational_alert_ref))]:
         response=api.post(f'/api/v2/tier2/cases/{closed.case_ref}/{suffix}',json=body.model_dump(mode='json',by_alias=True))

@@ -2,6 +2,7 @@
 from concurrent.futures import ThreadPoolExecutor
 from contextlib import closing
 import json
+from pathlib import Path
 import sqlite3
 from uuid import uuid4
 import pytest
@@ -183,7 +184,7 @@ def test_http_auth_all_mutations(client,database,candidate,role,status):
     assert client.post(path,json=body,headers=headers).status_code == status
     created = client.post(path,json=body).json()['case']
     ref = created['caseRef']
-    for suffix,payload in [('notes',{}),('findings',{'finding':'suspicious'}),
+    for suffix,payload in [('notes',{}),('conclusions',{'finding':'suspicious','finalAttackCategory':'infiltration'}),
         ('alerts',{'operationalAlertRef':str(candidate[0].operational_alert_ref)}),('start-investigation',{})]:
         assert client.post(f'/api/v2/tier2/cases/{ref}/{suffix}',json={
             **command().model_dump(mode='json',by_alias=True),**payload},headers=headers).status_code == status
@@ -207,7 +208,10 @@ def test_http_admin_contract_history_and_validation(client,database,candidate):
     assert client.get(root+'/events?limit=1').json()['items'][0]['eventType'] == 'V2_TIER2_CASE_CREATED'
     assert client.get(root+'/events?action=note').json()['items'] == []
     assert client.post(root+'/notes',json={**command().model_dump(mode='json',by_alias=True),'reason':'  '}).status_code == 400
-    assert client.post(root+'/findings',json={**command().model_dump(mode='json',by_alias=True),'finding':'blocked_ip'}).status_code == 400
+    # D3 (S4-08): the legacy /findings write is gone; a late legacy finding can no longer replace the conclusion.
+    assert client.post(root+'/findings',json={**command().model_dump(mode='json',by_alias=True),'finding':'suspicious'}).status_code in (404, 405)
+    published = json.loads((Path(__file__).resolve().parents[1] / 'apps/api/openapi.json').read_text(encoding='utf-8'))
+    assert '/api/v2/tier2/cases/{caseRef}/findings' not in published['paths']
     assert client.get('/api/v2/tier2/cases/'+str(uuid4())).status_code == 404
 
 

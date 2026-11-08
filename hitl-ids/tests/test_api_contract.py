@@ -107,7 +107,6 @@ REQUIRED_OPERATIONS = {
     ('/api/v2/tier2/cases/{caseRef}/triage-memory/conclusion-state','get'),
     ('/api/v2/tier2/cases/{caseRef}/resolve','post'),
     ('/api/v2/tier2/cases/{caseRef}/conclusions','post'),
-    ('/api/v2/tier2/cases/{caseRef}/findings','post'),
     ('/api/v2/tier2/cases/{caseRef}/start-investigation','post'),
     ('/api/v2/external-alerts', 'get'),
     ('/api/v2/external-alerts/{inboxId}', 'get'),

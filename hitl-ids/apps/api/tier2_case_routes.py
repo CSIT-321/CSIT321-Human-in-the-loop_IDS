@@ -33,11 +33,25 @@ def create(alertRef: UUID, body: CreateCaseRequest, conn: Conn, principal: Princ
 
 
 @router.get('/tier2/cases',response_model=Page[CaseView],operation_id='listTier2Cases')
-def list_cases(conn: ReadConn, principal: ReadPrincipal, limit: int=Query(50,ge=1,le=200),offset: int=Query(0,ge=0)):
+def list_cases(conn: ReadConn, principal: ReadPrincipal, limit: int=Query(50,ge=1,le=200),offset: int=Query(0,ge=0),
+               status: Literal['active','open','investigating','resolved'] | None=None,
+               owner: Literal['me','unassigned'] | None=None):
+    """D1: filter by status ('active' = open or investigating) and owner; newest case first, id as the tie-break."""
+    clauses, params = [], []
+    if status == 'active':
+        clauses.append("s.status IN ('open','investigating')")
+    elif status:
+        clauses.append('s.status = ?'); params.append(status)
+    if owner == 'me':
+        clauses.append('c.owner_actor_id = ?'); params.append(principal.user_id)
+    elif owner == 'unassigned':
+        clauses.append('c.owner_actor_id IS NULL')
+    where = ('WHERE ' + ' AND '.join(clauses)) if clauses else ''
+    base = f'FROM tier2_cases c JOIN tier2_case_state s ON s.case_id = c.id {where}'
     with conn:
         conn.execute('BEGIN')
-        total = conn.execute('SELECT count(*) FROM tier2_cases').fetchone()[0]
-        refs = conn.execute('SELECT case_ref FROM tier2_cases ORDER BY id DESC LIMIT ? OFFSET ?',(limit,offset)).fetchall()
+        total = conn.execute(f'SELECT count(*) {base}', params).fetchone()[0]
+        refs = conn.execute(f'SELECT c.case_ref {base} ORDER BY c.id DESC LIMIT ? OFFSET ?', (*params, limit, offset)).fetchall()
         items = [read_case(conn,row[0]) for row in refs]
         return Page(items=items,page=PageInfo(total=total,limit=limit,offset=offset,returned=len(items)))
 
@@ -93,10 +107,8 @@ def note(caseRef: UUID,body: CaseCommand,conn: Conn,principal: Principal):
     return _mutate(conn,principal,caseRef,'note',body)
 
 
-@router.post('/tier2/cases/{caseRef}/findings',response_model=CaseMutation,
-             operation_id='recordTier2CaseFinding',dependencies=[MutationRole])
-def finding(caseRef: UUID,body: FindingRequest,conn: Conn,principal: Principal):
-    return _mutate(conn,principal,caseRef,'finding',body)
+# D3 (S4-08): the legacy POST /findings route is removed. A late legacy finding became the displayed conclusion
+# and response basis while skipping the final attack category. Old legacy_finding rows stay readable.
 
 
 @router.post('/tier2/cases/{caseRef}/conclusions',response_model=CaseMutation,

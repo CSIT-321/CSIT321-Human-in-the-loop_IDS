@@ -2,6 +2,7 @@ import { screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 import { renderApp, stubFetch, jsonResponse } from "../../test/renderApp";
+import { flowPanelResponse } from "../../test/flowPanelFixture";
 
 const ref = "fe130e6f-af86-4fc6-89f2-bc76b6cad68b";
 const session = { username: "g.ang", displayName: "Analyst", role: "security_analyst" as const, token: "test" };
@@ -75,6 +76,28 @@ describe("Tier 2 cases", () => {
     expect(seen.some(request => new URL(request.url).pathname === "/api/v2/alerts")).toBe(false);
   });
 
+  it("D1: filters by status and owner on the server and shows who escalated and why", async () => {
+    const system = { ...record, caseRef: relatedRef, decisionSource: "system_policy", ownerActorId: null, createdByActorId: null,
+      snapshot: { ...record.snapshot, escalationReason: "E1: corroborated, score 100" } };
+    const seen = stubFetch(() => jsonResponse({ ...empty, items: [record, system], page: { ...empty.page, total: 2, returned: 2 } }));
+    renderApp("/analyst/tier2-cases", { session });
+    const table = await screen.findByRole("table", { name: "Tier 2 cases" });
+    expect(within(table).getByRole("columnheader", { name: "Escalated by" })).toBeVisible();
+    expect(within(table).getByText("Rule")).toBeVisible();
+    expect(within(table).getByText("E1: corroborated, score 100")).toBeVisible();
+    expect(within(table).getByText("Analyst #1")).toBeVisible();
+    expect(within(table).getByText("Needs deeper review")).toBeVisible();
+    // The default view is active work; the filters go to the server, not a client-side filter.
+    const query = () => new URL(seen[seen.length - 1]!.url).searchParams;
+    expect(query().get("status")).toBe("active");
+    await userEvent.selectOptions(screen.getByLabelText("Status"), "resolved");
+    await waitFor(() => expect(query().get("status")).toBe("resolved"));
+    await userEvent.selectOptions(screen.getByLabelText("Owner"), "me");
+    await waitFor(() => expect(query().get("owner")).toBe("me"));
+    await userEvent.selectOptions(screen.getByLabelText("Status"), "all");
+    await waitFor(() => expect(query().has("status")).toBe(false));
+  });
+
   it("labels collaborative and stored assignment without implying an assignment engine", async () => {
     stubFetch(() => jsonResponse({ ...empty, items: [{ ...record, ownerActorId: null }, { ...record, caseRef: relatedRef }], page: { ...empty.page, total: 2, returned: 2 } }));
     renderApp("/analyst/tier2-cases", { session });
@@ -114,6 +137,25 @@ describe("Tier 2 cases", () => {
     expect(await screen.findByRole("region", { name: "Investigation Assistance" })).toHaveTextContent("Why Tier 2");
     expect(screen.getByRole("region", { name: "Case summary" })).toHaveTextContent("Unassigned / Collaborative");
     expect(seen.every(request => request.method === "GET" && !request.url.endsWith("/evidence"))).toBe(true);
+    // D2: a Suricata case does not show the flow panels.
+    expect(screen.queryByRole("region", { name: "Flow and score" })).not.toBeInTheDocument();
+  });
+
+  it("D2: a case whose primary alert is a flow alert shows the restored Flow & Score panels", async () => {
+    const flowCase = { ...record, snapshot: { ...record.snapshot, detector: { ...record.snapshot.detector, detectorSource: "current_flow",
+      detectorEvidence: { ...detectorEvidence, detectorSource: "current_flow", evidenceClass: "ml_only", sourceRecordReference: "AL-00114",
+        structuredEvidence: { explanation: "Only the model flagged this flow.", signatureRules: [], mlPredictedClass: "DDoS", detectionScore: 100 } } } } };
+    const seen = stubFetch(request => {
+      const path = new URL(request.url).pathname;
+      const legacy = flowPanelResponse(path, ref);
+      if (legacy) return legacy;
+      return jsonResponse(request.url.includes("/assistance") ? assistance : request.url.includes("/responses") ? { ...empty, caseRevision: 1 } : request.url.includes("/events") ? empty : flowCase);
+    });
+    renderApp("/analyst/tier2-cases/" + ref, { session });
+    expect(await screen.findByRole("region", { name: "Flow and score" })).toBeVisible();
+    await waitFor(() => expect(seen.some(request => new URL(request.url).pathname === `/api/alerts/${ref}/feedback-history`)).toBe(true));
+    expect(await screen.findByText("Score adjustment")).toBeVisible();
+    expect(seen.every(request => request.method === "GET")).toBe(true);   // read only: no write from the panels
   });
 
   it("evaluator can inspect but cannot append investigation records", async () => {
