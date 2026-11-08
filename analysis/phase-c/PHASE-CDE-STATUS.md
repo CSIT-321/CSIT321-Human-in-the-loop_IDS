@@ -14,7 +14,7 @@ checks only on high-risk code (routing, verdicts, guardrails, security). X8 and 
 | C4 | `009eb63` | fusion confidence vs model probability named apart |
 | C5 | `fc79fec` | Flow & Score tab, 7 read-only cards restored from `f1b74b6` |
 | D1–D3 | `4059a69` | Tier 2 list filters + Escalated by; flow panels in the case; `/findings` route and CreateCasePanel removed |
-| X1 | `f37fd81` | evaluator cannot write legacy feedback (`TriageRoles`); all 48 write routes probed — only feedback was open |
+| X1 | `f37fd81` | evaluator cannot write legacy feedback (`TriageRoles`); all 48 write routes probed (47 after D3 removed `/findings`) — only feedback was open |
 | X2 | `b6cd3f1` | CSV formula-injection guard in audit export |
 | X3 | `5f5676f` | guardrail PUT enforces the page's cross-field rules; 7 tests; planted-defect check green |
 | X4 + X5 | `4b43370` | second run on a dataset refused; detection applies the live guardrail policy it records; fresh demo build = real `data/demo.db` on all 5,000 alerts (0 differing) |
@@ -26,6 +26,13 @@ checks only on high-risk code (routing, verdicts, guardrails, security). X8 and 
 | E4 | `7ab6cad` | evaluation accepts `system_route` admissions; temporal exporter coalesces paired same-instant audits; planted-regression check green |
 | E5 | `a1bafea` | 4 Tier 1/Tier 2 mutations role-gated in the contract; 401 stamped on the whole surface; one role key; scope rewritten |
 | E7 | `0b82ad0` | changelog v1.33, handover rev 25; `test_plan_sync` green |
+
+## Final gate (2026-11-08)
+
+- Python: `1846 passed, 4 skipped, 0 failed` (980 s, tree at `0b82ad0`). The 4 skips are the frozen
+  live-tree preflight tests (3 in `test_protocol_v3.py`, 1 in `test_protocol_v3_1.py`).
+- Web: TypeScript 0 errors; Vitest 307/307 (40 files).
+- Frozen scripts unchanged since the 2026-11-02 freeze commits (`398fd99`, `0836502`).
 
 ## Delegated decisions (recorded, not asked)
 

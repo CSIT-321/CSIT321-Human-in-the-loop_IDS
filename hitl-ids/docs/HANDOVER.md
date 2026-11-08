@@ -101,7 +101,7 @@ inspection-sort tie-break fixed (v1.28):** it was a direction-blind `a.id ASC`, 
 scores all tied came back identical ascending and descending — and 4,789 of 5,000 alerts (95.8%)
 tie on their score. It now orders by evidence class, review flag, capture time and id, each
 following the requested direction ·
-**933 tests, 4 skipped** (frozen live-tree preflight skips; missing optional dataset fixtures) +
+**1850 tests, 4 skipped** (1846 passed, Python 3.11; the 4 skips are the frozen live-tree preflight tests — see `tests/test_frozen_evidence.py`) +
 **307 web tests** (`apps/web`, `npm test`) +
 the browser narrative (`npm run e2e`, passes with three real sign-ins) ·
 **Python runs from `hitl-ids\.venv` (3.11) — see §0b before running anything** ·
