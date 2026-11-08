@@ -35,3 +35,16 @@ class MeResponse(ApiModel):
     username: str
     display_name: str
     role: m.Role
+
+
+class ActorName(ApiModel):
+    """One account's id and display name, so the console names who acted instead of "Actor #N"."""
+
+    id: int
+    display_name: str
+
+
+class ActorDirectory(ApiModel):
+    """Every account's display name, read-only; no username, email, role or credential is exposed."""
+
+    items: list[ActorName]

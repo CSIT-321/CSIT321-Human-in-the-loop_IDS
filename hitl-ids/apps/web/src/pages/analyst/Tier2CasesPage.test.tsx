@@ -48,6 +48,7 @@ const assistance = {
 };
 const empty = { items: [], page: { total: 0, returned: 0, offset: 0, limit: 50 } };
 
+const actors = { items: [{ id: 1, displayName: "Glenn Ang" }] };
 describe("Tier 2 cases", () => {
   it("keeps resolved Case history visible and hides all investigation, linking, response and learning write controls", async () => {
     const closed={...record,status:"resolved",revision:4,resolution:{eventId:10,caseRef:ref,actorId:1,actorName:"Analyst",reason:"Investigation completed",createdAt:"2026-11-02T00:00:00Z",previousStatus:"investigating",newStatus:"resolved",caseRevision:4,requestId:ref,
@@ -79,16 +80,16 @@ describe("Tier 2 cases", () => {
   it("D1: filters by status and owner on the server and shows who escalated and why", async () => {
     const system = { ...record, caseRef: relatedRef, decisionSource: "system_policy", ownerActorId: null, createdByActorId: null,
       snapshot: { ...record.snapshot, escalationReason: "E1: corroborated, score 100" } };
-    const seen = stubFetch(() => jsonResponse({ ...empty, items: [record, system], page: { ...empty.page, total: 2, returned: 2 } }));
+    const seen = stubFetch(r => jsonResponse(r.url.includes("/api/auth/actors") ? actors : { ...empty, items: [record, system], page: { ...empty.page, total: 2, returned: 2 } }));
     renderApp("/analyst/tier2-cases", { session });
     const table = await screen.findByRole("table", { name: "Tier 2 cases" });
     expect(within(table).getByRole("columnheader", { name: "Escalated by" })).toBeVisible();
     expect(within(table).getByText("Rule")).toBeVisible();
     expect(within(table).getByText("E1: corroborated, score 100")).toBeVisible();
-    expect(within(table).getByText("Analyst #1")).toBeVisible();
+    expect(within(table).getByText("Glenn Ang")).toBeVisible();
     expect(within(table).getByText("Needs deeper review")).toBeVisible();
     // The default view is active work; the filters go to the server, not a client-side filter.
-    const query = () => new URL(seen[seen.length - 1]!.url).searchParams;
+    const query = () => new URL(seen.filter(r => r.url.includes("/api/v2/tier2/cases")).at(-1)!.url).searchParams;
     expect(query().get("status")).toBe("active");
     await userEvent.selectOptions(screen.getByLabelText("Status"), "resolved");
     await waitFor(() => expect(query().get("status")).toBe("resolved"));
@@ -99,12 +100,12 @@ describe("Tier 2 cases", () => {
   });
 
   it("labels collaborative and stored assignment without implying an assignment engine", async () => {
-    stubFetch(() => jsonResponse({ ...empty, items: [{ ...record, ownerActorId: null }, { ...record, caseRef: relatedRef }], page: { ...empty.page, total: 2, returned: 2 } }));
+    stubFetch(r => jsonResponse(r.url.includes("/api/auth/actors") ? actors : { ...empty, items: [{ ...record, ownerActorId: null }, { ...record, caseRef: relatedRef }], page: { ...empty.page, total: 2, returned: 2 } }));
     renderApp("/analyst/tier2-cases", { session });
     const table = await screen.findByRole("table", { name: "Tier 2 cases" });
     expect(within(table).getByRole("columnheader", { name: "Case Assignment" })).toBeVisible();
     expect(within(table).getByText("Unassigned / Collaborative")).toBeVisible();
-    expect(within(table).getByText("Assigned to Actor #1")).toBeVisible();
+    expect(within(table).getByText("Assigned to Glenn Ang")).toBeVisible();
     expect(screen.getByText(/does not implement automatic case assignment or workload balancing/)).toBeVisible();
   });
 

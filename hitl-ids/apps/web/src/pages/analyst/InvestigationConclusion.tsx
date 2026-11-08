@@ -1,4 +1,5 @@
 import type { Schemas } from "../../api/client";
+import { useActorName } from "../../session/ActorNames";
 
 export type FinalCategory = NonNullable<Schemas["InvestigationConclusionRequest"]["finalAttackCategory"]>;
 export const finalCategories: Record<FinalCategory, string> = {
@@ -11,12 +12,13 @@ export const systemCategoryLabel = (classification?: Schemas["AttackClassificati
     classification.attackCategory ? finalCategories[classification.attackCategory] : "Informational / Policy Signal";
 
 export function ConclusionDetails({ conclusion }: { conclusion: Schemas["InvestigationConclusion"] }) {
+  const actorName = useActorName();
   return <div className="min-w-0 space-y-1 text-sm [overflow-wrap:anywhere]">
     <p>Human Investigation Finding: {conclusion.finding.replaceAll("_", " ")}</p>
     <p>Human Final Attack Classification: {conclusion.finalAttackCategory ? finalCategories[conclusion.finalAttackCategory] :
       conclusion.recordKind === "legacy_finding" ? "Not recorded (historical Finding)" :
         conclusion.finding === "expected_activity" ? "Not applicable" : "Unresolved"}</p>
-    <p className="text-xs text-muted">Actor #{conclusion.actorId} · {conclusion.createdAt} · Case revision {conclusion.caseRevision} · Event #{conclusion.eventId}</p>
+    <p className="text-xs text-muted">{actorName(conclusion.actorId)} · {conclusion.createdAt} · Case revision {conclusion.caseRevision} · Event #{conclusion.eventId}</p>
     {conclusion.supersedesEventId && <p className="text-xs text-muted">Supersedes event #{conclusion.supersedesEventId}; history is preserved.</p>}
     <p className="whitespace-pre-wrap">{conclusion.reason}</p>
   </div>;

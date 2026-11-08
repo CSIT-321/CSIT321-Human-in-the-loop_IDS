@@ -51,6 +51,44 @@
         "title": "Actor",
         "type": "object"
       },
+      "ActorDirectory": {
+        "additionalProperties": false,
+        "description": "Every account's display name, read-only; no username, email, role or credential is exposed.",
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/ActorName"
+            },
+            "title": "Items",
+            "type": "array"
+          }
+        },
+        "required": [
+          "items"
+        ],
+        "title": "ActorDirectory",
+        "type": "object"
+      },
+      "ActorName": {
+        "additionalProperties": false,
+        "description": "One account's id and display name, so the console names who acted instead of \"Actor #N\".",
+        "properties": {
+          "displayName": {
+            "title": "Displayname",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "id",
+          "displayName"
+        ],
+        "title": "ActorName",
+        "type": "object"
+      },
       "AdminGovernance": {
         "additionalProperties": false,
         "properties": {
@@ -16140,6 +16178,60 @@
         "summary": "The append-only audit trail",
         "tags": [
           "audit"
+        ]
+      }
+    },
+    "/api/auth/actors": {
+      "get": {
+        "description": "Read-only id -> display name list, so screens name who acted. No username, email, role or credential.",
+        "operationId": "listActorNames",
+        "parameters": [
+          {
+            "description": "`Bearer <token>` from POST /api/auth/login",
+            "in": "header",
+            "name": "Authorization",
+            "required": false,
+            "schema": {
+              "example": "Bearer eyJhbGciOiJIUzI1NiJ9...",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ActorDirectory"
+                }
+              }
+            },
+            "description": "Every account's display name"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not signed in, or the token expired"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Database unavailable or schema unsupported; read-only requests never migrate"
+          }
+        },
+        "summary": "Display names of every account",
+        "tags": [
+          "auth"
         ]
       }
     },

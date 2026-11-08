@@ -7,6 +7,7 @@ import { SystemRouting } from "../../features/alert/SystemRouting";
 import { useSession } from "../../session/SessionContext";
 import { AlertMemoryPanel } from "./TriageMemoryPage";
 import { SelectiveReviewPanel } from "./SelectiveReviewPage";
+import { useActorName } from "../../session/ActorNames";
 
 type View = Schemas["RoutingView"];
 type Action = View["allowedActions"][number];
@@ -21,6 +22,7 @@ type CommandAction = "manual_escalate";
 export function RoutingDetail({ initial, refresh, casePrefix = "/analyst", compact = false, onChanged }: {
   initial: View; refresh: () => void; casePrefix?: string; compact?: boolean; onChanged?: (view: View) => void;
 }) {
+  const actorName = useActorName();
   const [view, setView] = useState(initial);
   useEffect(() => { setView(initial); }, [initial]);
   const [reason, setReason] = useState("");
@@ -81,7 +83,7 @@ export function RoutingDetail({ initial, refresh, casePrefix = "/analyst", compa
     </>}
     {view.latestDecision && <section className="space-y-1 border-t border-border pt-4" aria-label="Latest routing decision">
       <h3 className="text-sm font-semibold">Latest Routing Decision</h3>
-      <p className="text-sm">{view.latestDecision.action === "system_route" ? "System routing" : labels[view.latestDecision.action]} · {view.latestDecision.decisionSource === "system_policy" ? "System Policy" : `Actor #${view.latestDecision.actorId}`}</p>
+      <p className="text-sm">{view.latestDecision.action === "system_route" ? "System routing" : labels[view.latestDecision.action]} · {view.latestDecision.decisionSource === "system_policy" ? "System Policy" : actorName(view.latestDecision.actorId)}</p>
       <p className="break-words whitespace-pre-wrap text-sm">{view.latestDecision.reason}</p>
       <p className="text-xs text-muted">{pretty(view.latestDecision.beforeState.handlingRoute)} → {pretty(view.latestDecision.afterState.handlingRoute)}</p>
       <p className="text-xs text-dim">{view.latestDecision.createdAt}</p>

@@ -90,6 +90,8 @@ MODELS: tuple[type[BaseModel], ...] = (
     au.LoginRequest,
     au.LoginResponse,
     au.MeResponse,
+    au.ActorName,
+    au.ActorDirectory,
     a.AlertSummary,
     a.AlertDetail,
     a.FlowPanel,
@@ -299,6 +301,19 @@ def _paths() -> dict[str, Any]:
                 "responses": {"200": {"description": "The account named by the token",
                                       **_json(au.MeResponse)},
                               **_errors(401)},
+            }
+        },
+        "/api/auth/actors": {
+            "get": {
+                "operationId": "listActorNames",
+                "summary": "Display names of every account",
+                "description": "Read-only id -> display name list, so screens name who acted. No username, "
+                               "email, role or credential.",
+                "tags": ["auth"],
+                "parameters": [AUTH_PARAMETER],
+                "responses": {"200": {"description": "Every account's display name",
+                                      **_json(au.ActorDirectory)},
+                              **_errors(401, 503)},
             }
         },
         "/api/alerts": {

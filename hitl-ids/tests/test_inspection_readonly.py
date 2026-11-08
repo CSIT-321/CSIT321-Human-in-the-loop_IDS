@@ -32,6 +32,7 @@ INSPECTION_ROUTES = (
     '/api/v2/alerts/{alertRef}/verdict',
     '/api/v2/alerts/{alertRef}/verdict-history',
     '/api/auth/me',
+    '/api/auth/actors',
     '/api/alerts',
     '/api/alerts/families',
     '/api/alerts/{alertRef}',

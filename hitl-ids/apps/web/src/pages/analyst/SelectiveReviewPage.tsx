@@ -8,6 +8,7 @@ import { TrustedContextPanel } from "./TrustedContextPanel";
 import {CollectionRunsPanel,CollectionDecisionPanel,ContextCollectionForm} from "./CollectionPanel";
 
 import { reviewLabels } from "../../features/alert/EffectiveReview";
+import { useActorName } from "../../session/ActorNames";
 
 type View=Schemas["ReviewView"];
 type Disposition=View["disposition"];
@@ -41,6 +42,7 @@ export function ReviewSummary({view}:{view:View}) {
 }
 
 export function SelectiveReviewPanel({alertRef,onReview,readOnly=false}:{alertRef:string;onReview?:(view:View)=>void;readOnly?:boolean}) {
+  const actorName = useActorName();
   const {session}=useSession();
   const [reason,setReason]=useState("");
   const [busy,setBusy]=useState(false);
@@ -111,7 +113,7 @@ export function SelectiveReviewPanel({alertRef,onReview,readOnly=false}:{alertRe
     {historyOpen&&history.status==="success"&&history.data&&<section className="space-y-3" aria-label="Review audit history">
       {history.data.items.length===0&&<p className="text-sm">No recorded review decisions.</p>}
       {history.data.items.map(event=><article key={event.id} className="min-w-0 space-y-2 border-b border-border py-3 text-sm">
-        <p className="break-all text-xs text-muted">{event.eventType} / Actor #{event.actorId} / {event.createdAt}</p>
+        <p className="break-all text-xs text-muted">{event.eventType} / {actorName(event.actorId)} / {event.createdAt}</p>
         <p>{labels[event.snapshot.result.disposition]}</p><p className="whitespace-pre-wrap break-words">{event.reason}</p>
         <details><summary className="cursor-pointer">Immutable decision snapshot</summary><pre className="max-h-80 overflow-auto whitespace-pre-wrap break-all text-xs">{JSON.stringify(event.snapshot,null,2)}</pre></details>
       </article>)}

@@ -2,6 +2,7 @@ import { useRef,useState } from "react";
 import { api,unwrap,type Schemas } from "../../api/client";
 import { useApi } from "../../api/useApi";
 import { Pill } from "../../components/ui";
+import { useActorName } from "../../session/ActorNames";
 
 type View = Schemas["ResponseView"];
 type Kind = Schemas["ManualResponseRequest"]["recommendationType"];
@@ -15,6 +16,7 @@ const input = "w-full min-w-0 rounded-sm border border-border bg-surface p-2 tex
 export function ResponseRecommendationCard({ view,caseRevision,canWrite,onChange }: {
   view:View;caseRevision:number;canWrite:boolean;onChange:()=>void;
 }) {
+  const actorName = useActorName();
   const [reason,setReason] = useState("");
   const [busy,setBusy] = useState(false);
   const [error,setError] = useState("");
@@ -43,7 +45,7 @@ export function ResponseRecommendationCard({ view,caseRevision,canWrite,onChange
     <dl className="grid grid-cols-1 gap-2 text-sm sm:grid-cols-2">
       <div><dt className="text-muted">Target</dt><dd className="break-all">{proposal.targetType}: {proposal.targetValue}</dd></div>
       <div><dt className="text-muted">Proposal Source</dt><dd>{proposal.proposalSource==="system_policy" ? "System Policy" : "Analyst"}</dd></div>
-      <div><dt className="text-muted">Proposed By</dt><dd>Actor #{proposal.proposedByActorId}</dd></div>
+      <div><dt className="text-muted">Proposed By</dt><dd>{actorName(proposal.proposedByActorId)}</dd></div>
       <div><dt className="text-muted">Created</dt><dd>{proposal.createdAt}</dd></div>
     </dl>
     <p className="whitespace-pre-wrap break-words text-sm">{proposal.rationale}</p>

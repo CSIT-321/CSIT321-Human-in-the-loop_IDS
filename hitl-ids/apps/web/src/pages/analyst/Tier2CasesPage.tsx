@@ -11,15 +11,17 @@ import { InvestigationAssistance } from "./InvestigationAssistance";
 import { ConclusionDetails, finalCategories, systemCategoryLabel, type FinalCategory } from "./InvestigationConclusion";
 import { ConclusionLearning } from "./ConclusionLearning";
 import { CaseResolution, ResolutionDetails } from "./CaseResolution";
+import { useActorName } from "../../session/ActorNames";
 
 const button = "rounded-sm border border-border px-3 py-2 text-sm hover:bg-raised disabled:opacity-50";
 const input = "w-full min-w-0 rounded-sm border border-border bg-surface p-2 text-sm";
 type Case = Schemas["CaseView"];
 type Tab = "note" | "finding" | "link" | "timeline";
 const prefixFor = (role?: string) => role === "system_admin" ? "/admin" : role === "evaluator" ? "/evaluator" : "/analyst";
-const caseAssignment = (ownerActorId: number | null) => ownerActorId == null ? "Unassigned / Collaborative" : `Assigned to Actor #${ownerActorId}`;
+const caseAssignment = (ownerActorId: number | null, actorName: (id: number) => string) => ownerActorId == null ? "Unassigned / Collaborative" : `Assigned to ${actorName(ownerActorId)}`;
 
 export function Tier2CasesPage() {
+  const actorName = useActorName();
   const { session } = useSession();
   const [offset, setOffset] = useState(0);
   // D1: server-side filters. Default = active work (open + investigating); "all" sends no status.
@@ -52,9 +54,9 @@ export function Tier2CasesPage() {
             <td className="border-b border-border p-2">{item.snapshot.triage.priorityBand ?? "Unassigned"} / {item.snapshot.triage.operationalPriority ?? "Not assigned"}</td>
             <td className="border-b border-border p-2">{item.status === "resolved" ? "Resolved" : item.status}</td>
             <td className="min-w-48 border-b border-border p-2">
-              <span className="block font-semibold">{item.decisionSource === "system_policy" ? "Rule" : `Analyst #${item.createdByActorId}`}</span>
+              <span className="block font-semibold">{item.decisionSource === "system_policy" ? "Rule" : actorName(item.createdByActorId)}</span>
               <span className="block text-xs text-muted">{item.snapshot.escalationReason}</span></td>
-            <td className="border-b border-border p-2">{caseAssignment(item.ownerActorId)}</td>
+            <td className="border-b border-border p-2">{caseAssignment(item.ownerActorId, actorName)}</td>
             <td className="border-b border-border p-2">{item.createdAt}</td>
             <td className="border-b border-border p-2"><Link className="text-accent underline" to={(session?.role === "security_analyst" ? "/analyst/operations" : prefixFor(session?.role) + "/v2-triage") + "?alertRef=" + item.primaryOperationalAlertRef}>{item.primaryOperationalAlertRef.slice(0, 8)}</Link></td>
           </tr>)}</tbody>
@@ -83,6 +85,7 @@ export function Tier2CaseDetailPage() {
 }
 
 export function CaseInvestigation({ initial, refresh }: { initial: Case; refresh: () => void }) {
+  const actorName = useActorName();
   const { session } = useSession();
   const [current, setCurrent] = useState(initial);
   const [responseVersion,setResponseVersion] = useState(0);
@@ -126,8 +129,8 @@ export function CaseInvestigation({ initial, refresh }: { initial: Case; refresh
       <Pill tone="accent">{current.status === "resolved" ? "Resolved" : current.status}</Pill>
       {current.status === "resolved" && <p className="text-sm">Investigation closed. Evidence, history and human learning provenance remain available.</p>}
       <dl className="grid grid-cols-1 gap-3 text-sm sm:grid-cols-2">
-        <div><dt className="text-muted">Case Assignment</dt><dd>{caseAssignment(current.ownerActorId)}</dd></div>
-        <div><dt className="text-muted">Creation Source</dt><dd>{current.decisionSource === "system_policy" ? "System Policy" : `Analyst #${current.createdByActorId}`}</dd></div>
+        <div><dt className="text-muted">Case Assignment</dt><dd>{caseAssignment(current.ownerActorId, actorName)}</dd></div>
+        <div><dt className="text-muted">Creation Source</dt><dd>{current.decisionSource === "system_policy" ? "System Policy" : actorName(current.createdByActorId)}</dd></div>
         <div><dt className="text-muted">Created</dt><dd>{current.createdAt}</dd></div>
         <div><dt className="text-muted">Operational Priority at Creation</dt><dd>{snapshot.triage.priorityBand ?? "Unassigned"} / {snapshot.triage.operationalPriority ?? "Not assigned"}</dd></div>
         <div><dt className="text-muted">Policy at Creation</dt><dd>{snapshot.triage.triagePolicyVersion ?? "Not applied"}</dd></div>

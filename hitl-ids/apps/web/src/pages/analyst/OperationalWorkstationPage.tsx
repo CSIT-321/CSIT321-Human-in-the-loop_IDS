@@ -19,6 +19,7 @@ import { SelectiveReviewPanel } from "./SelectiveReviewPage";
 import { OperationalKpis, QueueTabs, QueueItem, queueViews, attackCategories, type QueueView } from "../../features/alert/OperationalQueue";
 
 import { needsReview, reviewLabel, reviewProjection } from "../../features/alert/EffectiveReview";
+import { useActorName } from "../../session/ActorNames";
 
 type View = Schemas["RoutingView"];
 const button = "rounded-sm border border-border bg-raised px-2.5 py-1.5 text-xs hover:border-border-strong disabled:opacity-40";
@@ -112,6 +113,7 @@ function Assistance({ view, onReview, active }: { view: View; onReview: (review:
 }
 
 function AlertWorkspace({ view, onChanged, refresh, onReview, starting }: { view: View; onChanged: (view: View) => void; refresh: () => void; onReview: (review: Schemas["ReviewView"]) => void; starting: boolean }) {
+  const actorName = useActorName();
   const [tab, setTab] = useState<Tab>("Overview");
   const tabBeforeTour = useRef<Tab | null>(null);
   const currentTab = useRef(tab); currentTab.current = tab;
@@ -176,7 +178,7 @@ function AlertWorkspace({ view, onChanged, refresh, onReview, starting }: { view
         <AnalystVerdictHistory alertRef={view.operationalAlertRef}/>
         <h3 className="label-mono">Latest routing decision</h3>
         {view.latestDecision ? <>
-          <p className="capitalize">{view.latestDecision.action.replaceAll("_", " ")} · {view.latestDecision.decisionSource === "system_policy" ? "System Policy" : `Actor #${view.latestDecision.actorId}`}</p>
+          <p className="capitalize">{view.latestDecision.action.replaceAll("_", " ")} · {view.latestDecision.decisionSource === "system_policy" ? "System Policy" : actorName(view.latestDecision.actorId)}</p>
           <p className="whitespace-pre-wrap break-words text-sm">{view.latestDecision.reason}</p>
           <p className="text-xs text-muted">{view.latestDecision.createdAt}</p>
         </> : <p className="text-sm text-muted">No routing decision recorded.</p>}

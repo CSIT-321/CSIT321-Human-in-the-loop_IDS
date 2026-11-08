@@ -6,6 +6,7 @@ import { api,unwrap,type Schemas } from "../../api/client";
 import { useApi } from "../../api/useApi";
 import { PageHeader,Pill } from "../../components/ui";
 import { useSession } from "../../session/SessionContext";
+import { useActorName } from "../../session/ActorNames";
 
 type View=Schemas["MemoryView"];
 const button="rounded-sm border border-border px-3 py-2 text-sm hover:bg-raised disabled:opacity-50";
@@ -23,6 +24,7 @@ function Pagination({offset,total,onChange}:{offset:number;total:number;onChange
 }
 
 export function MemorySummary({view}:{view:View}) {
+  const actorName = useActorName();
   return <div className="min-w-0 space-y-3">
     <h3 className="text-base font-semibold capitalize">{pretty(view.lesson.outcome)}</h3>
     <Pill tone={view.status==="active"?"ok":view.status==="conflict_review"?"warn":"muted"}>{pretty(view.status)}</Pill>
@@ -32,7 +34,7 @@ export function MemorySummary({view}:{view:View}) {
       <div><dt className="text-muted">Support</dt><dd>{view.supportCount}</dd></div>
       <div><dt className="text-muted">Conflicts</dt><dd>{view.conflictCount}</dd></div>
       <div><dt className="text-muted">Agreement</dt><dd>{(view.agreementRatio*100).toFixed(1)}%</dd></div>
-      <div><dt className="text-muted">Created by</dt><dd>{view.lesson.decisionSource==="system_policy"?"System Policy":`Actor #${view.lesson.createdByActorId}`}</dd></div>
+      <div><dt className="text-muted">Created by</dt><dd>{view.lesson.decisionSource==="system_policy"?"System Policy":actorName(view.lesson.createdByActorId)}</dd></div>
       <div><dt className="text-muted">Created at</dt><dd className="break-all">{view.lesson.createdAt}</dd></div>
       <div><dt className="text-muted">Expires at</dt><dd className="break-all">{view.expiresAt??"Not assigned"}</dd></div>
       <div><dt className="text-muted">Last support</dt><dd className="break-all">{view.lastSupportedAt}</dd></div>
@@ -42,6 +44,7 @@ export function MemorySummary({view}:{view:View}) {
 }
 
 function MemoryDetail({view,canWrite,onChange}:{view:View;canWrite:boolean;onChange:()=>void}) {
+  const actorName = useActorName();
   const {session}=useSession();
   const [reason,setReason]=useState("");
   const [busy,setBusy]=useState(false);
@@ -94,7 +97,7 @@ function MemoryDetail({view,canWrite,onChange}:{view:View;canWrite:boolean;onCha
       {history.status==="error"&&<p role="alert">{history.error.message}</p>}
       {history.status==="success"&&<>
         {history.data.items.map(event=><article key={event.id} className="min-w-0 space-y-2 border-b border-border py-3 text-sm">
-          <p className="break-all text-xs text-muted">{event.eventType} / {event.decisionSource==="system_policy"?"System Policy":`Actor #${event.actorId}`} / {event.createdAt}</p>
+          <p className="break-all text-xs text-muted">{event.eventType} / {event.decisionSource==="system_policy"?"System Policy":actorName(event.actorId)} / {event.createdAt}</p>
           <p className="whitespace-pre-wrap break-words">{event.reason}</p>
           {event.evidence?.sourceConclusion&&<div className="min-w-0 space-y-1 border-l-2 border-primary pl-3 text-xs [overflow-wrap:anywhere]">
             <p>Source: Tier 2 Investigation Conclusion</p>
@@ -113,7 +116,7 @@ function MemoryDetail({view,canWrite,onChange}:{view:View;canWrite:boolean;onCha
             <p className="capitalize">Source Human Verdict: {pretty(event.evidence.outcome)}</p>
             <p className="break-all">Verdict Reference: {event.evidence.sourceVerdictRef} · Revision {event.evidence.sourceVerdictRevision}</p>
             <p>Verdict Author: {event.evidence.verdictAuthorName} / #{event.evidence.verdictAuthorId}</p>
-            <p>Memory Contribution: {event.evidence.decisionSource==="system_policy"?"Automatic System Policy":`Actor #${event.evidence.actorId}`} · Scope: {event.lessonSnapshot.lesson.scope}</p>
+            <p>Memory Contribution: {event.evidence.decisionSource==="system_policy"?"Automatic System Policy":actorName(event.evidence.actorId)} · Scope: {event.lessonSnapshot.lesson.scope}</p>
             <p>{event.evidenceCurrent?"Current human evidence":"Superseded human evidence — excluded from effective support"}</p>
           </div>}
           <p className="text-xs text-muted">{event.evidence?"Memory Evidence History":"Memory Activation History"}</p>

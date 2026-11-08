@@ -427,6 +427,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/auth/actors": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Display names of every account
+         * @description Read-only id -> display name list, so screens name who acted. No username, email, role or credential.
+         */
+        get: operations["listActorNames"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/auth/login": {
         parameters: {
             query?: never;
@@ -1833,6 +1853,24 @@ export interface components {
              * @default null
              */
             userId: number | null;
+        };
+        /**
+         * ActorDirectory
+         * @description Every account's display name, read-only; no username, email, role or credential is exposed.
+         */
+        ActorDirectory: {
+            /** Items */
+            items: components["schemas"]["ActorName"][];
+        };
+        /**
+         * ActorName
+         * @description One account's id and display name, so the console names who acted instead of "Actor #N".
+         */
+        ActorName: {
+            /** Displayname */
+            displayName: string;
+            /** Id */
+            id: number;
         };
         /** AdminGovernance */
         AdminGovernance: {
@@ -8730,6 +8768,47 @@ export interface operations {
             };
             /** @description Role not permitted */
             403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Database unavailable or schema unsupported; read-only requests never migrate */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    listActorNames: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description `Bearer <token>` from POST /api/auth/login */
+                Authorization?: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Every account's display name */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ActorDirectory"];
+                };
+            };
+            /** @description Not signed in, or the token expired */
+            401: {
                 headers: {
                     [name: string]: unknown;
                 };

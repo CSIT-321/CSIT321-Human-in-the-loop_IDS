@@ -10,6 +10,7 @@ import { useCallback, useEffect, useState } from "react";
 import { Outlet, useLocation } from "react-router";
 
 import { useSession } from "../../session/SessionContext";
+import { ActorNamesProvider } from "../../session/ActorNames";
 import { Sidebar } from "./Sidebar";
 import { TopBar } from "./TopBar";
 import { AnalystTour } from "./AnalystTour";
@@ -29,6 +30,7 @@ export function AppShell() {
   if (session === null) return null;
 
   return (
+    <ActorNamesProvider>
     <div className="flex h-full flex-col bg-bg">
       <TopBar onStartTour={session.role === "security_analyst" ? () => setTourStep(0) : undefined} />
       <div className="flex min-h-0 flex-1 max-sm:flex-col">
@@ -42,5 +44,6 @@ export function AppShell() {
       </div>
       {session.role === "security_analyst" && <AnalystTour stepIndex={tourStep} onStep={setTourStep} onClose={closeTour} />}
     </div>
+    </ActorNamesProvider>
   );
 }

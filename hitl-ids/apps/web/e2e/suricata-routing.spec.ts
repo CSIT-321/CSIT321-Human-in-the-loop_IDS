@@ -27,7 +27,9 @@ test("correlated Suricata: routine, multiple signatures, automatic expert/critic
   await expect(page.getByRole("heading", { name: "Flow / Session Evidence" })).toBeVisible();
   await expect(page.getByRole("heading", { name: "Application Evidence" })).toBeVisible();
   await expect(page.getByText(/OpenSSH_9.6/).first()).toBeVisible();
-  await expect(page.getByText("Unavailable — no validated feature bridge")).toBeVisible();
+  // c00c556 removed the "XGBoost supporting evidence" row from Suricata evidence (no validated feature bridge
+  // exists, so the row only said "Unavailable"). The unit test asserts it is absent; so does this one.
+  await expect(page.getByText(/XGBoost supporting evidence/)).toHaveCount(0);
   // B: two signatures, one detection; severity 1 alone remains routine.
   await select("SYNTHETIC SSH brute force");
   await expect(page.getByRole("region", { name: "System Routing", exact: true })).toContainText("Routine Review");
@@ -86,7 +88,10 @@ test("correlated Suricata: routine, multiple signatures, automatic expert/critic
   await expect(page.getByRole("region", { name: "System Routing", exact: true })).toContainText("Initial system route: Tier 1 (Routine Review)");
   await expect(page.getByText(/Tier 2 Candidate|Create Tier 2 Case/)).toHaveCount(0);
   await page.getByRole("tab", { name: "History & Notes" }).click();
-  await expect(page.getByRole("region", { name: "Operational decision history" })).toContainText("Actor #");
+  // The history names the person who acted (SOC accountability), never a raw "Actor #N".
+  const history = page.getByRole("region", { name: "Operational decision history" });
+  await expect(history).toContainText("Glenn Ang");
+  await expect(history).not.toContainText("Actor #");
   await page.goto("/analyst/v2-triage?alertRef=" + multiRef);
   await expect(page.getByRole("heading", { name: "Analyst Workstation", exact: true })).toBeVisible();
   await select("Legacy Flow Detector");

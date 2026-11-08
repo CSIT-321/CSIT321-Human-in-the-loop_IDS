@@ -110,6 +110,15 @@ def me(principal: ReadPrincipal) -> au.MeResponse:
                          role=principal.role)
 
 
+@router.get("/api/auth/actors", response_model=au.ActorDirectory, tags=["auth"],
+            operation_id="listActorNames")
+def actor_names(conn: ReadConn, principal: ReadPrincipal) -> au.ActorDirectory:
+    """Names for the "who acted" lines (claims, verdicts, cases, memory): an SOC audit trail must name
+    the person, not an id. Display names only; any signed-in role may read them."""
+    rows = conn.execute("SELECT id, display_name FROM users ORDER BY id").fetchall()
+    return au.ActorDirectory(items=[au.ActorName(id=r[0], display_name=r[1]) for r in rows])
+
+
 def guardrail_values(conn: sqlite3.Connection) -> dict[str, float]:
     """The live guardrail settings, so an intervention's configured value is looked up rather than
     inferred from the delta - which produced "held at the floor of 29.89" when the floor is 70."""
