@@ -10,7 +10,8 @@ export function WorkspacesPage() {
     { keepPreviousData: true });
   const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [reason, setReason] = useState("Prepare isolated V3.1 analyst demonstration");
+  // X7 (S8-09): no pre-filled "Prepare ..." sentence; an empty reason records the action that was taken.
+  const [reason, setReason] = useState("");
   const [mode, setMode] = useState<"full" | "presentation">("full");
   const reload = useRef(state.reload); reload.current = state.reload;
   useEffect(() => { const timer = setInterval(() => reload.current(), 5000); return () => clearInterval(timer); }, []);
@@ -21,7 +22,10 @@ export function WorkspacesPage() {
       "Reset V3.1 Demo Replay? This permanently removes only its isolated operational alerts, verdicts, memory and cases. The Operational workspace and official frozen evaluation remain unchanged.")) return;
     setBusy(`${action}:${id}`); setError(null);
     try {
-      const body = { reason: reason.trim() || "Administrator workspace action" };
+      const defaults = { prepare: "Prepare isolated V3.1 analyst demonstration", reset: "Reset V3.1 Demo Replay",
+        activate: `Activate workspace ${id}`, start: "Start replay playback", pause: "Pause replay playback",
+        advance: `Advance replay by ${count}` } as const;
+      const body = { reason: reason.trim() || defaults[action] };
       if (action === "prepare") await unwrap(api.POST("/api/admin/workspaces/v3-1-replay/prepare", { body: { ...body, mode } }));
       else if (action === "reset") await unwrap(api.POST("/api/admin/workspaces/v3-1-replay/reset", { body }));
       else if (action === "start") await unwrap(api.POST("/api/admin/workspaces/v3-1-replay/start", { body }));

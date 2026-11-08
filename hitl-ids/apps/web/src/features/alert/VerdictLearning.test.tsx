@@ -12,6 +12,12 @@ const latest={verdictRef:vref,outcome:"expected_activity",reason:"Canonical auth
 const empty={items:[],page:{total:0,returned:0,limit:50,offset:0}};
 function mount(onVerdict=()=>{}){return render(<MemoryRouter><VerdictLearning view={view} onVerdict={onVerdict}/></MemoryRouter>);}
 describe("Verdict-based human learning",()=>{
+  it("X7 (S7-06): hides 'Open Analyst Verdict' when the page gives no handler (admin/evaluator routing view)",async()=>{
+    stubFetch(req=>jsonResponse(req.url.endsWith('/verdict')?{latest:null,canRecord:false}:req.url.includes('verdict-state')?{latestVerdictRef:null,contributionStatus:'not_contributed',lessonRef:null}:empty));
+    render(<MemoryRouter><VerdictLearning view={view}/></MemoryRouter>);
+    expect(await screen.findByText('Record an Analyst Verdict to automatically capture Exact learning evidence.')).toBeVisible();
+    expect(screen.queryByRole('button',{name:'Open Analyst Verdict'})).toBeNull();
+  });
   it("guides missing-Verdict users to the canonical editor instead of requesting another outcome",async()=>{
     const open=vi.fn();stubFetch(req=>jsonResponse(req.url.endsWith('/verdict')?{latest:null,canRecord:true}:req.url.includes('verdict-state')?{latestVerdictRef:null,contributionStatus:'not_contributed',lessonRef:null}:empty));
     mount(open);await userEvent.click(await screen.findByRole('button',{name:'Open Analyst Verdict'}));

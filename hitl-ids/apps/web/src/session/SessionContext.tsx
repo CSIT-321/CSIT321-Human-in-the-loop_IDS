@@ -99,3 +99,8 @@ export function useSession(): SessionApi {
   if (value === null) throw new Error("useSession must be used inside <SessionProvider>");
   return value;
 }
+
+/** The signed-in role, or undefined outside a provider (a component tested on its own). */
+export function useOptionalRole(): string | undefined {
+  return useContext(SessionContext)?.session?.role;
+}

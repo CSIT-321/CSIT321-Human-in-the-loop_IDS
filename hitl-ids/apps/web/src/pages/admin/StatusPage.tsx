@@ -264,7 +264,9 @@ function DetectorHitsCard({ run }: { run: ApiResource<Run> }) {
   return (
     <Card title="Detector hits" subtitle="Which detectors flagged each alert in the latest run.">
       {run.status === "loading" && <LoadingState label="Waiting for the run…" />}
-      {run.status === "error" && <p className="text-[13px] text-muted">No run to break down.</p>}
+      {run.status === "error" && run.error.status === 409 && <p className="text-[13px] text-muted">No run to break down.</p>}
+      {/* X7 (S8-06): any other error is an error, not "no run" (the card beside it shows the details). */}
+      {run.status === "error" && run.error.status !== 409 && <p role="alert" className="text-[13px] text-danger">Detector hits are unavailable.</p>}
       {run.status === "success" && <EvidenceHits run={run.data} />}
     </Card>
   );

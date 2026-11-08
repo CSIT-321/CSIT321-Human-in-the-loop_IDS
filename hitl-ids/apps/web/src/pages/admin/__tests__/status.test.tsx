@@ -160,4 +160,20 @@ describe("admin status: the operations strip", () => {
     expect((await within(hits).findAllByRole("meter")).length).toBeGreaterThan(0);
     expect(within(hits).getByText("Model only hits")).toBeInTheDocument();
   });
+
+  it("X7 (S8-06): a server error in the run is an error, not 'No run to break down'", async () => {
+    stubApi(() => jsonResponse({ error: { code: "INTERNAL", message: "boom" } }, 500));
+    renderApp("/admin/status", { session: ADMIN });
+    const hits = (await screen.findByText("Detector hits")).closest("section")!;
+    await waitFor(() => expect(within(hits).queryByText("Waiting for the run…")).toBeNull());
+    expect(within(hits).queryByText("No run to break down.")).toBeNull();
+    expect(within(hits).getByText("Detector hits are unavailable.")).toBeInTheDocument();
+  });
+
+  it("X7 (S8-06): a 409 (no run yet) still reads as 'No run to break down'", async () => {
+    stubApi(() => jsonResponse(CONFLICT, 409));
+    renderApp("/admin/status", { session: ADMIN });
+    const hits = (await screen.findByText("Detector hits")).closest("section")!;
+    expect(await within(hits).findByText("No run to break down.")).toBeInTheDocument();
+  });
 });

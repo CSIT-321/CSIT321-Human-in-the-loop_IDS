@@ -3,9 +3,13 @@ import { Link } from "react-router";
 import { api,unwrap,type Schemas } from "../../api/client";
 import { useApi } from "../../api/useApi";
 import { verdictLabels } from "./AnalystVerdict";
+import { useOptionalRole } from "../../session/SessionContext";
 
 const button="rounded-sm border border-border px-3 py-2 text-sm hover:bg-raised disabled:opacity-50";
 export function VerdictLearning({view,onVerdict,onContributed}:{view:Schemas["RoutingView"];onVerdict?:()=>void;onContributed?:()=>void}) {
+  // X7 (S7-06): admin and evaluator reach memory under their own prefix; a fixed /analyst link bounced them home.
+  const role=useOptionalRole();
+  const memoryPath=(role==="system_admin"?"/admin":role==="evaluator"?"/evaluator":"/analyst")+"/triage-memory";
   const alertRef=view.operationalAlertRef;
   const verdict=useApi(signal=>unwrap(api.GET("/api/v2/alerts/{alertRef}/verdict",{params:{path:{alertRef}},signal})),[alertRef,view.stateVersion]);
   const contribution=useApi(signal=>unwrap(api.GET("/api/v2/alerts/{alertRef}/triage-memory/verdict-state",{params:{path:{alertRef}},signal})),[alertRef]);
@@ -32,7 +36,7 @@ export function VerdictLearning({view,onVerdict,onContributed}:{view:Schemas["Ro
     {verdict.status==="error"&&<p role="alert">{verdict.error.message}</p>}
     {contribution.status==="error"&&<p role="alert">{contribution.error.message}</p>}
     {view.state.handlingRoute==="tier2_case"?<p>Tier 2 learning uses Investigation Conclusion. No Tier 1 Verdict is required.</p>:
-      verdict.status==="success"&&!current?<><p>Record an Analyst Verdict to automatically capture Exact learning evidence.</p><button className={button} onClick={onVerdict}>Open Analyst Verdict</button></>:null}
+      verdict.status==="success"&&!current?<><p>Record an Analyst Verdict to automatically capture Exact learning evidence.</p>{onVerdict&&<button className={button} onClick={onVerdict}>Open Analyst Verdict</button>}</>:null}
     {current&&<>
       <p>Analyst Verdict: <strong>{verdictLabels[current.outcome]}</strong></p>
       <p className="whitespace-pre-wrap break-words text-sm">Verdict reason: {current.reason}</p>
@@ -46,7 +50,7 @@ export function VerdictLearning({view,onVerdict,onContributed}:{view:Schemas["Ro
         {status.memory.validFrom&&<p>Valid from: {status.memory.validFrom}</p>}
         {status.memory.expiresAt&&<p>Valid until: {status.memory.expiresAt}</p>}
       </div>}
-      {status?.lessonRef&&<Link className="block text-accent underline" to={"/analyst/triage-memory?lessonRef="+status.lessonRef}>Open linked Memory lesson</Link>}
+      {status?.lessonRef&&<Link className="block text-accent underline" to={memoryPath+"?lessonRef="+status.lessonRef}>Open linked Memory lesson</Link>}
       {verdict.status==="success"&&verdict.data.canRecord&&consistent&&status?.scope!=="narrow"&&<div className="space-y-2">
         <label htmlFor="verdict-learning-scope" className="block text-sm">Optional broader learning scope</label>
         <select id="verdict-learning-scope" value={scope} disabled={busy} onChange={e=>setScope(e.target.value as typeof scope)} className="w-full min-w-0 rounded-sm border border-border bg-surface p-2 text-sm"><option value="narrow">Narrow — explicit broader scope</option></select>
@@ -61,7 +65,7 @@ export function VerdictLearning({view,onVerdict,onContributed}:{view:Schemas["Ro
         <p className="capitalize">{match.memory.lesson.outcome.replaceAll("_"," ")} · {match.memory.status.replaceAll("_"," ")}</p>
         <p>Support: {match.memory.supportCount} · Conflicts: {match.memory.conflictCount}</p>
         <p>Active guidance: {match.guidanceActive?"Yes":"No"}</p>
-        <Link className="text-accent underline" to={"/analyst/triage-memory?lessonRef="+match.memory.lesson.lessonRef}>Inspect lesson and evidence history</Link>
+        <Link className="text-accent underline" to={memoryPath+"?lessonRef="+match.memory.lesson.lessonRef}>Inspect lesson and evidence history</Link>
       </article>)}
     </section>
     <button className={button} disabled={busy} onClick={()=>refreshRef.current()}>Refresh learning</button>

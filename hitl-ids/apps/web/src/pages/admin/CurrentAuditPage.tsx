@@ -4,6 +4,7 @@ import { api, unwrap, type Schemas } from "../../api/client";
 import { useApi } from "../../api/useApi";
 import { ErrorState } from "../../components/states";
 import { Card, PageHeader } from "../../components/ui";
+import { formatDateTime } from "../../design/format";
 
 type Event = Schemas["CurrentAuditEvent"];
 type Category = Event["eventCategory"];
@@ -18,7 +19,7 @@ const short = (value: string) => value.length > 18 ? `${value.slice(0, 8)}…${v
 
 function EventRow({ event }: { event: Event }) {
   return <tr className="border-t border-border align-top" data-testid="audit-event">
-    <td className="whitespace-nowrap px-3 py-3 text-xs text-muted"><time dateTime={event.timestamp}>{new Date(event.timestamp).toLocaleString()}</time></td>
+    <td className="whitespace-nowrap px-3 py-3 text-xs text-muted"><time dateTime={event.timestamp}>{formatDateTime(event.timestamp)}</time></td>
     <td className="px-3 py-3 text-sm">{event.actorType === "system" ? "System Policy" : event.actorName ?? "Unknown user"}</td>
     <td className="px-3 py-3 text-xs font-semibold text-accent">{event.eventCategory}</td>
     <td className="px-3 py-3 text-sm">{event.action}</td>
@@ -98,9 +99,10 @@ export function CurrentAuditPage() {
       </div>
     </Card>
     {resource.status === "error" && <ErrorState error={resource.error} onRetry={resource.reload} />}
-    <Card title="Timeline" subtitle={`Active workspace: ${page?.activeWorkspace ?? "Loading"}. Newest durable events first.`}>
+    {/* X7 (S8-08): on an error the timeline says so instead of "Loading" forever. */}
+    <Card title="Timeline" subtitle={`Active workspace: ${page?.activeWorkspace ?? (resource.status === "error" ? "Unavailable" : "Loading")}. Newest durable events first.`}>
       <div className="min-w-0">
-        <p className="px-4 pt-3 text-xs text-muted">{page ? `${page.total} matching events` : "Loading events…"}</p>
+        <p className="px-4 pt-3 text-xs text-muted">{page ? `${page.total} matching events` : resource.status === "error" ? "Events unavailable." : "Loading events…"}</p>
         <div className="max-w-full overflow-x-auto">
           <table className="min-w-[1080px] w-full text-left">
             <thead><tr className="text-xs uppercase text-muted">{["Time", "Actor", "Category", "Action", "Object", "Summary", "Result"].map(column =>

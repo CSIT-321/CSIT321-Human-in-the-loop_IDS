@@ -178,6 +178,44 @@ describe("current Admin surface", () => {
     expect(screen.getByText("Approved — Not Executed")).toBeVisible();
   });
 
+  it("X7 (S8-07, S8-08): shows audit times in UTC like every other page, and an error is not 'Loading' forever", async () => {
+    setup();
+    const first = renderApp("/admin/evaluation/audit", { session: admin });
+    const cell = (await screen.findAllByTestId("audit-event"))[0]!.querySelector("time")!;
+    expect(cell.getAttribute("dateTime")).toBe("2026-11-03T02:01:12Z");
+    expect(cell.textContent).toMatch(/UTC$/);
+    expect(cell.textContent).toContain("02:01");
+    first.unmount();
+    stubFetch(() => jsonResponse({ error: { code: "INTERNAL", message: "boom" } }, 500));
+    renderApp("/admin/evaluation/audit", { session: admin });
+    expect(await screen.findByRole("heading", { level: 1, name: "Current HITL Audit" })).toBeVisible();
+    await waitFor(() => expect(screen.queryByText("Loading events…")).toBeNull());
+    expect(screen.queryByText(/Active workspace: Loading/)).toBeNull();
+    expect(screen.getByText("Events unavailable.")).toBeVisible();
+  });
+
+  it("X7 (S8-09): a workspace action without a typed reason records that action, not 'Prepare'", async () => {
+    const posts: { path: string; body: { reason: string } }[] = [];
+    const workspaces = { activeWorkspaceName: "V3.1 Demo Replay", actions: [], workspaces: [
+      { id: "operational", name: "Operational", active: false, ready: true, alertCount: 5000 },
+      { id: "v3-1-replay", name: "V3.1 Demo Replay", active: true, ready: true, alertCount: 50, preparationMode: "full",
+        rawRecords: 200, stagedAlerts: 200, lastPreparedAt: null }] };
+    stubFetch(async request => {
+      const path = new URL(request.url).pathname;
+      if (request.method === "POST") { posts.push({ path, body: await request.json() }); }
+      return jsonResponse(workspaces);
+    });
+    renderApp("/admin/workspaces", { session: admin });
+    const input = await screen.findByRole("textbox", { name: "Reason for workspace action" });
+    expect((input as HTMLInputElement).value).toBe("");
+    const activate = screen.getAllByRole("button", { name: "Activate" }).find(b => !(b as HTMLButtonElement).disabled)!;
+    fireEvent.click(activate);
+    await waitFor(() => expect(posts.length).toBe(1));
+    expect(posts[0]!.path).toBe("/api/admin/workspaces/operational/activate");
+    expect(posts[0]!.body.reason).not.toMatch(/^Prepare/);
+    expect(posts[0]!.body.reason.toLowerCase()).toContain("activate");
+  });
+
   it("keeps Current HITL Audit unavailable to Analyst and Evaluator routes", async () => {
     setup();
     const mounted = renderApp("/admin/evaluation/audit", { session: analyst });
