@@ -54,7 +54,7 @@ export function DetectorProvenance({ detector, confidence, agreement }: {
         <div><dt className="text-muted">Detection</dt><dd className="break-words">{detector.detectionTitle}</dd></div>
         {kind === "xgboost" && <div><dt className="text-muted">Prediction</dt><dd>{typeof prediction === "string" ? prediction : "Not provided"}</dd></div>}
         <div><dt className="text-muted">Native Severity</dt><dd>{detector.detectorSeverity}</dd></div>
-        <div><dt className="text-muted">Confidence</dt><dd>{shown == null ? "Not provided" : formatPercent(shown)}</dd></div>
+        <div><dt className="text-muted">{confidence !== undefined ? "Fusion confidence" : "Confidence"}</dt><dd>{shown == null ? "Not provided" : formatPercent(shown)}</dd></div>
         {agreement && <div><dt className="text-muted">Signature and ML agreement</dt><dd>{agreement}</dd></div>}
       </dl>
       <p className="mt-2 text-xs text-muted">Native Severity and Confidence are detector evidence, separate from Operational Priority and workflow Tier.</p>

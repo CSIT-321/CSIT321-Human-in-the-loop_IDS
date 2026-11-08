@@ -49,8 +49,11 @@ function ModelEvidence({ detector, historical }: { detector: Canonical; historic
     <KeyValues rows={[
       ["Model/version", detector.detectorVersion ?? display(detector.provenance.modelVersion)],
       ["Prediction", display(evidence.mlPredictedClass ?? evidence.predictedAttackType ?? evidence.prediction)],
-      ["Supplied confidence", detector.confidence == null ? "Not provided" : formatPercent(detector.confidence)],
-      ...(historical && evidence.mlProbability != null ? [["Historical ML probability", display(evidence.mlProbability)] as const] : []),
+      // C4 decision (2026-11-08): a flow alert shows its fusion confidence in the provenance block. Its
+      // canonical confidence is empty for corroborated alerts, so the card shows the model's own
+      // probability instead of a second, empty "confidence" row.
+      ...(historical ? [] : [["Supplied confidence", detector.confidence == null ? "Not provided" : formatPercent(detector.confidence)] as const]),
+      ...(historical && typeof evidence.mlProbability === "number" ? [["Model probability", formatPercent(evidence.mlProbability)] as const] : []),
     ]} />
     {evidence.treeShap != null && <section aria-label="TreeSHAP evidence" className="mt-4 space-y-2">
       <h3 className="label-mono">TreeSHAP / Attributions</h3>

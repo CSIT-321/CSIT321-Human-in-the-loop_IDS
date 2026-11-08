@@ -72,6 +72,19 @@ describe("C4 flow alert evidence", () => {
     expect(screen.queryByRole("table", { name: /Conditions for/ })).not.toBeInTheDocument();
   });
 
+  it("names the two confidence values apart and never shows an empty one beside a real one (C4 decision)", () => {
+    const alert = flowAlert("ml_only", { fusion: 0.9989171 });
+    (alert.detectorEvidence.structuredEvidence as Record<string, unknown>).mlProbability = 0.97;
+    render(<OperationalEvidence alert={alert} />);
+    const provenance = screen.getByRole("region", { name: "Detector provenance" });
+    expect(within(provenance).getByText("Fusion confidence")).toBeVisible();
+    expect(within(provenance).getByText("99.9%")).toBeVisible();
+    expect(screen.queryByText("Supplied confidence")).not.toBeInTheDocument();
+    expect(screen.getByText("Model probability")).toBeVisible();
+    expect(screen.getByText("97.0%")).toBeVisible();
+    expect(screen.queryByText("Not provided")).not.toBeInTheDocument();
+  });
+
   it("gives the AL short name for a flow alert and nothing for other sources", () => {
     expect(flowShortName(flowAlert("corroborated"))).toBe("AL-01958");
     const suricata = { ...flowAlert("corroborated"), sourceKind: "external_detector_alert",
