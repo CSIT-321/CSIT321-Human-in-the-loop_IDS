@@ -107,8 +107,11 @@ export function interventionExplanations(
 /** The trail as a spreadsheet: the header is the contract's field names, every cell is quoted. */
 export const CSV_HEADER = "eventId,createdAt,eventType,actorRole,actorName,alertRef,rationale,details";
 
+/** X2 (S8-03): a cell that starts with = + - @ tab or CR runs as a formula in Excel/LibreOffice. A leading
+ *  single quote makes it text. Every field goes through this, because rationale and actor names are user input. */
 function csvField(value: string): string {
-  return `"${value.replace(/"/g, '""')}"`;
+  const safe = /^[=+\-@\t\r]/.test(value) ? `'${value}` : value;
+  return `"${safe.replace(/"/g, '""')}"`;
 }
 
 export function auditCsv(entries: readonly AuditEntry[]): string {

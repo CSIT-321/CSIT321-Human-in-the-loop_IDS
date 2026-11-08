@@ -228,6 +228,17 @@ describe("the export's escaping", () => {
         '"7","2026-09-12T10:00:00.000000Z","CONFIG_CHANGE","system_admin","Grace ""G"" Ang","","Rehearsal, second pass: raise the cap by ""10""",""\n',
     );
   });
+
+  it("X2 (S8-03): neutralises a cell that a spreadsheet would run as a formula", () => {
+    const base: AuditEntry = { eventId: 8, eventType: "FEEDBACK", actor: { displayName: "@mallory", role: "security_analyst", userId: 1 },
+      alertRef: null, rationale: null, details: null, createdAt: "2026-11-08T10:00:00.000000Z" };
+    for (const lead of ["=", "+", "-", "@", "\t", "\r"]) {
+      const line = auditCsv([{ ...base, rationale: `${lead}HYPERLINK("http://x","y")` }]).split("\n")[1]!;
+      expect(line).toContain(`"'${lead}HYPERLINK(""http://x"",""y"")"`);
+    }
+    // the actor name is user-controlled too; ordinary text and numbers are untouched
+    expect(auditCsv([base]).split("\n")[1]).toBe('"8","2026-11-08T10:00:00.000000Z","FEEDBACK","security_analyst","\'@mallory","","",""');
+  });
 });
 
 describe("admin audit: how a row reads", () => {
