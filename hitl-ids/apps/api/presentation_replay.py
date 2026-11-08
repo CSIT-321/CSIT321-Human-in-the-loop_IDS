@@ -20,7 +20,10 @@ from packages.detection.context_store import seed_synthetic_facts
 from packages.detection.triage_policy import TriageContext
 from packages.detection import analyst_work, selective_review, triage_memory
 from packages.detection.analyst_verdict import VerdictCommand, read_verdict, record_verdict
-from scripts.protocol_v3.common import SENSOR, SCOPE
+# X6 (S9-05): the frozen V3.1 sensor and scope, owned by the product. tests/test_product_boundary.py pins them
+# to the frozen protocol's values, so they cannot drift; the product no longer imports runner code.
+SENSOR = 'controlled-v3-sensor'
+SCOPE = 'controlled-v3-final'
 
 REPOSITORY = Path(__file__).resolve().parents[3]
 WORKLOAD = REPOSITORY / 'evaluation/protocol-v3.1/workload/operational-workload.jsonl'
