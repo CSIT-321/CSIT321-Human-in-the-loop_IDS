@@ -19,49 +19,69 @@ from packages.detection.adapters.operational_v2 import materialize_source, read_
 from packages.detection.adapters.staging import stage_file
 from packages.detection.triage_policy import TriageContext
 from packages.detection.triage_policy_service import apply_triage_policy
-from packages.detection.external_admission import EligibilityRequest,AdmissionRequest,review_eligibility,admit_external
+from packages.detection.external_admission import EligibilityRequest, AdmissionRequest, review_eligibility, admit_external
+
+
+def build_fixture(path: Path, *, prospective: bool = False) -> None:
+    """Build the disposable routing fixture into ``path`` (a migrated copy of data/demo.db).
+
+    E3 (S9-02): stage_file requires capture_scope; every stage call here names its own scope so the
+    fixture stages at all. Imported by tests/test_routing_rehearsal_fixture.py.
+    """
+    with closing(db.connect(path)) as conn:
+        db.migrate(conn)
+        auth.ensure_demo_accounts(conn)
+        if prospective:
+            stage_file(conn, HITL / 'tests/fixtures/prospective-collection-demo.json', 'prospective-demo',
+                       capture_scope='disposable-prospective')
+        actor = conn.execute("SELECT id FROM users WHERE username='g.ang'").fetchone()[0]
+        for sensor in ('routing-staged', 'routing-recommended', 'routing-reject'):
+            stage_file(conn, HITL / 'tests/fixtures/suricata-alerts.json', sensor,
+                       capture_scope='disposable-routing-rehearsal')
+            source_id = conn.execute('SELECT id FROM external_alert_inbox WHERE sensor_id=? ORDER BY id LIMIT 1',
+                                     (sensor,)).fetchone()[0]
+            alert = materialize_source(conn, 'external_nids_alert', source_id)
+            if sensor != 'routing-staged':
+                apply_triage_policy(conn, alert.id, actor_id=actor, expected_state=read_triage(conn, alert.id),
+                                    context=TriageContext(unresolved_by_tier1=True))
+        stage_file(conn, HITL / 'tests/fixtures/triage-memory-scans.json', 'memory-demo',
+                   capture_scope='disposable-routing-rehearsal')
+        ids = [r[0] for r in conn.execute("SELECT id FROM external_alert_inbox WHERE sensor_id='memory-demo' ORDER BY id")]
+        for source_id in ids:
+            review = review_eligibility(conn, source_id, actor_id=actor, request=EligibilityRequest(
+                request_id=uuid4(), expected_review_id=None, decision='accepted',
+                reason='Disposable memory scenario fixture verified'))
+            admit_external(conn, source_id, actor_id=actor, request=AdmissionRequest(
+                request_id=uuid4(), expected_review_id=review['id'],
+                reason='Disposable demo admission; no memory verdict seeded'))
+        # Explicit synthetic safety facts for this disposable scenario only. Production admission keeps unknowns.
+        stage_file(conn, HITL / 'tests/fixtures/selective-review-demo.json', 'selective-demo',
+                   capture_scope='disposable-routing-rehearsal')
+        safe = TriageContext(asset_criticality='low', repeated_campaign=False, correlated_alert_count=1,
+                             response_required=False, known_malicious_indicator=False, analyst_escalated=False,
+                             unresolved_by_tier1=False, evidence_conflict=False, confirmed_malicious=False)
+        ids = [r[0] for r in conn.execute("SELECT id FROM external_alert_inbox WHERE sensor_id='selective-demo' ORDER BY id")]
+        for source_id in ids:
+            review = review_eligibility(conn, source_id, actor_id=actor, request=EligibilityRequest(
+                request_id=uuid4(), expected_review_id=None, decision='accepted',
+                reason='SYNTHETIC selective-review fixture; safety context is demo-only'))
+            # E3: bundled detections take the system-route path; caller-supplied context is refused, so the
+            # synthetic facts are seeded after admission (context_store fixture helper).
+            receipt, _ = admit_external(conn, source_id, actor_id=actor, request=AdmissionRequest(
+                request_id=uuid4(), expected_review_id=review['id'],
+                reason='SYNTHETIC safe context; not observed production evidence'))
+            seed_synthetic_facts(conn, read_projection(conn, receipt['operational_alert_id']), safe, m.utc_now())
 
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--port', type=int, default=8002)
-    parser.add_argument('--prospective',action='store_true',help='Add an unadmitted synthetic prospective journey fixture')
+    parser.add_argument('--prospective', action='store_true', help='Add an unadmitted synthetic prospective journey fixture')
     args = parser.parse_args()
     with tempfile.TemporaryDirectory(prefix='hitl-routing-e2e-') as folder:
         path = Path(folder) / 'routing.db'
         shutil.copy2(HITL / 'data/demo.db', path)
-        with closing(db.connect(path)) as conn:
-            db.migrate(conn)
-            auth.ensure_demo_accounts(conn)
-            if args.prospective:
-                stage_file(conn,HITL/'tests/fixtures/prospective-collection-demo.json','prospective-demo')
-            actor = conn.execute("SELECT id FROM users WHERE username='g.ang'").fetchone()[0]
-            for sensor in ('routing-staged', 'routing-recommended', 'routing-reject'):
-                stage_file(conn, HITL / 'tests/fixtures/suricata-alerts.json', sensor)
-                source_id = conn.execute('SELECT id FROM external_alert_inbox WHERE sensor_id=? ORDER BY id LIMIT 1', (sensor,)).fetchone()[0]
-                alert = materialize_source(conn, 'external_nids_alert', source_id)
-                if sensor != 'routing-staged':
-                    apply_triage_policy(conn, alert.id, actor_id=actor, expected_state=read_triage(conn, alert.id),
-                        context=TriageContext(unresolved_by_tier1=True))
-            stage_file(conn,HITL/'tests/fixtures/triage-memory-scans.json','memory-demo')
-            ids=[r[0] for r in conn.execute("SELECT id FROM external_alert_inbox WHERE sensor_id='memory-demo' ORDER BY id")]
-            for source_id in ids:
-                review=review_eligibility(conn,source_id,actor_id=actor,request=EligibilityRequest(
-                    request_id=uuid4(),expected_review_id=None,decision='accepted',reason='Disposable memory scenario fixture verified'))
-                admit_external(conn,source_id,actor_id=actor,request=AdmissionRequest(
-                    request_id=uuid4(),expected_review_id=review['id'],reason='Disposable demo admission; no memory verdict seeded'))
-            # Explicit synthetic safety facts for this disposable scenario only. Production admission keeps unknowns.
-            stage_file(conn,HITL/'tests/fixtures/selective-review-demo.json','selective-demo')
-            safe=TriageContext(asset_criticality='low',repeated_campaign=False,correlated_alert_count=1,
-                response_required=False,known_malicious_indicator=False,analyst_escalated=False,
-                unresolved_by_tier1=False,evidence_conflict=False,confirmed_malicious=False)
-            ids=[r[0] for r in conn.execute("SELECT id FROM external_alert_inbox WHERE sensor_id='selective-demo' ORDER BY id")]
-            for source_id in ids:
-                review=review_eligibility(conn,source_id,actor_id=actor,request=EligibilityRequest(
-                    request_id=uuid4(),expected_review_id=None,decision='accepted',reason='SYNTHETIC selective-review fixture; safety context is demo-only'))
-                receipt,_=admit_external(conn,source_id,actor_id=actor,request=AdmissionRequest(
-                    request_id=uuid4(),expected_review_id=review['id'],reason='SYNTHETIC safe context; not observed production evidence'),trusted_context=safe)
-                seed_synthetic_facts(conn,read_projection(conn,receipt['operational_alert_id']),safe,m.utc_now())
+        build_fixture(path, prospective=args.prospective)
         print(f'Serving disposable routing fixture: {path}', flush=True)
         uvicorn.run(create_app(path), host='127.0.0.1', port=args.port, log_level='warning')
 
