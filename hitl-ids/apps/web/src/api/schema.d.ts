@@ -5227,6 +5227,11 @@ export interface components {
              */
             activeAlerts: number;
             /**
+             * Autoescalated
+             * @default 0
+             */
+            autoEscalated: number;
+            /**
              * Availablework
              * @default 0
              */
@@ -5256,8 +5261,23 @@ export interface components {
             openTier2Cases: number;
             /** Reviewrequired */
             reviewRequired: number;
+            /**
+             * Tier1Groups
+             * @default 0
+             */
+            tier1Groups: number;
             /** Tier1Review */
             tier1Review: number;
+            /**
+             * Tier1Singles
+             * @default 0
+             */
+            tier1Singles: number;
+            /**
+             * Tier2Candidates
+             * @default 0
+             */
+            tier2Candidates: number;
             /** Tier2Cases */
             tier2Cases: number;
             /** Totalalerts */
@@ -6079,6 +6099,11 @@ export interface components {
             detectorSource: string | null;
             /** @default null */
             effectiveReview: components["schemas"]["EffectiveReview"] | null;
+            /**
+             * Groupmembercount
+             * @default null
+             */
+            groupMemberCount: number | null;
             latestDecision: components["schemas"]["RoutingAudit"] | null;
             /**
              * Operationalalertref
@@ -9649,6 +9674,8 @@ export interface operations {
                 attackCategory?: "brute_force" | "botnet_c2" | "dos" | "ddos" | "web_attack" | "infiltration" | "reconnaissance_port_scan" | "malware_exploit" | "other_known_attack" | "unknown_needs_expert";
                 reviewDisposition?: "must_review" | "recommended_review" | "no_immediate_review";
                 reviewRequired?: boolean;
+                tier2Candidate?: boolean;
+                decisionSource?: "system_policy" | "analyst";
                 workScope?: "all" | "active" | "completed" | "escalated" | "in_review";
                 q?: string;
                 sort?: "priority_desc";

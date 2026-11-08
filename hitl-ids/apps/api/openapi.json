@@ -8109,6 +8109,11 @@
             "title": "Activealerts",
             "type": "integer"
           },
+          "autoEscalated": {
+            "default": 0,
+            "title": "Autoescalated",
+            "type": "integer"
+          },
           "availableWork": {
             "default": 0,
             "title": "Availablework",
@@ -8149,8 +8154,23 @@
             "title": "Reviewrequired",
             "type": "integer"
           },
+          "tier1Groups": {
+            "default": 0,
+            "title": "Tier1Groups",
+            "type": "integer"
+          },
           "tier1Review": {
             "title": "Tier1Review",
+            "type": "integer"
+          },
+          "tier1Singles": {
+            "default": 0,
+            "title": "Tier1Singles",
+            "type": "integer"
+          },
+          "tier2Candidates": {
+            "default": 0,
+            "title": "Tier2Candidates",
             "type": "integer"
           },
           "tier2Cases": {
@@ -10214,6 +10234,18 @@
               }
             ],
             "default": null
+          },
+          "groupMemberCount": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Groupmembercount"
           },
           "latestDecision": {
             "anyOf": [
@@ -17552,6 +17584,24 @@
             "name": "reviewRequired",
             "schema": {
               "type": "boolean"
+            }
+          },
+          {
+            "in": "query",
+            "name": "tier2Candidate",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "in": "query",
+            "name": "decisionSource",
+            "schema": {
+              "enum": [
+                "system_policy",
+                "analyst"
+              ],
+              "type": "string"
             }
           },
           {

@@ -12,7 +12,8 @@ const view = { systemRouting: {routeClass:"ROUTINE_REVIEW",route:"tier1_review",
   stateVersion: "a".repeat(64), reviewReasons: ["Human review required"], latestDecision: null, caseRef: null, allowedActions: ["manual_escalate"],
   state: { decisionSource: "system_policy", operationalPriority: 85, priorityBand: "P1", reviewRequired: true, handlingRoute: "tier1_review", workflowStage: "triage", tier2Recommended: false, tier2RecommendationReasons: [] } };
 const empty = { items: [], page: { total: 0, offset: 0, limit: 50, returned: 0 } };
-const summary = { totalAlerts: 5000, criticalAlerts: 16, tier1Review: 312, tier2Cases: 24, expertReview: 8, reviewRequired: 336, noImmediateReview: 4664, openTier2Cases: 24 };
+const summary = { totalAlerts: 5000, criticalAlerts: 16, tier1Review: 312, tier2Cases: 24, expertReview: 8, reviewRequired: 336, noImmediateReview: 4664, openTier2Cases: 24,
+  tier2Candidates: 74, autoEscalated: 3, tier1Groups: 78, tier1Singles: 234 };
 const review = { disposition: "must_review", policyEvaluation: { contextProvenance: { fields: [{ status: "trusted" }] } } };
 function evidence(source = "suricata") {
   return { detectorEvidence: { detectorSource: source, detectorName: source === "suricata" ? "Suricata" : "XGBoost", detectorVersion: "synthetic-v1",
@@ -170,13 +171,18 @@ describe("unified operational workstation", () => {
     expect(within(workload).getByRole("button", { name: "No Immediate Review 4,664" })).toBeVisible();
     expect(within(workload).getByRole("link", { name: "Open Tier 2 Cases 24" })).toHaveAttribute("href", "/analyst/tier2-cases");
     const tabs = screen.getByRole("tablist", { name: "Operational queue views" });
-    expect(within(tabs).getAllByRole("tab")).toHaveLength(10);
+    expect(within(tabs).getAllByRole("tab")).toHaveLength(12);
     expect(within(tabs).getByRole("tab", { name: "Tier 2 24" })).toBeVisible();
+    // C2 + D4 condition 3 (approved 2026-11-08): 2 new tabs; Tier 1 counts groups and singles apart.
+    expect(within(tabs).getByRole("tab", { name: "Tier 2 candidates 74" })).toBeVisible();
+    expect(within(tabs).getByRole("tab", { name: "Auto-escalated 3" })).toBeVisible();
+    expect(within(tabs).getByRole("tab", { name: "Tier 1 78 groups · 234 single" })).toBeVisible();
+    expect(within(workload).getByRole("button", { name: "Active Tier 1 78 groups · 234 single" })).toBeVisible();
     const queue = screen.getByRole("list", { name: "Operational alerts" });
     expect((await within(queue).findAllByLabelText("Operational Priority: 85"))[0]).toHaveTextContent("85");
     expect(within(queue).getAllByText("85")[0]).toHaveClass("text-3xl");
     expect(within(queue).getAllByText("Critical · Tier 1")[0]).toBeVisible();
-    expect(within(tabs).queryByText(/Rule \+ Model|Model Only|Rule Only|Not Flagged|Tier 2 Candidate/)).toBeNull();
+    expect(within(tabs).queryByText(/Rule \+ Model|Model Only|Rule Only|Not Flagged/)).toBeNull();
     expect(within(workload).queryByText(/Verdicts|False Positives/i)).toBeNull();
   });
 

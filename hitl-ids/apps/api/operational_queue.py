@@ -5,7 +5,12 @@ from apps.api.contract.routing import OperationalSummary
 from packages.contracts.operational_v2 import POLICY_BAND_STORAGE
 from packages.detection.selective_review import effective_review
 from packages.detection.queue_severity import severity_rank
+from packages.detection.routing import RECOMMENDATION_OPEN_SQL
 from packages.detection.tier1_eligibility import CURRENT_TIER1_SQL
+
+ACTIVE_WORK = "(w.status IS NULL OR w.status NOT IN ('completed','escalated'))"
+# D4 condition 3: a Tier 1 item is a group when it represents one (a group of 1 is still a group).
+IS_GROUP = 'EXISTS (SELECT 1 FROM alert_groups g WHERE g.representative_operational_alert_id = a.id)'
 
 
 SOURCE = '''FROM operational_alerts_v2 a
@@ -64,15 +69,17 @@ def reviewed_ids(conn):
 
 
 def matching(*, handling_route=None, priority_band=None, work_scope='all',
-             route_class=None, attack_category=None, q=None):
+             route_class=None, attack_category=None, q=None, tier2_candidate=None, decision_source=None):
     clauses, params = [], []
-    if work_scope=='active': clauses.append("(w.status IS NULL OR w.status NOT IN ('completed','escalated'))")
+    if work_scope=='active': clauses.append(ACTIVE_WORK)
     elif work_scope in ('completed','escalated','in_review'):
         clauses.append('w.status=?');params.append(work_scope)
     for value, column in ((handling_route, 't.handling_route'),
-                          (attack_category, CATEGORY)):
+                          (attack_category, CATEGORY), (decision_source, 't.decision_source')):
         if value is not None:
             clauses.append(f'{column}=?'); params.append(value)
+    if tier2_candidate is not None:  # C2: the C3 rule, so the tab and the panel never disagree
+        clauses.append(RECOMMENDATION_OPEN_SQL if tier2_candidate else f'NOT {RECOMMENDATION_OPEN_SQL}')
     if priority_band is not None:
         clauses.append('t.priority_band=?'); params.append(POLICY_BAND_STORAGE.get(priority_band, priority_band))
     if route_class == 'EXPERT_REVIEW_REQUIRED':
@@ -118,7 +125,10 @@ def summary(conn):
     row = conn.execute(f'''SELECT count(*) AS total_alerts,
         count(CASE WHEN {CRITICAL} THEN 1 END) AS critical_alerts,
         count(CASE WHEN t.handling_route='tier1_review' AND (w.status IS NULL OR w.status NOT IN ('completed','escalated')) THEN 1 END) AS tier1_review,
+        count(CASE WHEN t.handling_route='tier1_review' AND {ACTIVE_WORK} AND {IS_GROUP} THEN 1 END) AS tier1_groups,
         count(CASE WHEN t.handling_route='tier2_case' THEN 1 END) AS tier2_cases,
+        count(CASE WHEN t.handling_route='tier2_case' AND t.decision_source='system_policy' THEN 1 END) AS auto_escalated,
+        count(CASE WHEN {RECOMMENDATION_OPEN_SQL} AND {ACTIVE_WORK} THEN 1 END) AS tier2_candidates,
         count(CASE WHEN {EXPERT} THEN 1 END) AS expert_review
         {SOURCE}''').fetchone()
     open_cases = conn.execute("SELECT count(*) FROM tier2_cases c JOIN tier2_case_state cs ON cs.case_id=c.id WHERE cs.status IN ('open','investigating')").fetchone()[0]
@@ -140,5 +150,6 @@ def summary(conn):
     available = {item[0] for item in conn.execute(f"SELECT a.id {SOURCE} WHERE {CURRENT_TIER1_SQL} AND (w.status IS NULL OR w.status='available')")}
     values['available_work'] -= len(available & deferred_ids)
     deferred = len(deferred_ids)
-    values.update(no_immediate_review=deferred, review_required=values['total_alerts'] - deferred)
+    values.update(no_immediate_review=deferred, review_required=values['total_alerts'] - deferred,
+                  tier1_singles=values['tier1_review'] - values['tier1_groups'])
     return OperationalSummary(**values, open_tier2_cases=open_cases)

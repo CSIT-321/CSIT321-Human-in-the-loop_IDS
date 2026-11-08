@@ -14,6 +14,9 @@ export const queueViews = [
   { key: "all", label: "All", count: "totalAlerts", query: {} },
   { key: "tier2", label: "Tier 2", count: "tier2Cases", query: { handlingRoute: "tier2_case" } },
   { key: "tier1", label: "Tier 1", count: "tier1Review", query: { handlingRoute: "tier1_review",workScope:'active' } },
+  // C2 (approved 2026-11-08): the server applies the C3 rule, so this tab and the "Why Tier 2" panel agree.
+  { key: "tier2-candidates", label: "Tier 2 candidates", count: "tier2Candidates", query: { tier2Candidate: true, workScope: "active" } },
+  { key: "auto-escalated", label: "Auto-escalated", count: "autoEscalated", query: { handlingRoute: "tier2_case", decisionSource: "system_policy" } },
   { key: "expert", label: "Expert Review", count: "expertReview", query: { routeClass: "EXPERT_REVIEW_REQUIRED" } },
   { key: "critical", label: "Critical", count: "criticalAlerts", query: { priorityBand: "P1" } },
   { key: "needs-review", label: "Needs Review", count: "reviewRequired", query: { reviewRequired: true } },
@@ -27,6 +30,10 @@ export const attackCategories = [
 ] as const;
 export const categoryLabel = (value: string) => attackCategories.find(([key]) => key === value)?.[1] ?? "Not classified";
 const number = (value: number | undefined) => value === undefined ? "—" : value.toLocaleString();
+// D4 condition 3: the Tier 1 count shows groups and singles apart. Falls back to the total if the split is absent.
+const tier1Split = (data?: Summary) => data?.tier1Groups === undefined || data.tier1Singles === undefined ? null
+  : `${number(data.tier1Groups)} groups · ${number(data.tier1Singles)} single`;
+const shown = (data: Summary | undefined, key: keyof Summary) => key === "tier1Review" ? tier1Split(data) ?? number(data?.[key]) : number(data?.[key]);
 const metrics = [
   ["active", "Active Alerts", "activeAlerts", "Alerts without completed or escalated Tier 1 work; attention and Tier 2 remain separate"],
   ["critical", "Critical", "criticalAlerts", "Current priority band P1 / critical"],
@@ -44,9 +51,9 @@ export function OperationalKpis({ data, onView }: { data?: Summary; onView: (vie
     <div className="ops-kpis">
       {metrics.map(([view, label, key, definition]) => {
         const content = <><span className="block text-[10px] font-semibold uppercase tracking-wide text-muted">{label}</span>
-          <span className={`mt-1 block font-mono text-2xl font-semibold tabular-nums ${key === "criticalAlerts" ? "text-danger" : "text-text"}`}>{number(data?.[key])}</span></>;
+          <span className={`mt-1 block font-mono ${key === "tier1Review" && tier1Split(data) ? "text-sm" : "text-2xl"} font-semibold tabular-nums ${key === "criticalAlerts" ? "text-danger" : "text-text"}`}>{shown(data, key)}</span></>;
         const className = "min-w-0 rounded-sm px-3 py-2 text-left hover:bg-raised focus-visible:outline-2 focus-visible:outline-primary";
-        const accessible = `${label} ${number(data?.[key])}`;
+        const accessible = `${label} ${shown(data, key)}`;
         return view === "cases" ? <Link key={key} to="/analyst/tier2-cases" aria-label={accessible} title={definition} className={className}>{content}</Link>
           : <button key={key} aria-label={accessible} title={definition} onClick={() => onView(view)} className={className}>{content}</button>;
       })}
@@ -66,7 +73,7 @@ export function QueueTabs({ active, data, onView }: { active: QueueView; data?: 
     {queueViews.map(view => <button key={view.key} id={"queue-view-" + view.key} role="tab" aria-selected={active === view.key}
       tabIndex={active === view.key ? 0 : -1} aria-controls="operational-queue-panel" onClick={() => onView(view.key)}
       className={`whitespace-nowrap rounded-sm border px-2 py-1 text-[10px] ${active === view.key ? "border-primary bg-raised text-text" : "border-border text-muted hover:text-text"}`}>
-      {view.label} <span className="ml-1 font-mono tabular-nums">{number(data?.[view.count])}</span>
+      {view.label} <span className="ml-1 font-mono tabular-nums">{shown(data, view.count)}</span>
     </button>)}
   </div>;
 }
@@ -82,18 +89,23 @@ export function QueueItem({ item }: { item: Schemas["RoutingView"] }) {
   return <>
     <span className="flex items-start justify-between gap-2">
       <span className="min-w-0 space-y-1 pt-1"><span className={`block text-[10px] font-semibold uppercase tracking-wide ${bandLabel === "Critical" ? "text-danger" : "text-muted"}`}>{bandLabel} · {routeLabel}</span>
-        {expert ? <span className="block text-[10px] font-semibold text-accent">EXPERT</span> : item.systemRouting && <span className="block text-[10px] text-muted">{item.systemRouting.routeClass === "CRITICAL_ESCALATION" ? "Critical Escalation" : state.decisionSource === "analyst" && route === "tier2_case" ? "Manual Override" : "Routine Review"}</span>}</span>
+        {expert ? <span className="block text-[10px] font-semibold text-accent">EXPERT</span> : item.systemRouting && <span className="block text-[10px] text-muted">{state.decisionSource === "analyst" && route === "tier2_case" ? "Manual Override" : route === "tier2_case" && state.decisionSource === "system_policy" ? "Auto-escalated" : item.systemRouting.routeClass === "CRITICAL_ESCALATION" ? "Critical Escalation" : "Routine Review"}</span>}</span>
       <span title="Operational Priority — urgency for SOC action; not detector confidence or severity" aria-label={`Operational Priority: ${state.operationalPriority ?? "Unassigned"}`} className="shrink-0 text-right">
         <span className="block font-mono text-3xl font-semibold leading-none tabular-nums">{state.operationalPriority ?? "—"}</span>
         <span className="mt-1 block text-[9px] text-muted">Operational Priority</span>
       </span>
     </span>
     <span className="block break-words font-semibold">{item.title}</span>
+    {item.tier2RecommendationOpen && <span className="block rounded-sm border border-accent/40 bg-accent/10 px-1.5 py-1 text-[10px]">
+      <span className="block font-semibold tracking-wide text-accent">TIER 2 RECOMMENDED</span>
+      {state.tier2RecommendationReasons[0] && <span className="block break-words text-muted">{state.tier2RecommendationReasons[0]}</span>}
+    </span>}
     {item.work?.status&&<span className="block break-words font-semibold text-accent">{workLabel(item.work)}{item.work.status==='completed'&&item.work.verdictOutcome?` · ${item.work.verdictOutcome.replaceAll('_',' ')}`:''}</span>}
     {!needsReview(item) && <span className="block text-ok">No Immediate Review</span>}
     <span className="block text-muted">{item.classification?.status === "informational_policy_signal" ? "Informational / Policy Signal" : categoryLabel(item.classification?.attackCategory ?? "")}</span>
     {detail && <span className="block break-all font-mono text-[10px]">{detail.sourceIp} → {detail.destinationIp}{detail.destinationPort != null ? ":" + detail.destinationPort : ""}</span>}
     <span className="block text-[10px] text-muted">{item.detectorSource === "current_flow" ? "Legacy Flow Detector" : item.detectorName}
+      {item.groupMemberCount != null && ` · Group of ${item.groupMemberCount}`}
       {detail?.relatedSignatureCount != null && ` · ${detail.relatedSignatureCount} signature${detail.relatedSignatureCount === 1 ? "" : "s"}`}
       {!!detail?.evidenceTypes.length && ` · ${detail.evidenceTypes.filter(type => type !== "alert").map(type => type.toUpperCase()).join(" + ") || "Alert"}`}</span>
     <span className="sr-only">Review Required: {needsReview(item) ? "Yes" : "No"}</span>

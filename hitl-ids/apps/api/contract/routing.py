@@ -24,6 +24,11 @@ class OperationalSummary(ApiModel):
     escalated_work: int = 0
     available_work: int = 0
     in_review_work: int = 0
+    # C2 + D4 condition 3 (approved 2026-11-08). tier1_groups + tier1_singles = tier1_review.
+    tier2_candidates: int = 0   # open C3 recommendations on active work
+    auto_escalated: int = 0     # Tier 2 cases the system policy opened
+    tier1_groups: int = 0
+    tier1_singles: int = 0
 
 
 class QueueDetectionSummary(ApiModel):
@@ -47,6 +52,7 @@ class RoutingView(ApiModel):
     allowed_actions: list[RoutingAction]
     tier2_recommendation_open: bool = False  # C3: the "Why Tier 2" panel shows only while this is true
     case_ref: UUID | None = None
+    group_member_count: int | None = None  # C2: flows in the group this alert represents; None for a single
     classification: AttackClassification | None = None
     system_routing: SystemRoutingDecision | None = None
     detection_summary: QueueDetectionSummary | None = None

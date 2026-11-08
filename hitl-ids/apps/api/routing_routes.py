@@ -45,6 +45,7 @@ def _view(conn, alert_id, principal, review=None):
                          'ORDER BY id DESC LIMIT 1', (alert_id,)).fetchone()
     case = conn.execute('SELECT case_ref FROM tier2_cases WHERE primary_operational_alert_id=?', (alert_id,)).fetchone()
     system = conn.execute('SELECT classification,routing_decision FROM operational_system_routing WHERE operational_alert_id=?', (alert_id,)).fetchone()
+    group = conn.execute('SELECT member_count FROM alert_groups WHERE representative_operational_alert_id=?', (alert_id,)).fetchone()
     bundle = json.loads(row['detector_evidence']).get('structured_evidence', {}).get('suricataBundle')
     attention=review or effective_review(conn,row['operational_alert_ref'])
     work=read_work(conn,alert_id,principal.user_id,attention)
@@ -65,7 +66,7 @@ def _view(conn, alert_id, principal, review=None):
         allowed_actions=actions, work=work,
         # The C3 panel is for current (system-routed) alerts only; historical rows keep their read-only history.
         tier2_recommendation_open=status=='current' and recommendation_open(state, status),
-        case_ref=case['case_ref'] if case else None)
+        case_ref=case['case_ref'] if case else None, group_member_count=group[0] if group else None)
 
 
 @router.get('', response_model=Page[RoutingView], operation_id='listV2Routing')
@@ -77,6 +78,8 @@ def list_routing(request: Request, response: Response, conn: ReadConn, principal
                  routeClass: Literal['ROUTINE_REVIEW', 'CRITICAL_ESCALATION', 'EXPERT_REVIEW_REQUIRED'] | None = None,
                  attackCategory: AttackCategory | None = None, q: str | None = Query(None, max_length=200),
                  workScope: Scope = 'all',
+                 tier2Candidate: bool | None = None,
+                 decisionSource: Literal['system_policy', 'analyst'] | None = None,
                  sort: Literal['priority_desc'] = 'priority_desc'):
     """Filter the full V2 dataset before paging. Order: Operational Priority DESC (null last),
     occurredAt instant DESC, operationalAlertRef ASC. Attention is evaluated read-only."""
@@ -86,7 +89,7 @@ def list_routing(request: Request, response: Response, conn: ReadConn, principal
         reviews = {}
         total, ids = operational_queue.queue_page(conn, limit=limit, offset=offset, reviews=reviews,
             handling_route=handlingRoute, review_required=reviewRequired, priority_band=priorityBand,
-            review_disposition=reviewDisposition,
+            review_disposition=reviewDisposition, tier2_candidate=tier2Candidate, decision_source=decisionSource,
             route_class=routeClass, attack_category=attackCategory, q=q, work_scope=workScope)
         items = [_view(conn, alert_id, principal, reviews.get(alert_id)) for alert_id in ids]
         return Page(items=items, page=PageInfo(total=total, limit=limit, offset=offset, returned=len(items)))

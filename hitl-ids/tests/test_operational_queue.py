@@ -52,7 +52,8 @@ def test_whole_dataset_summary_overlap_and_readonly_snapshot(api, queue_db, monk
     response = api.get('/api/v2/alerts/summary')
     assert response.status_code == 200
     assert response.json() == dict(totalAlerts=66, criticalAlerts=54, tier1Review=8, tier2Cases=54,
-        expertReview=2, reviewRequired=64, noImmediateReview=2, openTier2Cases=54, activeAlerts=63, completedWork=3, escalatedWork=0, availableWork=6, inReviewWork=0)
+        expertReview=2, reviewRequired=64, noImmediateReview=2, openTier2Cases=54, activeAlerts=63, completedWork=3, escalatedWork=0, availableWork=6, inReviewWork=0,
+        tier2Candidates=0, autoEscalated=54, tier1Groups=0, tier1Singles=8)  # C2: Suricata fixture, no flow groups
     assert traces.count('BEGIN') == 1 and traces.count('COMMIT') == 1
     assert all(not sql.lstrip().upper().startswith(('INSERT','UPDATE','DELETE','CREATE','ALTER','REPLACE')) for sql in traces)
     assert len(page(api)['items']) == 50  # KPI totals are not this page.
@@ -157,4 +158,4 @@ def test_empty_current_dataset(tmp_path):
         token = auth.encode_token(db.from_row(m.User, conn.execute("SELECT * FROM users WHERE username='g.ang'").fetchone()))
     with TestClient(create_app(path)) as api:
         data = api.get('/api/v2/alerts/summary',headers={'Authorization':'Bearer '+token}).json()
-    assert len(data) == 13 and set(data.values()) == {0}
+    assert len(data) == 17 and set(data.values()) == {0}

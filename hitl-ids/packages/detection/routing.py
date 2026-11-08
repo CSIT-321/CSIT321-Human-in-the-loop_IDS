@@ -11,7 +11,7 @@ from pydantic import Field, field_validator
 from packages.contracts import db, models as m
 from packages.contracts.operational_v2 import OperationalTriageStateV2, V2Contract
 from packages.detection.adapters.operational_v2 import read_triage
-from packages.detection.tier1_eligibility import Tier1Status
+from packages.detection.tier1_eligibility import CURRENT_TIER1_SQL, Tier1Status
 
 RoutingAction = Literal['admit_tier1', 'approve_tier2', 'reject_tier2', 'manual_escalate']
 EVENTS = {'admit_tier1': 'V2_TIER1_ADMITTED', 'approve_tier2': 'V2_TIER2_APPROVED',
@@ -85,6 +85,12 @@ def recommendation_open(state: OperationalTriageStateV2, status: Tier1Status) ->
     if status == 'current':
         return state.tier2_recommended and state.decision_source != 'analyst'
     return state.tier2_recommended and status == 'historical'
+
+
+#: C2: the queue's SQL form of "the C3 panel is open" (current alerts only, as RoutingView.tier2_recommendation_open).
+#: test_queue_tier_views compares it with recommendation_open on every row.
+RECOMMENDATION_OPEN_SQL = (f"({CURRENT_TIER1_SQL} AND t.tier2_recommended=1 "
+                           "AND t.decision_source != 'analyst')")
 
 
 def route_alert(conn: sqlite3.Connection, alert_id: int, *, actor_id: int,

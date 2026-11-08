@@ -13,7 +13,7 @@ const REASON = "E3: score 100 and Botnet has attack severity 9. A Tier 1 analyst
 
 function view(overrides: Partial<View> = {}): View {
   return {
-    work: null, effectiveReview: null, detectionSummary: null, classification: null, caseRef: null,
+    work: null, effectiveReview: null, detectionSummary: null, classification: null, caseRef: null, groupMemberCount: null,
     systemRouting: { routeClass: "ROUTINE_REVIEW", route: "tier1_review", decisionSource: "system_policy", policyVersion: "flow-routing-v1", reasons: ["Normal review"] },
     operationalAlertRef: REF, title: "XGBoost: Botnet", detectorName: "Legacy Flow Detector", detectorSource: "legacy_flow",
     stateVersion: "a".repeat(64), reviewReasons: ["Review"], latestDecision: null,
