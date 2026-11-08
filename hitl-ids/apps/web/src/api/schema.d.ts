@@ -9999,6 +9999,15 @@ export interface operations {
                     "application/json": components["schemas"]["Note"][];
                 };
             };
+            /** @description Not signed in, or the token expired */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
             /** @description Not found */
             404: {
                 headers: {
@@ -10048,6 +10057,15 @@ export interface operations {
             };
             /** @description Validation failed */
             400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not signed in, or the token expired */
+            401: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -10854,6 +10872,15 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
+            /** @description Not signed in, or the token expired */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
             /** @description Role not permitted */
             403: {
                 headers: {
@@ -10973,6 +11000,15 @@ export interface operations {
                     "application/json": components["schemas"]["VerdictMemoryState"];
                 };
             };
+            /** @description Not signed in, or the token expired */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
             /** @description Not found */
             404: {
                 headers: {
@@ -11078,6 +11114,15 @@ export interface operations {
                     "application/json": components["schemas"]["VerdictView"];
                 };
             };
+            /** @description Not signed in, or the token expired */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
             /** @description Not found */
             404: {
                 headers: {
@@ -11127,6 +11172,15 @@ export interface operations {
             };
             /** @description Validation failed */
             400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not signed in, or the token expired */
+            401: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -11189,6 +11243,15 @@ export interface operations {
                     "application/json": components["schemas"]["VerdictHistory"];
                 };
             };
+            /** @description Not signed in, or the token expired */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
             /** @description Not found */
             404: {
                 headers: {
@@ -11230,6 +11293,15 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["WorkView"];
+                };
+            };
+            /** @description Not signed in, or the token expired */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
             /** @description Not found */
@@ -11283,6 +11355,15 @@ export interface operations {
             };
             /** @description Validation failed */
             400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not signed in, or the token expired */
+            401: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -11354,6 +11435,15 @@ export interface operations {
                     "application/json": components["schemas"]["WorkEvent"][];
                 };
             };
+            /** @description Not signed in, or the token expired */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
             /** @description Not found */
             404: {
                 headers: {
@@ -11403,6 +11493,15 @@ export interface operations {
             };
             /** @description Validation failed */
             400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not signed in, or the token expired */
+            401: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -13558,6 +13657,15 @@ export interface operations {
                     "application/json": components["schemas"]["ConclusionMemoryState"];
                 };
             };
+            /** @description Not signed in, or the token expired */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
             /** @description Not found */
             404: {
                 headers: {
@@ -13607,6 +13715,24 @@ export interface operations {
             };
             /** @description Validation failed */
             400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not signed in, or the token expired */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Role not permitted */
+            403: {
                 headers: {
                     [name: string]: unknown;
                 };

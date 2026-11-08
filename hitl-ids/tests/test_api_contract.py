@@ -301,10 +301,32 @@ def test_the_family_effect_is_reportable(document):
     assert "membersMoved" in effect and "gateOpen" in effect
 
 
+def test_every_operation_documents_401_except_login(document):
+    for path, operations in document["paths"].items():
+        for method, operation in operations.items():
+            if path == "/api/auth/login":
+                continue
+            assert "401" in operation["responses"], f"{method.upper()} {path} omits the documented 401"
+
+
+def test_the_four_tier1_tier2_mutations_are_role_gated_in_the_contract(document):
+    """S6-03: these four handlers carry MutationRole; the published contract must say so."""
+    expected = {
+        ('/api/v2/alerts/{alertRef}/verdict', 'post'),
+        ('/api/v2/alerts/{alertRef}/work/claim', 'post'),
+        ('/api/v2/alerts/{alertRef}/triage-memory/from-verdict', 'post'),
+        ('/api/v2/tier2/cases/{caseRef}/triage-memory/from-conclusion', 'post'),
+    }
+    for path, method in expected:
+        assert document["paths"][path][method]["x-required-roles"] == ["security_analyst", "system_admin"], path
+    from_conclusion = document["paths"]['/api/v2/tier2/cases/{caseRef}/triage-memory/from-conclusion']['post']
+    assert "403" in from_conclusion["responses"]
+
+
 def test_the_admin_write_is_role_gated(document):
     """The plan's named verification: an analyst account is blocked from the guardrail config."""
     put = document["paths"]["/api/config/guardrails"]["put"]
-    assert put["x-required-role"] == "system_admin"
+    assert put["x-required-roles"] == ["system_admin"]
     assert "403" in put["responses"] and "401" in put["responses"]
     assert any(parameter["name"] == "Authorization" for parameter in put["parameters"])
 

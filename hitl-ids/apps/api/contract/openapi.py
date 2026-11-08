@@ -149,15 +149,19 @@ MODELS: tuple[type[BaseModel], ...] = (
 )
 
 DESCRIPTION = f"""
-The demo API for the Human-in-the-Loop IDS dashboard (FYP-26-S3-13).
+The API for the Human-in-the-Loop IDS dashboard (FYP-26-S3-13).
 
-**Deliberately narrow.** Only the endpoints the demo path exercises; the remaining TDM surface is
-S18. Adding endpoints "while we're here" is on the plan's anti-pattern list.
+**The final product surface is the V2 operational workflow**: Suricata evidence → normalized classification →
+Operational Priority → System Routing → human investigation. The Tier 1/Tier 2 routes (`/api/v2/...`) carry the
+triage: the queue, claims, verdicts, selective review, triage memory, Tier 2 cases and response authorization.
+The research surface (prospective collection, frozen V3/V3.1 evaluation records, the presentation replay
+workspace) and the historical `/api/alerts` console remain exposed for the demo's evaluation story; they are
+not part of the day-to-day analyst loop.
 
-**Authentication is real (S18a).** `POST /api/auth/login` with one of the three seeded accounts
-returns a JWT bearer token; send it as `Authorization: Bearer <token>` on every other request. No
-token, a forged token or an expired one is a 401. The role gates only where a role genuinely gates
-an action, so `PUT /api/config/guardrails` refuses anything but `system_admin`.
+**Authentication is real.** `POST /api/auth/login` with one of the three seeded accounts returns a JWT bearer
+token; send it as `Authorization: Bearer <token>` on every other request. No token, a forged token or an
+expired one is a 401. Where a role genuinely gates an action, the operation carries `x-required-roles`; the
+rest are open to any signed-in account.
 
 **Historical /api/alerts queue ordering**: `{QUEUE_ORDER}`. Feedback moves an alert between queue
 *bands*, never across evidence classes, so a client that re-sorts by `evidenceClass` will hide the
@@ -399,7 +403,7 @@ def _paths() -> dict[str, Any]:
                 "responses": {"200": {"description": "The alert after the change",
                                       **_json(a.TriageResponse)},
                               **_errors(400, 403, 404, 409)},
-                "x-required-role": "security_analyst | system_admin",
+                "x-required-roles": ["security_analyst", "system_admin"],
             }
         },
         "/api/alerts/{alertRef}/assign": {
@@ -412,7 +416,7 @@ def _paths() -> dict[str, Any]:
                 "responses": {"200": {"description": "The alert after the change",
                                       **_json(a.TriageResponse)},
                               **_errors(400, 403, 404, 409)},
-                "x-required-role": "security_analyst | system_admin",
+                "x-required-roles": ["security_analyst", "system_admin"],
             }
         },
         "/api/alerts/{alertRef}/notes": {
@@ -433,7 +437,7 @@ def _paths() -> dict[str, Any]:
                 "requestBody": {"required": True, **_json(a.NoteRequest)},
                 "responses": {"200": {"description": "The stored note", **_json(a.NoteOut)},
                               **_errors(400, 403, 404)},
-                "x-required-role": "security_analyst | system_admin",
+                "x-required-roles": ["security_analyst", "system_admin"],
             },
         },
         "/api/dashboard/breakdowns": {
@@ -472,7 +476,7 @@ def _paths() -> dict[str, Any]:
                             **_json(o.IpSecurityReport)},
                     **_errors(400, 403),
                 },
-                "x-required-role": "system_admin",
+                "x-required-roles": ["system_admin"],
             }
         },
         "/api/admin/reports/ips": {
@@ -489,7 +493,7 @@ def _paths() -> dict[str, Any]:
                             **_json(o.SourceIpOverviewPage)},
                     **_errors(400, 403),
                 },
-                "x-required-role": "system_admin",
+                "x-required-roles": ["system_admin"],
             }
         },
         "/api/dashboard/summary": {
@@ -513,7 +517,7 @@ def _paths() -> dict[str, Any]:
                 "responses": {"202": {"description": "The run was accepted",
                                       **_json(o.DetectionRunSummary)},
                               **_errors(400, 403, 409)},
-                "x-required-role": "system_admin",
+                "x-required-roles": ["system_admin"],
             }
         },
         "/api/audit-log": {
@@ -545,7 +549,7 @@ def _paths() -> dict[str, Any]:
                 "requestBody": {"required": True, **_json(o.GuardrailConfigUpdate)},
                 "responses": {"200": {"description": "The updated settings",
                                       **_json(o.GuardrailConfig)}, **_errors(400, 403)},
-                "x-required-role": "system_admin",
+                "x-required-roles": ["system_admin"],
             },
         },
         "/api/evaluation/scenarios": {
@@ -789,7 +793,8 @@ def _paths() -> dict[str, Any]:
         'get': {'operationId':'getAnalystVerdict','summary':'Read current human verdict','tags':['Analyst verdict'],
             'parameters':[AUTH_PARAMETER,alert_ref], 'responses':{'200':{'description':'Current verdict',**_json(VerdictView)},**_errors(404,503)}},
         'post': {'operationId':'recordAnalystVerdict','summary':'Record or correct authenticated Tier 1 verdict','tags':['Analyst verdict'],
-            'parameters':[AUTH_PARAMETER,alert_ref], 'requestBody':{'required':True,**_json(VerdictCommand)},
+            'parameters':[AUTH_PARAMETER,alert_ref], 'x-required-roles':['security_analyst','system_admin'],
+            'requestBody':{'required':True,**_json(VerdictCommand)},
             'responses':{'200':{'description':'Recorded verdict',**_json(VerdictMutation)},**_errors(400,403,404,409)}}}
     paths['/api/v2/alerts/{alertRef}/work']={'get':{
         'operationId':'getAnalystWork','summary':'Read human work without claiming','tags':['Shared analyst work'],
@@ -805,6 +810,7 @@ def _paths() -> dict[str, Any]:
         'parameters':[AUTH_PARAMETER,alert_ref,{'name':'X-Operational-Workspace','in':'header','required':False,
             'description':'Optional workspace observed with the queue/work read; reject a switch before this claim.',
             'schema':{'type':'string','enum':['operational','v3-1-replay']}}],
+        'x-required-roles':['security_analyst','system_admin'],
         'requestBody':{'required':True,**_json(ClaimCommand)},
         'responses':{'200':{'description':'Finalized single-actor claim',**_json(ClaimResult)},**_errors(400,403,404,409,503)}}}
     paths['/api/v2/alerts/{alertRef}/work/release']={'post':{
@@ -828,15 +834,17 @@ def _paths() -> dict[str, Any]:
         'responses':{'200':{'description':'Verdict history',**_json(VerdictHistory)},**_errors(404,503)}}}
     paths['/api/v2/alerts/{alertRef}/triage-memory/from-verdict']={'post':{
         'operationId':'contributeVerdictMemory','summary':'Contribute latest canonical human Verdict with explicit reuse scope','tags':['Triage memory'],
-        'parameters':[AUTH_PARAMETER,alert_ref],'requestBody':{'required':True,**_json(VerdictMemoryRequest)},
+        'parameters':[AUTH_PARAMETER,alert_ref],'x-required-roles':['security_analyst','system_admin'],
+        'requestBody':{'required':True,**_json(VerdictMemoryRequest)},
         'responses':{'200':{'description':'Verdict-linked memory evidence',**_json(MemoryMutation)},**_errors(400,403,404,409)}}}
     paths['/api/v2/alerts/{alertRef}/triage-memory/verdict-state']={'get':{
         'operationId':'getVerdictMemoryState','summary':'Read current or superseded contribution state','tags':['Triage memory'],
         'parameters':[AUTH_PARAMETER,alert_ref], 'responses':{'200':{'description':'Read-only contribution projection',**_json(VerdictMemoryState)},**_errors(404,503)}}}
     paths['/api/v2/tier2/cases/{caseRef}/triage-memory/from-conclusion']={'post':{
         'operationId':'contributeConclusionMemory','summary':'Explicitly contribute latest expert conclusion with reuse scope','tags':['Triage memory'],
-        'parameters':[AUTH_PARAMETER,case_ref],'requestBody':{'required':True,**_json(ConclusionMemoryRequest)},
-        'responses':{'200':{'description':'Expert memory contribution',**_json(MemoryMutation)},**_errors(400,404,409)}}}
+        'parameters':[AUTH_PARAMETER,case_ref],'x-required-roles':['security_analyst','system_admin'],
+        'requestBody':{'required':True,**_json(ConclusionMemoryRequest)},
+        'responses':{'200':{'description':'Expert memory contribution',**_json(MemoryMutation)},**_errors(400,403,404,409)}}}
     paths['/api/v2/tier2/cases/{caseRef}/triage-memory/conclusion-state']={'get':{
         'operationId':'getConclusionMemoryState','summary':'Read expert learning eligibility and supersession','tags':['Triage memory'],
         'parameters':[AUTH_PARAMETER,case_ref],'responses':{'200':{'description':'Read-only expert learning state',**_json(ConclusionMemoryState)},**_errors(404,503)}}}
@@ -922,6 +930,12 @@ def _paths() -> dict[str, Any]:
                               'x-required-roles':['system_admin','evaluator'], 'parameters':parameters,
                               'responses': {'200': {'description':'Official frozen V3.1 evidence', **_json(model)},
                                             **_errors(400,401,403,404,503)}}}
+    # S6-03: several operations are declared after the 401-stamping loop above; stamp every operation
+    # except login here, once, so a missing sign-in is documented on the whole surface.
+    for path, operations in paths.items():
+        for operation in operations.values():
+            if isinstance(operation, dict) and "401" not in operation.get("responses", {}):
+                operation.setdefault("responses", {})["401"] = _errors(401)["401"]
     return paths
 
 

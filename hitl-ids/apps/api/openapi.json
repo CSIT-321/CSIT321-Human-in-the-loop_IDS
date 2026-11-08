@@ -12779,7 +12779,7 @@
     }
   },
   "info": {
-    "description": "The demo API for the Human-in-the-Loop IDS dashboard (FYP-26-S3-13).\n\n**Deliberately narrow.** Only the endpoints the demo path exercises; the remaining TDM surface is\nS18. Adding endpoints \"while we're here\" is on the plan's anti-pattern list.\n\n**Authentication is real (S18a).** `POST /api/auth/login` with one of the three seeded accounts\nreturns a JWT bearer token; send it as `Authorization: Bearer <token>` on every other request. No\ntoken, a forged token or an expired one is a 401. The role gates only where a role genuinely gates\nan action, so `PUT /api/config/guardrails` refuses anything but `system_admin`.\n\n**Historical /api/alerts queue ordering**: `CASE severity WHEN 'Critical' THEN 4 WHEN 'High' THEN 3 WHEN 'Medium' THEN 2 WHEN 'Low' THEN 1 ELSE 0 END DESC, combined_score DESC, id ASC`. Feedback moves an alert between queue\n*bands*, never across evidence classes, so a client that re-sorts by `evidenceClass` will hide the\nre-ranking the system exists to perform.\n\n**Current operational workflow:** Suricata evidence → normalized classification → Operational Priority → System Routing → human investigation. V2 queues rank Operational Priority DESC, event time DESC, then reference; they do not use legacy feedback scoring.\n\n**Alerts are addressed by UUID.** V2 routing uses the separate operational alert UUID;\nV2 state/audit bodies include internal correlation ids, never legacy alert identifiers.\n\n**In the historical recorded-flow pipeline, every flow becomes an alert**, including flows no detector flagged. They are the queue's bottom\nband and the evaluation's denominator.",
+    "description": "The API for the Human-in-the-Loop IDS dashboard (FYP-26-S3-13).\n\n**The final product surface is the V2 operational workflow**: Suricata evidence → normalized classification →\nOperational Priority → System Routing → human investigation. The Tier 1/Tier 2 routes (`/api/v2/...`) carry the\ntriage: the queue, claims, verdicts, selective review, triage memory, Tier 2 cases and response authorization.\nThe research surface (prospective collection, frozen V3/V3.1 evaluation records, the presentation replay\nworkspace) and the historical `/api/alerts` console remain exposed for the demo's evaluation story; they are\nnot part of the day-to-day analyst loop.\n\n**Authentication is real.** `POST /api/auth/login` with one of the three seeded accounts returns a JWT bearer\ntoken; send it as `Authorization: Bearer <token>` on every other request. No token, a forged token or an\nexpired one is a 401. Where a role genuinely gates an action, the operation carries `x-required-roles`; the\nrest are open to any signed-in account.\n\n**Historical /api/alerts queue ordering**: `CASE severity WHEN 'Critical' THEN 4 WHEN 'High' THEN 3 WHEN 'Medium' THEN 2 WHEN 'Low' THEN 1 ELSE 0 END DESC, combined_score DESC, id ASC`. Feedback moves an alert between queue\n*bands*, never across evidence classes, so a client that re-sorts by `evidenceClass` will hide the\nre-ranking the system exists to perform.\n\n**Current operational workflow:** Suricata evidence → normalized classification → Operational Priority → System Routing → human investigation. V2 queues rank Operational Priority DESC, event time DESC, then reference; they do not use legacy feedback scoring.\n\n**Alerts are addressed by UUID.** V2 routing uses the separate operational alert UUID;\nV2 state/audit bodies include internal correlation ids, never legacy alert identifiers.\n\n**In the historical recorded-flow pipeline, every flow becomes an alert**, including flows no detector flagged. They are the queue's bottom\nband and the evaluation's denominator.",
     "title": "HITL IDS demo API",
     "version": "0.1.0"
   },
@@ -13193,7 +13193,9 @@
         "tags": [
           "reports"
         ],
-        "x-required-role": "system_admin"
+        "x-required-roles": [
+          "system_admin"
+        ]
       }
     },
     "/api/admin/reports/ips": {
@@ -13396,7 +13398,9 @@
         "tags": [
           "reports"
         ],
-        "x-required-role": "system_admin"
+        "x-required-roles": [
+          "system_admin"
+        ]
       }
     },
     "/api/admin/users": {
@@ -15402,7 +15406,10 @@
           "alerts",
           "triage"
         ],
-        "x-required-role": "security_analyst | system_admin"
+        "x-required-roles": [
+          "security_analyst",
+          "system_admin"
+        ]
       }
     },
     "/api/alerts/{alertRef}/feedback": {
@@ -15740,7 +15747,10 @@
           "alerts",
           "triage"
         ],
-        "x-required-role": "security_analyst | system_admin"
+        "x-required-roles": [
+          "security_analyst",
+          "system_admin"
+        ]
       }
     },
     "/api/alerts/{alertRef}/score-adjustment": {
@@ -15920,7 +15930,10 @@
           "alerts",
           "triage"
         ],
-        "x-required-role": "security_analyst | system_admin"
+        "x-required-roles": [
+          "security_analyst",
+          "system_admin"
+        ]
       }
     },
     "/api/audit-log": {
@@ -16359,7 +16372,9 @@
         "tags": [
           "config"
         ],
-        "x-required-role": "system_admin"
+        "x-required-roles": [
+          "system_admin"
+        ]
       }
     },
     "/api/dashboard/breakdowns": {
@@ -16573,7 +16588,9 @@
         "tags": [
           "detection"
         ],
-        "x-required-role": "system_admin"
+        "x-required-roles": [
+          "system_admin"
+        ]
       }
     },
     "/api/entities/ip/{ip}": {
@@ -18081,6 +18098,16 @@
             },
             "description": "Notes"
           },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not signed in, or the token expired"
+          },
           "404": {
             "content": {
               "application/json": {
@@ -18160,6 +18187,16 @@
               }
             },
             "description": "Validation failed"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not signed in, or the token expired"
           },
           "403": {
             "content": {
@@ -19314,6 +19351,16 @@
             },
             "description": "Validation failed"
           },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not signed in, or the token expired"
+          },
           "403": {
             "content": {
               "application/json": {
@@ -19348,6 +19395,10 @@
         "summary": "Contribute latest canonical human Verdict with explicit reuse scope",
         "tags": [
           "Triage memory"
+        ],
+        "x-required-roles": [
+          "security_analyst",
+          "system_admin"
         ]
       }
     },
@@ -19502,6 +19553,16 @@
             },
             "description": "Read-only contribution projection"
           },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not signed in, or the token expired"
+          },
           "404": {
             "content": {
               "application/json": {
@@ -19647,6 +19708,16 @@
             },
             "description": "Current verdict"
           },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not signed in, or the token expired"
+          },
           "404": {
             "content": {
               "application/json": {
@@ -19727,6 +19798,16 @@
             },
             "description": "Validation failed"
           },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not signed in, or the token expired"
+          },
           "403": {
             "content": {
               "application/json": {
@@ -19761,6 +19842,10 @@
         "summary": "Record or correct authenticated Tier 1 verdict",
         "tags": [
           "Analyst verdict"
+        ],
+        "x-required-roles": [
+          "security_analyst",
+          "system_admin"
         ]
       }
     },
@@ -19817,6 +19902,16 @@
               }
             },
             "description": "Verdict history"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not signed in, or the token expired"
           },
           "404": {
             "content": {
@@ -19879,6 +19974,16 @@
               }
             },
             "description": "Current human work"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not signed in, or the token expired"
           },
           "404": {
             "content": {
@@ -19975,6 +20080,16 @@
             },
             "description": "Validation failed"
           },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not signed in, or the token expired"
+          },
           "403": {
             "content": {
               "application/json": {
@@ -20019,6 +20134,10 @@
         "summary": "Arbitrate explicit Tier 1 claim; multiple distinct contenders all conflict",
         "tags": [
           "Shared analyst work"
+        ],
+        "x-required-roles": [
+          "security_analyst",
+          "system_admin"
         ]
       }
     },
@@ -20078,6 +20197,16 @@
               }
             },
             "description": "Work history"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not signed in, or the token expired"
           },
           "404": {
             "content": {
@@ -20160,6 +20289,16 @@
               }
             },
             "description": "Validation failed"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not signed in, or the token expired"
           },
           "403": {
             "content": {
@@ -23311,6 +23450,16 @@
             },
             "description": "Read-only expert learning state"
           },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not signed in, or the token expired"
+          },
           "404": {
             "content": {
               "application/json": {
@@ -23393,6 +23542,26 @@
             },
             "description": "Validation failed"
           },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not signed in, or the token expired"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Role not permitted"
+          },
           "404": {
             "content": {
               "application/json": {
@@ -23417,6 +23586,10 @@
         "summary": "Explicitly contribute latest expert conclusion with reuse scope",
         "tags": [
           "Triage memory"
+        ],
+        "x-required-roles": [
+          "security_analyst",
+          "system_admin"
         ]
       }
     },
