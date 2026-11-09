@@ -1,0 +1,2622 @@
+{
+ "generatedAt": "2026-11-09T06:48:11.049Z",
+ "paths": [
+  {
+   "id": "A",
+   "title": "Corroborated group, auto-escalated (E1)",
+   "ref": "10ee4c5f-c25d-4e4d-96ae-f870157700c4",
+   "steps": [
+    {
+     "id": "A0",
+     "label": "Detected, grouped and routed by the system",
+     "actor": "System",
+     "action": "Detection -> grouping -> routing",
+     "before": {
+      "ref": "10ee4c5f-c25d-4e4d-96ae-f870157700c4",
+      "recordId": "AL-01958",
+      "raw": {
+       "srcIp": "18.221.219.4",
+       "dstIp": "172.31.69.25",
+       "srcPort": 42424,
+       "dstPort": 21,
+       "protocol": "TCP",
+       "duration": 0.000003,
+       "packets": 2,
+       "bytes": 0,
+       "features": {
+        "Flow Duration": 3,
+        "Timestamp": "2018-02-14 14:34:04.378776"
+       },
+       "featureCount": 88
+      },
+      "detection": {
+       "signatureRules": [
+        {
+         "rule": "SIG-FTP-BRUTE-FORCE",
+         "name": "FTP Brute Force Flow Pattern",
+         "severity": "Medium",
+         "class": "Brute Force",
+         "conditions": [
+          "protocol TCP -> TCP",
+          "destinationPort 21 -> 21",
+          "flowPacketsPerSecond {'min': 10.0} -> 666666.6666666666",
+          "totalFwdPackets {'min': 1.0} -> 1",
+          "flowDuration {'max': 5000000.0} -> 3"
+         ]
+        }
+       ],
+       "signatureSeverity": 0.6,
+       "mlClass": "Brute Force",
+       "mlProbability": 0.99999921,
+       "evidenceClass": "corroborated",
+       "detectionScore": 100,
+       "combinedScore": 100,
+       "severity": "Medium",
+       "attackCategory": "Brute Force",
+       "isCritical": true
+      },
+      "group": {
+       "members": 80,
+       "key": "18.221.219.4",
+       "firstSeen": "2018-02-14T14:34:04.378776Z",
+       "lastSeen": "2018-02-14T16:10:29.988521Z"
+      },
+      "routing": {
+       "route": "tier2_case",
+       "stage": "investigation",
+       "priority": 100,
+       "band": "critical",
+       "tier2Recommended": false,
+       "reasons": [],
+       "reviewReason": "E1-flow-rule: the rule and the model agree on Brute Force at score 100. The whole group of 80 alerts is escalated; member 1 of 80 qualified.",
+       "decisionSource": "system_policy",
+       "classification": {
+        "attackCategory": "brute_force",
+        "status": "mapped",
+        "source": "deterministic_suricata_mapping",
+        "reasons": [
+         "Rule and model assert Brute Force."
+        ],
+        "policyVersion": "flow-classification-v1",
+        "matches": [],
+        "conflictingCategories": []
+       }
+      },
+      "work": null,
+      "verdicts": 0,
+      "legacy": {
+       "combinedScore": 100,
+       "severity": "Medium",
+       "feedback": []
+      },
+      "case": {
+       "case_ref": "f84b0ba2-656a-5907-85e9-0926cba70119",
+       "decision_source": "system_policy",
+       "created_by_actor_id": null,
+       "status": "open",
+       "revision": 1
+      },
+      "groundTruth": {
+       "malicious: Brute Force": 80
+      }
+     },
+     "after": {
+      "ref": "10ee4c5f-c25d-4e4d-96ae-f870157700c4",
+      "recordId": "AL-01958",
+      "raw": {
+       "srcIp": "18.221.219.4",
+       "dstIp": "172.31.69.25",
+       "srcPort": 42424,
+       "dstPort": 21,
+       "protocol": "TCP",
+       "duration": 0.000003,
+       "packets": 2,
+       "bytes": 0,
+       "features": {
+        "Flow Duration": 3,
+        "Timestamp": "2018-02-14 14:34:04.378776"
+       },
+       "featureCount": 88
+      },
+      "detection": {
+       "signatureRules": [
+        {
+         "rule": "SIG-FTP-BRUTE-FORCE",
+         "name": "FTP Brute Force Flow Pattern",
+         "severity": "Medium",
+         "class": "Brute Force",
+         "conditions": [
+          "protocol TCP -> TCP",
+          "destinationPort 21 -> 21",
+          "flowPacketsPerSecond {'min': 10.0} -> 666666.6666666666",
+          "totalFwdPackets {'min': 1.0} -> 1",
+          "flowDuration {'max': 5000000.0} -> 3"
+         ]
+        }
+       ],
+       "signatureSeverity": 0.6,
+       "mlClass": "Brute Force",
+       "mlProbability": 0.99999921,
+       "evidenceClass": "corroborated",
+       "detectionScore": 100,
+       "combinedScore": 100,
+       "severity": "Medium",
+       "attackCategory": "Brute Force",
+       "isCritical": true
+      },
+      "group": {
+       "members": 80,
+       "key": "18.221.219.4",
+       "firstSeen": "2018-02-14T14:34:04.378776Z",
+       "lastSeen": "2018-02-14T16:10:29.988521Z"
+      },
+      "routing": {
+       "route": "tier2_case",
+       "stage": "investigation",
+       "priority": 100,
+       "band": "critical",
+       "tier2Recommended": false,
+       "reasons": [],
+       "reviewReason": "E1-flow-rule: the rule and the model agree on Brute Force at score 100. The whole group of 80 alerts is escalated; member 1 of 80 qualified.",
+       "decisionSource": "system_policy",
+       "classification": {
+        "attackCategory": "brute_force",
+        "status": "mapped",
+        "source": "deterministic_suricata_mapping",
+        "reasons": [
+         "Rule and model assert Brute Force."
+        ],
+        "policyVersion": "flow-classification-v1",
+        "matches": [],
+        "conflictingCategories": []
+       }
+      },
+      "work": null,
+      "verdicts": 0,
+      "legacy": {
+       "combinedScore": 100,
+       "severity": "Medium",
+       "feedback": []
+      },
+      "case": {
+       "case_ref": "f84b0ba2-656a-5907-85e9-0926cba70119",
+       "decision_source": "system_policy",
+       "created_by_actor_id": null,
+       "status": "open",
+       "revision": 1
+      },
+      "groundTruth": {
+       "malicious: Brute Force": 80
+      }
+     },
+     "shot": "A0.png"
+    },
+    {
+     "id": "A1",
+     "label": "Expert starts the investigation",
+     "actor": "Tier 2 analyst",
+     "action": "Start investigation (reason required)",
+     "before": {
+      "ref": "10ee4c5f-c25d-4e4d-96ae-f870157700c4",
+      "recordId": "AL-01958",
+      "raw": {
+       "srcIp": "18.221.219.4",
+       "dstIp": "172.31.69.25",
+       "srcPort": 42424,
+       "dstPort": 21,
+       "protocol": "TCP",
+       "duration": 0.000003,
+       "packets": 2,
+       "bytes": 0,
+       "features": {
+        "Flow Duration": 3,
+        "Timestamp": "2018-02-14 14:34:04.378776"
+       },
+       "featureCount": 88
+      },
+      "detection": {
+       "signatureRules": [
+        {
+         "rule": "SIG-FTP-BRUTE-FORCE",
+         "name": "FTP Brute Force Flow Pattern",
+         "severity": "Medium",
+         "class": "Brute Force",
+         "conditions": [
+          "protocol TCP -> TCP",
+          "destinationPort 21 -> 21",
+          "flowPacketsPerSecond {'min': 10.0} -> 666666.6666666666",
+          "totalFwdPackets {'min': 1.0} -> 1",
+          "flowDuration {'max': 5000000.0} -> 3"
+         ]
+        }
+       ],
+       "signatureSeverity": 0.6,
+       "mlClass": "Brute Force",
+       "mlProbability": 0.99999921,
+       "evidenceClass": "corroborated",
+       "detectionScore": 100,
+       "combinedScore": 100,
+       "severity": "Medium",
+       "attackCategory": "Brute Force",
+       "isCritical": true
+      },
+      "group": {
+       "members": 80,
+       "key": "18.221.219.4",
+       "firstSeen": "2018-02-14T14:34:04.378776Z",
+       "lastSeen": "2018-02-14T16:10:29.988521Z"
+      },
+      "routing": {
+       "route": "tier2_case",
+       "stage": "investigation",
+       "priority": 100,
+       "band": "critical",
+       "tier2Recommended": false,
+       "reasons": [],
+       "reviewReason": "E1-flow-rule: the rule and the model agree on Brute Force at score 100. The whole group of 80 alerts is escalated; member 1 of 80 qualified.",
+       "decisionSource": "system_policy",
+       "classification": {
+        "attackCategory": "brute_force",
+        "status": "mapped",
+        "source": "deterministic_suricata_mapping",
+        "reasons": [
+         "Rule and model assert Brute Force."
+        ],
+        "policyVersion": "flow-classification-v1",
+        "matches": [],
+        "conflictingCategories": []
+       }
+      },
+      "work": null,
+      "verdicts": 0,
+      "legacy": {
+       "combinedScore": 100,
+       "severity": "Medium",
+       "feedback": []
+      },
+      "case": {
+       "case_ref": "f84b0ba2-656a-5907-85e9-0926cba70119",
+       "decision_source": "system_policy",
+       "created_by_actor_id": null,
+       "status": "open",
+       "revision": 1
+      },
+      "groundTruth": {
+       "malicious: Brute Force": 80
+      }
+     },
+     "after": {
+      "ref": "10ee4c5f-c25d-4e4d-96ae-f870157700c4",
+      "recordId": "AL-01958",
+      "raw": {
+       "srcIp": "18.221.219.4",
+       "dstIp": "172.31.69.25",
+       "srcPort": 42424,
+       "dstPort": 21,
+       "protocol": "TCP",
+       "duration": 0.000003,
+       "packets": 2,
+       "bytes": 0,
+       "features": {
+        "Flow Duration": 3,
+        "Timestamp": "2018-02-14 14:34:04.378776"
+       },
+       "featureCount": 88
+      },
+      "detection": {
+       "signatureRules": [
+        {
+         "rule": "SIG-FTP-BRUTE-FORCE",
+         "name": "FTP Brute Force Flow Pattern",
+         "severity": "Medium",
+         "class": "Brute Force",
+         "conditions": [
+          "protocol TCP -> TCP",
+          "destinationPort 21 -> 21",
+          "flowPacketsPerSecond {'min': 10.0} -> 666666.6666666666",
+          "totalFwdPackets {'min': 1.0} -> 1",
+          "flowDuration {'max': 5000000.0} -> 3"
+         ]
+        }
+       ],
+       "signatureSeverity": 0.6,
+       "mlClass": "Brute Force",
+       "mlProbability": 0.99999921,
+       "evidenceClass": "corroborated",
+       "detectionScore": 100,
+       "combinedScore": 100,
+       "severity": "Medium",
+       "attackCategory": "Brute Force",
+       "isCritical": true
+      },
+      "group": {
+       "members": 80,
+       "key": "18.221.219.4",
+       "firstSeen": "2018-02-14T14:34:04.378776Z",
+       "lastSeen": "2018-02-14T16:10:29.988521Z"
+      },
+      "routing": {
+       "route": "tier2_case",
+       "stage": "investigation",
+       "priority": 100,
+       "band": "critical",
+       "tier2Recommended": false,
+       "reasons": [],
+       "reviewReason": "E1-flow-rule: the rule and the model agree on Brute Force at score 100. The whole group of 80 alerts is escalated; member 1 of 80 qualified.",
+       "decisionSource": "system_policy",
+       "classification": {
+        "attackCategory": "brute_force",
+        "status": "mapped",
+        "source": "deterministic_suricata_mapping",
+        "reasons": [
+         "Rule and model assert Brute Force."
+        ],
+        "policyVersion": "flow-classification-v1",
+        "matches": [],
+        "conflictingCategories": []
+       }
+      },
+      "work": null,
+      "verdicts": 0,
+      "legacy": {
+       "combinedScore": 100,
+       "severity": "Medium",
+       "feedback": []
+      },
+      "case": {
+       "case_ref": "f84b0ba2-656a-5907-85e9-0926cba70119",
+       "decision_source": "system_policy",
+       "created_by_actor_id": null,
+       "status": "investigating",
+       "revision": 2
+      },
+      "groundTruth": {
+       "malicious: Brute Force": 80
+      }
+     },
+     "shot": "A1.png"
+    },
+    {
+     "id": "A2",
+     "label": "Expert records the conclusion",
+     "actor": "Tier 2 analyst",
+     "action": "Conclusion: confirmed_malicious, brute_force",
+     "before": {
+      "ref": "10ee4c5f-c25d-4e4d-96ae-f870157700c4",
+      "recordId": "AL-01958",
+      "raw": {
+       "srcIp": "18.221.219.4",
+       "dstIp": "172.31.69.25",
+       "srcPort": 42424,
+       "dstPort": 21,
+       "protocol": "TCP",
+       "duration": 0.000003,
+       "packets": 2,
+       "bytes": 0,
+       "features": {
+        "Flow Duration": 3,
+        "Timestamp": "2018-02-14 14:34:04.378776"
+       },
+       "featureCount": 88
+      },
+      "detection": {
+       "signatureRules": [
+        {
+         "rule": "SIG-FTP-BRUTE-FORCE",
+         "name": "FTP Brute Force Flow Pattern",
+         "severity": "Medium",
+         "class": "Brute Force",
+         "conditions": [
+          "protocol TCP -> TCP",
+          "destinationPort 21 -> 21",
+          "flowPacketsPerSecond {'min': 10.0} -> 666666.6666666666",
+          "totalFwdPackets {'min': 1.0} -> 1",
+          "flowDuration {'max': 5000000.0} -> 3"
+         ]
+        }
+       ],
+       "signatureSeverity": 0.6,
+       "mlClass": "Brute Force",
+       "mlProbability": 0.99999921,
+       "evidenceClass": "corroborated",
+       "detectionScore": 100,
+       "combinedScore": 100,
+       "severity": "Medium",
+       "attackCategory": "Brute Force",
+       "isCritical": true
+      },
+      "group": {
+       "members": 80,
+       "key": "18.221.219.4",
+       "firstSeen": "2018-02-14T14:34:04.378776Z",
+       "lastSeen": "2018-02-14T16:10:29.988521Z"
+      },
+      "routing": {
+       "route": "tier2_case",
+       "stage": "investigation",
+       "priority": 100,
+       "band": "critical",
+       "tier2Recommended": false,
+       "reasons": [],
+       "reviewReason": "E1-flow-rule: the rule and the model agree on Brute Force at score 100. The whole group of 80 alerts is escalated; member 1 of 80 qualified.",
+       "decisionSource": "system_policy",
+       "classification": {
+        "attackCategory": "brute_force",
+        "status": "mapped",
+        "source": "deterministic_suricata_mapping",
+        "reasons": [
+         "Rule and model assert Brute Force."
+        ],
+        "policyVersion": "flow-classification-v1",
+        "matches": [],
+        "conflictingCategories": []
+       }
+      },
+      "work": null,
+      "verdicts": 0,
+      "legacy": {
+       "combinedScore": 100,
+       "severity": "Medium",
+       "feedback": []
+      },
+      "case": {
+       "case_ref": "f84b0ba2-656a-5907-85e9-0926cba70119",
+       "decision_source": "system_policy",
+       "created_by_actor_id": null,
+       "status": "investigating",
+       "revision": 2
+      },
+      "groundTruth": {
+       "malicious: Brute Force": 80
+      }
+     },
+     "after": {
+      "ref": "10ee4c5f-c25d-4e4d-96ae-f870157700c4",
+      "recordId": "AL-01958",
+      "raw": {
+       "srcIp": "18.221.219.4",
+       "dstIp": "172.31.69.25",
+       "srcPort": 42424,
+       "dstPort": 21,
+       "protocol": "TCP",
+       "duration": 0.000003,
+       "packets": 2,
+       "bytes": 0,
+       "features": {
+        "Flow Duration": 3,
+        "Timestamp": "2018-02-14 14:34:04.378776"
+       },
+       "featureCount": 88
+      },
+      "detection": {
+       "signatureRules": [
+        {
+         "rule": "SIG-FTP-BRUTE-FORCE",
+         "name": "FTP Brute Force Flow Pattern",
+         "severity": "Medium",
+         "class": "Brute Force",
+         "conditions": [
+          "protocol TCP -> TCP",
+          "destinationPort 21 -> 21",
+          "flowPacketsPerSecond {'min': 10.0} -> 666666.6666666666",
+          "totalFwdPackets {'min': 1.0} -> 1",
+          "flowDuration {'max': 5000000.0} -> 3"
+         ]
+        }
+       ],
+       "signatureSeverity": 0.6,
+       "mlClass": "Brute Force",
+       "mlProbability": 0.99999921,
+       "evidenceClass": "corroborated",
+       "detectionScore": 100,
+       "combinedScore": 100,
+       "severity": "Medium",
+       "attackCategory": "Brute Force",
+       "isCritical": true
+      },
+      "group": {
+       "members": 80,
+       "key": "18.221.219.4",
+       "firstSeen": "2018-02-14T14:34:04.378776Z",
+       "lastSeen": "2018-02-14T16:10:29.988521Z"
+      },
+      "routing": {
+       "route": "tier2_case",
+       "stage": "investigation",
+       "priority": 100,
+       "band": "critical",
+       "tier2Recommended": false,
+       "reasons": [],
+       "reviewReason": "E1-flow-rule: the rule and the model agree on Brute Force at score 100. The whole group of 80 alerts is escalated; member 1 of 80 qualified.",
+       "decisionSource": "system_policy",
+       "classification": {
+        "attackCategory": "brute_force",
+        "status": "mapped",
+        "source": "deterministic_suricata_mapping",
+        "reasons": [
+         "Rule and model assert Brute Force."
+        ],
+        "policyVersion": "flow-classification-v1",
+        "matches": [],
+        "conflictingCategories": []
+       }
+      },
+      "work": null,
+      "verdicts": 0,
+      "legacy": {
+       "combinedScore": 100,
+       "severity": "Medium",
+       "feedback": []
+      },
+      "case": {
+       "case_ref": "f84b0ba2-656a-5907-85e9-0926cba70119",
+       "decision_source": "system_policy",
+       "created_by_actor_id": null,
+       "status": "investigating",
+       "revision": 3
+      },
+      "groundTruth": {
+       "malicious: Brute Force": 80
+      }
+     },
+     "shot": "A2.png"
+    },
+    {
+     "id": "A3",
+     "label": "Expert resolves the case",
+     "actor": "Tier 2 analyst",
+     "action": "Resolve Case (reason required)",
+     "before": {
+      "ref": "10ee4c5f-c25d-4e4d-96ae-f870157700c4",
+      "recordId": "AL-01958",
+      "raw": {
+       "srcIp": "18.221.219.4",
+       "dstIp": "172.31.69.25",
+       "srcPort": 42424,
+       "dstPort": 21,
+       "protocol": "TCP",
+       "duration": 0.000003,
+       "packets": 2,
+       "bytes": 0,
+       "features": {
+        "Flow Duration": 3,
+        "Timestamp": "2018-02-14 14:34:04.378776"
+       },
+       "featureCount": 88
+      },
+      "detection": {
+       "signatureRules": [
+        {
+         "rule": "SIG-FTP-BRUTE-FORCE",
+         "name": "FTP Brute Force Flow Pattern",
+         "severity": "Medium",
+         "class": "Brute Force",
+         "conditions": [
+          "protocol TCP -> TCP",
+          "destinationPort 21 -> 21",
+          "flowPacketsPerSecond {'min': 10.0} -> 666666.6666666666",
+          "totalFwdPackets {'min': 1.0} -> 1",
+          "flowDuration {'max': 5000000.0} -> 3"
+         ]
+        }
+       ],
+       "signatureSeverity": 0.6,
+       "mlClass": "Brute Force",
+       "mlProbability": 0.99999921,
+       "evidenceClass": "corroborated",
+       "detectionScore": 100,
+       "combinedScore": 100,
+       "severity": "Medium",
+       "attackCategory": "Brute Force",
+       "isCritical": true
+      },
+      "group": {
+       "members": 80,
+       "key": "18.221.219.4",
+       "firstSeen": "2018-02-14T14:34:04.378776Z",
+       "lastSeen": "2018-02-14T16:10:29.988521Z"
+      },
+      "routing": {
+       "route": "tier2_case",
+       "stage": "investigation",
+       "priority": 100,
+       "band": "critical",
+       "tier2Recommended": false,
+       "reasons": [],
+       "reviewReason": "E1-flow-rule: the rule and the model agree on Brute Force at score 100. The whole group of 80 alerts is escalated; member 1 of 80 qualified.",
+       "decisionSource": "system_policy",
+       "classification": {
+        "attackCategory": "brute_force",
+        "status": "mapped",
+        "source": "deterministic_suricata_mapping",
+        "reasons": [
+         "Rule and model assert Brute Force."
+        ],
+        "policyVersion": "flow-classification-v1",
+        "matches": [],
+        "conflictingCategories": []
+       }
+      },
+      "work": null,
+      "verdicts": 0,
+      "legacy": {
+       "combinedScore": 100,
+       "severity": "Medium",
+       "feedback": []
+      },
+      "case": {
+       "case_ref": "f84b0ba2-656a-5907-85e9-0926cba70119",
+       "decision_source": "system_policy",
+       "created_by_actor_id": null,
+       "status": "investigating",
+       "revision": 3
+      },
+      "groundTruth": {
+       "malicious: Brute Force": 80
+      }
+     },
+     "after": {
+      "ref": "10ee4c5f-c25d-4e4d-96ae-f870157700c4",
+      "recordId": "AL-01958",
+      "raw": {
+       "srcIp": "18.221.219.4",
+       "dstIp": "172.31.69.25",
+       "srcPort": 42424,
+       "dstPort": 21,
+       "protocol": "TCP",
+       "duration": 0.000003,
+       "packets": 2,
+       "bytes": 0,
+       "features": {
+        "Flow Duration": 3,
+        "Timestamp": "2018-02-14 14:34:04.378776"
+       },
+       "featureCount": 88
+      },
+      "detection": {
+       "signatureRules": [
+        {
+         "rule": "SIG-FTP-BRUTE-FORCE",
+         "name": "FTP Brute Force Flow Pattern",
+         "severity": "Medium",
+         "class": "Brute Force",
+         "conditions": [
+          "protocol TCP -> TCP",
+          "destinationPort 21 -> 21",
+          "flowPacketsPerSecond {'min': 10.0} -> 666666.6666666666",
+          "totalFwdPackets {'min': 1.0} -> 1",
+          "flowDuration {'max': 5000000.0} -> 3"
+         ]
+        }
+       ],
+       "signatureSeverity": 0.6,
+       "mlClass": "Brute Force",
+       "mlProbability": 0.99999921,
+       "evidenceClass": "corroborated",
+       "detectionScore": 100,
+       "combinedScore": 100,
+       "severity": "Medium",
+       "attackCategory": "Brute Force",
+       "isCritical": true
+      },
+      "group": {
+       "members": 80,
+       "key": "18.221.219.4",
+       "firstSeen": "2018-02-14T14:34:04.378776Z",
+       "lastSeen": "2018-02-14T16:10:29.988521Z"
+      },
+      "routing": {
+       "route": "tier2_case",
+       "stage": "investigation",
+       "priority": 100,
+       "band": "critical",
+       "tier2Recommended": false,
+       "reasons": [],
+       "reviewReason": "E1-flow-rule: the rule and the model agree on Brute Force at score 100. The whole group of 80 alerts is escalated; member 1 of 80 qualified.",
+       "decisionSource": "system_policy",
+       "classification": {
+        "attackCategory": "brute_force",
+        "status": "mapped",
+        "source": "deterministic_suricata_mapping",
+        "reasons": [
+         "Rule and model assert Brute Force."
+        ],
+        "policyVersion": "flow-classification-v1",
+        "matches": [],
+        "conflictingCategories": []
+       }
+      },
+      "work": null,
+      "verdicts": 0,
+      "legacy": {
+       "combinedScore": 100,
+       "severity": "Medium",
+       "feedback": []
+      },
+      "case": {
+       "case_ref": "f84b0ba2-656a-5907-85e9-0926cba70119",
+       "decision_source": "system_policy",
+       "created_by_actor_id": null,
+       "status": "resolved",
+       "revision": 4
+      },
+      "groundTruth": {
+       "malicious: Brute Force": 80
+      }
+     },
+     "shot": "A3.png"
+    }
+   ]
+  },
+  {
+   "id": "B",
+   "title": "Tier 2 candidate, escalated by a human (E3)",
+   "ref": "04e26942-b33f-4f8b-ae68-f12cbdc07dbe",
+   "steps": [
+    {
+     "id": "B0",
+     "label": "Detected, grouped and routed as a Tier 2 candidate",
+     "actor": "System",
+     "action": "Detection -> grouping -> routing",
+     "before": {
+      "ref": "04e26942-b33f-4f8b-ae68-f12cbdc07dbe",
+      "recordId": "AL-03909",
+      "raw": {
+       "srcIp": "172.31.69.13",
+       "dstIp": "162.125.248.1",
+       "srcPort": 50841,
+       "dstPort": 443,
+       "protocol": "TCP",
+       "duration": 78.956981,
+       "packets": 27,
+       "bytes": 5674,
+       "features": {
+        "Flow Duration": 78956981,
+        "Timestamp": "2018-03-01 13:53:12.134725"
+       },
+       "featureCount": 88
+      },
+      "detection": {
+       "signatureRules": [],
+       "signatureSeverity": null,
+       "mlClass": "Infiltration",
+       "mlProbability": 0.99604651,
+       "evidenceClass": "ml_only",
+       "detectionScore": 99.6,
+       "combinedScore": 99.6,
+       "severity": "Critical",
+       "attackCategory": "Infiltration",
+       "isCritical": true
+      },
+      "group": {
+       "members": 57,
+       "key": "172.31.69.13",
+       "firstSeen": "2018-03-01T13:53:12.134725Z",
+       "lastSeen": "2018-03-01T16:48:50.950745Z"
+      },
+      "routing": {
+       "route": "tier1_review",
+       "stage": "triage",
+       "priority": 99.6,
+       "band": "critical",
+       "tier2Recommended": true,
+       "reasons": [
+        "E3: score 99.6 and Infiltration has attack severity 9.5. A Tier 1 analyst confirms before escalation. (17 of 57 members; first shown.)"
+       ],
+       "reviewReason": "Tier 2 candidate; a Tier 1 analyst decides. E3: score 99.6 and Infiltration has attack severity 9.5. A Tier 1 analyst confirms before escalation. (17 of 57 members; first shown.)",
+       "decisionSource": "system_policy",
+       "classification": {
+        "attackCategory": "infiltration",
+        "status": "mapped",
+        "source": "deterministic_suricata_mapping",
+        "reasons": [
+         "Rule and model assert Infiltration."
+        ],
+        "policyVersion": "flow-classification-v1",
+        "matches": [],
+        "conflictingCategories": []
+       }
+      },
+      "work": null,
+      "verdicts": 0,
+      "legacy": {
+       "combinedScore": 99.6,
+       "severity": "Critical",
+       "feedback": []
+      },
+      "case": null,
+      "groundTruth": {
+       "malicious: Infiltration": 17,
+       "malicious: Port Scan": 40
+      }
+     },
+     "after": {
+      "ref": "04e26942-b33f-4f8b-ae68-f12cbdc07dbe",
+      "recordId": "AL-03909",
+      "raw": {
+       "srcIp": "172.31.69.13",
+       "dstIp": "162.125.248.1",
+       "srcPort": 50841,
+       "dstPort": 443,
+       "protocol": "TCP",
+       "duration": 78.956981,
+       "packets": 27,
+       "bytes": 5674,
+       "features": {
+        "Flow Duration": 78956981,
+        "Timestamp": "2018-03-01 13:53:12.134725"
+       },
+       "featureCount": 88
+      },
+      "detection": {
+       "signatureRules": [],
+       "signatureSeverity": null,
+       "mlClass": "Infiltration",
+       "mlProbability": 0.99604651,
+       "evidenceClass": "ml_only",
+       "detectionScore": 99.6,
+       "combinedScore": 99.6,
+       "severity": "Critical",
+       "attackCategory": "Infiltration",
+       "isCritical": true
+      },
+      "group": {
+       "members": 57,
+       "key": "172.31.69.13",
+       "firstSeen": "2018-03-01T13:53:12.134725Z",
+       "lastSeen": "2018-03-01T16:48:50.950745Z"
+      },
+      "routing": {
+       "route": "tier1_review",
+       "stage": "triage",
+       "priority": 99.6,
+       "band": "critical",
+       "tier2Recommended": true,
+       "reasons": [
+        "E3: score 99.6 and Infiltration has attack severity 9.5. A Tier 1 analyst confirms before escalation. (17 of 57 members; first shown.)"
+       ],
+       "reviewReason": "Tier 2 candidate; a Tier 1 analyst decides. E3: score 99.6 and Infiltration has attack severity 9.5. A Tier 1 analyst confirms before escalation. (17 of 57 members; first shown.)",
+       "decisionSource": "system_policy",
+       "classification": {
+        "attackCategory": "infiltration",
+        "status": "mapped",
+        "source": "deterministic_suricata_mapping",
+        "reasons": [
+         "Rule and model assert Infiltration."
+        ],
+        "policyVersion": "flow-classification-v1",
+        "matches": [],
+        "conflictingCategories": []
+       }
+      },
+      "work": null,
+      "verdicts": 0,
+      "legacy": {
+       "combinedScore": 99.6,
+       "severity": "Critical",
+       "feedback": []
+      },
+      "case": null,
+      "groundTruth": {
+       "malicious: Infiltration": 17,
+       "malicious: Port Scan": 40
+      }
+     },
+     "shot": "B0.png"
+    },
+    {
+     "id": "B1",
+     "label": "Analyst opens the group (claims it)",
+     "actor": "Tier 1 analyst",
+     "action": "Row click = claim",
+     "before": {
+      "ref": "04e26942-b33f-4f8b-ae68-f12cbdc07dbe",
+      "recordId": "AL-03909",
+      "raw": {
+       "srcIp": "172.31.69.13",
+       "dstIp": "162.125.248.1",
+       "srcPort": 50841,
+       "dstPort": 443,
+       "protocol": "TCP",
+       "duration": 78.956981,
+       "packets": 27,
+       "bytes": 5674,
+       "features": {
+        "Flow Duration": 78956981,
+        "Timestamp": "2018-03-01 13:53:12.134725"
+       },
+       "featureCount": 88
+      },
+      "detection": {
+       "signatureRules": [],
+       "signatureSeverity": null,
+       "mlClass": "Infiltration",
+       "mlProbability": 0.99604651,
+       "evidenceClass": "ml_only",
+       "detectionScore": 99.6,
+       "combinedScore": 99.6,
+       "severity": "Critical",
+       "attackCategory": "Infiltration",
+       "isCritical": true
+      },
+      "group": {
+       "members": 57,
+       "key": "172.31.69.13",
+       "firstSeen": "2018-03-01T13:53:12.134725Z",
+       "lastSeen": "2018-03-01T16:48:50.950745Z"
+      },
+      "routing": {
+       "route": "tier1_review",
+       "stage": "triage",
+       "priority": 99.6,
+       "band": "critical",
+       "tier2Recommended": true,
+       "reasons": [
+        "E3: score 99.6 and Infiltration has attack severity 9.5. A Tier 1 analyst confirms before escalation. (17 of 57 members; first shown.)"
+       ],
+       "reviewReason": "Tier 2 candidate; a Tier 1 analyst decides. E3: score 99.6 and Infiltration has attack severity 9.5. A Tier 1 analyst confirms before escalation. (17 of 57 members; first shown.)",
+       "decisionSource": "system_policy",
+       "classification": {
+        "attackCategory": "infiltration",
+        "status": "mapped",
+        "source": "deterministic_suricata_mapping",
+        "reasons": [
+         "Rule and model assert Infiltration."
+        ],
+        "policyVersion": "flow-classification-v1",
+        "matches": [],
+        "conflictingCategories": []
+       }
+      },
+      "work": null,
+      "verdicts": 0,
+      "legacy": {
+       "combinedScore": 99.6,
+       "severity": "Critical",
+       "feedback": []
+      },
+      "case": null,
+      "groundTruth": {
+       "malicious: Infiltration": 17,
+       "malicious: Port Scan": 40
+      }
+     },
+     "after": {
+      "ref": "04e26942-b33f-4f8b-ae68-f12cbdc07dbe",
+      "recordId": "AL-03909",
+      "raw": {
+       "srcIp": "172.31.69.13",
+       "dstIp": "162.125.248.1",
+       "srcPort": 50841,
+       "dstPort": 443,
+       "protocol": "TCP",
+       "duration": 78.956981,
+       "packets": 27,
+       "bytes": 5674,
+       "features": {
+        "Flow Duration": 78956981,
+        "Timestamp": "2018-03-01 13:53:12.134725"
+       },
+       "featureCount": 88
+      },
+      "detection": {
+       "signatureRules": [],
+       "signatureSeverity": null,
+       "mlClass": "Infiltration",
+       "mlProbability": 0.99604651,
+       "evidenceClass": "ml_only",
+       "detectionScore": 99.6,
+       "combinedScore": 99.6,
+       "severity": "Critical",
+       "attackCategory": "Infiltration",
+       "isCritical": true
+      },
+      "group": {
+       "members": 57,
+       "key": "172.31.69.13",
+       "firstSeen": "2018-03-01T13:53:12.134725Z",
+       "lastSeen": "2018-03-01T16:48:50.950745Z"
+      },
+      "routing": {
+       "route": "tier1_review",
+       "stage": "triage",
+       "priority": 99.6,
+       "band": "critical",
+       "tier2Recommended": true,
+       "reasons": [
+        "E3: score 99.6 and Infiltration has attack severity 9.5. A Tier 1 analyst confirms before escalation. (17 of 57 members; first shown.)"
+       ],
+       "reviewReason": "Tier 2 candidate; a Tier 1 analyst decides. E3: score 99.6 and Infiltration has attack severity 9.5. A Tier 1 analyst confirms before escalation. (17 of 57 members; first shown.)",
+       "decisionSource": "system_policy",
+       "classification": {
+        "attackCategory": "infiltration",
+        "status": "mapped",
+        "source": "deterministic_suricata_mapping",
+        "reasons": [
+         "Rule and model assert Infiltration."
+        ],
+        "policyVersion": "flow-classification-v1",
+        "matches": [],
+        "conflictingCategories": []
+       }
+      },
+      "work": {
+       "status": "in_review",
+       "owner": "Glenn Ang",
+       "finishedBy": null
+      },
+      "verdicts": 0,
+      "legacy": {
+       "combinedScore": 99.6,
+       "severity": "Critical",
+       "feedback": []
+      },
+      "case": null,
+      "groundTruth": {
+       "malicious: Infiltration": 17,
+       "malicious: Port Scan": 40
+      }
+     },
+     "shot": "B1.png"
+    },
+    {
+     "id": "B2",
+     "label": "Analyst reads Why Tier 2 and escalates",
+     "actor": "Tier 1 analyst",
+     "action": "Escalate to Tier 2 (reason required)",
+     "before": {
+      "ref": "04e26942-b33f-4f8b-ae68-f12cbdc07dbe",
+      "recordId": "AL-03909",
+      "raw": {
+       "srcIp": "172.31.69.13",
+       "dstIp": "162.125.248.1",
+       "srcPort": 50841,
+       "dstPort": 443,
+       "protocol": "TCP",
+       "duration": 78.956981,
+       "packets": 27,
+       "bytes": 5674,
+       "features": {
+        "Flow Duration": 78956981,
+        "Timestamp": "2018-03-01 13:53:12.134725"
+       },
+       "featureCount": 88
+      },
+      "detection": {
+       "signatureRules": [],
+       "signatureSeverity": null,
+       "mlClass": "Infiltration",
+       "mlProbability": 0.99604651,
+       "evidenceClass": "ml_only",
+       "detectionScore": 99.6,
+       "combinedScore": 99.6,
+       "severity": "Critical",
+       "attackCategory": "Infiltration",
+       "isCritical": true
+      },
+      "group": {
+       "members": 57,
+       "key": "172.31.69.13",
+       "firstSeen": "2018-03-01T13:53:12.134725Z",
+       "lastSeen": "2018-03-01T16:48:50.950745Z"
+      },
+      "routing": {
+       "route": "tier1_review",
+       "stage": "triage",
+       "priority": 99.6,
+       "band": "critical",
+       "tier2Recommended": true,
+       "reasons": [
+        "E3: score 99.6 and Infiltration has attack severity 9.5. A Tier 1 analyst confirms before escalation. (17 of 57 members; first shown.)"
+       ],
+       "reviewReason": "Tier 2 candidate; a Tier 1 analyst decides. E3: score 99.6 and Infiltration has attack severity 9.5. A Tier 1 analyst confirms before escalation. (17 of 57 members; first shown.)",
+       "decisionSource": "system_policy",
+       "classification": {
+        "attackCategory": "infiltration",
+        "status": "mapped",
+        "source": "deterministic_suricata_mapping",
+        "reasons": [
+         "Rule and model assert Infiltration."
+        ],
+        "policyVersion": "flow-classification-v1",
+        "matches": [],
+        "conflictingCategories": []
+       }
+      },
+      "work": {
+       "status": "in_review",
+       "owner": "Glenn Ang",
+       "finishedBy": null
+      },
+      "verdicts": 0,
+      "legacy": {
+       "combinedScore": 99.6,
+       "severity": "Critical",
+       "feedback": []
+      },
+      "case": null,
+      "groundTruth": {
+       "malicious: Infiltration": 17,
+       "malicious: Port Scan": 40
+      }
+     },
+     "after": {
+      "ref": "04e26942-b33f-4f8b-ae68-f12cbdc07dbe",
+      "recordId": "AL-03909",
+      "raw": {
+       "srcIp": "172.31.69.13",
+       "dstIp": "162.125.248.1",
+       "srcPort": 50841,
+       "dstPort": 443,
+       "protocol": "TCP",
+       "duration": 78.956981,
+       "packets": 27,
+       "bytes": 5674,
+       "features": {
+        "Flow Duration": 78956981,
+        "Timestamp": "2018-03-01 13:53:12.134725"
+       },
+       "featureCount": 88
+      },
+      "detection": {
+       "signatureRules": [],
+       "signatureSeverity": null,
+       "mlClass": "Infiltration",
+       "mlProbability": 0.99604651,
+       "evidenceClass": "ml_only",
+       "detectionScore": 99.6,
+       "combinedScore": 100,
+       "severity": "Critical",
+       "attackCategory": "Infiltration",
+       "isCritical": true
+      },
+      "group": {
+       "members": 57,
+       "key": "172.31.69.13",
+       "firstSeen": "2018-03-01T13:53:12.134725Z",
+       "lastSeen": "2018-03-01T16:48:50.950745Z"
+      },
+      "routing": {
+       "route": "tier2_case",
+       "stage": "investigation",
+       "priority": 99.6,
+       "band": "critical",
+       "tier2Recommended": true,
+       "reasons": [
+        "E3: score 99.6 and Infiltration has attack severity 9.5. A Tier 1 analyst confirms before escalation. (17 of 57 members; first shown.)"
+       ],
+       "reviewReason": "Tier 2 candidate; a Tier 1 analyst decides. E3: score 99.6 and Infiltration has attack severity 9.5. A Tier 1 analyst confirms before escalation. (17 of 57 members; first shown.)",
+       "decisionSource": "analyst",
+       "classification": {
+        "attackCategory": "infiltration",
+        "status": "mapped",
+        "source": "deterministic_suricata_mapping",
+        "reasons": [
+         "Rule and model assert Infiltration."
+        ],
+        "policyVersion": "flow-classification-v1",
+        "matches": [],
+        "conflictingCategories": []
+       }
+      },
+      "work": {
+       "status": "escalated",
+       "owner": "Glenn Ang",
+       "finishedBy": "Glenn Ang"
+      },
+      "verdicts": 0,
+      "legacy": {
+       "combinedScore": 100,
+       "severity": "Critical",
+       "feedback": [
+        {
+         "category": "escalate",
+         "original_score": 99.6,
+         "requested_delta": 15,
+         "actual_delta": 0.4,
+         "guardrail_action": "capped",
+         "user_id": 1
+        }
+       ]
+      },
+      "case": {
+       "case_ref": "38e1f83d-cb04-4c53-829d-15f43a26ec4b",
+       "decision_source": "analyst",
+       "created_by_actor_id": 1,
+       "status": "open",
+       "revision": 1
+      },
+      "groundTruth": {
+       "malicious: Infiltration": 17,
+       "malicious: Port Scan": 40
+      }
+     },
+     "shot": "B2.png"
+    }
+   ]
+  },
+  {
+   "id": "C",
+   "title": "Model-only false positive, kept in Tier 1",
+   "ref": "8987c09b-ac09-40c2-a896-ae2fb6ad6ea1",
+   "steps": [
+    {
+     "id": "C0",
+     "label": "Detected and routed as a Tier 2 candidate",
+     "actor": "System",
+     "action": "Detection -> group of 1 -> routing",
+     "before": {
+      "ref": "8987c09b-ac09-40c2-a896-ae2fb6ad6ea1",
+      "recordId": "AL-00478",
+      "raw": {
+       "srcIp": "172.31.64.80",
+       "dstIp": "64.150.178.87",
+       "srcPort": 50792,
+       "dstPort": 80,
+       "protocol": "TCP",
+       "duration": 5.237688,
+       "packets": 11,
+       "bytes": 1295,
+       "features": {
+        "Flow Duration": 5237688,
+        "Timestamp": "2018-02-14 12:40:02.383338"
+       },
+       "featureCount": 88
+      },
+      "detection": {
+       "signatureRules": [],
+       "signatureSeverity": null,
+       "mlClass": "Web Attack",
+       "mlProbability": 0.99893205,
+       "evidenceClass": "ml_only",
+       "detectionScore": 99.89,
+       "combinedScore": 99.89,
+       "severity": "High",
+       "attackCategory": "Web Attack",
+       "isCritical": true
+      },
+      "group": {
+       "members": 1,
+       "key": "172.31.64.80",
+       "firstSeen": "2018-02-14T12:40:02.383338Z",
+       "lastSeen": "2018-02-14T12:40:02.383338Z"
+      },
+      "routing": {
+       "route": "tier1_review",
+       "stage": "triage",
+       "priority": 99.89,
+       "band": "critical",
+       "tier2Recommended": true,
+       "reasons": [
+        "E3: score 99.89 and Web Attack has attack severity 8. A Tier 1 analyst confirms before escalation."
+       ],
+       "reviewReason": "Tier 2 candidate; a Tier 1 analyst decides. E3: score 99.89 and Web Attack has attack severity 8. A Tier 1 analyst confirms before escalation.",
+       "decisionSource": "system_policy",
+       "classification": {
+        "attackCategory": "web_attack",
+        "status": "mapped",
+        "source": "deterministic_suricata_mapping",
+        "reasons": [
+         "Rule and model assert Web Attack."
+        ],
+        "policyVersion": "flow-classification-v1",
+        "matches": [],
+        "conflictingCategories": []
+       }
+      },
+      "work": null,
+      "verdicts": 0,
+      "legacy": {
+       "combinedScore": 99.89,
+       "severity": "High",
+       "feedback": []
+      },
+      "case": null,
+      "groundTruth": {
+       "benign: Benign": 1
+      }
+     },
+     "after": {
+      "ref": "8987c09b-ac09-40c2-a896-ae2fb6ad6ea1",
+      "recordId": "AL-00478",
+      "raw": {
+       "srcIp": "172.31.64.80",
+       "dstIp": "64.150.178.87",
+       "srcPort": 50792,
+       "dstPort": 80,
+       "protocol": "TCP",
+       "duration": 5.237688,
+       "packets": 11,
+       "bytes": 1295,
+       "features": {
+        "Flow Duration": 5237688,
+        "Timestamp": "2018-02-14 12:40:02.383338"
+       },
+       "featureCount": 88
+      },
+      "detection": {
+       "signatureRules": [],
+       "signatureSeverity": null,
+       "mlClass": "Web Attack",
+       "mlProbability": 0.99893205,
+       "evidenceClass": "ml_only",
+       "detectionScore": 99.89,
+       "combinedScore": 99.89,
+       "severity": "High",
+       "attackCategory": "Web Attack",
+       "isCritical": true
+      },
+      "group": {
+       "members": 1,
+       "key": "172.31.64.80",
+       "firstSeen": "2018-02-14T12:40:02.383338Z",
+       "lastSeen": "2018-02-14T12:40:02.383338Z"
+      },
+      "routing": {
+       "route": "tier1_review",
+       "stage": "triage",
+       "priority": 99.89,
+       "band": "critical",
+       "tier2Recommended": true,
+       "reasons": [
+        "E3: score 99.89 and Web Attack has attack severity 8. A Tier 1 analyst confirms before escalation."
+       ],
+       "reviewReason": "Tier 2 candidate; a Tier 1 analyst decides. E3: score 99.89 and Web Attack has attack severity 8. A Tier 1 analyst confirms before escalation.",
+       "decisionSource": "system_policy",
+       "classification": {
+        "attackCategory": "web_attack",
+        "status": "mapped",
+        "source": "deterministic_suricata_mapping",
+        "reasons": [
+         "Rule and model assert Web Attack."
+        ],
+        "policyVersion": "flow-classification-v1",
+        "matches": [],
+        "conflictingCategories": []
+       }
+      },
+      "work": null,
+      "verdicts": 0,
+      "legacy": {
+       "combinedScore": 99.89,
+       "severity": "High",
+       "feedback": []
+      },
+      "case": null,
+      "groundTruth": {
+       "benign: Benign": 1
+      }
+     },
+     "shot": "C0.png"
+    },
+    {
+     "id": "C1",
+     "label": "Analyst opens the alert (claims it)",
+     "actor": "Tier 1 analyst",
+     "action": "Row click = claim",
+     "before": {
+      "ref": "8987c09b-ac09-40c2-a896-ae2fb6ad6ea1",
+      "recordId": "AL-00478",
+      "raw": {
+       "srcIp": "172.31.64.80",
+       "dstIp": "64.150.178.87",
+       "srcPort": 50792,
+       "dstPort": 80,
+       "protocol": "TCP",
+       "duration": 5.237688,
+       "packets": 11,
+       "bytes": 1295,
+       "features": {
+        "Flow Duration": 5237688,
+        "Timestamp": "2018-02-14 12:40:02.383338"
+       },
+       "featureCount": 88
+      },
+      "detection": {
+       "signatureRules": [],
+       "signatureSeverity": null,
+       "mlClass": "Web Attack",
+       "mlProbability": 0.99893205,
+       "evidenceClass": "ml_only",
+       "detectionScore": 99.89,
+       "combinedScore": 99.89,
+       "severity": "High",
+       "attackCategory": "Web Attack",
+       "isCritical": true
+      },
+      "group": {
+       "members": 1,
+       "key": "172.31.64.80",
+       "firstSeen": "2018-02-14T12:40:02.383338Z",
+       "lastSeen": "2018-02-14T12:40:02.383338Z"
+      },
+      "routing": {
+       "route": "tier1_review",
+       "stage": "triage",
+       "priority": 99.89,
+       "band": "critical",
+       "tier2Recommended": true,
+       "reasons": [
+        "E3: score 99.89 and Web Attack has attack severity 8. A Tier 1 analyst confirms before escalation."
+       ],
+       "reviewReason": "Tier 2 candidate; a Tier 1 analyst decides. E3: score 99.89 and Web Attack has attack severity 8. A Tier 1 analyst confirms before escalation.",
+       "decisionSource": "system_policy",
+       "classification": {
+        "attackCategory": "web_attack",
+        "status": "mapped",
+        "source": "deterministic_suricata_mapping",
+        "reasons": [
+         "Rule and model assert Web Attack."
+        ],
+        "policyVersion": "flow-classification-v1",
+        "matches": [],
+        "conflictingCategories": []
+       }
+      },
+      "work": null,
+      "verdicts": 0,
+      "legacy": {
+       "combinedScore": 99.89,
+       "severity": "High",
+       "feedback": []
+      },
+      "case": null,
+      "groundTruth": {
+       "benign: Benign": 1
+      }
+     },
+     "after": {
+      "ref": "8987c09b-ac09-40c2-a896-ae2fb6ad6ea1",
+      "recordId": "AL-00478",
+      "raw": {
+       "srcIp": "172.31.64.80",
+       "dstIp": "64.150.178.87",
+       "srcPort": 50792,
+       "dstPort": 80,
+       "protocol": "TCP",
+       "duration": 5.237688,
+       "packets": 11,
+       "bytes": 1295,
+       "features": {
+        "Flow Duration": 5237688,
+        "Timestamp": "2018-02-14 12:40:02.383338"
+       },
+       "featureCount": 88
+      },
+      "detection": {
+       "signatureRules": [],
+       "signatureSeverity": null,
+       "mlClass": "Web Attack",
+       "mlProbability": 0.99893205,
+       "evidenceClass": "ml_only",
+       "detectionScore": 99.89,
+       "combinedScore": 99.89,
+       "severity": "High",
+       "attackCategory": "Web Attack",
+       "isCritical": true
+      },
+      "group": {
+       "members": 1,
+       "key": "172.31.64.80",
+       "firstSeen": "2018-02-14T12:40:02.383338Z",
+       "lastSeen": "2018-02-14T12:40:02.383338Z"
+      },
+      "routing": {
+       "route": "tier1_review",
+       "stage": "triage",
+       "priority": 99.89,
+       "band": "critical",
+       "tier2Recommended": true,
+       "reasons": [
+        "E3: score 99.89 and Web Attack has attack severity 8. A Tier 1 analyst confirms before escalation."
+       ],
+       "reviewReason": "Tier 2 candidate; a Tier 1 analyst decides. E3: score 99.89 and Web Attack has attack severity 8. A Tier 1 analyst confirms before escalation.",
+       "decisionSource": "system_policy",
+       "classification": {
+        "attackCategory": "web_attack",
+        "status": "mapped",
+        "source": "deterministic_suricata_mapping",
+        "reasons": [
+         "Rule and model assert Web Attack."
+        ],
+        "policyVersion": "flow-classification-v1",
+        "matches": [],
+        "conflictingCategories": []
+       }
+      },
+      "work": {
+       "status": "in_review",
+       "owner": "Glenn Ang",
+       "finishedBy": null
+      },
+      "verdicts": 0,
+      "legacy": {
+       "combinedScore": 99.89,
+       "severity": "High",
+       "feedback": []
+      },
+      "case": null,
+      "groundTruth": {
+       "benign: Benign": 1
+      }
+     },
+     "shot": "C1.png"
+    },
+    {
+     "id": "C2",
+     "label": "Analyst rejects the recommendation",
+     "actor": "Tier 1 analyst",
+     "action": "Keep in Tier 1 (reason required)",
+     "before": {
+      "ref": "8987c09b-ac09-40c2-a896-ae2fb6ad6ea1",
+      "recordId": "AL-00478",
+      "raw": {
+       "srcIp": "172.31.64.80",
+       "dstIp": "64.150.178.87",
+       "srcPort": 50792,
+       "dstPort": 80,
+       "protocol": "TCP",
+       "duration": 5.237688,
+       "packets": 11,
+       "bytes": 1295,
+       "features": {
+        "Flow Duration": 5237688,
+        "Timestamp": "2018-02-14 12:40:02.383338"
+       },
+       "featureCount": 88
+      },
+      "detection": {
+       "signatureRules": [],
+       "signatureSeverity": null,
+       "mlClass": "Web Attack",
+       "mlProbability": 0.99893205,
+       "evidenceClass": "ml_only",
+       "detectionScore": 99.89,
+       "combinedScore": 99.89,
+       "severity": "High",
+       "attackCategory": "Web Attack",
+       "isCritical": true
+      },
+      "group": {
+       "members": 1,
+       "key": "172.31.64.80",
+       "firstSeen": "2018-02-14T12:40:02.383338Z",
+       "lastSeen": "2018-02-14T12:40:02.383338Z"
+      },
+      "routing": {
+       "route": "tier1_review",
+       "stage": "triage",
+       "priority": 99.89,
+       "band": "critical",
+       "tier2Recommended": true,
+       "reasons": [
+        "E3: score 99.89 and Web Attack has attack severity 8. A Tier 1 analyst confirms before escalation."
+       ],
+       "reviewReason": "Tier 2 candidate; a Tier 1 analyst decides. E3: score 99.89 and Web Attack has attack severity 8. A Tier 1 analyst confirms before escalation.",
+       "decisionSource": "system_policy",
+       "classification": {
+        "attackCategory": "web_attack",
+        "status": "mapped",
+        "source": "deterministic_suricata_mapping",
+        "reasons": [
+         "Rule and model assert Web Attack."
+        ],
+        "policyVersion": "flow-classification-v1",
+        "matches": [],
+        "conflictingCategories": []
+       }
+      },
+      "work": {
+       "status": "in_review",
+       "owner": "Glenn Ang",
+       "finishedBy": null
+      },
+      "verdicts": 0,
+      "legacy": {
+       "combinedScore": 99.89,
+       "severity": "High",
+       "feedback": []
+      },
+      "case": null,
+      "groundTruth": {
+       "benign: Benign": 1
+      }
+     },
+     "after": {
+      "ref": "8987c09b-ac09-40c2-a896-ae2fb6ad6ea1",
+      "recordId": "AL-00478",
+      "raw": {
+       "srcIp": "172.31.64.80",
+       "dstIp": "64.150.178.87",
+       "srcPort": 50792,
+       "dstPort": 80,
+       "protocol": "TCP",
+       "duration": 5.237688,
+       "packets": 11,
+       "bytes": 1295,
+       "features": {
+        "Flow Duration": 5237688,
+        "Timestamp": "2018-02-14 12:40:02.383338"
+       },
+       "featureCount": 88
+      },
+      "detection": {
+       "signatureRules": [],
+       "signatureSeverity": null,
+       "mlClass": "Web Attack",
+       "mlProbability": 0.99893205,
+       "evidenceClass": "ml_only",
+       "detectionScore": 99.89,
+       "combinedScore": 99.89,
+       "severity": "High",
+       "attackCategory": "Web Attack",
+       "isCritical": true
+      },
+      "group": {
+       "members": 1,
+       "key": "172.31.64.80",
+       "firstSeen": "2018-02-14T12:40:02.383338Z",
+       "lastSeen": "2018-02-14T12:40:02.383338Z"
+      },
+      "routing": {
+       "route": "tier1_review",
+       "stage": "triage",
+       "priority": 99.89,
+       "band": "critical",
+       "tier2Recommended": true,
+       "reasons": [
+        "E3: score 99.89 and Web Attack has attack severity 8. A Tier 1 analyst confirms before escalation."
+       ],
+       "reviewReason": "Tier 2 candidate; a Tier 1 analyst decides. E3: score 99.89 and Web Attack has attack severity 8. A Tier 1 analyst confirms before escalation.",
+       "decisionSource": "analyst",
+       "classification": {
+        "attackCategory": "web_attack",
+        "status": "mapped",
+        "source": "deterministic_suricata_mapping",
+        "reasons": [
+         "Rule and model assert Web Attack."
+        ],
+        "policyVersion": "flow-classification-v1",
+        "matches": [],
+        "conflictingCategories": []
+       }
+      },
+      "work": {
+       "status": "in_review",
+       "owner": "Glenn Ang",
+       "finishedBy": null
+      },
+      "verdicts": 0,
+      "legacy": {
+       "combinedScore": 99.89,
+       "severity": "High",
+       "feedback": []
+      },
+      "case": null,
+      "groundTruth": {
+       "benign: Benign": 1
+      }
+     },
+     "shot": "C2.png"
+    },
+    {
+     "id": "C3",
+     "label": "Analyst records False Positive",
+     "actor": "Tier 1 analyst",
+     "action": "Verdict: false_positive",
+     "before": {
+      "ref": "8987c09b-ac09-40c2-a896-ae2fb6ad6ea1",
+      "recordId": "AL-00478",
+      "raw": {
+       "srcIp": "172.31.64.80",
+       "dstIp": "64.150.178.87",
+       "srcPort": 50792,
+       "dstPort": 80,
+       "protocol": "TCP",
+       "duration": 5.237688,
+       "packets": 11,
+       "bytes": 1295,
+       "features": {
+        "Flow Duration": 5237688,
+        "Timestamp": "2018-02-14 12:40:02.383338"
+       },
+       "featureCount": 88
+      },
+      "detection": {
+       "signatureRules": [],
+       "signatureSeverity": null,
+       "mlClass": "Web Attack",
+       "mlProbability": 0.99893205,
+       "evidenceClass": "ml_only",
+       "detectionScore": 99.89,
+       "combinedScore": 99.89,
+       "severity": "High",
+       "attackCategory": "Web Attack",
+       "isCritical": true
+      },
+      "group": {
+       "members": 1,
+       "key": "172.31.64.80",
+       "firstSeen": "2018-02-14T12:40:02.383338Z",
+       "lastSeen": "2018-02-14T12:40:02.383338Z"
+      },
+      "routing": {
+       "route": "tier1_review",
+       "stage": "triage",
+       "priority": 99.89,
+       "band": "critical",
+       "tier2Recommended": true,
+       "reasons": [
+        "E3: score 99.89 and Web Attack has attack severity 8. A Tier 1 analyst confirms before escalation."
+       ],
+       "reviewReason": "Tier 2 candidate; a Tier 1 analyst decides. E3: score 99.89 and Web Attack has attack severity 8. A Tier 1 analyst confirms before escalation.",
+       "decisionSource": "analyst",
+       "classification": {
+        "attackCategory": "web_attack",
+        "status": "mapped",
+        "source": "deterministic_suricata_mapping",
+        "reasons": [
+         "Rule and model assert Web Attack."
+        ],
+        "policyVersion": "flow-classification-v1",
+        "matches": [],
+        "conflictingCategories": []
+       }
+      },
+      "work": {
+       "status": "in_review",
+       "owner": "Glenn Ang",
+       "finishedBy": null
+      },
+      "verdicts": 0,
+      "legacy": {
+       "combinedScore": 99.89,
+       "severity": "High",
+       "feedback": []
+      },
+      "case": null,
+      "groundTruth": {
+       "benign: Benign": 1
+      }
+     },
+     "after": {
+      "ref": "8987c09b-ac09-40c2-a896-ae2fb6ad6ea1",
+      "recordId": "AL-00478",
+      "raw": {
+       "srcIp": "172.31.64.80",
+       "dstIp": "64.150.178.87",
+       "srcPort": 50792,
+       "dstPort": 80,
+       "protocol": "TCP",
+       "duration": 5.237688,
+       "packets": 11,
+       "bytes": 1295,
+       "features": {
+        "Flow Duration": 5237688,
+        "Timestamp": "2018-02-14 12:40:02.383338"
+       },
+       "featureCount": 88
+      },
+      "detection": {
+       "signatureRules": [],
+       "signatureSeverity": null,
+       "mlClass": "Web Attack",
+       "mlProbability": 0.99893205,
+       "evidenceClass": "ml_only",
+       "detectionScore": 99.89,
+       "combinedScore": 70,
+       "severity": "High",
+       "attackCategory": "Web Attack",
+       "isCritical": true
+      },
+      "group": {
+       "members": 1,
+       "key": "172.31.64.80",
+       "firstSeen": "2018-02-14T12:40:02.383338Z",
+       "lastSeen": "2018-02-14T12:40:02.383338Z"
+      },
+      "routing": {
+       "route": "tier1_review",
+       "stage": "triage",
+       "priority": 99.89,
+       "band": "critical",
+       "tier2Recommended": true,
+       "reasons": [
+        "E3: score 99.89 and Web Attack has attack severity 8. A Tier 1 analyst confirms before escalation."
+       ],
+       "reviewReason": "Tier 2 candidate; a Tier 1 analyst decides. E3: score 99.89 and Web Attack has attack severity 8. A Tier 1 analyst confirms before escalation.",
+       "decisionSource": "analyst",
+       "classification": {
+        "attackCategory": "web_attack",
+        "status": "mapped",
+        "source": "deterministic_suricata_mapping",
+        "reasons": [
+         "Rule and model assert Web Attack."
+        ],
+        "policyVersion": "flow-classification-v1",
+        "matches": [],
+        "conflictingCategories": []
+       }
+      },
+      "work": {
+       "status": "completed",
+       "owner": "Glenn Ang",
+       "finishedBy": "Glenn Ang"
+      },
+      "verdicts": 1,
+      "legacy": {
+       "combinedScore": 70,
+       "severity": "High",
+       "feedback": [
+        {
+         "category": "mark_false_positive",
+         "original_score": 99.89,
+         "requested_delta": -30,
+         "actual_delta": -29.89,
+         "guardrail_action": "capped",
+         "user_id": 1
+        }
+       ]
+      },
+      "case": null,
+      "groundTruth": {
+       "benign: Benign": 1
+      }
+     },
+     "shot": "C3.png"
+    }
+   ]
+  },
+  {
+   "id": "D",
+   "title": "Routine group, confirmed by a Tier 1 verdict",
+   "ref": "5749fa6a-74d0-4021-a022-77539a407646",
+   "steps": [
+    {
+     "id": "D0",
+     "label": "Detected, grouped and routed to routine Tier 1",
+     "actor": "System",
+     "action": "Detection -> grouping -> routing",
+     "before": {
+      "ref": "5749fa6a-74d0-4021-a022-77539a407646",
+      "recordId": "AL-03066",
+      "raw": {
+       "srcIp": "18.219.193.20",
+       "dstIp": "172.31.69.25",
+       "srcPort": 40270,
+       "dstPort": 80,
+       "protocol": "TCP",
+       "duration": 0.027386,
+       "packets": 10,
+       "bytes": 1242,
+       "features": {
+        "Flow Duration": 27386,
+        "Timestamp": "2018-02-16 17:45:28.339667"
+       },
+       "featureCount": 88
+      },
+      "detection": {
+       "signatureRules": [],
+       "signatureSeverity": null,
+       "mlClass": "DoS",
+       "mlProbability": 0.99999951,
+       "evidenceClass": "ml_only",
+       "detectionScore": 100,
+       "combinedScore": 100,
+       "severity": "Medium",
+       "attackCategory": "DoS",
+       "isCritical": true
+      },
+      "group": {
+       "members": 197,
+       "key": "18.219.193.20",
+       "firstSeen": "2018-02-16T17:45:28.339667Z",
+       "lastSeen": "2018-02-16T17:58:20.990381Z"
+      },
+      "routing": {
+       "route": "tier1_review",
+       "stage": "triage",
+       "priority": 100,
+       "band": "critical",
+       "tier2Recommended": false,
+       "reasons": [],
+       "reviewReason": "No automatic or candidate rule applies. Routine Tier 1 review.",
+       "decisionSource": "system_policy",
+       "classification": {
+        "attackCategory": "dos",
+        "status": "mapped",
+        "source": "deterministic_suricata_mapping",
+        "reasons": [
+         "Rule and model assert DoS."
+        ],
+        "policyVersion": "flow-classification-v1",
+        "matches": [],
+        "conflictingCategories": []
+       }
+      },
+      "work": null,
+      "verdicts": 0,
+      "legacy": {
+       "combinedScore": 100,
+       "severity": "Medium",
+       "feedback": []
+      },
+      "case": null,
+      "groundTruth": {
+       "malicious: DoS": 197
+      }
+     },
+     "after": {
+      "ref": "5749fa6a-74d0-4021-a022-77539a407646",
+      "recordId": "AL-03066",
+      "raw": {
+       "srcIp": "18.219.193.20",
+       "dstIp": "172.31.69.25",
+       "srcPort": 40270,
+       "dstPort": 80,
+       "protocol": "TCP",
+       "duration": 0.027386,
+       "packets": 10,
+       "bytes": 1242,
+       "features": {
+        "Flow Duration": 27386,
+        "Timestamp": "2018-02-16 17:45:28.339667"
+       },
+       "featureCount": 88
+      },
+      "detection": {
+       "signatureRules": [],
+       "signatureSeverity": null,
+       "mlClass": "DoS",
+       "mlProbability": 0.99999951,
+       "evidenceClass": "ml_only",
+       "detectionScore": 100,
+       "combinedScore": 100,
+       "severity": "Medium",
+       "attackCategory": "DoS",
+       "isCritical": true
+      },
+      "group": {
+       "members": 197,
+       "key": "18.219.193.20",
+       "firstSeen": "2018-02-16T17:45:28.339667Z",
+       "lastSeen": "2018-02-16T17:58:20.990381Z"
+      },
+      "routing": {
+       "route": "tier1_review",
+       "stage": "triage",
+       "priority": 100,
+       "band": "critical",
+       "tier2Recommended": false,
+       "reasons": [],
+       "reviewReason": "No automatic or candidate rule applies. Routine Tier 1 review.",
+       "decisionSource": "system_policy",
+       "classification": {
+        "attackCategory": "dos",
+        "status": "mapped",
+        "source": "deterministic_suricata_mapping",
+        "reasons": [
+         "Rule and model assert DoS."
+        ],
+        "policyVersion": "flow-classification-v1",
+        "matches": [],
+        "conflictingCategories": []
+       }
+      },
+      "work": {
+       "status": "available",
+       "owner": null,
+       "finishedBy": null
+      },
+      "verdicts": 0,
+      "legacy": {
+       "combinedScore": 100,
+       "severity": "Medium",
+       "feedback": []
+      },
+      "case": null,
+      "groundTruth": {
+       "malicious: DoS": 197
+      }
+     },
+     "shot": "D0.png"
+    },
+    {
+     "id": "D1",
+     "label": "Analyst records Confirmed Malicious",
+     "actor": "Tier 1 analyst",
+     "action": "Verdict: confirmed_malicious",
+     "before": {
+      "ref": "5749fa6a-74d0-4021-a022-77539a407646",
+      "recordId": "AL-03066",
+      "raw": {
+       "srcIp": "18.219.193.20",
+       "dstIp": "172.31.69.25",
+       "srcPort": 40270,
+       "dstPort": 80,
+       "protocol": "TCP",
+       "duration": 0.027386,
+       "packets": 10,
+       "bytes": 1242,
+       "features": {
+        "Flow Duration": 27386,
+        "Timestamp": "2018-02-16 17:45:28.339667"
+       },
+       "featureCount": 88
+      },
+      "detection": {
+       "signatureRules": [],
+       "signatureSeverity": null,
+       "mlClass": "DoS",
+       "mlProbability": 0.99999951,
+       "evidenceClass": "ml_only",
+       "detectionScore": 100,
+       "combinedScore": 100,
+       "severity": "Medium",
+       "attackCategory": "DoS",
+       "isCritical": true
+      },
+      "group": {
+       "members": 197,
+       "key": "18.219.193.20",
+       "firstSeen": "2018-02-16T17:45:28.339667Z",
+       "lastSeen": "2018-02-16T17:58:20.990381Z"
+      },
+      "routing": {
+       "route": "tier1_review",
+       "stage": "triage",
+       "priority": 100,
+       "band": "critical",
+       "tier2Recommended": false,
+       "reasons": [],
+       "reviewReason": "No automatic or candidate rule applies. Routine Tier 1 review.",
+       "decisionSource": "system_policy",
+       "classification": {
+        "attackCategory": "dos",
+        "status": "mapped",
+        "source": "deterministic_suricata_mapping",
+        "reasons": [
+         "Rule and model assert DoS."
+        ],
+        "policyVersion": "flow-classification-v1",
+        "matches": [],
+        "conflictingCategories": []
+       }
+      },
+      "work": {
+       "status": "available",
+       "owner": null,
+       "finishedBy": null
+      },
+      "verdicts": 0,
+      "legacy": {
+       "combinedScore": 100,
+       "severity": "Medium",
+       "feedback": []
+      },
+      "case": null,
+      "groundTruth": {
+       "malicious: DoS": 197
+      }
+     },
+     "after": {
+      "ref": "5749fa6a-74d0-4021-a022-77539a407646",
+      "recordId": "AL-03066",
+      "raw": {
+       "srcIp": "18.219.193.20",
+       "dstIp": "172.31.69.25",
+       "srcPort": 40270,
+       "dstPort": 80,
+       "protocol": "TCP",
+       "duration": 0.027386,
+       "packets": 10,
+       "bytes": 1242,
+       "features": {
+        "Flow Duration": 27386,
+        "Timestamp": "2018-02-16 17:45:28.339667"
+       },
+       "featureCount": 88
+      },
+      "detection": {
+       "signatureRules": [],
+       "signatureSeverity": null,
+       "mlClass": "DoS",
+       "mlProbability": 0.99999951,
+       "evidenceClass": "ml_only",
+       "detectionScore": 100,
+       "combinedScore": 100,
+       "severity": "Medium",
+       "attackCategory": "DoS",
+       "isCritical": true
+      },
+      "group": {
+       "members": 197,
+       "key": "18.219.193.20",
+       "firstSeen": "2018-02-16T17:45:28.339667Z",
+       "lastSeen": "2018-02-16T17:58:20.990381Z"
+      },
+      "routing": {
+       "route": "tier1_review",
+       "stage": "triage",
+       "priority": 100,
+       "band": "critical",
+       "tier2Recommended": false,
+       "reasons": [],
+       "reviewReason": "No automatic or candidate rule applies. Routine Tier 1 review.",
+       "decisionSource": "system_policy",
+       "classification": {
+        "attackCategory": "dos",
+        "status": "mapped",
+        "source": "deterministic_suricata_mapping",
+        "reasons": [
+         "Rule and model assert DoS."
+        ],
+        "policyVersion": "flow-classification-v1",
+        "matches": [],
+        "conflictingCategories": []
+       }
+      },
+      "work": {
+       "status": "completed",
+       "owner": "Glenn Ang",
+       "finishedBy": "Glenn Ang"
+      },
+      "verdicts": 1,
+      "legacy": {
+       "combinedScore": 100,
+       "severity": "Medium",
+       "feedback": [
+        {
+         "category": "confirm_true_positive",
+         "original_score": 100,
+         "requested_delta": 10,
+         "actual_delta": 0,
+         "guardrail_action": "capped",
+         "user_id": 1
+        }
+       ]
+      },
+      "case": null,
+      "groundTruth": {
+       "malicious: DoS": 197
+      }
+     },
+     "shot": "D1.png"
+    }
+   ]
+  },
+  {
+   "id": "E",
+   "title": "Unflagged flow, missed attack found by a human (D4)",
+   "ref": "b13d4312-47ed-4b63-a60c-fdcccc4de508",
+   "steps": [
+    {
+     "id": "E0",
+     "label": "Not flagged; kept as a single bottom-band item",
+     "actor": "System",
+     "action": "Detection -> no group -> routing",
+     "before": {
+      "ref": "b13d4312-47ed-4b63-a60c-fdcccc4de508",
+      "recordId": "AL-03086",
+      "raw": {
+       "srcIp": "18.218.115.60",
+       "dstIp": "172.31.69.28",
+       "srcPort": 51146,
+       "dstPort": 80,
+       "protocol": "TCP",
+       "duration": 6.397363,
+       "packets": 14,
+       "bytes": 9747,
+       "features": {
+        "Flow Duration": 6397363,
+        "Timestamp": "2018-02-22 14:13:45.074278"
+       },
+       "featureCount": 88
+      },
+      "detection": {
+       "signatureRules": [],
+       "signatureSeverity": null,
+       "mlClass": "Benign",
+       "mlProbability": 0.36943698,
+       "evidenceClass": "none",
+       "detectionScore": 36.94,
+       "combinedScore": 36.94,
+       "severity": "Low",
+       "attackCategory": null,
+       "isCritical": false
+      },
+      "group": null,
+      "routing": {
+       "route": "tier1_review",
+       "stage": "triage",
+       "priority": 36.94,
+       "band": "medium",
+       "tier2Recommended": false,
+       "reasons": [],
+       "reviewReason": "No automatic or candidate rule applies. Routine Tier 1 review.",
+       "decisionSource": "system_policy",
+       "classification": {
+        "attackCategory": null,
+        "status": "informational_policy_signal",
+        "source": "deterministic_suricata_mapping",
+        "reasons": [
+         "No detector asserts an attack class."
+        ],
+        "policyVersion": "flow-classification-v1",
+        "matches": [],
+        "conflictingCategories": []
+       }
+      },
+      "work": null,
+      "verdicts": 0,
+      "legacy": {
+       "combinedScore": 36.94,
+       "severity": "Low",
+       "feedback": []
+      },
+      "case": null,
+      "groundTruth": {
+       "malicious: Web Attack": 1
+      }
+     },
+     "after": {
+      "ref": "b13d4312-47ed-4b63-a60c-fdcccc4de508",
+      "recordId": "AL-03086",
+      "raw": {
+       "srcIp": "18.218.115.60",
+       "dstIp": "172.31.69.28",
+       "srcPort": 51146,
+       "dstPort": 80,
+       "protocol": "TCP",
+       "duration": 6.397363,
+       "packets": 14,
+       "bytes": 9747,
+       "features": {
+        "Flow Duration": 6397363,
+        "Timestamp": "2018-02-22 14:13:45.074278"
+       },
+       "featureCount": 88
+      },
+      "detection": {
+       "signatureRules": [],
+       "signatureSeverity": null,
+       "mlClass": "Benign",
+       "mlProbability": 0.36943698,
+       "evidenceClass": "none",
+       "detectionScore": 36.94,
+       "combinedScore": 36.94,
+       "severity": "Low",
+       "attackCategory": null,
+       "isCritical": false
+      },
+      "group": null,
+      "routing": {
+       "route": "tier1_review",
+       "stage": "triage",
+       "priority": 36.94,
+       "band": "medium",
+       "tier2Recommended": false,
+       "reasons": [],
+       "reviewReason": "No automatic or candidate rule applies. Routine Tier 1 review.",
+       "decisionSource": "system_policy",
+       "classification": {
+        "attackCategory": null,
+        "status": "informational_policy_signal",
+        "source": "deterministic_suricata_mapping",
+        "reasons": [
+         "No detector asserts an attack class."
+        ],
+        "policyVersion": "flow-classification-v1",
+        "matches": [],
+        "conflictingCategories": []
+       }
+      },
+      "work": null,
+      "verdicts": 0,
+      "legacy": {
+       "combinedScore": 36.94,
+       "severity": "Low",
+       "feedback": []
+      },
+      "case": null,
+      "groundTruth": {
+       "malicious: Web Attack": 1
+      }
+     },
+     "shot": "E0.png"
+    },
+    {
+     "id": "E1",
+     "label": "Analyst searches and opens it (claims it)",
+     "actor": "Tier 1 analyst",
+     "action": "Search by reference, row click = claim",
+     "before": {
+      "ref": "b13d4312-47ed-4b63-a60c-fdcccc4de508",
+      "recordId": "AL-03086",
+      "raw": {
+       "srcIp": "18.218.115.60",
+       "dstIp": "172.31.69.28",
+       "srcPort": 51146,
+       "dstPort": 80,
+       "protocol": "TCP",
+       "duration": 6.397363,
+       "packets": 14,
+       "bytes": 9747,
+       "features": {
+        "Flow Duration": 6397363,
+        "Timestamp": "2018-02-22 14:13:45.074278"
+       },
+       "featureCount": 88
+      },
+      "detection": {
+       "signatureRules": [],
+       "signatureSeverity": null,
+       "mlClass": "Benign",
+       "mlProbability": 0.36943698,
+       "evidenceClass": "none",
+       "detectionScore": 36.94,
+       "combinedScore": 36.94,
+       "severity": "Low",
+       "attackCategory": null,
+       "isCritical": false
+      },
+      "group": null,
+      "routing": {
+       "route": "tier1_review",
+       "stage": "triage",
+       "priority": 36.94,
+       "band": "medium",
+       "tier2Recommended": false,
+       "reasons": [],
+       "reviewReason": "No automatic or candidate rule applies. Routine Tier 1 review.",
+       "decisionSource": "system_policy",
+       "classification": {
+        "attackCategory": null,
+        "status": "informational_policy_signal",
+        "source": "deterministic_suricata_mapping",
+        "reasons": [
+         "No detector asserts an attack class."
+        ],
+        "policyVersion": "flow-classification-v1",
+        "matches": [],
+        "conflictingCategories": []
+       }
+      },
+      "work": null,
+      "verdicts": 0,
+      "legacy": {
+       "combinedScore": 36.94,
+       "severity": "Low",
+       "feedback": []
+      },
+      "case": null,
+      "groundTruth": {
+       "malicious: Web Attack": 1
+      }
+     },
+     "after": {
+      "ref": "b13d4312-47ed-4b63-a60c-fdcccc4de508",
+      "recordId": "AL-03086",
+      "raw": {
+       "srcIp": "18.218.115.60",
+       "dstIp": "172.31.69.28",
+       "srcPort": 51146,
+       "dstPort": 80,
+       "protocol": "TCP",
+       "duration": 6.397363,
+       "packets": 14,
+       "bytes": 9747,
+       "features": {
+        "Flow Duration": 6397363,
+        "Timestamp": "2018-02-22 14:13:45.074278"
+       },
+       "featureCount": 88
+      },
+      "detection": {
+       "signatureRules": [],
+       "signatureSeverity": null,
+       "mlClass": "Benign",
+       "mlProbability": 0.36943698,
+       "evidenceClass": "none",
+       "detectionScore": 36.94,
+       "combinedScore": 36.94,
+       "severity": "Low",
+       "attackCategory": null,
+       "isCritical": false
+      },
+      "group": null,
+      "routing": {
+       "route": "tier1_review",
+       "stage": "triage",
+       "priority": 36.94,
+       "band": "medium",
+       "tier2Recommended": false,
+       "reasons": [],
+       "reviewReason": "No automatic or candidate rule applies. Routine Tier 1 review.",
+       "decisionSource": "system_policy",
+       "classification": {
+        "attackCategory": null,
+        "status": "informational_policy_signal",
+        "source": "deterministic_suricata_mapping",
+        "reasons": [
+         "No detector asserts an attack class."
+        ],
+        "policyVersion": "flow-classification-v1",
+        "matches": [],
+        "conflictingCategories": []
+       }
+      },
+      "work": {
+       "status": "in_review",
+       "owner": "Glenn Ang",
+       "finishedBy": null
+      },
+      "verdicts": 0,
+      "legacy": {
+       "combinedScore": 36.94,
+       "severity": "Low",
+       "feedback": []
+      },
+      "case": null,
+      "groundTruth": {
+       "malicious: Web Attack": 1
+      }
+     },
+     "shot": "E1.png"
+    },
+    {
+     "id": "E2",
+     "label": "Analyst records Confirmed Malicious",
+     "actor": "Tier 1 analyst",
+     "action": "Verdict: confirmed_malicious",
+     "before": {
+      "ref": "b13d4312-47ed-4b63-a60c-fdcccc4de508",
+      "recordId": "AL-03086",
+      "raw": {
+       "srcIp": "18.218.115.60",
+       "dstIp": "172.31.69.28",
+       "srcPort": 51146,
+       "dstPort": 80,
+       "protocol": "TCP",
+       "duration": 6.397363,
+       "packets": 14,
+       "bytes": 9747,
+       "features": {
+        "Flow Duration": 6397363,
+        "Timestamp": "2018-02-22 14:13:45.074278"
+       },
+       "featureCount": 88
+      },
+      "detection": {
+       "signatureRules": [],
+       "signatureSeverity": null,
+       "mlClass": "Benign",
+       "mlProbability": 0.36943698,
+       "evidenceClass": "none",
+       "detectionScore": 36.94,
+       "combinedScore": 36.94,
+       "severity": "Low",
+       "attackCategory": null,
+       "isCritical": false
+      },
+      "group": null,
+      "routing": {
+       "route": "tier1_review",
+       "stage": "triage",
+       "priority": 36.94,
+       "band": "medium",
+       "tier2Recommended": false,
+       "reasons": [],
+       "reviewReason": "No automatic or candidate rule applies. Routine Tier 1 review.",
+       "decisionSource": "system_policy",
+       "classification": {
+        "attackCategory": null,
+        "status": "informational_policy_signal",
+        "source": "deterministic_suricata_mapping",
+        "reasons": [
+         "No detector asserts an attack class."
+        ],
+        "policyVersion": "flow-classification-v1",
+        "matches": [],
+        "conflictingCategories": []
+       }
+      },
+      "work": {
+       "status": "in_review",
+       "owner": "Glenn Ang",
+       "finishedBy": null
+      },
+      "verdicts": 0,
+      "legacy": {
+       "combinedScore": 36.94,
+       "severity": "Low",
+       "feedback": []
+      },
+      "case": null,
+      "groundTruth": {
+       "malicious: Web Attack": 1
+      }
+     },
+     "after": {
+      "ref": "b13d4312-47ed-4b63-a60c-fdcccc4de508",
+      "recordId": "AL-03086",
+      "raw": {
+       "srcIp": "18.218.115.60",
+       "dstIp": "172.31.69.28",
+       "srcPort": 51146,
+       "dstPort": 80,
+       "protocol": "TCP",
+       "duration": 6.397363,
+       "packets": 14,
+       "bytes": 9747,
+       "features": {
+        "Flow Duration": 6397363,
+        "Timestamp": "2018-02-22 14:13:45.074278"
+       },
+       "featureCount": 88
+      },
+      "detection": {
+       "signatureRules": [],
+       "signatureSeverity": null,
+       "mlClass": "Benign",
+       "mlProbability": 0.36943698,
+       "evidenceClass": "none",
+       "detectionScore": 36.94,
+       "combinedScore": 46.94,
+       "severity": "Medium",
+       "attackCategory": null,
+       "isCritical": false
+      },
+      "group": null,
+      "routing": {
+       "route": "tier1_review",
+       "stage": "triage",
+       "priority": 36.94,
+       "band": "medium",
+       "tier2Recommended": false,
+       "reasons": [],
+       "reviewReason": "No automatic or candidate rule applies. Routine Tier 1 review.",
+       "decisionSource": "system_policy",
+       "classification": {
+        "attackCategory": null,
+        "status": "informational_policy_signal",
+        "source": "deterministic_suricata_mapping",
+        "reasons": [
+         "No detector asserts an attack class."
+        ],
+        "policyVersion": "flow-classification-v1",
+        "matches": [],
+        "conflictingCategories": []
+       }
+      },
+      "work": {
+       "status": "completed",
+       "owner": "Glenn Ang",
+       "finishedBy": "Glenn Ang"
+      },
+      "verdicts": 1,
+      "legacy": {
+       "combinedScore": 46.94,
+       "severity": "Medium",
+       "feedback": [
+        {
+         "category": "confirm_true_positive",
+         "original_score": 36.94,
+         "requested_delta": 10,
+         "actual_delta": 10,
+         "guardrail_action": "applied",
+         "user_id": 1
+        }
+       ]
+      },
+      "case": null,
+      "groundTruth": {
+       "malicious: Web Attack": 1
+      }
+     },
+     "shot": "E2.png"
+    }
+   ]
+  }
+ ]
+}

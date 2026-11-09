@@ -45,7 +45,7 @@ Tick each line only when you see the expected result. Write what you saw if it d
 | 14 | Type a resolution reason → **Resolve Case** | "Resolved by: Glenn Ang / #1"; all edit buttons are gone | ☐ |
 | 15 | **All Tier 2 cases** | Your case is not in the Active list. Set Status to "Resolved": it is there | ☐ |
 | 16 | Back to the workstation, open another Tier 2 candidate, click **Release claim** → **Release** | The row is free again ("Available") | ☐ |
-| 17 | Sign out, sign in as `admin`, open **Overview** | "Claimed alerts" lists open claims; admin Release needs a reason | ☐ |
+| 17 | Sign out, sign in as `admin`, open **Overview** | "Claimed alerts" lists open claims; admin Release needs a reason. The admin shows as "LIOW CHEE KUANG" (the demo name, set at sign-in by `apps/api/auth.py:107`) | ☐ |
 | 18 | Anywhere above: look for "Actor #" or "User #" | It never shows; names show instead | ☐ |
 
 ## C. What to report back
