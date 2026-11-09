@@ -14,6 +14,7 @@ stage-3/outputs/ml-predictions.regenerated.json
 dashboard/node_modules/
 dashboard/dist/
 hitl-ids/apps/web/node_modules/
+hitl-ids/apps/web/src/node_modules/
 hitl-ids/apps/web/dist/
 hitl-ids/apps/web/*.tsbuildinfo
 hitl-ids/apps/web/test-results/
