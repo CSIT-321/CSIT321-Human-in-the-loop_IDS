@@ -1,0 +1,156 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Packet to workstation - one confirmed case</title><style>
+:root{--ink:#16202b;--mut:#5b6b7c;--line:#dbe3ec;--bg:#fbfcfe;--accent:#0b6bcb;--warn:#b45309;--ok:#0f766e}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.55 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+main{max-width:1120px;margin:0 auto;padding:30px 22px 80px}
+h1{font-size:28px;line-height:1.25;margin:0 0 8px}
+h2{font-size:21px;margin:40px 0 10px;padding-bottom:6px;border-bottom:2px solid var(--line)}
+h3{font-size:16px;margin:22px 0 8px}
+p.lead{font-size:16px;color:var(--mut);margin:0 0 18px}
+.step{border:1px solid var(--line);border-radius:10px;background:#fff;padding:16px 18px;margin:16px 0}
+.step > h2{margin-top:0;border:0;font-size:19px;display:flex;gap:10px;align-items:baseline}
+.tag{font:600 11px/1 ui-monospace,monospace;letter-spacing:.06em;color:#fff;background:var(--accent);
+     padding:5px 7px;border-radius:5px;text-transform:uppercase;white-space:nowrap}
+.tag.legacy{background:var(--warn)}
+.tag.suricata{background:#7c3aed}
+table{border-collapse:collapse;width:100%;margin:10px 0;font-size:14px}
+th,td{border:1px solid var(--line);padding:7px 9px;text-align:left;vertical-align:top}
+th{background:#f3f6fa;font-weight:600}
+td code, p code, li code{font:13px/1.4 ui-monospace,SFMono-Regular,Consolas,monospace;background:#f3f6fa;padding:1px 4px;border-radius:4px}
+pre{background:#0f172a;color:#e6edf6;padding:12px 14px;border-radius:8px;overflow-x:auto;
+    font:12.5px/1.45 ui-monospace,SFMono-Regular,Consolas,monospace}
+figure{margin:14px 0}
+figure img{width:100%;border:1px solid var(--line);border-radius:8px;display:block}
+figcaption{font-size:13px;color:var(--mut);margin-top:6px}
+.facts{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:10px;margin:14px 0}
+.fact{border:1px solid var(--line);border-radius:8px;padding:10px 12px;background:#fff}
+.fact b{display:block;font-size:12px;color:var(--mut);text-transform:uppercase;letter-spacing:.05em}
+.fact span{font:600 16px/1.4 ui-monospace,monospace}
+.note{border-left:4px solid var(--accent);background:#f0f6ff;padding:10px 14px;border-radius:0 8px 8px 0;margin:14px 0}
+.warn{border-left:4px solid var(--warn);background:#fff7ed;padding:10px 14px;border-radius:0 8px 8px 0;margin:14px 0}
+.ok{color:var(--ok);font-weight:600}
+ul{margin:8px 0 8px 20px;padding:0}
+li{margin:4px 0}
+footer{margin-top:50px;border-top:1px solid var(--line);padding-top:14px;color:var(--mut);font-size:13px}
+nav.toc{display:flex;flex-wrap:wrap;gap:8px;margin:18px 0 8px}
+nav.toc a{font-size:13px;border:1px solid var(--line);border-radius:999px;padding:4px 10px;text-decoration:none;color:var(--ink);background:#fff}
+</style></head><body><main>
+<h1>Packet to workstation: one confirmed case, every layer</h1>
+<p class="lead">One real SSH scan and brute-force burst is followed from the raw frames in the capture, through Suricata, into this product's own admission path, and onto the analyst screen. A second, legacy lane shows the same packets through the CICIDS2018 flow model that the product is leaving behind.</p>
+<div class="facts">
+<div class="fact"><b>Attack</b><span>SSH scan / brute force</span></div>
+<div class="fact"><b>Source</b><span>13.58.98.64</span></div>
+<div class="fact"><b>Target</b><span>172.31.69.25:22</span></div>
+<div class="fact"><b>Suricata rule</b><span>sid 2001219</span></div>
+<div class="fact"><b>SYNs in this burst</b><span>7 in 1572 us</span></div>
+<div class="fact"><b>Ground truth</b><span>54 of 54 malicious/Brute Force</span></div>
+</div>
+<nav class="toc"><a href="#s1">1 Packet</a><a href="#s2">2 Suricata</a><a href="#s3">3 Ingestion</a><a href="#s4">4 Admission</a><a href="#s5">5 Analyst screen</a><a href="#s6">6 Legacy flow lane</a><a href="#s7">7 Two lanes</a><a href="#s8">8 Verification</a></nav>
+<section class="step" id="s1"><h2><span class="tag">Step 1</span>The packet, as it was captured</h2>
+<p>These are real frames from <code>data/spike/Wednesday-14-02-2018/repaired/172.31.69.25.pcap</code>, the repaired capture of the host <code>172.31.69.25</code> on 2018-02-14. The filter was <code>13.58.98.64 to 172.31.69.25:22</code>.</p>
+<table class=""><thead><tr><th>Time (UTC)</th><th>Source port</th><th>TCP flags</th><th>IP bytes</th><th>TTL</th><th>Window</th><th>Payload bytes</th></tr></thead><tbody><tr><td><code>2018-02-14T18:01:50.374537Z</code></td><td>43840</td><td>SYN</td><td>60</td><td>63</td><td>26883</td><td>0</td></tr><tr><td><code>2018-02-14T18:01:50.374568Z</code></td><td>43838</td><td>SYN</td><td>60</td><td>63</td><td>26883</td><td>0</td></tr><tr><td><code>2018-02-14T18:01:50.374573Z</code></td><td>43842</td><td>SYN</td><td>60</td><td>63</td><td>26883</td><td>0</td></tr><tr><td><code>2018-02-14T18:01:50.374880Z</code></td><td>43840</td><td>ACK</td><td>52</td><td>63</td><td>211</td><td>0</td></tr><tr><td><code>2018-02-14T18:01:50.374912Z</code></td><td>43838</td><td>ACK</td><td>52</td><td>63</td><td>211</td><td>0</td></tr><tr><td><code>2018-02-14T18:01:50.374933Z</code></td><td>43842</td><td>ACK</td><td>52</td><td>63</td><td>211</td><td>0</td></tr></tbody></table>
+<p class="note"><b>7 SYNs</b> leave for port 22 from 7 source ports inside <b>1572 microseconds</b> (1.57 ms); the first three land within 36 microseconds. One connection attempt is normal behaviour. This burst is what Suricata's scan rule looks for.</p>
+<h3>Frame 405673, hex dump (first 54 bytes)</h3>
+<pre>02 d8 a9 4e 38 42 02 ca 69 c4 6d 06 08 00 45 00 00 3c fe 72 40 00 3f 06 dc 96 0d 3a 62 40 ac 1f 45 19 ab 46 00 16 57 bb ab d2 00 00 00 00 a0 02 69 03 53 a6 00 00</pre>
+<table class=""><thead><tr><th>Field</th><th>Value</th></tr></thead><tbody><tr><td>Frame number in the capture</td><td><code>405673</code></td></tr><tr><td>Epoch timestamp</td><td><code>1518631310.375719</code></td></tr><tr><td>Source to destination</td><td>13.58.98.64:43846 to 172.31.69.25:22</td></tr><tr><td>TCP flags</td><td>SYN (2)</td></tr><tr><td>IP total length / frame bytes</td><td>60 / 74</td></tr><tr><td>Ethernet destination / source</td><td><code>02:d8:a9:4e:38:42</code> / <code>02:ca:69:c4:6d:06</code></td></tr></tbody></table>
+</section>
+<section class="step" id="s2"><h2><span class="tag suricata">Step 2</span>Suricata reads the packet and writes an alert</h2>
+<p>Suricata is a standard, third-party engine. This page does not explain how it detects; it shows what it emitted, because that record is the input to this product.</p>
+<table class=""><thead><tr><th>Field</th><th>Value</th></tr></thead><tbody><tr><td>Signature</td><td><b>ET SCAN Potential SSH Scan</b></td></tr><tr><td>Signature id / revision</td><td>2001219 / 20</td></tr><tr><td>Native severity</td><td>2</td></tr><tr><td>Suricata category</td><td>Attempted Information Leak</td></tr><tr><td>Action</td><td>allowed</td></tr><tr><td>Direction</td><td>to_server</td></tr><tr><td>Flow id</td><td><code>1895176605453914</code></td></tr><tr><td>Frame that raised it (pcap_cnt)</td><td><code>405673</code></td></tr><tr><td>Timestamp</td><td><code>2018-02-15T02:01:50.375719+0800</code></td></tr></tbody></table>
+<p class="note">Frame <code>405673</code> is the same frame decoded in step 1, and the microsecond parts agree: <code>2018-02-15T02:01:50.375719+0800</code> in the alert equals <code>1518631310.375719</code> in the capture. The link between packet and alert is exact, not a guess from loose time correlation.</p>
+<h3>The eve.json record, verbatim (metadata shortened)</h3>
+<pre>{
+ &quot;timestamp&quot;: &quot;2018-02-15T02:01:50.375719+0800&quot;,
+ &quot;flow_id&quot;: 1895176605453914,
+ &quot;pcap_cnt&quot;: 405673,
+ &quot;src_ip&quot;: &quot;13.58.98.64&quot;,
+ &quot;src_port&quot;: 43846,
+ &quot;dest_ip&quot;: &quot;172.31.69.25&quot;,
+ &quot;dest_port&quot;: 22,
+ &quot;proto&quot;: &quot;TCP&quot;,
+ &quot;app_proto&quot;: null,
+ &quot;direction&quot;: &quot;to_server&quot;,
+ &quot;alert&quot;: {
+  &quot;action&quot;: &quot;allowed&quot;,
+  &quot;gid&quot;: 1,
+  &quot;signature_id&quot;: 2001219,
+  &quot;rev&quot;: 20,
+  &quot;signature&quot;: &quot;ET SCAN Potential SSH Scan&quot;,
+  &quot;category&quot;: &quot;Attempted Information Leak&quot;,
+  &quot;severity&quot;: 2,
+  &quot;metadata&quot;: {
+   &quot;confidence&quot;: [
+    &quot;Medium&quot;
+   ],
+   &quot;created_at&quot;: [
+    &quot;2010_07_30&quot;
+   ],
+   &quot;signature_severity&quot;: [
+    &quot;Informational&quot;
+   ]
+  }
+ },
+ &quot;flow&quot;: {
+  &quot;pkts_toserver&quot;: 1,
+  &quot;pkts_toclient&quot;: 0,
+  &quot;bytes_toserver&quot;: 74,
+  &quot;bytes_toclient&quot;: 0,
+  &quot;start&quot;: &quot;2018-02-15T02:01:50.375719+0800&quot;,
+  &quot;src_ip&quot;: &quot;13.58.98.64&quot;,
+  &quot;dest_ip&quot;: &quot;172.31.69.25&quot;,
+  &quot;src_port&quot;: 43846,
+  &quot;dest_port&quot;: 22
+ }
+}</pre>
+</section>
+<section class="step" id="s3"><h2><span class="tag">Step 3</span>Our ingest reads the Suricata record</h2>
+<p><code>scripts/import_suricata_eve.py</code> parses eve.json, validates each record against the canonical alert contract and stages it. Nothing is admitted at this point.</p>
+<table class=""><thead><tr><th>Field</th><th>Value</th></tr></thead><tbody><tr><td>Records parsed</td><td>46</td></tr><tr><td>Records staged</td><td>46</td></tr><tr><td>Invalid / duplicate / rejected</td><td>0 / 0 / 0</td></tr><tr><td>Admission status after import</td><td><code>pending</code></td></tr><tr><td>Policy version</td><td><code>suricata-offline-v1</code> (config/external-admission.json)</td></tr><tr><td>Proposed priority from native severity</td><td>2 to <b>65</b></td></tr><tr><td>Staging decision</td><td><code>hold_for_review</code></td></tr></tbody></table>
+<h3>Field by field: what the record contributes</h3>
+<table class=""><thead><tr><th>eve.json field</th><th>meaning in our contract</th><th>stored column</th><th>value for this case</th></tr></thead><tbody><tr><td><code>alert.signature</code></td><td>detection title</td><td><code>detection_title</code></td><td>ET SCAN Potential SSH Scan</td></tr><tr><td><code>alert.category</code></td><td>native category</td><td><code>detection_category</code></td><td>Attempted Information Leak</td></tr><tr><td><code>alert.severity</code></td><td>native severity</td><td><code>native_severity</code></td><td>2</td></tr><tr><td><code>timestamp</code></td><td>occurred at</td><td><code>occurred_at</code></td><td><code>2018-02-15T02:01:50.375719+0800</code></td></tr><tr><td><code>src_ip</code>, <code>src_port</code></td><td>source</td><td><code>source_ip</code>, <code>source_port</code></td><td>13.58.98.64</td></tr><tr><td><code>dest_ip</code>, <code>dest_port</code></td><td>destination</td><td><code>destination_ip</code>, <code>destination_port</code></td><td>172.31.69.25:22</td></tr><tr><td><code>proto</code></td><td>protocol</td><td><code>protocol</code></td><td>TCP</td></tr><tr><td>(none)</td><td>confidence</td><td><code>confidence</code></td><td>null: the admission policy rejects a confidence from Suricata</td></tr><tr><td>(none)</td><td>evidence class</td><td><code>proposed_evidence_class</code></td><td><code>external_rule</code></td></tr></tbody></table>
+<p class="note">The rule fires on the signature text, and the mapping to our attack class is deterministic: <code>suricata-classification-v3</code> maps signature 2001219 to <b>reconnaissance_port_scan</b>. The reason recorded is: &ldquo;Rule reconnaissance: signature 2001219 signature maps to reconnaissance_port_scan.&rdquo;.</p>
+</section>
+<section class="step" id="s4"><h2><span class="tag">Step 4</span>Eligibility review and admission</h2>
+<p>An external alert is not trusted on arrival. An analyst records an eligibility decision, then admits it. Both writes are kept with the person and the reason.</p>
+<table class=""><thead><tr><th>Field</th><th>Value</th></tr></thead><tbody><tr><td>Review decision</td><td><b>accepted</b></td></tr><tr><td>Review reason</td><td>Packet evidence checked: 7 SYNs to port 22 from 7 source ports within 1572 microseconds.</td></tr><tr><td>Review id / actor</td><td>1 / Glenn Ang</td></tr><tr><td>Admitted by</td><td>Glenn Ang at <code>2026-11-09T08:54:21.162639Z</code></td></tr><tr><td>Operational alert reference</td><td><code>940906e6-1fe5-5523-ad0a-6a01926552c7</code></td></tr><tr><td>Source kind</td><td><code>external_nids_alert</code></td></tr></tbody></table>
+<h3>What the product decided after admission</h3>
+<table class=""><thead><tr><th>Field</th><th>Value</th></tr></thead><tbody><tr><td>Operational priority</td><td><b>65</b> from native severity 2 (the policy table, not the class)</td></tr><tr><td>Priority band</td><td><code>high</code></td></tr><tr><td>Handling route</td><td><code>tier1_review</code></td></tr><tr><td>Workflow stage</td><td><code>triage</code></td></tr><tr><td>Review required</td><td>yes</td></tr><tr><td>System routing decision</td><td><code>tier1_review</code> (class <code>ROUTINE_REVIEW</code>, source <code>system_policy</code>)<br><span class="mut">Known attack classification; no configured trusted critical or expert condition is satisfied. Routine Tier 1 review.</span></td></tr><tr><td>Attack category</td><td><b>reconnaissance_port_scan</b> (<code>mapped</code>, source <code>deterministic_suricata_mapping</code>)</td></tr><tr><td>Learning eligible</td><td>no: external rule alerts are isolated until a source-specific family policy is validated</td></tr></tbody></table>
+<p class="note">Native severity 2 maps to priority 65 by <code>config/external-admission.json</code> (severities 1, 2, 3, 4 map to 85, 65, 40, 20). The attack class does not raise it here: an external alert is ranked by what the sensor said, and a human decides the rest.</p>
+</section>
+<section class="step" id="s5"><h2><span class="tag">Step 5</span>How it looks to the analyst</h2>
+<p>Four screens, taken live from the database that holds this Suricata lane. Read them in order.</p>
+<figure><a href="shots/01-inbox-backlog.png"><img src="shots/01-inbox-backlog.png" alt="Incoming Alerts: 46 staged Suricata records. This is the real backlog, not one fabricated row." loading="lazy"></a><figcaption>Incoming Alerts: 46 staged Suricata records. This is the real backlog, not one fabricated row.</figcaption></figure>
+<figure><a href="shots/02-admitted-record.png"><img src="shots/02-admitted-record.png" alt="The admitted record: eligibility accepted, review reason, who admitted it, the operational alert reference and the link to the workstation." loading="lazy"></a><figcaption>The admitted record: eligibility accepted, review reason, who admitted it, the operational alert reference and the link to the workstation.</figcaption></figure>
+<figure><a href="shots/03-workstation-suricata-alert.png"><img src="shots/03-workstation-suricata-alert.png" alt="The analyst workstation. The alert shows Suricata as the detector, native severity 2, our class Reconnaissance Port Scan, priority 65, Tier 1 review." loading="lazy"></a><figcaption>The analyst workstation. The alert shows Suricata as the detector, native severity 2, our class Reconnaissance Port Scan, priority 65, Tier 1 review.</figcaption></figure>
+<figure><a href="shots/04-queue-suricata-lane.png"><img src="shots/04-queue-suricata-lane.png" alt="The queue for this database. One item, because this database holds only the Suricata lane." loading="lazy"></a><figcaption>The queue for this database. One item, because this database holds only the Suricata lane.</figcaption></figure>
+<p class="note">The record states both categories, and they differ: Suricata says &ldquo;Attempted Information Leak&rdquo;, this product says &ldquo;Reconnaissance Port Scan&rdquo;. That is expected. Suricata classifies its own rule; we classify the attack.</p>
+</section>
+<section class="step" id="s6"><h2><span class="tag legacy">Step 6</span>The legacy flow lane, labelled for removal</h2>
+<div class="warn"><b>The CICIDS2018 flow path is legacy.</b> The product is moving to Suricata as the true start of the pipeline. This lane is shown because the current demo data and most of today's screens are built on it, and reviewers must see the difference. It is scheduled for removal.</div>
+<p>The same packets also appear as flow features. Here the values are real CICIDS2018 rows, not derived by this page.</p>
+<h3>The rule that fires on these flows</h3>
+<table class=""><thead><tr><th>Field</th><th>Test</th><th>Observed</th><th>Result</th></tr></thead><tbody><tr><td><code>protocol</code></td><td>TCP</td><td>TCP</td><td>pass</td></tr><tr><td><code>destinationPort</code></td><td>22</td><td>22</td><td>pass</td></tr><tr><td><code>flowPacketsPerSecond</code></td><td>{&#x27;min&#x27;: 10.66689}</td><td>133.8524826661035</td><td>pass</td></tr><tr><td><code>totalFwdPackets</code></td><td>{&#x27;min&#x27;: 10.0}</td><td>22</td><td>pass</td></tr><tr><td><code>flowDuration</code></td><td>{&#x27;max&#x27;: 5000000.0}</td><td>336191</td><td>pass</td></tr></tbody></table>
+<table class=""><thead><tr><th>Field</th><th>Value</th></tr></thead><tbody><tr><td>Rule</td><td><code>SIG-SSH-BRUTE-FORCE</code> (SSH Brute Force Flow Pattern, version s4b-1)</td></tr><tr><td>Rule strength (sig)</td><td>0.6</td></tr><tr><td>Model class / confidence</td><td>Brute Force / 0.9999783</td></tr><tr><td>Malicious probability (1 - P(Benign))</td><td>0.99999804</td></tr><tr><td>Evidence class</td><td><b>corroborated</b></td></tr><tr><td>Fused score</td><td><b>100</b> (min(100, max(sig, ml) x 100 + 5) clipped)</td></tr><tr><td>Severity</td><td><b>Medium</b> from the Brute Force class ceiling (CVSS 5.0), although the score is 100</td></tr><tr><td>Group</td><td>54 flows from 13.58.98.64, 18:03:05 to 19:32:12</td></tr><tr><td>Routing</td><td><code>tier2_case</code>, priority 100: E1-flow-rule: the rule and the model agree on Brute Force at score 100. The whole group of 54 alerts is escalated; member 1 of 54 qualified.</td></tr><tr><td>Tier 2 case</td><td><code>14f59d20-866a-5abd-acb2-76d3542b3848</code>, source <code>system_policy</code>, status <code>open</code></td></tr></tbody></table>
+<figure><a href="shots/06-flow-alert-panel.png"><img src="shots/06-flow-alert-panel.png" alt="The legacy alert: Legacy Flow Detector, score 100, priority 100, Tier 2 case, group of 54, and the rule and model agreement in the combined explanation." loading="lazy"></a><figcaption>The legacy alert: Legacy Flow Detector, score 100, priority 100, Tier 2 case, group of 54, and the rule and model agreement in the combined explanation.</figcaption></figure>
+<figure><a href="shots/05-queue-flow-group.png"><img src="shots/05-queue-flow-group.png" alt="The same item in the queue, filtered to its reference." loading="lazy"></a><figcaption>The same item in the queue, filtered to its reference.</figcaption></figure>
+<figure><a href="shots/08-tier2-case-detail.png"><img src="shots/08-tier2-case-detail.png" alt="The Tier 2 case the system opened by itself: creation source System Policy, priority at creation P1 / 100, and why Tier 2 recorded in the case." loading="lazy"></a><figcaption>The Tier 2 case the system opened by itself: creation source System Policy, priority at creation P1 / 100, and why Tier 2 recorded in the case.</figcaption></figure>
+<p class="note">Five layers agree on this event: 54 flow records, one rule (<code>SIG-SSH-BRUTE-FORCE</code>), one model verdict, one fused score, one group, and one case. Ground truth for those flows is <b>malicious/Brute Force</b>, so this is a confirmed case, not a guess.</p>
+</section>
+<section class="step" id="s7"><h2><span class="tag">Step 7</span>Why the two lanes do not meet yet</h2>
+<table class=""><thead><tr><th></th><th>Suricata lane (target)</th><th>Flow lane (legacy)</th></tr></thead><tbody><tr><td>Detector</td><td>Suricata signatures, standard rules</td><td>Our 16-field rule engine plus the XGBoost model</td></tr><tr><td>How it enters</td><td>Import, eligibility review, admission</td><td>Detection run over CICIDS2018 features</td></tr><tr><td>Score basis</td><td>Native severity to priority (2 to 65)</td><td>Fused score 0-100, then the class ceiling</td></tr><tr><td>Class basis</td><td>Deterministic signature text mapping</td><td>Rule conditions plus model class</td></tr><tr><td>Route for this case</td><td><code>tier1_review</code></td><td><code>tier2_case</code></td></tr><tr><td>Learning</td><td>Not eligible</td><td>Eligible, gated by family agreement</td></tr><tr><td>Screens</td><td>Steps 5</td><td>Step 6</td></tr></tbody></table>
+<div class="warn"><b>Found while building this page: the two lanes cannot share one database.</b> Admitting a Suricata alert into a database that already holds routed flow alerts fails with <code>ValidationError: 3 validation errors for ClassificationPolicy</code>. The cause is <code>packages/detection/system_routing.py:70-75</code>, which re-validates every stored <code>classification_policy</code> snapshot as the Suricata policy type; the flow lane stored a different policy family (<code>flow-classification-v1</code>). A database with no flow routing rows accepts the same alert without error. This page therefore uses two databases, and every screenshot is labelled with its lane. No product code was changed.</div>
+<p>Consequence for the roadmap: moving to a Suricata-first pipeline is not only a detector swap. The admission path, the classification policy and the routing policy each need one owner per lane, and the version guard needs to compare like with like. Until that is done, a deployment that runs both detectors cannot merge their queues.</p>
+</section>
+<section class="step" id="s8"><h2><span class="tag">Step 8</span>What was checked</h2>
+<table class=""><thead><tr><th>Check</th><th>What was measured</th><th>Detail</th><th>Result</th></tr></thead><tbody><tr><td>The alert names the frame that raised it</td><td>pcap_cnt 405673 equals frame 405673</td><td>same microsecond: 2018-02-15T02:01:50.375719+0800 vs 1518631310.375719</td><td><span class="ok">pass</span></td></tr><tr><td>The decoded frame is the same flow</td><td>13.58.98.64:43846 to 172.31.69.25:22</td><td>matches the alert 5-tuple</td><td><span class="ok">pass</span></td></tr><tr><td>Every staged record is valid</td><td>46 parsed, 0 invalid</td><td>46 staged</td><td><span class="ok">pass</span></td></tr><tr><td>One admission produces one queue row</td><td>1 admission, 1 operational alert</td><td></td><td><span class="ok">pass</span></td></tr><tr><td>The class comes from the policy</td><td>reconnaissance_port_scan by deterministic_suricata_mapping</td><td>policy suricata-classification-v3</td><td><span class="ok">pass</span></td></tr><tr><td>The flow lane is one group</td><td>54 members</td><td>one representative</td><td><span class="ok">pass</span></td></tr><tr><td>The flow lane is a confirmed case</td><td>malicious/Brute Force</td><td>ground truth joined after detection</td><td><span class="ok">pass</span></td></tr><tr><td>The case was opened by policy</td><td>source system_policy</td><td>status open</td><td><span class="ok">pass</span></td></tr></tbody></table>
+<h3>Reproduce it</h3>
+<pre>python analysis/phase-f/packet-to-workstation/p2w_capture.py      # packets + the eve record
+python analysis/phase-f/packet-to-workstation/p2w_data.py suricata  # DB #1: stage, review, admit
+python analysis/phase-f/packet-to-workstation/p2w_data.py flow      # DB #2: legacy flow lane
+bash analysis/phase-f/pw_run.sh p2w-suricata p2w-flow              # the 8 screenshots
+python analysis/phase-f/packet-to-workstation/build_page.py        # this page</pre>
+</section>
+<footer>Data: <code>data/spike/Wednesday-14-02-2018/repaired/172.31.69.25.pcap</code>, <code>suricata-172.31.69.25/eve.json</code>, two copies of <code>data/demo.db</code> (one routed, one not). No product code was changed to build this page. Ground truth is shown only in this document; the product never reads it.</footer>
+</main></body></html>

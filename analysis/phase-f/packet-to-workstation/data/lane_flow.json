@@ -1,0 +1,222 @@
+{
+ "db": "C:\\Users\\Glenn Ang\\AppData\\Local\\Temp\\hitl-review\\p2w-flow.db",
+ "group": {
+  "group_ref": "3df3cb58-cb78-530d-9b2e-7f94989bfb32",
+  "grouping_key": "13.58.98.64",
+  "member_count": 54,
+  "first_seen_at": "2018-02-14T18:03:05.526244Z",
+  "last_seen_at": "2018-02-14T19:32:12.404894Z"
+ },
+ "representative": {
+  "operational_alert_ref": "4b32f032-4f19-4783-8c57-0503fb319c09",
+  "alert_ref": "4b32f032-4f19-4783-8c57-0503fb319c09",
+  "record_id": "AL-02365",
+  "members": [
+   "AL-02365",
+   "AL-03817",
+   "AL-03017",
+   "AL-00074",
+   "AL-02801",
+   "AL-01880",
+   "AL-03139",
+   "AL-04708",
+   "AL-04601",
+   "AL-04062",
+   "AL-02927",
+   "AL-03960",
+   "AL-00265",
+   "AL-02775",
+   "AL-02103",
+   "AL-04368",
+   "AL-02792",
+   "AL-04439",
+   "AL-02158",
+   "AL-03298",
+   "AL-00215",
+   "AL-00737",
+   "AL-02873",
+   "AL-00949",
+   "AL-04875",
+   "AL-00899",
+   "AL-02326",
+   "AL-04764",
+   "AL-02785",
+   "AL-04594",
+   "AL-04448",
+   "AL-03901",
+   "AL-01344",
+   "AL-03300",
+   "AL-01407",
+   "AL-02109",
+   "AL-03218",
+   "AL-04988",
+   "AL-02611",
+   "AL-03365",
+   "AL-04351",
+   "AL-00062",
+   "AL-03358",
+   "AL-03380",
+   "AL-02206",
+   "AL-04724",
+   "AL-00622",
+   "AL-04694",
+   "AL-01001",
+   "AL-02857",
+   "AL-01587",
+   "AL-04608",
+   "AL-00060",
+   "AL-00457"
+  ]
+ },
+ "alert": {
+  "attack_category": "Brute Force",
+  "ml_predicted_class": "Brute Force",
+  "ml_probability": 0.99999804,
+  "confidence": 0.9999783,
+  "signature_severity": 0.6,
+  "combined_score": 100,
+  "detection_score": 100,
+  "severity": "Medium",
+  "evidence_class": "corroborated",
+  "is_critical": 1
+ },
+ "signatureRules": [
+  {
+   "attack_category": "Brute Force",
+   "matched_conditions": [
+    {
+     "expected": "TCP",
+     "feature": "protocol",
+     "observed": "TCP"
+    },
+    {
+     "expected": 22,
+     "feature": "destinationPort",
+     "observed": 22
+    },
+    {
+     "expected": {
+      "min": 10.66689
+     },
+     "feature": "flowPacketsPerSecond",
+     "observed": 133.8524826661035
+    },
+    {
+     "expected": {
+      "min": 10.0
+     },
+     "feature": "totalFwdPackets",
+     "observed": 22
+    },
+    {
+     "expected": {
+      "max": 5000000.0
+     },
+     "feature": "flowDuration",
+     "observed": 336191
+    }
+   ],
+   "name": "SSH Brute Force Flow Pattern",
+   "rule_id": "SIG-SSH-BRUTE-FORCE",
+   "severity": "Medium",
+   "version": "s4b-1"
+  }
+ ],
+ "shap": {
+  "additivity_check": {
+   "difference": 3.677800123114139e-06,
+   "passed": true,
+   "tolerance": 0.0001
+  },
+  "base_value": -0.7585001587867737,
+  "explained_class": "Brute Force",
+  "explained_class_index": 2,
+  "method": "xgboost_native_treeshap_pred_contribs",
+  "output_space": "raw_margin",
+  "raw_model_margin": 6.432360649108887,
+  "reason": null,
+  "status": "available",
+  "top_opposing_features": [
+   {
+    "direction": "opposes_prediction",
+    "feature_name": "Fwd Packets/s",
+    "feature_value": 65.4389877319336,
+    "shap_contribution": -0.08926356583833694
+   },
+   {
+    "direction": "opposes_prediction",
+    "feature_name": "Flow Duration",
+    "feature_value": 336191.0,
+    "shap_contribution": -0.016714347526431084
+   },
+   {
+    "direction": "opposes_prediction",
+    "feature_name": "Total TCP Flow Time",
+    "feature_value": 336191.0,
+    "shap_contribution": -0.013079183176159859
+   },
+   {
+    "direction": "opposes_prediction",
+    "feature_name": "Flow Packets/s",
+    "feature_value": 133.85247802734375,
+    "shap_contribution": -0.01122746430337429
+   },
+   {
+    "direction": "opposes_prediction",
+    "feature_name": "Bwd Packets/s",
+    "feature_value": 68.41349029541016,
+    "shap_contribution": -0.0007553152972832322
+   }
+  ],
+  "top_supporting_features": [
+   {
+    "direction": "supports_prediction",
+    "feature_name": "Dst Port",
+    "feature_value": 22.0,
+    "shap_contribution": 5.556386470794678
+   },
+   {
+    "direction": "supports_prediction",
+    "feature_name": "Fwd Seg Size Min",
+    "feature_value": 32.0,
+    "shap_contribution": 0.9151092171669006
+   },
+   {
+    "direction": "supports_prediction",
+    "feature_name": "Flow IAT Min",
+    "feature_value": 5.0,
+    "shap_contribution": 0.5430344939231873
+   },
+   {
+    "direction": "supports_prediction",
+    "feature_name": "FWD Init Win Bytes",
+    "feature_value": 26883.0,
+    "shap_contribution": 0.13258770108222961
+   },
+   {
+    "direction": "supports_prediction",
+    "feature_name": "Bwd Packet Length Std",
+    "feature_value": 253.95423889160156,
+    "shap_contribution": 0.06224527582526207
+   }
+  ]
+ },
+ "triage": {
+  "operational_priority": 100,
+  "priority_band": "critical",
+  "handling_route": "tier2_case",
+  "workflow_stage": "investigation",
+  "tier2_recommended": 0,
+  "review_reason": "E1-flow-rule: the rule and the model agree on Brute Force at score 100. The whole group of 54 alerts is escalated; member 1 of 54 qualified."
+ },
+ "case": {
+  "case_ref": "14f59d20-866a-5abd-acb2-76d3542b3848",
+  "decision_source": "system_policy",
+  "created_by_actor_id": null,
+  "status": "open",
+  "revision": 1
+ },
+ "groundTruth": {
+  "malicious/Brute Force": 54
+ }
+}

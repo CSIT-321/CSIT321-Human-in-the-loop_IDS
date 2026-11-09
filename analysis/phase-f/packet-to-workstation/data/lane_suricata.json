@@ -1,0 +1,199 @@
+{
+ "db": "C:\\Users\\Glenn Ang\\AppData\\Local\\Temp\\hitl-review\\p2w-suri.db",
+ "import": {
+  "parsed": 46,
+  "staged": 46,
+  "duplicate": 0,
+  "preserved": 46,
+  "duplicate_records": 0,
+  "skipped": 0,
+  "invalid": 0,
+  "rejected_by_policy": 0,
+  "dry_run": false,
+  "issues": [],
+  "operational_admission": "pending"
+ },
+ "stagedAlerts": 46,
+ "counts": {
+  "suricata_eve_records": 46,
+  "external_alert_inbox": 46,
+  "external_eligibility_review": 1,
+  "external_operational_admission": 1,
+  "operational_alerts_v2": 1
+ },
+ "actor": {
+  "id": 1,
+  "name": "Glenn Ang",
+  "role": "security_analyst"
+ },
+ "targetInbox": {
+  "id": 1,
+  "detection_title": "ET SCAN Potential SSH Scan",
+  "native_severity": 2,
+  "proposed_operational_priority": 65,
+  "source_ip": "13.58.98.64",
+  "destination_ip": "172.31.69.25",
+  "destination_port": 22,
+  "occurred_at": "2018-02-15T02:01:50.375719+0800",
+  "admission_decision": "hold_for_review",
+  "import_status": "staged"
+ },
+ "review": {
+  "id": 1,
+  "external_inbox_id": 1,
+  "actor_id": 1,
+  "request_id": "c9e25451-cd42-444e-be03-f88f57e11275",
+  "expected_review_id": null,
+  "decision": "accepted",
+  "reason": "Packet evidence checked: 7 SYNs to port 22 from 7 source ports within 1572 microseconds.",
+  "evidence_digest": "8305accf662e14eae15a48bd93b9265586f501fbed0ca800dc8cb33b411bbddc",
+  "created_at": "2026-11-09T08:54:21.151630Z"
+ },
+ "admission": {
+  "id": 1,
+  "external_inbox_id": 1,
+  "operational_alert_id": 1,
+  "canonical_alert_id": "940906e6-1fe5-5523-ad0a-6a01926552c7",
+  "actor_id": 1,
+  "review_id": 1,
+  "request_id": "b22aec35-4ef5-46fc-80ce-a65e9c6ac618",
+  "reason": "Admit for analyst triage.",
+  "event_type": "V2_EXTERNAL_ALERT_ADMITTED",
+  "policy_audit_id": 1,
+  "routing_audit_id": 1,
+  "context_snapshot": "{\"analystEscalated\":null,\"assetCriticality\":null,\"confirmedMalicious\":null,\"correlatedAlertCount\":null,\"evidenceConflict\":null,\"knownMaliciousIndicator\":null,\"repeatedCampaign\":null,\"responseRequired\":null,\"unresolvedByTier1\":null}",
+  "resulting_state": "{\"operationalAlertId\":1,\"operationalPriority\":65.0,\"priorityBand\":\"P2\",\"priorityBandScheme\":\"p1_p4\",\"handlingRoute\":\"tier1_review\",\"workflowStage\":\"triage\",\"reviewRequired\":true,\"reviewReason\":\"Known attack classification; no configured trusted critical or expert condition is satisfied. Routine Tier 1 review.\",\"tier2Recommended\":false,\"tier2RecommendationReasons\":[],\"decisionSource\":\"system_policy\",\"triagePolicyVersion\":\"operational-triage-v1\",\"updatedAt\":\"2026-11-09T08:54:21.162639Z\"}",
+  "created_at": "2026-11-09T08:54:21.162639Z"
+ },
+ "replayed": false,
+ "queue": {
+  "operational_alert_ref": "940906e6-1fe5-5523-ad0a-6a01926552c7",
+  "source_kind": "external_nids_alert",
+  "detector_source": "suricata",
+  "detection_title": "ET SCAN Potential SSH Scan",
+  "detection_category": "Attempted Information Leak",
+  "native_severity": "2",
+  "occurred_at": "2018-02-15T02:01:50.375719+0800",
+  "source_ip": "13.58.98.64",
+  "destination_ip": "172.31.69.25",
+  "destination_port": 22,
+  "protocol": "TCP",
+  "external_inbox_id": 1
+ },
+ "triage": {
+  "operational_priority": 65,
+  "priority_band": "high",
+  "handling_route": "tier1_review",
+  "workflow_stage": "triage",
+  "review_required": 1,
+  "decision_source": "system_policy",
+  "triage_policy_version": "operational-triage-v1"
+ },
+ "classification": {
+  "value": {
+   "attackCategory": "reconnaissance_port_scan",
+   "status": "mapped",
+   "source": "deterministic_suricata_mapping",
+   "reasons": [
+    "Rule reconnaissance: signature 2001219 signature maps to reconnaissance_port_scan."
+   ],
+   "policyVersion": "suricata-classification-v3",
+   "matches": [
+    {
+     "ruleId": "reconnaissance",
+     "sourceRecordRef": "eve-sha256:74990c84896efa38da438df689addfb512bb84b7374f39ded9691b281e7ed3d9",
+     "signatureId": 2001219,
+     "field": "signature",
+     "value": "ET SCAN Potential SSH Scan",
+     "category": "reconnaissance_port_scan"
+    }
+   ],
+   "conflictingCategories": []
+  },
+  "policy": "suricata-classification-v3",
+  "routing_decision": "{\"routeClass\":\"ROUTINE_REVIEW\",\"route\":\"tier1_review\",\"decisionSource\":\"system_policy\",\"policyVersion\":\"system-routing-v1\",\"reasons\":[\"Known attack classification; no configured trusted critical or expert condition is satisfied. Routine Tier 1 review.\"]}",
+  "routing_policy": "{\"version\":\"system-routing-v1\",\"rules\":[\"unknown_classification_requires_expert\",\"confirmed_malicious_and_response_required\",\"high_priority_and_critical_asset\",\"repeated_campaign_and_independent_alert_threshold\",\"unresolved_requires_expert\"],\"highPriorityThreshold\":80.0,\"campaignAlertThreshold\":3}"
+ },
+ "inboxBacklog": [
+  {
+   "id": 1,
+   "detection_title": "ET SCAN Potential SSH Scan",
+   "native_severity": 2,
+   "admission_decision": "hold_for_review",
+   "import_status": "staged",
+   "source_ip": "13.58.98.64",
+   "destination_ip": "172.31.69.25",
+   "occurred_at": "2018-02-15T02:01:50.375719+0800"
+  },
+  {
+   "id": 2,
+   "detection_title": "ET SCAN Potential SSH Scan",
+   "native_severity": 2,
+   "admission_decision": "hold_for_review",
+   "import_status": "staged",
+   "source_ip": "13.58.98.64",
+   "destination_ip": "172.31.69.25",
+   "occurred_at": "2018-02-15T02:03:50.702690+0800"
+  },
+  {
+   "id": 3,
+   "detection_title": "ET SCAN Potential SSH Scan",
+   "native_severity": 2,
+   "admission_decision": "hold_for_review",
+   "import_status": "staged",
+   "source_ip": "13.58.98.64",
+   "destination_ip": "172.31.69.25",
+   "occurred_at": "2018-02-15T02:05:50.948974+0800"
+  },
+  {
+   "id": 4,
+   "detection_title": "ET SCAN Potential SSH Scan",
+   "native_severity": 2,
+   "admission_decision": "hold_for_review",
+   "import_status": "staged",
+   "source_ip": "13.58.98.64",
+   "destination_ip": "172.31.69.25",
+   "occurred_at": "2018-02-15T02:07:51.085954+0800"
+  },
+  {
+   "id": 5,
+   "detection_title": "ET SCAN Potential SSH Scan",
+   "native_severity": 2,
+   "admission_decision": "hold_for_review",
+   "import_status": "staged",
+   "source_ip": "13.58.98.64",
+   "destination_ip": "172.31.69.25",
+   "occurred_at": "2018-02-15T02:09:51.491036+0800"
+  },
+  {
+   "id": 6,
+   "detection_title": "ET SCAN Potential SSH Scan",
+   "native_severity": 2,
+   "admission_decision": "hold_for_review",
+   "import_status": "staged",
+   "source_ip": "13.58.98.64",
+   "destination_ip": "172.31.69.25",
+   "occurred_at": "2018-02-15T02:11:51.922981+0800"
+  },
+  {
+   "id": 7,
+   "detection_title": "ET SCAN Potential SSH Scan",
+   "native_severity": 2,
+   "admission_decision": "hold_for_review",
+   "import_status": "staged",
+   "source_ip": "13.58.98.64",
+   "destination_ip": "172.31.69.25",
+   "occurred_at": "2018-02-15T02:13:52.103974+0800"
+  },
+  {
+   "id": 8,
+   "detection_title": "ET SCAN Potential SSH Scan",
+   "native_severity": 2,
+   "admission_decision": "hold_for_review",
+   "import_status": "staged",
+   "source_ip": "13.58.98.64",
+   "destination_ip": "172.31.69.25",
+   "occurred_at": "2018-02-15T02:15:52.170966+0800"
+  }
+ ]
+}
