@@ -33,6 +33,9 @@ test("data-flow trace: one real record per decision-tree branch", async ({ page 
                       run: () => Promise<void>, subject?: Locator) {
     const before = await state(p.ref);
     await run();
+    // Let panels finish loading so the picture matches the stored state (soft: a panel that keeps a
+    // "Loading" line must not fail the trace).
+    await expect(page.getByText(/^Loading\b|^—$/).first()).toBeHidden({ timeout: 10_000 }).catch(() => {});
     if (subject) await subject.scrollIntoViewIfNeeded();
     const shot = `${id}.png`;
     await page.screenshot({ path: `${OUT}/${shot}`, animations: "disabled" });
@@ -113,6 +116,7 @@ test("data-flow trace: one real record per decision-tree branch", async ({ page 
   paths.push(C);
   await step(C, "C0", "Detected and routed as a Tier 2 candidate", "System", "Detection -> group of 1 -> routing", async () => {
     await page.goto(`/analyst/operations?view=all&q=${C.ref}`);
+    await expect(page.getByRole("list", { name: "Operational alerts" }).locator(`button[data-alert-ref="${C.ref}"]`)).toBeVisible();
   });
   await step(C, "C1", "Analyst opens the alert (claims it)", "Tier 1 analyst", "Row click = claim", async () => {
     await page.getByRole("list", { name: "Operational alerts" }).locator(`button[data-alert-ref="${C.ref}"]`).click();
@@ -147,6 +151,7 @@ test("data-flow trace: one real record per decision-tree branch", async ({ page 
   paths.push(E);
   await step(E, "E0", "Not flagged; kept as a single bottom-band item", "System", "Detection -> no group -> routing", async () => {
     await page.goto(`/analyst/operations?view=all&q=${E.ref}`);
+    await expect(page.getByRole("list", { name: "Operational alerts" }).locator(`button[data-alert-ref="${E.ref}"]`)).toBeVisible();
   });
   await step(E, "E1", "Analyst searches and opens it (claims it)", "Tier 1 analyst", "Search by reference, row click = claim", async () => {
     await page.getByRole("list", { name: "Operational alerts" }).locator(`button[data-alert-ref="${E.ref}"]`).click();

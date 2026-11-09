@@ -1,5 +1,5 @@
 {
- "generatedAt": "2026-11-09T06:48:11.049Z",
+ "generatedAt": "2026-11-09T06:54:24.400Z",
  "paths": [
   {
    "id": "A",
@@ -1220,7 +1220,7 @@
        ]
       },
       "case": {
-       "case_ref": "38e1f83d-cb04-4c53-829d-15f43a26ec4b",
+       "case_ref": "a3aca9d9-2115-48d1-81af-a9430addba16",
        "decision_source": "analyst",
        "created_by_actor_id": 1,
        "status": "open",
@@ -2004,8 +2004,8 @@
        }
       },
       "work": {
-       "status": "available",
-       "owner": null,
+       "status": "in_review",
+       "owner": "Glenn Ang",
        "finishedBy": null
       },
       "verdicts": 0,
@@ -2084,8 +2084,8 @@
        }
       },
       "work": {
-       "status": "available",
-       "owner": null,
+       "status": "in_review",
+       "owner": "Glenn Ang",
        "finishedBy": null
       },
       "verdicts": 0,
