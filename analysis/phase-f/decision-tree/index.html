@@ -1,0 +1,260 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>HITL IDS - data decision tree (flow alerts, Tier 1 to Tier 2)</title><style>
+:root{--ink:#1a202c;--mut:#4a5568;--line:#e2e8f0;--bg:#fbfbfd}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);
+ font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+ line-height:1.5;font-size:15px}
+main{max-width:1200px;margin:0 auto;padding:28px 20px 60px}
+h1{font-size:26px;margin:0 0 6px}
+h2{font-size:20px;margin:34px 0 10px;padding-bottom:6px;border-bottom:1px solid var(--line)}
+h3{font-size:16px;margin:0 0 4px}
+p{margin:6px 0}
+.src{color:var(--mut);font-size:13px;max-width:900px}
+table{border-collapse:collapse;width:100%;font-size:13px;margin:10px 0}
+th,td{border:1px solid var(--line);padding:7px 9px;text-align:left;vertical-align:top}
+th{background:#eef2f7;font-weight:600}
+td code,code{font-family:ui-monospace,Consolas,monospace;font-size:12px}
+.wrap{overflow-x:auto}
+.btns{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}
+.btns button{font:inherit;font-size:13px;padding:6px 14px;border:1px solid #cbd5e0;
+ background:#fff;border-radius:6px;cursor:pointer}
+.btns button:hover{background:#edf2f7}
+.btns button[aria-pressed="true"]{background:#2b6cb0;color:#fff;border-color:#2b6cb0}
+.story{border-left:3px solid #2b6cb0;background:#f2f7fd;padding:8px 12px;font-size:14px;
+ min-height:58px;border-radius:0 4px 4px 0}
+.story .bt{font-size:12px;color:var(--mut);margin-top:6px}
+.node .box,.node text{transition:opacity .15s}
+.node.dim,.edge.dim{opacity:.28}
+.node.on .box{stroke-width:3.4}
+.step{border:1px solid var(--line);border-radius:8px;background:#fff;padding:12px 14px;margin:14px 0}
+.step .meta{font-size:13px;color:var(--mut)}
+.shots{display:flex;gap:2%;margin-top:10px}
+.shots figure{margin:0;max-width:49%;flex:1 1 49%}
+.shots img{width:100%;border:1px solid var(--line);border-radius:4px;display:block}
+.shots figcaption{font-size:11px;color:var(--mut);margin-top:4px;word-break:break-all}
+.paths{list-style:none;padding:0;font-size:13px}
+.paths li{padding:2px 0}
+footer{margin-top:44px;padding-top:12px;border-top:1px solid var(--line);
+ font-size:12px;color:var(--mut)}
+</style></head><body><main>
+<h1>HITL IDS - data decision tree (flow alerts, Tier 1 to Tier 2)</h1>
+<p class="src">Rules read from the code at commit dc58a09. Counts measured on a routed copy of data/demo.db (5,000 flows). Ground truth from data/processed/demo_ground_truth.json - shown to the reader only; the product never sees it.</p>
+<h2>Data types</h2>
+<div class="wrap"><table><thead><tr><th>id</th><th>Data type</th><th>Table</th><th>What it holds</th><th>Source</th></tr></thead><tbody><tr><td><code>raw</code></td><td>Raw flow record</td><td><code>flow_data</code></td><td>CICFlowMeter output for one network flow: addresses, ports, protocol, packets, bytes, duration, 88 features</td><td><code>data/processed/demo_sample.csv</code></td></tr><tr><td><code>alert</code></td><td>Detection alert</td><td><code>alerts</code></td><td>Signature matches, model class and probability, evidence class, detection score, is_critical (fixed after detection, migration 23); combined score and severity (moved by verdicts within guardrails). The queue score is not stored: routing priority + (combined - detection), clamped 0-100 (apps/api/operational_queue.py:43)</td><td><code>packages/detection/fusion/cef.py:217</code></td></tr><tr><td><code>group</code></td><td>Alert group</td><td><code>alert_groups, alert_group_members</code></td><td>Flagged alerts from one source IP; first member is the representative</td><td><code>scripts/materialize_flow_queue.py:49</code></td></tr><tr><td><code>op</code></td><td>Operational alert + triage state</td><td><code>operational_alerts_v2, operational_triage_state_v2</code></td><td>One queue item per group or single flow: route, stage, priority, band, Tier 2 recommendation and reasons</td><td><code>packages/detection/flow_routing.py:209</code></td></tr><tr><td><code>work</code></td><td>Tier 1 work</td><td><code>analyst_work, analyst_work_events</code></td><td>Claim owner, status (available, in_review, completed, escalated), who finished it</td><td><code>packages/detection/analyst_work.py:232</code></td></tr><tr><td><code>verdict</code></td><td>Analyst verdict + feedback</td><td><code>analyst_verdict_events, feedback_events</code></td><td>Outcome and reason; the mapped score change, requested and actually applied</td><td><code>packages/detection/verdict_bridge.py:19</code></td></tr><tr><td><code>case</code></td><td>Tier 2 case</td><td><code>tier2_cases, tier2_case_state, tier2_case_events</code></td><td>Who or what created it, status open -&gt; investigating -&gt; resolved, conclusion, resolution</td><td><code>packages/detection/tier2_cases.py</code></td></tr></tbody></table></div>
+<h2>Decision tree</h2>
+<p class="src">Pick a path to highlight its nodes and edges.</p>
+<div class="btns" id="pathbtns"><button type="button" data-path="A">Path A</button><button type="button" data-path="B">Path B</button><button type="button" data-path="C">Path C</button><button type="button" data-path="D">Path D</button><button type="button" data-path="E">Path E</button><button type="button" data-path="ALL">All</button></div><div class="story" id="story"></div>
+<script>
+var P = {"A": {"nodes": ["N1", "N2", "N3", "N4", "N5", "N13"], "branchTaken": {"N1": "corroborated", "N3": "flagged", "N5": "yes: Tier 2 case (system)"}, "story": "80 FTP brute-force flows from one external source. Rule SIG-FTP-BRUTE-FORCE and the model agree, score 100, so E1 opens a Tier 2 case with no Tier 1 click. The expert starts, concludes and resolves it."}, "B": {"nodes": ["N1", "N2", "N3", "N4", "N5", "N6", "N8", "N9", "N13"], "branchTaken": {"N1": "ml_only", "N3": "flagged", "N5": "no", "N6": "candidate (Tier 1 decides)", "N9": "Escalate -> Tier 2 case (analyst)"}, "story": "57 flows from one internal host; only the model flags them (Infiltration), score 99.6. No rule, so no E1. E3 makes it a candidate (severity 9.5 >= 7). The analyst reads Why Tier 2 and escalates. Escalate +15 is capped at 100 (+0.4)."}, "C": {"nodes": ["N1", "N2", "N3", "N4", "N5", "N6", "N8", "N9", "N10", "N11"], "branchTaken": {"N1": "ml_only", "N3": "flagged", "N5": "no", "N6": "candidate (Tier 1 decides)", "N9": "Keep in Tier 1", "N10": "false_positive -30"}, "story": "One web flow the model calls Web Attack (99.89). Ground truth: benign. E3 recommends Tier 2; the analyst keeps it in Tier 1 and marks False Positive. The critical floor holds it at 70, not 69.89: it stays visible."}, "D": {"nodes": ["N1", "N2", "N3", "N4", "N5", "N6", "N8", "N10", "N11"], "branchTaken": {"N1": "ml_only", "N3": "flagged", "N5": "no", "N6": "routine Tier 1", "N10": "confirmed_malicious +10"}, "story": "197 DoS flows from one source in 13 minutes, model only, score 100. DoS severity 6.5 < 7, so not a candidate: routine Tier 1. The analyst confirms; +10 is capped at 100."}, "E": {"nodes": ["N1", "N2", "N3", "N6", "N8", "N10", "N11"], "branchTaken": {"N1": "none", "N3": "unflagged (single item)", "N6": "routine Tier 1", "N10": "confirmed_malicious +10"}, "story": "One flow the model calls Benign (score 36.94, Low). Ground truth: an attempted Web Attack. It is not grouped and sits below all flagged items, but it is in the queue. The analyst finds it and confirms; +10 applied (36.94 -> 46.94, Medium)."}};
+function clearAll(){
+  document.querySelectorAll('.node,.edge').forEach(function(el){
+    el.classList.remove('on'); el.classList.remove('dim');});
+  document.querySelectorAll('#pathbtns button').forEach(function(b){
+    b.setAttribute('aria-pressed','false');});
+}
+function show(key){
+  clearAll();
+  var out = document.getElementById('story');
+  out.textContent = '';
+  if(key === 'ALL'){
+    var d0 = document.createElement('div');
+    d0.textContent = 'All 13 nodes and 15 edges of the decision tree.';
+    out.appendChild(d0);
+    return;
+  }
+  var p = P[key];
+  var btn = document.querySelector('#pathbtns button[data-path="'+key+'"]');
+  if(btn) btn.setAttribute('aria-pressed','true');
+  var on = {};
+  p.nodes.forEach(function(id){ on[id] = 1; });
+  document.querySelectorAll('.node').forEach(function(el){
+    var id = el.getAttribute('data-id');
+    if(on[id]){ el.classList.add('on'); } else { el.classList.add('dim'); }
+  });
+  var pair = {};
+  for(var i=0;i<p.nodes.length-1;i++){ pair[p.nodes[i]+'|'+p.nodes[i+1]] = 1; }
+  document.querySelectorAll('.edge').forEach(function(el){
+    var k = el.getAttribute('data-from')+'|'+el.getAttribute('data-to');
+    if(pair[k]){ el.classList.add('on'); } else { el.classList.add('dim'); }
+  });
+  var bt = Object.keys(p.branchTaken).map(function(n){
+    return n + ': ' + p.branchTaken[n]; }).join(' · ');
+  var d1 = document.createElement('div');
+  d1.textContent = p.story;
+  var d2 = document.createElement('div');
+  d2.className = 'bt';
+  d2.textContent = 'Branches taken — ' + bt;
+  out.appendChild(d1);
+  out.appendChild(d2);
+}
+document.querySelectorAll('#pathbtns button').forEach(function(b){
+  b.addEventListener('click', function(){ show(b.getAttribute('data-path')); });
+});
+show('ALL');
+</script>
+
+<div class="wrap"><svg class="tree" viewBox="0 0 1150 1878" width="1150" height="1878" role="img" aria-label="Data decision tree" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="arw" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#4a5568"/></marker><style>.node .box{fill:#fff;stroke-width:2}.node.decision .box{stroke:#d69e2e}.node.process .box{stroke:#a0aec0}.node.action .box{stroke:#3182ce}.node text{font-family:inherit;fill:#1a202c}.node .nid{font-size:12px;font-weight:700}.node .q{font-size:11px}.node .cnt{font-size:10.5px;fill:#4a5568}.edge path{fill:none;stroke:#4a5568;stroke-width:1.4}.edge text{font-size:9px;fill:#2d3748;font-family:inherit}</style></defs>
+<g class="edges">
+<g class="edge" data-from="N1" data-to="N2">
+<path d="M 415.0 142.0 C 415.0 167.2, 575.0 172.8, 575.0 198.0" marker-end="url(#arw)"/>
+</g>
+<g class="edge" data-from="N2" data-to="N3">
+<path d="M 575.0 310.0 C 575.0 335.2, 575.0 340.8, 575.0 366.0" marker-end="url(#arw)"/>
+</g>
+<g class="edge" data-from="N3" data-to="N4">
+<path d="M 575.0 478.0 C 575.0 503.2, 575.0 508.8, 575.0 534.0" marker-end="url(#arw)"/>
+<rect x="552.8" y="499.0" width="44.4" height="13" rx="2" fill="#ffffff" opacity="0.92"/>
+<text x="575.0" y="509.0" text-anchor="middle">flagged</text>
+</g>
+<g class="edge" data-from="N3" data-to="N6">
+<path d="M 575.0 478.0 C 851.0 548.6, 851.0 799.4, 575.0 870.0" marker-end="url(#arw)"/>
+<rect x="718.2" y="667.0" width="127.6" height="13" rx="2" fill="#ffffff" opacity="0.92"/>
+<text x="782.0" y="677.0" text-anchor="middle">unflagged (single item)</text>
+</g>
+<g class="edge" data-from="N4" data-to="N5">
+<path d="M 575.0 646.0 C 575.0 671.2, 575.0 676.8, 575.0 702.0" marker-end="url(#arw)"/>
+</g>
+<g class="edge" data-from="N5" data-to="N13">
+<path d="M 575.0 814.0 C 949.0 914.8, 949.0 1273.2, 735.0 1374.0" marker-end="url(#arw)"/>
+<rect x="855.9" y="1087.0" width="39.2" height="13" rx="2" fill="#ffffff" opacity="0.92"/>
+<text x="875.5" y="1097.0" text-anchor="middle">E1 yes</text>
+</g>
+<g class="edge" data-from="N5" data-to="N6">
+<path d="M 575.0 814.0 C 575.0 839.2, 575.0 844.8, 575.0 870.0" marker-end="url(#arw)"/>
+<rect x="558.0" y="835.0" width="34.0" height="13" rx="2" fill="#ffffff" opacity="0.92"/>
+<text x="575.0" y="845.0" text-anchor="middle">no</text>
+</g>
+<g class="edge" data-from="N6" data-to="N8">
+<path d="M 575.0 982.0 C 575.0 1007.2, 575.0 1012.8, 575.0 1038.0" marker-end="url(#arw)"/>
+<rect x="521.6" y="1003.0" width="106.8" height="13" rx="2" fill="#ffffff" opacity="0.92"/>
+<text x="575.0" y="1013.0" text-anchor="middle">candidate / routine</text>
+</g>
+<g class="edge" data-from="N7" data-to="N8">
+<path d="M 735.0 142.0 C 1045.0 303.3, 1045.0 876.7, 575.0 1038.0" marker-end="url(#arw)"/>
+<rect x="917.5" y="583.0" width="60.0" height="13" rx="2" fill="#ffffff" opacity="0.92"/>
+<text x="947.5" y="593.0" text-anchor="middle">on failure</text>
+</g>
+<g class="edge" data-from="N8" data-to="N9">
+<path d="M 575.0 1150.0 C 575.0 1175.2, 575.0 1180.8, 575.0 1206.0" marker-end="url(#arw)"/>
+<rect x="547.6" y="1171.0" width="54.8" height="13" rx="2" fill="#ffffff" opacity="0.92"/>
+<text x="575.0" y="1181.0" text-anchor="middle">candidate</text>
+</g>
+<g class="edge" data-from="N8" data-to="N10">
+<path d="M 575.0 1150.0 C 847.0 1190.3, 847.0 1333.7, 415.0 1374.0" marker-end="url(#arw)"/>
+<rect x="736.8" y="1255.0" width="44.4" height="13" rx="2" fill="#ffffff" opacity="0.92"/>
+<text x="759.0" y="1265.0" text-anchor="middle">routine</text>
+</g>
+<g class="edge" data-from="N9" data-to="N13">
+<path d="M 575.0 1318.0 C 575.0 1343.2, 735.0 1348.8, 735.0 1374.0" marker-end="url(#arw)"/>
+<rect x="630.2" y="1339.0" width="49.6" height="13" rx="2" fill="#ffffff" opacity="0.92"/>
+<text x="655.0" y="1349.0" text-anchor="middle">Escalate</text>
+</g>
+<g class="edge" data-from="N9" data-to="N10">
+<path d="M 575.0 1318.0 C 575.0 1343.2, 415.0 1348.8, 415.0 1374.0" marker-end="url(#arw)"/>
+<rect x="454.6" y="1339.0" width="80.8" height="13" rx="2" fill="#ffffff" opacity="0.92"/>
+<text x="495.0" y="1349.0" text-anchor="middle">Keep in Tier 1</text>
+</g>
+<g class="edge" data-from="N10" data-to="N11">
+<path d="M 415.0 1486.0 C 415.0 1511.2, 575.0 1516.8, 575.0 1542.0" marker-end="url(#arw)"/>
+</g>
+<g class="edge" data-from="N11" data-to="N12">
+<path d="M 575.0 1654.0 C 575.0 1679.2, 575.0 1684.8, 575.0 1710.0" marker-end="url(#arw)"/>
+</g>
+</g>
+<g class="nodes">
+<g class="node decision" data-id="N1">
+<rect class="box" x="290.0" y="30.0" width="250" height="112" rx="6"/>
+<text class="nid" x="300.0" y="48.0">N1</text>
+<text class="q" x="300.0" y="66.0">What do the detectors say?</text>
+<text class="cnt" x="300.0" y="86.0">• corroborated: 200</text>
+<text class="cnt" x="300.0" y="99.0">• signature_override: 0</text>
+<text class="cnt" x="300.0" y="112.0">• ml_only: 796</text>
+<text class="cnt" x="300.0" y="125.0">• none: 4,004</text>
+</g>
+<g class="node process" data-id="N2">
+<rect class="box" x="450.0" y="198.0" width="250" height="112" rx="6"/>
+<text class="nid" x="460.0" y="216.0">N2</text>
+<text class="q" x="460.0" y="234.0">Score and severity</text>
+</g>
+<g class="node decision" data-id="N3">
+<rect class="box" x="450.0" y="366.0" width="250" height="112" rx="6"/>
+<text class="nid" x="460.0" y="384.0">N3</text>
+<text class="q" x="460.0" y="402.0">Was the flow flagged?</text>
+<text class="cnt" x="460.0" y="422.0">• flagged: 996</text>
+<text class="cnt" x="460.0" y="435.0">• unflagged: 4,004</text>
+</g>
+<g class="node process" data-id="N4">
+<rect class="box" x="450.0" y="534.0" width="250" height="112" rx="6"/>
+<text class="nid" x="460.0" y="552.0">N4</text>
+<text class="q" x="460.0" y="570.0">Group by source IP</text>
+</g>
+<g class="node decision" data-id="N5">
+<rect class="box" x="450.0" y="702.0" width="250" height="112" rx="6"/>
+<text class="nid" x="460.0" y="720.0">N5</text>
+<text class="q" x="460.0" y="738.0">E1: auto-escalate?</text>
+<text class="cnt" x="460.0" y="758.0">• yes: Tier 2 case (system): 3 groups</text>
+<text class="cnt" x="460.0" y="771.0">• no: 78 groups + 4,004 singles</text>
+</g>
+<g class="node decision" data-id="N6">
+<rect class="box" x="450.0" y="870.0" width="250" height="112" rx="6"/>
+<text class="nid" x="460.0" y="888.0">N6</text>
+<text class="q" x="460.0" y="906.0">Tier 2 candidate?</text>
+<text class="cnt" x="460.0" y="926.0">• candidate (Tier 1 decides): 74</text>
+<text class="cnt" x="460.0" y="939.0">• routine Tier 1: 4 groups + 4,004 singles</text>
+</g>
+<g class="node process" data-id="N7">
+<rect class="box" x="610.0" y="30.0" width="250" height="112" rx="6"/>
+<text class="nid" x="620.0" y="48.0">N7</text>
+<text class="q" x="620.0" y="66.0">Fail-safe</text>
+</g>
+<g class="node action" data-id="N8">
+<rect class="box" x="450.0" y="1038.0" width="250" height="112" rx="6"/>
+<text class="nid" x="460.0" y="1056.0">N8</text>
+<text class="q" x="460.0" y="1074.0">Tier 1 claim</text>
+</g>
+<g class="node decision" data-id="N9">
+<rect class="box" x="450.0" y="1206.0" width="250" height="112" rx="6"/>
+<text class="nid" x="460.0" y="1224.0">N9</text>
+<text class="q" x="460.0" y="1242.0">Why Tier 2: escalate or keep?</text>
+<text class="cnt" x="460.0" y="1262.0">• Escalate -&gt; Tier 2 case (analyst)</text>
+<text class="cnt" x="460.0" y="1275.0">• Keep in Tier 1</text>
+</g>
+<g class="node decision" data-id="N10">
+<rect class="box" x="290.0" y="1374.0" width="250" height="112" rx="6"/>
+<text class="nid" x="300.0" y="1392.0">N10</text>
+<text class="q" x="300.0" y="1410.0">Verdict</text>
+<text class="cnt" x="300.0" y="1430.0">• confirmed_malicious +10</text>
+<text class="cnt" x="300.0" y="1443.0">• suspicious 0</text>
+<text class="cnt" x="300.0" y="1456.0">• expected_activity -15</text>
+<text class="cnt" x="300.0" y="1469.0">• false_positive -30</text>
+</g>
+<g class="node process" data-id="N11">
+<rect class="box" x="450.0" y="1542.0" width="250" height="112" rx="6"/>
+<text class="nid" x="460.0" y="1560.0">N11</text>
+<text class="q" x="460.0" y="1578.0">Guardrails</text>
+</g>
+<g class="node process" data-id="N12">
+<rect class="box" x="450.0" y="1710.0" width="250" height="112" rx="6"/>
+<text class="nid" x="460.0" y="1728.0">N12</text>
+<text class="q" x="460.0" y="1746.0">Family learning gate</text>
+</g>
+<g class="node action" data-id="N13">
+<rect class="box" x="610.0" y="1374.0" width="250" height="112" rx="6"/>
+<text class="nid" x="620.0" y="1392.0">N13</text>
+<text class="q" x="620.0" y="1410.0">Tier 2 case</text>
+</g>
+</g>
+</svg></div>
+<h2>Decision rules</h2>
+<div class="wrap"><table><thead><tr><th>id</th><th>Question</th><th>Rule (SOC)</th><th>Code</th><th>Why (SOC)</th><th>Evidence</th><th>Branches / counts</th></tr></thead><tbody><tr><td><code>N1</code><br><span style="font-size:11px;color:#4a5568">decision</span></td><td>What do the detectors say?</td><td>fuse(): a rule matched AND the model predicts a class a matching rule asserts -&gt; corroborated; a rule matched, model disagrees -&gt; signature_override; no rule, model predicts an attack -&gt; ml_only; else none.</td><td><code>packages/detection/fusion/cef.py:226-238</code></td><td>Two independent detectors that agree are stronger evidence than one. The class says what kind of proof the analyst has: a checkable rule, a model opinion, or nothing.</td><td>tests/test_fusion.py (invariants I1-I4); counts from the routed demo copy</td><td>corroborated &mdash; 200<br>signature_override &mdash; 0<br>ml_only &mdash; 796<br>none &mdash; 4,004</td></tr><tr><td><code>N2</code><br><span style="font-size:11px;color:#4a5568">process</span></td><td>Score and severity</td><td>corroborated: min(100, max(sig, ml) x 100 + 5); ml_only/none: ml x 100. Critical (is_critical) when score &gt;= 80. Severity band (Low &gt;= 1, Medium &gt;= 40, High &gt;= 70, Critical &gt;= 80) capped by the attack class: Brute Force/DoS Medium, Web Attack/DDoS High, Infiltration/Botnet Critical, Port Scan Low.</td><td><code>packages/detection/fusion/cef.py:229-241; config/severity-chart.json</code></td><td>Confidence says how sure the model is; the class says how much the finding is worth. Without the cap, every attack class read Critical.</td><td>tests/test_ranking.py asserts is_critical = score &gt;= 80; 0 mismatches on demo.db</td><td>&mdash;</td></tr><tr><td><code>N3</code><br><span style="font-size:11px;color:#4a5568">decision</span></td><td>Was the flow flagged?</td><td>evidence_class != &#x27;none&#x27; -&gt; flagged (goes to grouping). &#x27;none&#x27; -&gt; never grouped; each flow becomes its own routine queue item below every flagged item.</td><td><code>scripts/materialize_flow_queue.py:30-32, 142-150</code></td><td>D4: a missed attack must stay findable. Grouping by source would hide one attack among the same host&#x27;s benign flows.</td><td>Approved demo story AL-03086 (path E) is reachable only through this branch; test_a_high_scoring_unflagged_item_still_ranks_below_every_group</td><td>flagged &mdash; 996<br>unflagged &mdash; 4,004</td></tr><tr><td><code>N4</code><br><span style="font-size:11px;color:#4a5568">process</span></td><td>Group by source IP</td><td>Sort flagged alerts by time. The next alert from the same source IP within 30 minutes of the group&#x27;s last alert joins the group; otherwise a new group starts. One group = one queue item.</td><td><code>scripts/materialize_flow_queue.py:61-75; config/flow-routing-v1.json groupWindowMinutes=30</code></td><td>One attack produces hundreds of near-identical alerts. The analyst reads one item per event, not per packet flow (alert fatigue).</td><td>996 flagged alerts -&gt; 81 groups on demo.db (analysis/phase-b/PHASE-B-STATUS.md)</td><td>&mdash;</td></tr><tr><td><code>N5</code><br><span style="font-size:11px;color:#4a5568">decision</span></td><td>E1: auto-escalate?</td><td>Any member with score &gt;= 80 AND (corroborated [E1-flow-rule] OR a linked Suricata alert of severity &lt;= 2 [E1-suricata]) escalates the whole group to a Tier 2 case - unless 5 new groups already escalated in that minute (then candidate).</td><td><code>packages/detection/flow_routing.py:90-102, 115-134; config/flow-routing-v1.json</code></td><td>Clear, corroborated, severe events should not wait for a Tier 1 click. Two detectors must agree, so a single detector cannot open a case alone.</td><td>Real packets 2018-02-14: 287,591 E1 flows, precision 0.99986, recall 1.0 by per-flow labels (analysis/spike/SPIKE-RESULT.md). Demo: E1 = 200 alerts, 0 benign</td><td>yes: Tier 2 case (system) &mdash; 3 groups<br>no &mdash; 78 groups + 4,004 singles</td></tr><tr><td><code>N6</code><br><span style="font-size:11px;color:#4a5568">decision</span></td><td>Tier 2 candidate?</td><td>E3: score &gt;= 90 AND attack severity &gt;= 7 (Infiltration 9.5, Botnet 9.0, Web Attack 8.0, DDoS 7.5), OR the detectors disagree on the class, OR an E1 branch that the Admin switched off. Candidate = Tier 1 review with reasons; never automatic.</td><td><code>packages/detection/flow_routing.py:135-171</code></td><td>E3 alone made 342 wrong escalations on the stress set (precision 0.4722), so a human must confirm. DoS (6.5) and Brute Force (5.0) are below 7: high score alone does not make them candidates.</td><td>analysis/auto_escalation_safety.py; flow_routing.py docstring lines 10-12</td><td>candidate (Tier 1 decides) &mdash; 74<br>routine Tier 1 &mdash; 4 groups + 4,004 singles</td></tr><tr><td><code>N7</code><br><span style="font-size:11px;color:#4a5568">process</span></td><td>Fail-safe</td><td>If routing cannot be evaluated (an exception), the item goes to routine Tier 1 with the reason. Routing never closes, dismisses or lowers an alert.</td><td><code>packages/detection/flow_routing.py:161-165</code></td><td>A software fault must never hide an alert or open a case by mistake.</td><td>Not exercised on demo data (0 failures in 4,085 routes)</td><td>&mdash;</td></tr><tr><td><code>N8</code><br><span style="font-size:11px;color:#4a5568">action</span></td><td>Tier 1 claim</td><td>Opening a row claims it for the analyst (status in_review). A system-routed Tier 2 case cannot be claimed. Claim expires after 15 minutes idle; owner or admin (with reason) can release.</td><td><code>packages/detection/analyst_work.py:232; config/analyst-work-expiry-v1.json</code></td><td>Two analysts must not work the same alert. A claim left by someone off shift must not block it.</td><td>tests/test_work_release.py (15); shared-work.spec.ts (3 analysts)</td><td>&mdash;</td></tr><tr><td><code>N9</code><br><span style="font-size:11px;color:#4a5568">decision</span></td><td>Why Tier 2: escalate or keep?</td><td>On a candidate, the analyst reads the reasons and chooses Escalate to Tier 2 (opens a case, records &#x27;escalate&#x27; +15) or Keep in Tier 1 (closes the recommendation). A reason is required for both.</td><td><code>packages/detection/routing.py:79; packages/detection/tier2_escalation.py:17</code></td><td>The machine recommends; a human decides and states why. The reason is part of the audit record.</td><td>tests/test_tier2_recommendation_panel.py (16); 11 of 11 planted defects caught</td><td>Escalate -&gt; Tier 2 case (analyst) &mdash; <br>Keep in Tier 1 &mdash; </td></tr><tr><td><code>N10</code><br><span style="font-size:11px;color:#4a5568">decision</span></td><td>Verdict</td><td>Confirmed Malicious -&gt; +10; Suspicious -&gt; 0; Expected Activity -&gt; -15; False Positive -&gt; -30. The verdict completes the Tier 1 work.</td><td><code>packages/detection/verdict_bridge.py:19-23; packages/detection/feedback/service.py:61-67</code></td><td>A verdict teaches the system, so the next similar alert ranks better. The size of each step is fixed in configuration.</td><td>tests/test_verdict_bridge.py (19)</td><td>confirmed_malicious +10 &mdash; <br>suspicious 0 &mdash; <br>expected_activity -15 &mdash; <br>false_positive -30 &mdash; </td></tr><tr><td><code>N11</code><br><span style="font-size:11px;color:#4a5568">process</span></td><td>Guardrails</td><td>The change is capped at -30 / +20. A negative change cannot push a Critical alert (score &gt;= 80) below 70, nor an Infiltration alert below 75. The score stays within 0-100.</td><td><code>packages/detection/guardrail/policy.py:110-140; packages/contracts/models.py:128-145</code></td><td>One person&#x27;s verdict must not bury a severe alert or swing it without limit.</td><td>Path C: false positive on 99.89 requested -30, held at 70 (actual -29.89). Path D: +10 on 100 capped to 100.</td><td>&mdash;</td></tr><tr><td><code>N12</code><br><span style="font-size:11px;color:#4a5568">process</span></td><td>Family learning gate</td><td>Similar alerts (same family) move only after 3 agreeing verdicts at agreement &gt;= 0.67. A group verdict counts once per family.</td><td><code>packages/contracts/models.py:148-150; packages/detection/feedback/learning.py:153</code></td><td>One wrong verdict must not re-rank a whole family.</td><td>analysis/spike/group_verdict_weight.py; verdict-memory.spec.ts</td><td>&mdash;</td></tr><tr><td><code>N13</code><br><span style="font-size:11px;color:#4a5568">action</span></td><td>Tier 2 case</td><td>Start investigation (reason) -&gt; record conclusion (finding + final class + reason) -&gt; resolve (reason). Resolve stays off until a conclusion exists. A resolved case is read-only; a response plan is approved, never executed.</td><td><code>apps/api/tier2_case_routes.py:114-130</code></td><td>A case cannot close without a recorded finding; the closed record cannot change.</td><td>case-resolution.spec.ts (note after close -&gt; HTTP 409); soc-flow.spec.ts</td><td>&mdash;</td></tr></tbody></table></div>
+<h2>Paths</h2>
+<section class="path" id="path-A"><h2>Path A &mdash; Corroborated group, auto-escalated (E1)</h2><p class="src">80 FTP brute-force flows from one external source. Rule SIG-FTP-BRUTE-FORCE and the model agree, score 100, so E1 opens a Tier 2 case with no Tier 1 click. The expert starts, concludes and resolves it.</p><h3>Nodes on this path</h3><ol class="paths"><li><code>N1</code> &mdash; corroborated</li><li><code>N2</code></li><li><code>N3</code> &mdash; flagged</li><li><code>N4</code></li><li><code>N5</code> &mdash; yes: Tier 2 case (system)</li><li><code>N13</code></li></ol><h3>Steps</h3><div class="step" id="step-A0"><h3>A0 &mdash; Detected, grouped and routed by the system</h3><div class="meta">System &middot; Detection -&gt; grouping -&gt; routing</div><div class="shots"><figure><a href="cards/A0.png"><img src="cards/A0.png" alt="A0 card"></a><figcaption>cards/A0.png</figcaption></figure><figure><a href="trace/A0.png"><img src="trace/A0.png" alt="A0.png screenshot"></a><figcaption>trace/A0.png</figcaption></figure></div></div><div class="step" id="step-A1"><h3>A1 &mdash; Expert starts the investigation</h3><div class="meta">Tier 2 analyst &middot; Start investigation (reason required)</div><div class="shots"><figure><a href="cards/A1.png"><img src="cards/A1.png" alt="A1 card"></a><figcaption>cards/A1.png</figcaption></figure><figure><a href="trace/A1.png"><img src="trace/A1.png" alt="A1.png screenshot"></a><figcaption>trace/A1.png</figcaption></figure></div></div><div class="step" id="step-A2"><h3>A2 &mdash; Expert records the conclusion</h3><div class="meta">Tier 2 analyst &middot; Conclusion: confirmed_malicious, brute_force</div><div class="shots"><figure><a href="cards/A2.png"><img src="cards/A2.png" alt="A2 card"></a><figcaption>cards/A2.png</figcaption></figure><figure><a href="trace/A2.png"><img src="trace/A2.png" alt="A2.png screenshot"></a><figcaption>trace/A2.png</figcaption></figure></div></div><div class="step" id="step-A3"><h3>A3 &mdash; Expert resolves the case</h3><div class="meta">Tier 2 analyst &middot; Resolve Case (reason required)</div><div class="shots"><figure><a href="cards/A3.png"><img src="cards/A3.png" alt="A3 card"></a><figcaption>cards/A3.png</figcaption></figure><figure><a href="trace/A3.png"><img src="trace/A3.png" alt="A3.png screenshot"></a><figcaption>trace/A3.png</figcaption></figure></div></div></section>
+<section class="path" id="path-B"><h2>Path B &mdash; Tier 2 candidate, escalated by a human (E3)</h2><p class="src">57 flows from one internal host; only the model flags them (Infiltration), score 99.6. No rule, so no E1. E3 makes it a candidate (severity 9.5 &gt;= 7). The analyst reads Why Tier 2 and escalates. Escalate +15 is capped at 100 (+0.4).</p><h3>Nodes on this path</h3><ol class="paths"><li><code>N1</code> &mdash; ml_only</li><li><code>N2</code></li><li><code>N3</code> &mdash; flagged</li><li><code>N4</code></li><li><code>N5</code> &mdash; no</li><li><code>N6</code> &mdash; candidate (Tier 1 decides)</li><li><code>N8</code></li><li><code>N9</code> &mdash; Escalate -&gt; Tier 2 case (analyst)</li><li><code>N13</code></li></ol><h3>Steps</h3><div class="step" id="step-B0"><h3>B0 &mdash; Detected, grouped and routed as a Tier 2 candidate</h3><div class="meta">System &middot; Detection -&gt; grouping -&gt; routing</div><div class="shots"><figure><a href="cards/B0.png"><img src="cards/B0.png" alt="B0 card"></a><figcaption>cards/B0.png</figcaption></figure><figure><a href="trace/B0.png"><img src="trace/B0.png" alt="B0.png screenshot"></a><figcaption>trace/B0.png</figcaption></figure></div></div><div class="step" id="step-B1"><h3>B1 &mdash; Analyst opens the group (claims it)</h3><div class="meta">Tier 1 analyst &middot; Row click = claim</div><div class="shots"><figure><a href="cards/B1.png"><img src="cards/B1.png" alt="B1 card"></a><figcaption>cards/B1.png</figcaption></figure><figure><a href="trace/B1.png"><img src="trace/B1.png" alt="B1.png screenshot"></a><figcaption>trace/B1.png</figcaption></figure></div></div><div class="step" id="step-B2"><h3>B2 &mdash; Analyst reads Why Tier 2 and escalates</h3><div class="meta">Tier 1 analyst &middot; Escalate to Tier 2 (reason required)</div><div class="shots"><figure><a href="cards/B2.png"><img src="cards/B2.png" alt="B2 card"></a><figcaption>cards/B2.png</figcaption></figure><figure><a href="trace/B2.png"><img src="trace/B2.png" alt="B2.png screenshot"></a><figcaption>trace/B2.png</figcaption></figure></div></div></section>
+<section class="path" id="path-C"><h2>Path C &mdash; Model-only false positive, kept in Tier 1</h2><p class="src">One web flow the model calls Web Attack (99.89). Ground truth: benign. E3 recommends Tier 2; the analyst keeps it in Tier 1 and marks False Positive. The critical floor holds it at 70, not 69.89: it stays visible.</p><h3>Nodes on this path</h3><ol class="paths"><li><code>N1</code> &mdash; ml_only</li><li><code>N2</code></li><li><code>N3</code> &mdash; flagged</li><li><code>N4</code></li><li><code>N5</code> &mdash; no</li><li><code>N6</code> &mdash; candidate (Tier 1 decides)</li><li><code>N8</code></li><li><code>N9</code> &mdash; Keep in Tier 1</li><li><code>N10</code> &mdash; false_positive -30</li><li><code>N11</code></li></ol><h3>Steps</h3><div class="step" id="step-C0"><h3>C0 &mdash; Detected and routed as a Tier 2 candidate</h3><div class="meta">System &middot; Detection -&gt; group of 1 -&gt; routing</div><div class="shots"><figure><a href="cards/C0.png"><img src="cards/C0.png" alt="C0 card"></a><figcaption>cards/C0.png</figcaption></figure><figure><a href="trace/C0.png"><img src="trace/C0.png" alt="C0.png screenshot"></a><figcaption>trace/C0.png</figcaption></figure></div></div><div class="step" id="step-C1"><h3>C1 &mdash; Analyst opens the alert (claims it)</h3><div class="meta">Tier 1 analyst &middot; Row click = claim</div><div class="shots"><figure><a href="cards/C1.png"><img src="cards/C1.png" alt="C1 card"></a><figcaption>cards/C1.png</figcaption></figure><figure><a href="trace/C1.png"><img src="trace/C1.png" alt="C1.png screenshot"></a><figcaption>trace/C1.png</figcaption></figure></div></div><div class="step" id="step-C2"><h3>C2 &mdash; Analyst rejects the recommendation</h3><div class="meta">Tier 1 analyst &middot; Keep in Tier 1 (reason required)</div><div class="shots"><figure><a href="cards/C2.png"><img src="cards/C2.png" alt="C2 card"></a><figcaption>cards/C2.png</figcaption></figure><figure><a href="trace/C2.png"><img src="trace/C2.png" alt="C2.png screenshot"></a><figcaption>trace/C2.png</figcaption></figure></div></div><div class="step" id="step-C3"><h3>C3 &mdash; Analyst records False Positive</h3><div class="meta">Tier 1 analyst &middot; Verdict: false_positive</div><div class="shots"><figure><a href="cards/C3.png"><img src="cards/C3.png" alt="C3 card"></a><figcaption>cards/C3.png</figcaption></figure><figure><a href="trace/C3.png"><img src="trace/C3.png" alt="C3.png screenshot"></a><figcaption>trace/C3.png</figcaption></figure></div></div></section>
+<section class="path" id="path-D"><h2>Path D &mdash; Routine group, confirmed by a Tier 1 verdict</h2><p class="src">197 DoS flows from one source in 13 minutes, model only, score 100. DoS severity 6.5 &lt; 7, so not a candidate: routine Tier 1. The analyst confirms; +10 is capped at 100.</p><h3>Nodes on this path</h3><ol class="paths"><li><code>N1</code> &mdash; ml_only</li><li><code>N2</code></li><li><code>N3</code> &mdash; flagged</li><li><code>N4</code></li><li><code>N5</code> &mdash; no</li><li><code>N6</code> &mdash; routine Tier 1</li><li><code>N8</code></li><li><code>N10</code> &mdash; confirmed_malicious +10</li><li><code>N11</code></li></ol><h3>Steps</h3><div class="step" id="step-D0"><h3>D0 &mdash; Detected, grouped and routed to routine Tier 1</h3><div class="meta">System &middot; Detection -&gt; grouping -&gt; routing</div><div class="shots"><figure><a href="cards/D0.png"><img src="cards/D0.png" alt="D0 card"></a><figcaption>cards/D0.png</figcaption></figure><figure><a href="trace/D0.png"><img src="trace/D0.png" alt="D0.png screenshot"></a><figcaption>trace/D0.png</figcaption></figure></div></div><div class="step" id="step-D1"><h3>D1 &mdash; Analyst records Confirmed Malicious</h3><div class="meta">Tier 1 analyst &middot; Verdict: confirmed_malicious</div><div class="shots"><figure><a href="cards/D1.png"><img src="cards/D1.png" alt="D1 card"></a><figcaption>cards/D1.png</figcaption></figure><figure><a href="trace/D1.png"><img src="trace/D1.png" alt="D1.png screenshot"></a><figcaption>trace/D1.png</figcaption></figure></div></div></section>
+<section class="path" id="path-E"><h2>Path E &mdash; Unflagged flow, missed attack found by a human (D4)</h2><p class="src">One flow the model calls Benign (score 36.94, Low). Ground truth: an attempted Web Attack. It is not grouped and sits below all flagged items, but it is in the queue. The analyst finds it and confirms; +10 applied (36.94 -&gt; 46.94, Medium).</p><h3>Nodes on this path</h3><ol class="paths"><li><code>N1</code> &mdash; none</li><li><code>N2</code></li><li><code>N3</code> &mdash; unflagged (single item)</li><li><code>N6</code> &mdash; routine Tier 1</li><li><code>N8</code></li><li><code>N10</code> &mdash; confirmed_malicious +10</li><li><code>N11</code></li></ol><h3>Steps</h3><div class="step" id="step-E0"><h3>E0 &mdash; Not flagged; kept as a single bottom-band item</h3><div class="meta">System &middot; Detection -&gt; no group -&gt; routing</div><div class="shots"><figure><a href="cards/E0.png"><img src="cards/E0.png" alt="E0 card"></a><figcaption>cards/E0.png</figcaption></figure><figure><a href="trace/E0.png"><img src="trace/E0.png" alt="E0.png screenshot"></a><figcaption>trace/E0.png</figcaption></figure></div></div><div class="step" id="step-E1"><h3>E1 &mdash; Analyst searches and opens it (claims it)</h3><div class="meta">Tier 1 analyst &middot; Search by reference, row click = claim</div><div class="shots"><figure><a href="cards/E1.png"><img src="cards/E1.png" alt="E1 card"></a><figcaption>cards/E1.png</figcaption></figure><figure><a href="trace/E1.png"><img src="trace/E1.png" alt="E1.png screenshot"></a><figcaption>trace/E1.png</figcaption></figure></div></div><div class="step" id="step-E2"><h3>E2 &mdash; Analyst records Confirmed Malicious</h3><div class="meta">Tier 1 analyst &middot; Verdict: confirmed_malicious</div><div class="shots"><figure><a href="cards/E2.png"><img src="cards/E2.png" alt="E2 card"></a><figcaption>cards/E2.png</figcaption></figure><figure><a href="trace/E2.png"><img src="trace/E2.png" alt="E2.png screenshot"></a><figcaption>trace/E2.png</figcaption></figure></div></div></section>
+<footer>Trace generated at 2026-11-09T06:54:24.400Z. Tree source: Rules read from the code at commit dc58a09. Counts measured on a routed copy of </footer>
+</main></body></html>
