@@ -63,13 +63,23 @@ def _control(path: Path, *, create: bool = False) -> sqlite3.Connection | None:
         CREATE TABLE IF NOT EXISTS presentation_requests (request_id TEXT PRIMARY KEY,
             actor TEXT NOT NULL, count INTEGER NOT NULL, resulting_cursor INTEGER NOT NULL,
             created_at TEXT NOT NULL);
+        CREATE TABLE IF NOT EXISTS settings (key TEXT PRIMARY KEY, value TEXT NOT NULL,
+            updated_at TEXT NOT NULL, actor TEXT NOT NULL);
         INSERT OR IGNORE INTO selection(id,workspace) VALUES (1,'operational');
+        INSERT OR IGNORE INTO settings(key,value,updated_at,actor)
+            VALUES ('flow_chain_enabled','1',datetime('now'),'system');
         """)
         if 'mode' not in [column[1] for column in conn.execute('PRAGMA table_info(presentation)')]:
             conn.execute("ALTER TABLE presentation ADD COLUMN mode TEXT NOT NULL DEFAULT 'presentation'")
         if 'flow_chain' not in [column[1] for column in conn.execute('PRAGMA table_info(presentation)')]:
             conn.execute("ALTER TABLE presentation ADD COLUMN flow_chain INTEGER NOT NULL DEFAULT 1")
     return conn
+
+
+def detection(conn: sqlite3.Connection) -> dict:
+    """The program's detector settings. They belong to the product, not to a workspace or a replay."""
+    row = conn.execute("SELECT value FROM settings WHERE key='flow_chain_enabled'").fetchone()
+    return {'flowChainEnabled': True if row is None else row[0] == '1'}
 
 
 def configure_presentation_database(path: Path) -> None:
@@ -132,6 +142,7 @@ def state(request: Request) -> dict:
     presentation = None
     progressive = 'full'
     actions = []
+    settings = {'flowChainEnabled': True}
     conn = _control(control)
     if conn is not None:
         try:
@@ -144,10 +155,12 @@ def state(request: Request) -> dict:
                     progressive = presentation.get('mode', 'presentation')
             actions = [dict(row) for row in conn.execute(
                 "SELECT actor,action,workspace,reason,created_at FROM actions ORDER BY id DESC LIMIT 20")]
+            if conn.execute("SELECT 1 FROM sqlite_master WHERE type='table' AND name='settings'").fetchone():
+                settings = detection(conn)
         finally:
             conn.close()
     return {"activeWorkspaceId": active, "activeWorkspaceName": NAMES[active],
-            "actions": actions,
+            "actions": actions, "detection": settings,
             "workspaces": [
                 {"id": key, "name": NAMES[key], "active": key == active,
                  "ready": _count(path) is not None, "alertCount": _count(path),
@@ -160,7 +173,6 @@ def state(request: Request) -> dict:
                  "holdoutRemaining": 160-presentation['cursor'] if presentation and key == 'v3-1-replay' else 0 if key == 'v3-1-replay' and meta else None,
                  "playbackState": presentation['playback_state'] if presentation and key == 'v3-1-replay' else None,
                  "lastArrivalAt": presentation['last_arrival_at'] if presentation and key == 'v3-1-replay' else None,
-                 "flowChainEnabled": bool(presentation['flow_chain']) if presentation and 'flow_chain' in presentation.keys() else None,
                  "workloadSha256": meta["workload_sha256"] if key == "v3-1-replay" and meta else None}
                 for key, path in (("operational", operational), ("v3-1-replay", replay))]}
 
@@ -315,14 +327,13 @@ def _advance_locked(conn: sqlite3.Connection, replay: Path, count: int, actor: s
     cursor = row['cursor']
     packet = 'mode' in row.keys() and row['mode'] == 'packet'   # a control file from before Packet Replay has no column
     for _ in range(min(count, 160-cursor)):
-        # The flow-chain toggle is a live Admin control: every step reads the current setting.
-        flow_on = 'flow_chain' in row.keys() and bool(conn.execute(
-            'SELECT flow_chain FROM presentation WHERE id=1').fetchone()[0])
+        # The flow-chain switch is a program setting, not a replay option: every step reads it.
+        flow_on = detection(conn)['flowChainEnabled']
         for attempt in range(3):
             try:
                 if packet:
                     staged, total = packet_replay.advance_one(replay, order[cursor], row['preparing_admin'],
-                                                              flow_chain=flow_on)
+                                                              project_flows=flow_on)
                 else:
                     presentation_replay.advance_one(replay, order[cursor], row['preparing_admin'])
                     staged = total = 41 + cursor
@@ -411,25 +422,23 @@ def playback(request: Request, actor: str, reason: str, action: str) -> dict:
     return state(request)
 
 
-def flow_chain(request: Request, actor: str, reason: str, enabled: bool) -> dict:
-    """Live Admin control: include or exclude the CICFlowMeter flow chain from later Packet Replay steps.
+def set_detection_chain(request: Request, actor: str, reason: str, enabled: bool) -> dict:
+    """Program-wide switch: does the CICFlowMeter chain process arriving flow records?
 
-    Later steps obey the new setting at once; what already arrived stays. The toggle is not part of
-    preparation and needs no reset.
+    Off: flow records still arrive and are stored, but the program does not group, project or route
+    them. On: the program processes everything not yet processed, so a backlog is caught up.
+    Independent of any workspace or replay; no prepare and no reset.
     """
     _, control, _ = paths(request)
     conn = _control(control, create=True)
     assert conn is not None
     try:
         conn.execute('BEGIN IMMEDIATE')
-        row = conn.execute('SELECT * FROM presentation WHERE id=1').fetchone()
-        if row is None:
-            raise ApiError(409, 'PRESENTATION_NOT_PREPARED', 'Prepare Replay first.')
-        if not ('mode' in row.keys() and row['mode'] == 'packet'):
-            raise ApiError(400, 'NOT_PACKET_REPLAY', 'The flow chain toggle applies to Packet Replay only.')
-        conn.execute('UPDATE presentation SET flow_chain=? WHERE id=1', (int(enabled),))
-        _audit(conn, actor, 'packet_replay_flow_chain_set', 'v3-1-replay',
-               f'{reason} · flow chain {"on" if enabled else "off"}')
+        conn.execute("INSERT INTO settings(key,value,updated_at,actor) VALUES ('flow_chain_enabled',?,?,?) "
+                     "ON CONFLICT(key) DO UPDATE SET value=excluded.value, updated_at=excluded.updated_at, "
+                     "actor=excluded.actor", ('1' if enabled else '0', datetime.now(timezone.utc).isoformat(), actor))
+        _audit(conn, actor, 'detection_flow_chain_set', 'program',
+               f'{reason} · CICFlowMeter flow chain {"on" if enabled else "off"}')
         conn.commit()
     except Exception:
         conn.rollback()

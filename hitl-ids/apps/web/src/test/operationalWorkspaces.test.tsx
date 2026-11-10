@@ -11,7 +11,7 @@ const EVALUATOR = { username: "evaluator", displayName: "Evaluator", role: "eval
 function workspaceState(active: "operational" | "v3-1-replay", prepared: boolean) {
   return {
     activeWorkspaceId: active, activeWorkspaceName: active === "operational" ? "Operational" : "V3.1 Demo Replay",
-    actions: [], workspaces: [
+    actions: [], detection: { flowChainEnabled: true }, workspaces: [
       { id: "operational", name: "Operational", active: active === "operational", ready: true,
         alertCount: 13, rawRecords: null, stagedAlerts: null, lastPreparedAt: null, workloadSha256: null },
       { id: "v3-1-replay", name: "V3.1 Demo Replay", active: active === "v3-1-replay", ready: prepared,
@@ -118,6 +118,33 @@ describe("operational workspace controls", () => {
     expect(screen.getByRole("button", { name: "Next Step" })).toBeVisible();
     expect(screen.queryByRole("button", { name: "Load Remaining" })).toBeNull();
     expect(screen.queryByText(/Learning history/)).toBeNull();
+  });
+
+  it("turns the CICFlowMeter chain off as a program setting, not a replay option", async () => {
+    const user = userEvent.setup();
+    let flow = true;
+    const seen: { path: string; body: unknown }[] = [];
+    stubFetch(async request => {
+      const path = new URL(request.url).pathname;
+      if (request.method === "POST" && path === "/api/admin/detection/flow-chain") {
+        const body = await request.clone().json();
+        seen.push({ path, body });
+        flow = body.enabled;
+      }
+      const state = workspaceState("v3-1-replay", true);
+      Object.assign(state, { detection: { flowChainEnabled: flow } });
+      Object.assign(state.workspaces[1]!, { preparationMode: "packet", holdoutArrived: 3, holdoutRemaining: 157,
+        playbackState: "paused", lastArrivalAt: "2026-11-03T01:00:00Z" });
+      return jsonResponse(state);
+    });
+    renderApp("/admin/workspaces", { session: ADMIN });
+    const chain = await screen.findByLabelText("CICFlowMeter flow chain");
+    expect(chain).toBeChecked();
+    await user.click(chain);
+    await waitFor(() => expect(seen).toHaveLength(1));
+    expect(seen[0]!.path).toBe("/api/admin/detection/flow-chain");
+    expect(seen[0]!.body).toMatchObject({ enabled: false });
+    expect(await screen.findByLabelText("CICFlowMeter flow chain")).not.toBeChecked();
   });
 
   it("routes Admin and Evaluator to the same frozen evidence module", async () => {

@@ -103,28 +103,46 @@ def test_both_chains_arrive_step_by_step_in_one_workspace(tmp_path, grouped_data
     assert digest(operational) == before
 
 
-def test_packet_replay_without_the_flow_chain(tmp_path, grouped_database, monkeypatch):
-    """flowChain=false: the capture's flows never enter the database; the queue holds only Suricata alerts."""
+def test_flow_chain_is_a_program_switch_not_a_replay_option(tmp_path, grouped_database, monkeypatch):
+    """The switch belongs to the program. Off: flow data still arrives, but is not processed.
+    On again: the program processes the backlog it skipped."""
     client, _, tokens = _client(tmp_path)
-    replay_data(tmp_path, grouped_database, monkeypatch)
-    prepared = replay_state(client.post('/api/admin/workspaces/v3-1-replay/prepare', headers=tokens['admin'], json=ADMIN))
-    assert prepared['flowChainEnabled'] is True
-    # A live Admin control: turn the flow chain off after preparation, before any step.
-    off = replay_state(client.post('/api/admin/workspaces/v3-1-replay/flow-chain', headers=tokens['admin'],
-                                   json={'reason': 'Pure Suricata test', 'enabled': False}))
-    assert off['flowChainEnabled'] is False
+    total = replay_data(tmp_path, grouped_database, monkeypatch)
+    prepared = client.post('/api/admin/workspaces/v3-1-replay/prepare', headers=tokens['admin'], json=ADMIN)
+    assert prepared.status_code == 200, prepared.text
+    assert prepared.json()['detection']['flowChainEnabled'] is True
+    off = client.post('/api/admin/detection/flow-chain', headers=tokens['admin'],
+                      json={'reason': 'Pure Suricata test', 'enabled': False})
+    assert off.status_code == 200, off.text
+    assert off.json()['detection']['flowChainEnabled'] is False
     client.post('/api/admin/workspaces/v3-1-replay/activate', headers=tokens['admin'], json=ADMIN)
     replay = tmp_path / 'workspaces/v3-1-replay.db'
     for _ in range(2):
-        replay_state(client.post(ADVANCE, headers=tokens['admin'], json={
+        state = replay_state(client.post(ADVANCE, headers=tokens['admin'], json={
             'reason': 'Pure Suricata step', 'requestId': str(uuid4()), 'count': 1}))
     with closing(sqlite3.connect(replay)) as conn:
-        assert conn.execute('SELECT count(*) FROM alerts').fetchone()[0] == 0        # no flow copied
-        assert conn.execute('SELECT count(*) FROM flow_data').fetchone()[0] == 0
+        # The replay delivered the capture: the flow rows are in the database.
+        assert conn.execute('SELECT count(*) FROM alerts').fetchone()[0] == total
+        assert conn.execute('SELECT count(*) FROM flow_data').fetchone()[0] == total
+        # The program did not process them.
         assert conn.execute("SELECT count(*) FROM operational_alerts_v2 "
                             "WHERE source_kind='legacy_flow_alert'").fetchone()[0] == 0
-    state = replay_state(client.post(ADVANCE, headers=tokens['admin'], json={
-        'reason': 'Pure Suricata step', 'requestId': str(uuid4()), 'count': 1}))
-    assert state['alertCount'] == state['stagedAlerts'] == 2                          # only Suricata queue items
-    actions = [item['action'] for item in client.get('/api/admin/workspaces', headers=tokens['admin']).json()['actions']]
-    assert 'packet_replay_prepared' in actions and 'presentation_manual_advance' in actions
+    assert state['alertCount'] == state['stagedAlerts'] == 2          # Suricata only
+    # On again: the program catches up on what it skipped.
+    replay_state(client.post('/api/admin/detection/flow-chain', headers=tokens['admin'],
+                             json={'reason': 'Flow chain back on', 'enabled': True}))
+    caught_up = replay_state(client.post(ADVANCE, headers=tokens['admin'], json={
+        'reason': 'Next step', 'requestId': str(uuid4()), 'count': 1}))
+    assert caught_up['alertCount'] > 2
+    with closing(sqlite3.connect(replay)) as conn:
+        assert conn.execute("SELECT count(*) FROM operational_alerts_v2 "
+                            "WHERE source_kind='legacy_flow_alert'").fetchone()[0] > 0
+
+
+def test_only_admins_may_switch_the_flow_chain(tmp_path, grouped_database, monkeypatch):
+    client, _, tokens = _client(tmp_path)
+    replay_data(tmp_path, grouped_database, monkeypatch)
+    for role in ('analyst', 'evaluator'):
+        response = client.post('/api/admin/detection/flow-chain', headers=tokens[role],
+                               json={'reason': 'Try it', 'enabled': False})
+        assert response.status_code == 403

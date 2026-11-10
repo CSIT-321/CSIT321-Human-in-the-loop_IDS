@@ -21,6 +21,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/admin/detection/flow-chain": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** setDetectionFlowChain */
+        post: operations["setDetectionFlowChain"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/admin/governance": {
         parameters: {
             query?: never;
@@ -140,23 +157,6 @@ export interface paths {
         put?: never;
         /** advancePresentationReplay */
         post: operations["advancePresentationReplay"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/admin/workspaces/v3-1-replay/flow-chain": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /** setV31ReplayFlowChain */
-        post: operations["setV31ReplayFlowChain"];
         delete?: never;
         options?: never;
         head?: never;
@@ -2913,6 +2913,13 @@ export interface components {
             /** Totalalerts */
             totalAlerts: number;
         };
+        /** DetectionFlowChainCommand */
+        DetectionFlowChainCommand: {
+            /** Enabled */
+            enabled: boolean;
+            /** Reason */
+            reason: string;
+        };
         /**
          * DetectionRunRequest
          * @description ``POST /api/detection/run``. Detection is an offline batch (D3), never inline in a request:
@@ -2990,6 +2997,14 @@ export interface components {
              * @enum {string}
              */
             status: "pending" | "running" | "completed" | "aborted";
+        };
+        /**
+         * DetectionState
+         * @description Program-wide detector switches. They apply to every workspace and to both data sources.
+         */
+        DetectionState: {
+            /** Flowchainenabled */
+            flowChainEnabled: boolean;
         };
         /**
          * EffectiveReview
@@ -5654,13 +5669,6 @@ export interface components {
              */
             requestId: string;
         };
-        /** ReplayFlowChainCommand */
-        ReplayFlowChainCommand: {
-            /** Enabled */
-            enabled: boolean;
-            /** Reason */
-            reason: string;
-        };
         /** ReplayPrepareCommand */
         ReplayPrepareCommand: {
             /**
@@ -7093,11 +7101,6 @@ export interface components {
             /** Alertcount */
             alertCount: number | null;
             /**
-             * Flowchainenabled
-             * @default null
-             */
-            flowChainEnabled: boolean | null;
-            /**
              * Holdoutarrived
              * @default null
              */
@@ -7150,6 +7153,7 @@ export interface components {
             activeWorkspaceId: string;
             /** Activeworkspacename */
             activeWorkspaceName: string;
+            detection: components["schemas"]["DetectionState"];
             /** Workspaces */
             workspaces: components["schemas"]["WorkspaceInfo"][];
         };
@@ -7212,6 +7216,78 @@ export interface operations {
             };
             /** @description Role not permitted */
             403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Database unavailable or schema unsupported; read-only requests never migrate */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    setDetectionFlowChain: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description `Bearer <token>` from POST /api/auth/login */
+                Authorization?: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DetectionFlowChainCommand"];
+            };
+        };
+        responses: {
+            /** @description Program detection switches */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WorkspaceState"];
+                };
+            };
+            /** @description Validation failed */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not signed in, or the token expired */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Role not permitted */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -7613,78 +7689,6 @@ export interface operations {
         requestBody: {
             content: {
                 "application/json": components["schemas"]["ReplayAdvanceCommand"];
-            };
-        };
-        responses: {
-            /** @description Presentation Replay state */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["WorkspaceState"];
-                };
-            };
-            /** @description Validation failed */
-            400: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
-                };
-            };
-            /** @description Not signed in, or the token expired */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
-                };
-            };
-            /** @description Role not permitted */
-            403: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
-                };
-            };
-            /** @description Conflict */
-            409: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
-                };
-            };
-            /** @description Database unavailable or schema unsupported; read-only requests never migrate */
-            503: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
-                };
-            };
-        };
-    };
-    setV31ReplayFlowChain: {
-        parameters: {
-            query?: never;
-            header?: {
-                /** @description `Bearer <token>` from POST /api/auth/login */
-                Authorization?: string;
-            };
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["ReplayFlowChainCommand"];
             };
         };
         responses: {

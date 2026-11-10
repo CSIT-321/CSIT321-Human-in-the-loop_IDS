@@ -60,8 +60,9 @@ def build(path: Path) -> int:
         return flows
 
 
-def advance_one(path: Path, step: int, admin_name: str, flow_chain: bool = True) -> tuple[int, int]:
-    """One step of both chains, or of the Suricata chain alone when ``flow_chain`` is False.
+def advance_one(path: Path, step: int, admin_name: str, project_flows: bool = True) -> tuple[int, int]:
+    """One step of the capture: the data always arrives. ``project_flows`` is the program's flow-chain
+    switch, not a replay option: when False the flow records are stored but not grouped or queued.
 
     Returns (Suricata alerts admitted, queue items) so far.
 
@@ -74,14 +75,14 @@ def advance_one(path: Path, step: int, admin_name: str, flow_chain: bool = True)
         admin = conn.execute("SELECT id FROM users WHERE username=? AND role='system_admin'", (admin_name,)).fetchone()
         if admin is None:
             raise ValueError('Preparing Admin account is missing in Replay')
-        if flow_chain:
-            conn.execute('ATTACH DATABASE ? AS base', (str(DATA / 'base.db'),))
-            have = conn.execute('SELECT COALESCE(max(id),0) FROM alerts').fetchone()[0]
-            conn.execute('INSERT INTO alerts SELECT * FROM base.alerts WHERE id>? AND id<=?', (have, through))
-            conn.execute('INSERT INTO flow_data SELECT * FROM base.flow_data WHERE alert_id>? AND alert_id<=?',
-                         (have, through))
-            conn.commit()
-            conn.execute('DETACH DATABASE base')
+        conn.execute('ATTACH DATABASE ? AS base', (str(DATA / 'base.db'),))
+        have = conn.execute('SELECT COALESCE(max(id),0) FROM alerts').fetchone()[0]
+        conn.execute('INSERT INTO alerts SELECT * FROM base.alerts WHERE id>? AND id<=?', (have, through))
+        conn.execute('INSERT INTO flow_data SELECT * FROM base.flow_data WHERE alert_id>? AND alert_id<=?',
+                     (have, through))
+        conn.commit()
+        conn.execute('DETACH DATABASE base')
+        if project_flows:
             flow_queue.materialize_and_route(conn)
             conn.commit()      # staging needs a connection outside a transaction
         if events:

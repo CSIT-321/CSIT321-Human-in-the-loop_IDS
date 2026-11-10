@@ -24,8 +24,13 @@ class ReplayAdvanceCommand(WorkspaceCommand):
     count: Literal[1, 5, 150]
 
 
-class ReplayFlowChainCommand(WorkspaceCommand):
+class DetectionFlowChainCommand(WorkspaceCommand):
     enabled: bool
+
+
+class DetectionState(BaseModel):
+    """Program-wide detector switches. They apply to every workspace and to both data sources."""
+    flowChainEnabled: bool
 
 
 class WorkspaceInfo(BaseModel):
@@ -44,7 +49,6 @@ class WorkspaceInfo(BaseModel):
     holdoutRemaining: int | None = None
     playbackState: Literal['running', 'paused', 'complete'] | None = None
     lastArrivalAt: str | None = None
-    flowChainEnabled: bool | None = None
 
 
 class WorkspaceAction(BaseModel):
@@ -60,6 +64,7 @@ class WorkspaceState(BaseModel):
     activeWorkspaceName: str
     workspaces: list[WorkspaceInfo]
     actions: list[WorkspaceAction]
+    detection: DetectionState
 
 
 class WorkspaceCurrent(BaseModel):
@@ -117,10 +122,12 @@ def start(body: WorkspaceCommand, request: Request, principal: Admin) -> Workspa
     return WorkspaceState.model_validate(workspaces.playback(request, principal.username, body.reason, 'start'))
 
 
-@router.post('/api/admin/workspaces/v3-1-replay/flow-chain', response_model=WorkspaceState,
-             operation_id='setV31ReplayFlowChain')
-def set_flow_chain(body: ReplayFlowChainCommand, request: Request, principal: Admin) -> WorkspaceState:
-    return WorkspaceState.model_validate(workspaces.flow_chain(request, principal.username, body.reason, body.enabled))
+@router.post('/api/admin/detection/flow-chain', response_model=WorkspaceState,
+             operation_id='setDetectionFlowChain')
+def set_detection_flow_chain(body: DetectionFlowChainCommand, request: Request, principal: Admin) -> WorkspaceState:
+    """Program-wide: turn the CICFlowMeter chain on or off. Not tied to a workspace or a replay."""
+    return WorkspaceState.model_validate(
+        workspaces.set_detection_chain(request, principal.username, body.reason, body.enabled))
 
 
 @router.post('/api/admin/workspaces/v3-1-replay/pause', response_model=WorkspaceState,

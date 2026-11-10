@@ -52,8 +52,8 @@ REQUIRED_OPERATIONS = {
     ('/api/admin/workspaces/v3-1-replay/advance','post'),
     ('/api/admin/workspaces/v3-1-replay/start','post'),
     ('/api/admin/workspaces/v3-1-replay/pause','post'),
-    # Live admin control for the Packet Replay flow chain (Suricata-only testing).
-    ('/api/admin/workspaces/v3-1-replay/flow-chain','post'),
+    # Program-wide flow-chain switch (Suricata-only testing), independent of any workspace.
+    ('/api/admin/detection/flow-chain','post'),
     ('/api/evaluation/final-v3-1','get'),
     ('/api/evaluation/final-v3-1/records','get'),
     ('/api/evaluation/final-v3-1/records/{index}','get'),

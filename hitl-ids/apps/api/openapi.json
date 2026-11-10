@@ -2552,6 +2552,26 @@
         "title": "DashboardSummary",
         "type": "object"
       },
+      "DetectionFlowChainCommand": {
+        "properties": {
+          "enabled": {
+            "title": "Enabled",
+            "type": "boolean"
+          },
+          "reason": {
+            "maxLength": 500,
+            "minLength": 3,
+            "title": "Reason",
+            "type": "string"
+          }
+        },
+        "required": [
+          "reason",
+          "enabled"
+        ],
+        "title": "DetectionFlowChainCommand",
+        "type": "object"
+      },
       "DetectionRunRequest": {
         "additionalProperties": false,
         "description": "``POST /api/detection/run``. Detection is an offline batch (D3), never inline in a request:\nthe endpoint starts a run and returns its handle.",
@@ -2699,6 +2719,20 @@
           "startedAt"
         ],
         "title": "DetectionRunSummary",
+        "type": "object"
+      },
+      "DetectionState": {
+        "description": "Program-wide detector switches. They apply to every workspace and to both data sources.",
+        "properties": {
+          "flowChainEnabled": {
+            "title": "Flowchainenabled",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "flowChainEnabled"
+        ],
+        "title": "DetectionState",
         "type": "object"
       },
       "EffectiveReview": {
@@ -8967,26 +9001,6 @@
         "title": "ReplayAdvanceCommand",
         "type": "object"
       },
-      "ReplayFlowChainCommand": {
-        "properties": {
-          "enabled": {
-            "title": "Enabled",
-            "type": "boolean"
-          },
-          "reason": {
-            "maxLength": 500,
-            "minLength": 3,
-            "title": "Reason",
-            "type": "string"
-          }
-        },
-        "required": [
-          "reason",
-          "enabled"
-        ],
-        "title": "ReplayFlowChainCommand",
-        "type": "object"
-      },
       "ReplayPrepareCommand": {
         "properties": {
           "flowChain": {
@@ -12654,18 +12668,6 @@
             ],
             "title": "Alertcount"
           },
-          "flowChainEnabled": {
-            "anyOf": [
-              {
-                "type": "boolean"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "default": null,
-            "title": "Flowchainenabled"
-          },
           "holdoutArrived": {
             "anyOf": [
               {
@@ -12836,6 +12838,9 @@
             "title": "Activeworkspacename",
             "type": "string"
           },
+          "detection": {
+            "$ref": "#/components/schemas/DetectionState"
+          },
           "workspaces": {
             "items": {
               "$ref": "#/components/schemas/WorkspaceInfo"
@@ -12848,7 +12853,8 @@
           "activeWorkspaceId",
           "activeWorkspaceName",
           "workspaces",
-          "actions"
+          "actions",
+          "detection"
         ],
         "title": "WorkspaceState",
         "type": "object"
@@ -13031,6 +13037,102 @@
         "summary": "Read-only current HITL audit",
         "tags": [
           "Current Admin"
+        ],
+        "x-required-roles": [
+          "system_admin"
+        ]
+      }
+    },
+    "/api/admin/detection/flow-chain": {
+      "post": {
+        "operationId": "setDetectionFlowChain",
+        "parameters": [
+          {
+            "description": "`Bearer <token>` from POST /api/auth/login",
+            "in": "header",
+            "name": "Authorization",
+            "required": false,
+            "schema": {
+              "example": "Bearer eyJhbGciOiJIUzI1NiJ9...",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DetectionFlowChainCommand"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorkspaceState"
+                }
+              }
+            },
+            "description": "Program detection switches"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Validation failed"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not signed in, or the token expired"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Role not permitted"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Database unavailable or schema unsupported; read-only requests never migrate"
+          }
+        },
+        "summary": "setDetectionFlowChain",
+        "tags": [
+          "Operational workspaces"
         ],
         "x-required-roles": [
           "system_admin"
@@ -13730,102 +13832,6 @@
           }
         },
         "summary": "advancePresentationReplay",
-        "tags": [
-          "Operational workspaces"
-        ],
-        "x-required-roles": [
-          "system_admin"
-        ]
-      }
-    },
-    "/api/admin/workspaces/v3-1-replay/flow-chain": {
-      "post": {
-        "operationId": "setV31ReplayFlowChain",
-        "parameters": [
-          {
-            "description": "`Bearer <token>` from POST /api/auth/login",
-            "in": "header",
-            "name": "Authorization",
-            "required": false,
-            "schema": {
-              "example": "Bearer eyJhbGciOiJIUzI1NiJ9...",
-              "type": "string"
-            }
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/ReplayFlowChainCommand"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/WorkspaceState"
-                }
-              }
-            },
-            "description": "Presentation Replay state"
-          },
-          "400": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            },
-            "description": "Validation failed"
-          },
-          "401": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            },
-            "description": "Not signed in, or the token expired"
-          },
-          "403": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            },
-            "description": "Role not permitted"
-          },
-          "409": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            },
-            "description": "Conflict"
-          },
-          "503": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            },
-            "description": "Database unavailable or schema unsupported; read-only requests never migrate"
-          }
-        },
-        "summary": "setV31ReplayFlowChain",
         "tags": [
           "Operational workspaces"
         ],

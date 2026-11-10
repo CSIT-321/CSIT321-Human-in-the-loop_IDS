@@ -27,8 +27,7 @@ export function WorkspacesPage() {
         advance: `Advance replay by ${count}`, flowChain: "Set the CICFlowMeter flow chain" } as const;
       const body = { reason: reason.trim() || defaults[action] };
       if (action === "prepare") await unwrap(api.POST("/api/admin/workspaces/v3-1-replay/prepare", { body: { ...body, mode, flowChain: true } }));
-      else if (action === "flowChain") await unwrap(api.POST("/api/admin/workspaces/v3-1-replay/flow-chain",
-        { body: { ...body, enabled } }));
+      else if (action === "flowChain") await unwrap(api.POST("/api/admin/detection/flow-chain", { body: { ...body, enabled } }));
       else if (action === "reset") await unwrap(api.POST("/api/admin/workspaces/v3-1-replay/reset", { body }));
       else if (action === "start") await unwrap(api.POST("/api/admin/workspaces/v3-1-replay/start", { body }));
       else if (action === "pause") await unwrap(api.POST("/api/admin/workspaces/v3-1-replay/pause", { body }));
@@ -54,6 +53,17 @@ export function WorkspacesPage() {
           className="mt-1 block w-full rounded-sm border border-border bg-raised px-3 py-2 text-sm text-text" />
       </label>
       {error && <p role="alert" className="rounded-sm border border-danger p-3 text-sm text-danger">{error}</p>}
+      <Card title="Detection chains" subtitle="Program settings. They apply to every workspace and to both data sources.">
+        <label className="flex items-center gap-2 text-sm text-text">
+          <input type="checkbox" aria-label="CICFlowMeter flow chain" checked={data.detection.flowChainEnabled}
+            disabled={busy !== null}
+            onChange={event => void act("flowChain", "program", 1, event.target.checked)} />
+          CICFlowMeter flow chain
+          <span className="text-xs text-muted">{data.detection.flowChainEnabled
+            ? "on — flow records are grouped, queued and routed"
+            : "off — flow records still arrive, but the program does not process them"}</span>
+        </label>
+      </Card>
       <div className="grid gap-4 lg:grid-cols-2">{data.workspaces.map(workspace => <Card key={workspace.id}
         title={<span className="flex items-center gap-2">{workspace.name}<Pill tone={workspace.active ? "ok" : "muted"}>{workspace.active ? "Active" : "Inactive"}</Pill></span>}>
         <div className="space-y-2 text-sm text-muted">
@@ -69,13 +79,6 @@ export function WorkspacesPage() {
               </select>
             </label>}
             {workspace.ready && <p>Mode: <strong className="text-text">{workspace.preparationMode === "presentation" ? "Presentation Replay" : workspace.preparationMode === "packet" ? "Packet Replay" : "Full Replay"}</strong></p>}
-            {workspace.preparationMode === "packet" && workspace.ready && <label className="flex items-center gap-2 text-sm text-text">
-              <input type="checkbox" aria-label="CICFlowMeter flow chain" checked={workspace.flowChainEnabled !== false}
-                disabled={busy !== null}
-                onChange={event => void act("flowChain", "v3-1-replay", 1, event.target.checked)} />
-              CICFlowMeter flow chain
-              <span className="text-xs text-muted">{workspace.flowChainEnabled === false ? "off — pure Suricata arrivals" : "on — both chains arrive"}</span>
-            </label>}
             {workspace.preparationMode === "packet"
               ? <p>Flows in the capture window: {workspace.rawRecords ?? "N/A"}</p>
               : <p>Raw frozen workload records: {workspace.rawRecords ?? "N/A"}</p>}
