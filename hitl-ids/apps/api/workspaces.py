@@ -67,6 +67,8 @@ def _control(path: Path, *, create: bool = False) -> sqlite3.Connection | None:
         """)
         if 'mode' not in [column[1] for column in conn.execute('PRAGMA table_info(presentation)')]:
             conn.execute("ALTER TABLE presentation ADD COLUMN mode TEXT NOT NULL DEFAULT 'presentation'")
+        if 'flow_chain' not in [column[1] for column in conn.execute('PRAGMA table_info(presentation)')]:
+            conn.execute("ALTER TABLE presentation ADD COLUMN flow_chain INTEGER NOT NULL DEFAULT 1")
     return conn
 
 
@@ -158,6 +160,7 @@ def state(request: Request) -> dict:
                  "holdoutRemaining": 160-presentation['cursor'] if presentation and key == 'v3-1-replay' else 0 if key == 'v3-1-replay' and meta else None,
                  "playbackState": presentation['playback_state'] if presentation and key == 'v3-1-replay' else None,
                  "lastArrivalAt": presentation['last_arrival_at'] if presentation and key == 'v3-1-replay' else None,
+                 "flowChainEnabled": bool(presentation['flow_chain']) if presentation and 'flow_chain' in presentation.keys() else None,
                  "workloadSha256": meta["workload_sha256"] if key == "v3-1-replay" and meta else None}
                 for key, path in (("operational", operational), ("v3-1-replay", replay))]}
 
@@ -189,7 +192,7 @@ def activate(request: Request, workspace: str, actor: str, reason: str) -> dict:
     return state(request)
 
 
-def prepare(request: Request, actor: str, reason: str, mode: str = 'full') -> dict:
+def prepare(request: Request, actor: str, reason: str, mode: str = 'full', flow_chain: bool = True) -> dict:
     if mode not in ('full', 'presentation', 'packet'):
         raise ApiError(400, 'INVALID_REPLAY_MODE', 'Choose Full Replay, Presentation Replay or Packet Replay.')
     operational, control, replay = paths(request)
@@ -257,12 +260,12 @@ def prepare(request: Request, actor: str, reason: str, mode: str = 'full') -> di
                      (datetime.now(timezone.utc).isoformat(), records, staged, count, workload_hash))
         if mode == 'packet':
             # The capture steps arrive in order; nothing has arrived yet.
-            conn.execute("INSERT INTO presentation VALUES (1,0,0,?,'paused',NULL,NULL,?,'packet')",
-                         (json.dumps(list(range(160))), actor))
+            conn.execute("INSERT INTO presentation VALUES (1,0,0,?,'paused',NULL,NULL,?,'packet',?)",
+                         (json.dumps(list(range(160))), actor, int(flow_chain)))
             _audit(conn, actor, 'packet_replay_prepared', 'v3-1-replay', reason)
         elif mode == 'presentation':
             order = presentation_replay.arrival_order(json.loads(presentation_replay.STRUCTURE.read_text(encoding='utf-8')))
-            conn.execute("INSERT INTO presentation VALUES (1,?,?,?,?,?,?,?,'presentation')",
+            conn.execute("INSERT INTO presentation VALUES (1,?,?,?,?,?,?,?,'presentation',1)",
                 (presentation_replay.INITIAL_HOLDOUT, presentation_replay.INITIAL_HOLDOUT,
                  json.dumps(order), 'paused', None, datetime.now(timezone.utc).isoformat(), actor))
             _audit(conn, actor, 'presentation_replay_prepared', 'v3-1-replay', reason)
@@ -315,7 +318,8 @@ def _advance_locked(conn: sqlite3.Connection, replay: Path, count: int, actor: s
         for attempt in range(3):
             try:
                 if packet:
-                    staged, total = packet_replay.advance_one(replay, order[cursor], row['preparing_admin'])
+                    staged, total = packet_replay.advance_one(replay, order[cursor], row['preparing_admin'],
+                                                              flow_chain=bool(row['flow_chain']))
                 else:
                     presentation_replay.advance_one(replay, order[cursor], row['preparing_admin'])
                     staged = total = 41 + cursor

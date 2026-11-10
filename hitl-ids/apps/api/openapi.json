@@ -8969,6 +8969,11 @@
       },
       "ReplayPrepareCommand": {
         "properties": {
+          "flowChain": {
+            "default": true,
+            "title": "Flowchain",
+            "type": "boolean"
+          },
           "mode": {
             "default": "full",
             "enum": [
@@ -12628,6 +12633,18 @@
               }
             ],
             "title": "Alertcount"
+          },
+          "flowChainEnabled": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Flowchainenabled"
           },
           "holdoutArrived": {
             "anyOf": [

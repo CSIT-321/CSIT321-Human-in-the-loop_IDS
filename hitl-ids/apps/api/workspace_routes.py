@@ -16,6 +16,7 @@ class WorkspaceCommand(BaseModel):
 
 class ReplayPrepareCommand(WorkspaceCommand):
     mode: Literal['full', 'presentation', 'packet'] = 'full'
+    flowChain: bool = True  # Packet Replay only: False turns the CICFlowMeter flow chain off (pure Suricata)
 
 
 class ReplayAdvanceCommand(WorkspaceCommand):
@@ -39,6 +40,7 @@ class WorkspaceInfo(BaseModel):
     holdoutRemaining: int | None = None
     playbackState: Literal['running', 'paused', 'complete'] | None = None
     lastArrivalAt: str | None = None
+    flowChainEnabled: bool | None = None
 
 
 class WorkspaceAction(BaseModel):
@@ -88,7 +90,8 @@ def activate(workspaceId: str, body: WorkspaceCommand, request: Request, princip
 @router.post("/api/admin/workspaces/v3-1-replay/prepare", response_model=WorkspaceState,
              operation_id="prepareV31Replay")
 def prepare(body: ReplayPrepareCommand, request: Request, principal: Admin) -> WorkspaceState:
-    return WorkspaceState.model_validate(workspaces.prepare(request, principal.username, body.reason, body.mode))
+    return WorkspaceState.model_validate(workspaces.prepare(request, principal.username, body.reason, body.mode,
+                                                              body.flowChain))
 
 
 @router.post("/api/admin/workspaces/v3-1-replay/reset", response_model=WorkspaceState,

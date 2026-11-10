@@ -60,8 +60,10 @@ def build(path: Path) -> int:
         return flows
 
 
-def advance_one(path: Path, step: int, admin_name: str) -> tuple[int, int]:
-    """One step of both chains. Returns (Suricata alerts admitted, queue items) so far.
+def advance_one(path: Path, step: int, admin_name: str, flow_chain: bool = True) -> tuple[int, int]:
+    """One step of both chains, or of the Suricata chain alone when ``flow_chain`` is False.
+
+    Returns (Suricata alerts admitted, queue items) so far.
 
     Idempotent: a step that stopped part-way continues from what the database already holds.
     """
@@ -72,15 +74,16 @@ def advance_one(path: Path, step: int, admin_name: str) -> tuple[int, int]:
         admin = conn.execute("SELECT id FROM users WHERE username=? AND role='system_admin'", (admin_name,)).fetchone()
         if admin is None:
             raise ValueError('Preparing Admin account is missing in Replay')
-        conn.execute('ATTACH DATABASE ? AS base', (str(DATA / 'base.db'),))
-        have = conn.execute('SELECT COALESCE(max(id),0) FROM alerts').fetchone()[0]
-        conn.execute('INSERT INTO alerts SELECT * FROM base.alerts WHERE id>? AND id<=?', (have, through))
-        conn.execute('INSERT INTO flow_data SELECT * FROM base.flow_data WHERE alert_id>? AND alert_id<=?',
-                     (have, through))
-        conn.commit()
-        conn.execute('DETACH DATABASE base')
-        flow_queue.materialize_and_route(conn)
-        conn.commit()          # staging needs a connection outside a transaction
+        if flow_chain:
+            conn.execute('ATTACH DATABASE ? AS base', (str(DATA / 'base.db'),))
+            have = conn.execute('SELECT COALESCE(max(id),0) FROM alerts').fetchone()[0]
+            conn.execute('INSERT INTO alerts SELECT * FROM base.alerts WHERE id>? AND id<=?', (have, through))
+            conn.execute('INSERT INTO flow_data SELECT * FROM base.flow_data WHERE alert_id>? AND alert_id<=?',
+                         (have, through))
+            conn.commit()
+            conn.execute('DETACH DATABASE base')
+            flow_queue.materialize_and_route(conn)
+            conn.commit()      # staging needs a connection outside a transaction
         if events:
             stage_file(conn, _Batch(events), SENSOR, capture_scope=SCOPE)
         waiting = conn.execute(

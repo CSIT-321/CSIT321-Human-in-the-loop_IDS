@@ -13,6 +13,8 @@ export function WorkspacesPage() {
   // X7 (S8-09): no pre-filled "Prepare ..." sentence; an empty reason records the action that was taken.
   const [reason, setReason] = useState("");
   const [mode, setMode] = useState<"full" | "presentation" | "packet">("full");
+  // Packet Replay only: off = the CICFlowMeter flow chain never writes; the replay is pure Suricata.
+  const [flowChain, setFlowChain] = useState(true);
   const reload = useRef(state.reload); reload.current = state.reload;
   useEffect(() => { const timer = setInterval(() => reload.current(), 5000); return () => clearInterval(timer); }, []);
 
@@ -26,7 +28,8 @@ export function WorkspacesPage() {
         activate: `Activate workspace ${id}`, start: "Start replay playback", pause: "Pause replay playback",
         advance: `Advance replay by ${count}` } as const;
       const body = { reason: reason.trim() || defaults[action] };
-      if (action === "prepare") await unwrap(api.POST("/api/admin/workspaces/v3-1-replay/prepare", { body: { ...body, mode } }));
+      if (action === "prepare") await unwrap(api.POST("/api/admin/workspaces/v3-1-replay/prepare",
+        { body: { ...body, mode, flowChain: mode !== "packet" ? true : flowChain } }));
       else if (action === "reset") await unwrap(api.POST("/api/admin/workspaces/v3-1-replay/reset", { body }));
       else if (action === "start") await unwrap(api.POST("/api/admin/workspaces/v3-1-replay/start", { body }));
       else if (action === "pause") await unwrap(api.POST("/api/admin/workspaces/v3-1-replay/pause", { body }));
@@ -65,8 +68,15 @@ export function WorkspacesPage() {
                 <option value="presentation">Presentation Replay · progressive Holdout</option>
                 <option value="packet">Packet Replay · Suricata + flow chains, progressive arrivals</option>
               </select>
+              {mode === "packet" && <label className="mt-2 flex items-center gap-2 text-sm text-text">
+                <input type="checkbox" aria-label="Include the CICFlowMeter flow chain"
+                  checked={flowChain} onChange={event => setFlowChain(event.target.checked)} />
+                Include the CICFlowMeter flow chain
+                <span className="text-xs text-muted">(unchecked = pure Suricata replay)</span>
+              </label>}
             </label>}
             {workspace.ready && <p>Mode: <strong className="text-text">{workspace.preparationMode === "presentation" ? "Presentation Replay" : workspace.preparationMode === "packet" ? "Packet Replay" : "Full Replay"}</strong></p>}
+            {workspace.preparationMode === "packet" && <p>Flow chain: <strong className="text-text">{workspace.flowChainEnabled === false ? "Off — pure Suricata" : "On"}</strong></p>}
             {workspace.preparationMode === "packet"
               ? <p>Flows in the capture window: {workspace.rawRecords ?? "N/A"}</p>
               : <p>Raw frozen workload records: {workspace.rawRecords ?? "N/A"}</p>}

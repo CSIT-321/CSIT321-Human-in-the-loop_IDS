@@ -5640,6 +5640,11 @@ export interface components {
         /** ReplayPrepareCommand */
         ReplayPrepareCommand: {
             /**
+             * Flowchain
+             * @default true
+             */
+            flowChain: boolean;
+            /**
              * Mode
              * @default full
              * @enum {string}
@@ -7063,6 +7068,11 @@ export interface components {
             active: boolean;
             /** Alertcount */
             alertCount: number | null;
+            /**
+             * Flowchainenabled
+             * @default null
+             */
+            flowChainEnabled: boolean | null;
             /**
              * Holdoutarrived
              * @default null

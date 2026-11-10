@@ -101,5 +101,27 @@ def test_both_chains_arrive_step_by_step_in_one_workspace(tmp_path, grouped_data
     third = advance()                                   # a step with nothing new changes only the cursor
     assert (third['holdoutArrived'], third['alertCount'], third['stagedAlerts']) == (3, queue, 2)
     assert digest(operational) == before
+
+
+def test_packet_replay_without_the_flow_chain(tmp_path, grouped_database, monkeypatch):
+    """flowChain=false: the capture's flows never enter the database; the queue holds only Suricata alerts."""
+    client, _, tokens = _client(tmp_path)
+    replay_data(tmp_path, grouped_database, monkeypatch)
+    prepared = replay_state(client.post('/api/admin/workspaces/v3-1-replay/prepare', headers=tokens['admin'],
+                                        json={**ADMIN, 'flowChain': False}))
+    assert prepared['flowChainEnabled'] is False
+    client.post('/api/admin/workspaces/v3-1-replay/activate', headers=tokens['admin'], json=ADMIN)
+    replay = tmp_path / 'workspaces/v3-1-replay.db'
+    for _ in range(2):
+        replay_state(client.post(ADVANCE, headers=tokens['admin'], json={
+            'reason': 'Pure Suricata step', 'requestId': str(uuid4()), 'count': 1}))
+    with closing(sqlite3.connect(replay)) as conn:
+        assert conn.execute('SELECT count(*) FROM alerts').fetchone()[0] == 0        # no flow copied
+        assert conn.execute('SELECT count(*) FROM flow_data').fetchone()[0] == 0
+        assert conn.execute("SELECT count(*) FROM operational_alerts_v2 "
+                            "WHERE source_kind='legacy_flow_alert'").fetchone()[0] == 0
+    state = replay_state(client.post(ADVANCE, headers=tokens['admin'], json={
+        'reason': 'Pure Suricata step', 'requestId': str(uuid4()), 'count': 1}))
+    assert state['alertCount'] == state['stagedAlerts'] == 2                          # only Suricata queue items
     actions = [item['action'] for item in client.get('/api/admin/workspaces', headers=tokens['admin']).json()['actions']]
     assert 'packet_replay_prepared' in actions and 'presentation_manual_advance' in actions
