@@ -64,14 +64,14 @@ test("SOC packet replay: admin replay control, live arrivals, both chains, Tier 
   await signIn(page, "g.ang", "analyst-demo");
   await expect(page).toHaveURL(/\/analyst\/operations/);
   const views = page.getByRole("tablist", { name: "Operational queue views" });
-  const active = views.locator("#queue-view-active");
+  const active = views.locator("#queue-view-all");
   await expect(page.getByText("Arrival updates connected")).toBeVisible();
   const first = (await active.innerText()).replace(/\s+/g, " ");
   await shot(page, "03-arrivals-before", undefined, [["Workspace", page.getByText(/Workspace: V3\.1 Demo Replay/)],
-    ["Active count", active], ["Live updates", page.getByText("Arrival updates connected")]]);
+    ["Queue count", active], ["Live updates", page.getByText("Arrival updates connected")]]);
   await expect.poll(async () => (await active.innerText()).replace(/\s+/g, " "), { timeout: 60_000 }).not.toBe(first);
   const second = (await active.innerText()).replace(/\s+/g, " ");
-  await shot(page, "04-arrivals-after", undefined, [["Active count", active]]);
+  await shot(page, "04-arrivals-after", undefined, [["Queue count", active]]);
   facts.arrivals = { before: first, after: second };
 
   // Fast-forward the rest of the capture for the guide run (in a demo: let Start Arrivals run, ~13 min).
@@ -93,9 +93,10 @@ test("SOC packet replay: admin replay control, live arrivals, both chains, Tier 
 
   // ---------- Analyst: both chains in one queue ----------
   await page.goto("/analyst/operations?view=auto-escalated");
-  await expect(views.locator("#queue-view-auto-escalated")).toContainText(String((facts.complete as { autoCases: number }).autoCases));
-  await shot(page, "06-both-chains", undefined, [["Auto-escalated", views.locator("#queue-view-auto-escalated")],
-    ["Tier 1", views.locator("#queue-view-tier1")], ["Queue", page.getByRole("list", { name: "Operational alerts" })]]);
+  const complete = facts.complete as { autoCases: number; tier2Cases?: number };
+  await expect(views.locator("#queue-view-tier2")).toContainText(String(complete.tier2Cases ?? complete.autoCases));
+  await shot(page, "06-both-chains", undefined, [["Tier 2", views.locator("#queue-view-tier2")],
+    ["Queue", page.getByRole("list", { name: "Operational alerts" })]]);
 
   const workspace = page.getByRole("region", { name: "Operational alert workspace", exact: true });
   const work = workspace.getByRole("region", { name: "Human work status" });

@@ -30,6 +30,7 @@ def build(path: Path) -> None:
     subprocess.run([sys.executable, str(ROOT / 'scripts' / 'materialize_flow_queue.py'), '--database', str(path)],
                    check=True, cwd=ROOT)
     with closing(db.connect(path)) as c:
+        db.migrate(c)
         auth.ensure_demo_accounts(c)
 
 

@@ -89,7 +89,7 @@ def steps(f: dict) -> list[tuple[str, str, str, str, str, str]]:
          "A flow verdict feeds the learning loop: each outcome moves the score within the guardrails. "
          "One verdict alone does not re-rank a family (3-vote gate). A Suricata verdict is recorded but does not re-score."),
         ("14-case-list", "Tier 2", "The case list",
-         "Left menu: **Tier 2 Cases**.",
+         "Left menu: **Escalated**.",
          "Default filter Active. Rule cases say **Rule** with the rule sentence. Your case shows **Glenn Ang** and your reason.",
          "The expert sees open work and who or what sent each case."),
         ("15-conclusion", "Tier 2", "Investigate and conclude",
@@ -166,11 +166,12 @@ table{{border-collapse:collapse}} td,th{{border:1px solid #ddd;padding:4px 10px;
 (CICFlowMeter, signature rules and XGBoost, grouping, learning) and Suricata. Both arrive in <b>one</b> queue,
 behind <b>one</b> login. The Admin controls the replay; the analyst works the queue as it fills.</p>
 <div class=note><b>Accounts.</b> <code>admin</code> / <code>admin-demo</code> — runs the replay.
-<code>g.ang</code> / <code>analyst-demo</code> — Tier 1 and Tier 2 work. Use two browser windows (or one normal and
-one private window), because one browser keeps one session.<br>
+<code>g.ang</code> / <code>analyst-demo</code> — Tier 1 and Tier 2 work.
+<code>t2.ang</code> / <code>tier2-demo</code> — the Tier 2 analyst; its queue shows Tier 2 cases only.
+Use two browser windows (or one normal and one private window), because one browser keeps one session.<br>
 <b>Full capture</b>: {d['queue']:,} queue items ({d['flow']:,} flow, {d['suricata']:,} Suricata),
 {d['groups']} flow groups, {d['tier2Cases'] if 'tier2Cases' in d else d['autoCases']} Tier 2 cases opened by rule.
-Data flow per stage: see <code>analysis/phase-f/workflow-layout/index.html</code>.</div>
+Data flow per stage, all ten end results and the reranking flow: see <code>analysis/phase-f/dual-chain-guide/index.html</code>.</div>
 <p>Built from an automated run of <code>soc-packet.spec.ts</code> on a copy of the demo data. Every screenshot is
 from that run, and the run checked the database after each write. Orange boxes mark what to click or read; their
 positions were measured by the browser. The run fast-forwards the replay after step 4; in a demo, let it play.</p>

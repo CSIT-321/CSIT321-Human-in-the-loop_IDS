@@ -35,6 +35,7 @@ SURICATA = """SELECT o.operational_alert_ref FROM operational_alerts_v2 o
 def build(path: Path) -> None:
     shutil.copyfile(ROOT / 'data' / 'demo.db', path)
     with closing(db.connect(path)) as c:
+        db.migrate(c)
         auth.ensure_demo_accounts(c)
         c.commit()
 
