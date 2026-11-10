@@ -353,7 +353,7 @@ export function OperationalWorkstationPage({ active = true }: { active?: boolean
 
       </div>
     </header>
-    <OperationalKpis data={summary.status === "success" ? summary.data : undefined} onView={chooseView} />
+    <OperationalKpis data={summary.status === "success" ? summary.data : undefined} onView={chooseView} active={activeView.key} />
     {claimConflict&&<p role="alert" className="shrink-0 break-words border-b border-border p-3 text-sm text-warn">Claim Conflict — {claimConflict}</p>}
     {claimError&&<p role="alert" className="shrink-0 break-words border-b border-border p-3 text-sm text-warn">{claimError}</p>}
     {summary.status === "loading" && <p role="status" className="px-3 text-xs text-muted">Loading operational workload…</p>}

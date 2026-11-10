@@ -239,7 +239,7 @@ describe("intentional queue selection auto-claim", () => {
     renderApp("/analyst/operations?view=critical", { session: analyst });
     const queue = await screen.findByRole("list", { name: "Operational alerts" });
     await waitFor(() => expect(screen.getByText("Arrival updates connected")).toBeVisible());
-    expect(screen.getByRole("tab", { name: /^Critical / })).toHaveAttribute("aria-selected", "true");
+    expect(within(screen.getByRole("region", { name: "Operational workload" })).getByRole("button", { name: /^Critical / })).toHaveAttribute("aria-pressed", "true");
     scenario.arrived = true;
     act(() => controller.enqueue(new TextEncoder().encode(`event: alert_arrived\ndata: ${JSON.stringify({
       eventId: "operational:3", workspaceId: "operational", operationalAlertRef: third, timestamp: "now",
@@ -247,7 +247,7 @@ describe("intentional queue selection auto-claim", () => {
     await waitFor(() => expect(screen.getByRole("button", { name: /^Total Alerts 3$/ })).toBeVisible());
     expect(within(queue).getAllByRole("button")).toHaveLength(2);
     expect(within(queue).queryByRole("button", { name: /Newly arrived alert/ })).toBeNull();
-    expect(screen.getByRole("tab", { name: /^Critical / })).toHaveAttribute("aria-selected", "true");
+    expect(within(screen.getByRole("region", { name: "Operational workload" })).getByRole("button", { name: /^Critical / })).toHaveAttribute("aria-pressed", "true");
     expect(claims(seen)).toHaveLength(0);
   });
 

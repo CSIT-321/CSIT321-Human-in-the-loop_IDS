@@ -171,13 +171,14 @@ describe("unified operational workstation", () => {
     expect(within(workload).getByRole("button", { name: "No Immediate Review 4,664" })).toBeVisible();
     expect(within(workload).getByRole("link", { name: "Open Tier 2 Cases 24" })).toHaveAttribute("href", "/analyst/tier2-cases");
     const tabs = screen.getByRole("tablist", { name: "Operational queue views" });
-    expect(within(tabs).getAllByRole("tab")).toHaveLength(12);
+    expect(within(tabs).getAllByRole("tab")).toHaveLength(4);
     expect(within(tabs).getByRole("tab", { name: "Tier 2 24" })).toBeVisible();
-    // C2 + D4 condition 3 (approved 2026-11-08): 2 new tabs; Tier 1 counts groups and singles apart.
-    expect(within(tabs).getByRole("tab", { name: "Tier 2 candidates 74" })).toBeVisible();
-    expect(within(tabs).getByRole("tab", { name: "Auto-escalated 3" })).toBeVisible();
-    expect(within(tabs).getByRole("tab", { name: "Tier 1 78 groups · 234 single" })).toBeVisible();
-    expect(within(workload).getByRole("button", { name: "Active Tier 1 78 groups · 234 single" })).toBeVisible();
+    // The two views without a KPI card sit in the "More" menu of the strip.
+    await userEvent.click(screen.getByText("More views"));
+    expect(screen.getByRole("button", { name: "Tier 2 candidates 74" })).toBeVisible();
+    expect(screen.getByRole("button", { name: "Auto-escalated 3" })).toBeVisible();
+    expect(within(tabs).getByRole("tab", { name: "Tier 1 312" })).toBeVisible();
+    expect(within(workload).getByRole("button", { name: "Active Tier 1 78 flow groups · 234 single" })).toBeVisible();
     const queue = screen.getByRole("list", { name: "Operational alerts" });
     expect((await within(queue).findAllByLabelText("Operational Priority: 85"))[0]).toHaveTextContent("85");
     expect(within(queue).getAllByText("85")[0]).toHaveClass("text-3xl");
@@ -193,7 +194,7 @@ describe("unified operational workstation", () => {
       return reads(req);
     });
     const { router } = renderApp("/analyst/operations?offset=50&alertRef=" + ref, { session });
-    await userEvent.click(await screen.findByRole("tab", { name: "Expert Review 8" }));
+    await userEvent.click(await screen.findByRole("button", { name: "Expert Review 8" }));
     expect(router.state.location.search).toContain("view=expert");
     expect(router.state.location.search).not.toMatch(/offset|alertRef/);
     expect(await within(screen.getByRole("list", { name: "Operational alerts" })).findByText("EXPERT")).toBeVisible();
@@ -207,7 +208,7 @@ describe("unified operational workstation", () => {
     await userEvent.click(screen.getByRole("tab", { name: "All 5,000" }));
     await router.navigate(-1);
     await waitFor(() => expect(router.state.location.search).toBe(saved));
-    await waitFor(() => expect(screen.getByRole("tab", { name: "Expert Review 8" })).toHaveAttribute("aria-selected", "true"));
+    await waitFor(() => expect(screen.getByRole("button", { name: "Expert Review 8" })).toHaveAttribute("aria-pressed", "true"));
     expect(screen.getByLabelText("Attack Type")).toHaveValue("unknown_needs_expert");
     // Deep-link initialization uses the same URL source of truth.
     await router.navigate("/analyst/operations?view=tier2&attackCategory=web_attack&sort=priority_desc&q=scan");
@@ -222,10 +223,11 @@ describe("unified operational workstation", () => {
     await userEvent.click(await screen.findByRole("button", { name: "Critical 16" }));
     expect(router.state.location.search).toContain("view=critical");
     await waitFor(() => expect(requests.some(req => req.url.includes("priorityBand=P1"))).toBe(true));
-    screen.getByRole("tab", { name: "Critical 16" }).focus();
-    await userEvent.keyboard("{ArrowRight}");
-    expect(screen.getByRole("tab", { name: "Needs Review 336" })).toHaveFocus();
-    expect(router.state.location.search).toContain("view=needs-review");
+    expect(screen.getByRole("button", { name: "Critical 16" })).toHaveAttribute("aria-pressed", "true");
+    screen.getByRole("tab", { name: /^Active/ }).focus();
+    await userEvent.keyboard("{ArrowDown}");
+    expect(screen.getByRole("tab", { name: "Tier 1 312" })).toHaveFocus();
+    expect(router.state.location.search).toContain("view=tier1");
     await userEvent.keyboard("/");
     expect(screen.getByLabelText("Search operational alerts")).toHaveFocus();
     await userEvent.type(screen.getByLabelText("Search operational alerts"), "outside page");

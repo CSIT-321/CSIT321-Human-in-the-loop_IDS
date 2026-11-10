@@ -156,7 +156,7 @@
 }
 
 /* Operational Workstation: the original queue/detail/context interaction, on canonical data. */
-.ops-kpis { display: grid; grid-template-columns: repeat(8, minmax(0, 1fr)); gap: 1px; }
+.ops-kpis { display: grid; grid-template-columns: repeat(9, minmax(0, 1fr)); gap: 1px; }
 .ops-grid { grid-template-columns: 18rem minmax(0, 1fr) 15rem; }
 .ops-grid > * { min-width: 0; }
 .ops-queue footer button { padding: 6px 4px; font-size: 11px; }

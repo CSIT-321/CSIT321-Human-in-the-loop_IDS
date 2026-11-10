@@ -7,21 +7,26 @@ import {workLabel} from './AnalystWork';
 
 type Summary = Schemas["OperationalSummary"];
 type Query = NonNullable<paths["/api/v2/alerts"]["get"]["parameters"]["query"]>;
-export const queueViews = [
+export const primaryViews = [
   { key: "active", label: "Active", count: "activeAlerts", query: {workScope:'active'} },
+  { key: "tier1", label: "Tier 1", count: "tier1Review", query: { handlingRoute: "tier1_review",workScope:'active' } },
+  { key: "tier2", label: "Tier 2", count: "tier2Cases", query: { handlingRoute: "tier2_case" } },
+  { key: "all", label: "All", count: "totalAlerts", query: {} },
+] as const satisfies readonly { key: string; label: string; count: keyof Summary; query: Query }[];
+// Attribute views stay reachable from the KPI cards; the two without a card sit in the strip's menu.
+export const overflowViews = [
   { key: "completed", label: "Completed", count: "completedWork", query: {workScope:'completed'} },
   { key: "escalated", label: "Escalated", count: "escalatedWork", query: {workScope:'escalated'} },
-  { key: "all", label: "All", count: "totalAlerts", query: {} },
-  { key: "tier2", label: "Tier 2", count: "tier2Cases", query: { handlingRoute: "tier2_case" } },
-  { key: "tier1", label: "Tier 1", count: "tier1Review", query: { handlingRoute: "tier1_review",workScope:'active' } },
-  // C2 (approved 2026-11-08): the server applies the C3 rule, so this tab and the "Why Tier 2" panel agree.
+  // C2 (approved 2026-11-08): the server applies the C3 rule, so this view and the "Why Tier 2" panel agree.
   { key: "tier2-candidates", label: "Tier 2 candidates", count: "tier2Candidates", query: { tier2Candidate: true, workScope: "active" } },
   { key: "auto-escalated", label: "Auto-escalated", count: "autoEscalated", query: { handlingRoute: "tier2_case", decisionSource: "system_policy" } },
+] as const satisfies readonly { key: string; label: string; count: keyof Summary; query: Query }[];
+export const queueViews = [...primaryViews, ...overflowViews,
   { key: "expert", label: "Expert Review", count: "expertReview", query: { routeClass: "EXPERT_REVIEW_REQUIRED" } },
   { key: "critical", label: "Critical", count: "criticalAlerts", query: { priorityBand: "P1" } },
   { key: "needs-review", label: "Needs Review", count: "reviewRequired", query: { reviewRequired: true } },
   { key: "no-review", label: "No Immediate Review", count: "noImmediateReview", query: { reviewDisposition: "no_immediate_review" } },
-] as const satisfies readonly { key: string; label: string; count: keyof Summary; query: Query }[];
+] as const;
 export type QueueView = typeof queueViews[number]["key"];
 export const attackCategories = [
   ["brute_force", "Brute Force"], ["botnet_c2", "Botnet / C2"], ["dos", "DoS"], ["ddos", "DDoS"],
@@ -46,16 +51,17 @@ const metrics = [
   ["all", "Total Alerts", "totalAlerts", "All persisted operational alerts"],
 ] as const;
 
-export function OperationalKpis({ data, onView }: { data?: Summary; onView: (view: QueueView) => void }) {
+export function OperationalKpis({ data, onView, active }: { data?: Summary; onView: (view: QueueView) => void; active?: QueueView }) {
   return <section aria-label="Operational workload" className="shrink-0 border-b border-border bg-surface">
     <div className="ops-kpis">
       {metrics.map(([view, label, key, definition]) => {
         const content = <><span className="block text-[10px] font-semibold uppercase tracking-wide text-muted">{label}</span>
           <span className={`mt-1 block font-mono ${key === "tier1Review" && tier1Split(data) ? "text-sm" : "text-2xl"} font-semibold tabular-nums ${key === "criticalAlerts" ? "text-danger" : "text-text"}`}>{shown(data, key)}</span></>;
-        const className = "min-w-0 rounded-sm px-3 py-2 text-left hover:bg-raised focus-visible:outline-2 focus-visible:outline-primary";
+        const pressed = active === view;
+        const className = `min-w-0 rounded-sm px-3 py-2 text-left hover:bg-raised focus-visible:outline-2 focus-visible:outline-primary ${pressed ? "bg-raised outline outline-1 outline-primary" : ""}`;
         const accessible = `${label} ${shown(data, key)}`;
         return view === "cases" ? <Link key={key} to="/analyst/tier2-cases" aria-label={accessible} title={definition} className={className}>{content}</Link>
-          : <button key={key} aria-label={accessible} title={definition} onClick={() => onView(view)} className={className}>{content}</button>;
+          : <button key={key} aria-label={accessible} aria-pressed={pressed} title={definition} onClick={() => onView(view)} className={className}>{content}</button>;
       })}
     </div>
     <p className="px-3 pb-1 text-[10px] text-dim">Active Alerts / Active Tier 1 exclude completed and escalated work. Other counts cover the entire operational dataset; attention is not work completion.</p>
@@ -63,18 +69,37 @@ export function OperationalKpis({ data, onView }: { data?: Summary; onView: (vie
 }
 
 export function QueueTabs({ active, data, onView }: { active: QueueView; data?: Summary; onView: (view: QueueView) => void }) {
-  return <div role="tablist" aria-label="Operational queue views" className="ops-queue-tabs flex flex-wrap gap-1" onKeyDown={event => {
-    const position = queueViews.findIndex(view => view.key === active);
-    const index = event.key === "ArrowRight" ? (position + 1) % queueViews.length : event.key === "ArrowLeft" ? (position + queueViews.length - 1) % queueViews.length
-      : event.key === "Home" ? 0 : event.key === "End" ? queueViews.length - 1 : -1;
-    const next = queueViews[index];
-    if (next) { event.preventDefault(); onView(next.key); document.getElementById("queue-view-" + next.key)?.focus(); }
-  }}>
-    {queueViews.map(view => <button key={view.key} id={"queue-view-" + view.key} role="tab" aria-selected={active === view.key}
-      tabIndex={active === view.key ? 0 : -1} aria-controls="operational-queue-panel" onClick={() => onView(view.key)}
-      className={`whitespace-nowrap rounded-sm border px-2 py-1 text-[10px] ${active === view.key ? "border-primary bg-raised text-text" : "border-border text-muted hover:text-text"}`}>
-      {view.label} <span className="ml-1 font-mono tabular-nums">{shown(data, view.count)}</span>
-    </button>)}
+  // The strip lives in a narrow column: one row per view, label left and count right.
+  const count = (view: { count: keyof Summary; key: string }) => view.key === "tier1" ? number(data?.tier1Review) : shown(data, view.count);
+  const activeIndex = primaryViews.findIndex(view => view.key === active);
+  const open = (view: { key: string }) => onView(view.key as QueueView);
+  return <div className="space-y-1">
+    <div role="tablist" aria-label="Operational queue views" aria-orientation="vertical" className="flex flex-col gap-0.5" onKeyDown={event => {
+      const from = activeIndex < 0 ? 0 : activeIndex;
+      const index = event.key === "ArrowDown" ? (from + 1) % primaryViews.length : event.key === "ArrowUp" ? (from + primaryViews.length - 1) % primaryViews.length
+        : event.key === "Home" ? 0 : event.key === "End" ? primaryViews.length - 1 : -1;
+      const next = primaryViews[index];
+      if (next) { event.preventDefault(); open(next); document.getElementById("queue-view-" + next.key)?.focus(); }
+    }}>
+      {primaryViews.map(view => <button key={view.key} id={"queue-view-" + view.key} role="tab" aria-selected={active === view.key}
+        aria-label={`${view.label} ${count(view)}`} tabIndex={active === view.key || (activeIndex < 0 && view.key === "active") ? 0 : -1}
+        aria-controls="operational-queue-panel" onClick={() => open(view)}
+        className={`flex h-7 w-full items-center justify-between gap-2 rounded-sm border px-2 text-[11px] ${active === view.key ? "border-primary bg-raised text-text" : "border-transparent text-muted hover:bg-raised hover:text-text"}`}>
+        <span className="truncate">{view.label}</span><span className="shrink-0 font-mono tabular-nums">{count(view)}</span>
+      </button>)}
+    </div>
+    <details className="relative">
+      <summary className="flex h-7 cursor-pointer list-none items-center justify-between rounded-sm border border-transparent px-2 text-[11px] text-dim hover:bg-raised hover:text-text"
+        title="Completed, Escalated, Tier 2 candidates and Auto-escalated">
+        <span>More views</span><span aria-hidden="true">▾</span>
+      </summary>
+      <div className="absolute left-0 right-0 z-20 mt-1 rounded-sm border border-border bg-surface p-1 shadow-lg">
+        {overflowViews.map(view => <button key={view.key} type="button" aria-label={`${view.label} ${count(view)}`} onClick={() => open(view)}
+          className={`flex w-full items-center justify-between gap-2 rounded-sm px-2 py-1.5 text-left text-[11px] ${active === view.key ? "bg-raised text-text" : "text-muted hover:bg-raised hover:text-text"}`}>
+          <span className="truncate">{view.label}</span><span className="shrink-0 font-mono tabular-nums">{count(view)}</span>
+        </button>)}
+      </div>
+    </details>
   </div>;
 }
 
