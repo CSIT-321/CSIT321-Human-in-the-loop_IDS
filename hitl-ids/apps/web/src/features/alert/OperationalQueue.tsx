@@ -16,7 +16,7 @@ export const queueViews = [
   { key: "tier2", pill: true, label: "Tier 2", group: "Triage", count: "tier2Cases", query: { handlingRoute: "tier2_case" } },
   // C2 (approved 2026-11-08): the server applies the C3 rule, so this view and the "Why Tier 2" panel agree.
   { key: "tier2-candidates", pill: true, label: "Candidates", group: "Triage", count: "tier2Candidates", query: { tier2Candidate: true, workScope: "active" } },
-  { key: "grouped", pill: true, label: "Grouped", group: "Triage", count: "tier1Groups", query: { grouped: true, workScope: "active" } },
+  { key: "grouped", pill: false, label: "Grouped", group: "Triage", count: "tier1Groups", query: { grouped: true, workScope: "active" } },
   { key: "completed", pill: true, label: "Completed", group: "Work", count: "completedWork", query: { workScope: "completed" } },
   // Reachable from the KPI cards and old links, not from the pill strip.
   { key: "active", label: "Active", group: "Other", pill: false, count: "activeAlerts", query: { workScope: "active" } },

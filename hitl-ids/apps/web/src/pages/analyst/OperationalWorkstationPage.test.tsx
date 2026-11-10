@@ -171,12 +171,11 @@ describe("unified operational workstation", () => {
     expect(within(workload).getByRole("button", { name: "No Immediate Review 4,664" })).toBeVisible();
     expect(within(workload).getByRole("link", { name: "Open Tier 2 Cases 24" })).toHaveAttribute("href", "/analyst/tier2-cases");
     const tabs = screen.getByRole("tablist", { name: "Operational queue views" });
-    expect(within(tabs).getAllByRole("tab")).toHaveLength(9);
+    expect(within(tabs).getAllByRole("tab")).toHaveLength(8);
     expect(within(tabs).getByRole("tab", { name: "Tier 2 24" })).toBeVisible();
     // Pills: severity bands and the candidate/grouped views.
     expect(within(tabs).getByRole("tab", { name: "Critical 16" })).toBeVisible();
     expect(within(tabs).getByRole("tab", { name: "Candidates 74" })).toBeVisible();
-    expect(within(tabs).getByRole("tab", { name: "Grouped 78" })).toBeVisible();
     expect(within(tabs).getByRole("tab", { name: /^Completed/ })).toBeVisible();
     expect(within(workload).getByRole("button", { name: "Active Tier 1 78 flow groups · 234 single" })).toBeVisible();
     const queue = screen.getByRole("list", { name: "Operational alerts" });
