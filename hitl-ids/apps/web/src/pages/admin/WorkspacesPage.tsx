@@ -114,10 +114,12 @@ export function WorkspacesPage() {
             onClick={() => void act("activate", workspace.id)}
             className="rounded-sm border border-accent px-3 py-1.5 text-sm text-accent disabled:opacity-40">Activate</button>
           {workspace.id === "v3-1-replay" && <>
-            <button type="button" disabled={busy !== null || workspace.ready || workspace.active}
+            <button type="button" disabled={busy !== null || workspace.preparedFile || workspace.active}
+              title={workspace.preparedFile ? "Reset Replay before preparing it again." : undefined}
               onClick={() => void act("prepare")}
               className="rounded-sm border border-border px-3 py-1.5 text-sm text-text disabled:opacity-40">Prepare Replay</button>
-            <button type="button" disabled={busy !== null || !workspace.ready || workspace.active}
+            <button type="button" disabled={busy !== null || !workspace.preparedFile || workspace.active}
+              title={workspace.active ? "Activate Operational before resetting Replay." : undefined}
               onClick={() => void act("reset")}
               className="rounded-sm border border-danger/50 px-3 py-1.5 text-sm text-danger disabled:opacity-40">Reset Replay</button>
             {(workspace.preparationMode === "presentation" || workspace.preparationMode === "packet") && <>

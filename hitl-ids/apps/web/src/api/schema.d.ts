@@ -7131,6 +7131,11 @@ export interface components {
              * @default null
              */
             preparationMode: ("full" | "presentation" | "packet") | null;
+            /**
+             * Preparedfile
+             * @default false
+             */
+            preparedFile: boolean;
             /** Rawrecords */
             rawRecords: number | null;
             /** Ready */

@@ -307,3 +307,34 @@ def test_reset_retries_a_transient_handle(tmp_path, monkeypatch):
     request = SimpleNamespace(app=SimpleNamespace(state=SimpleNamespace(database_path=str(operational))))
     workspaces.reset(request, 'admin', 'Retry test')
     assert attempts['n'] == 2 and not replay.exists()
+
+
+def test_remove_database_takes_the_wal_and_shm_with_it(tmp_path):
+    target = tmp_path / "replay.db"
+    target.write_bytes(b"main")
+    Path(str(target) + "-wal").write_bytes(b"stale wal")
+    Path(str(target) + "-shm").write_bytes(b"stale shm")
+    workspaces._remove_database(target)
+    assert not target.exists()
+    assert not Path(str(target) + "-wal").exists()
+    assert not Path(str(target) + "-shm").exists()
+
+
+def test_prepare_accepts_a_stale_presentation_row(tmp_path):
+    if not workspaces.packet_replay.available():
+        import pytest
+        pytest.skip("packet replay data is a local build artefact")
+    client, operational, tokens = _client(tmp_path)
+    body = {"reason": "Packet replay recovery", "mode": "packet"}
+    assert client.post("/api/admin/workspaces/v3-1-replay/prepare", headers=tokens["admin"], json=body).status_code == 200
+    control = tmp_path / "workspaces/control.db"
+    with closing(sqlite3.connect(control)) as conn:
+        conn.execute("INSERT OR REPLACE INTO presentation VALUES "
+                     "(1,0,0,'[]','paused',NULL,NULL,'admin','packet',1)")
+        conn.commit()
+    assert client.post("/api/admin/workspaces/v3-1-replay/reset", headers=tokens["admin"],
+                       json={"reason": "Clear the replay"}).status_code == 200
+    replay = tmp_path / "workspaces/v3-1-replay.db"
+    for suffix in ("", "-wal", "-shm"):
+        assert not Path(str(replay) + suffix).exists()
+    assert client.post("/api/admin/workspaces/v3-1-replay/prepare", headers=tokens["admin"], json=body).status_code == 200

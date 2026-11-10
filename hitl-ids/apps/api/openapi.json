@@ -12764,6 +12764,11 @@
             "default": null,
             "title": "Preparationmode"
           },
+          "preparedFile": {
+            "default": false,
+            "title": "Preparedfile",
+            "type": "boolean"
+          },
           "rawRecords": {
             "anyOf": [
               {

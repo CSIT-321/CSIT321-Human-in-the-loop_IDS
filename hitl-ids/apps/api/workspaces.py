@@ -175,7 +175,8 @@ def state(request: Request) -> dict:
             "actions": actions, "detection": settings,
             "workspaces": [
                 {"id": key, "name": NAMES[key], "active": key == active,
-                 "ready": _count(path) is not None, "alertCount": _count(path),
+                 "ready": (count := _count(path)) is not None, "alertCount": count,
+                 "preparedFile": path.exists(),
                  "lastPreparedAt": meta["prepared_at"] if key == "v3-1-replay" and meta else None,
                  "rawRecords": meta["raw_records"] if key == "v3-1-replay" and meta else None,
                  "stagedAlerts": meta["staged_alerts"] if key == "v3-1-replay" and meta else None,
@@ -276,18 +277,25 @@ def prepare(request: Request, actor: str, reason: str, mode: str = 'full') -> di
                 if target.execute("PRAGMA foreign_key_check").fetchone():
                     raise ApiError(503, "REPLAY_INTEGRITY_FAILED", "Replay database has foreign key violations.")
                 staged = report.staged
+        for suffix in ("-wal", "-shm"):
+            sidecar = Path(str(replay) + suffix)
+            if sidecar.exists():
+                sidecar.unlink()
         os.replace(temporary, replay)
         published = True
+        _checkpoint(replay)
         if mode != 'full':
             configure_presentation_database(replay)
         conn.execute("INSERT OR REPLACE INTO replay_meta VALUES (1,?,?,?,?,?)",
                      (datetime.now(timezone.utc).isoformat(), records, staged, count, workload_hash))
-        if mode == 'packet':
+        if mode == "packet":
             # The capture steps arrive in order; nothing has arrived yet.
+            conn.execute("DELETE FROM presentation WHERE id=1")
             conn.execute("INSERT INTO presentation VALUES (1,0,0,?,'paused',NULL,NULL,?,'packet',1)",
                          (json.dumps(list(range(160))), actor))
             _audit(conn, actor, 'packet_replay_prepared', 'v3-1-replay', reason)
         elif mode == 'presentation':
+            conn.execute("DELETE FROM presentation WHERE id=1")
             order = presentation_replay.arrival_order(json.loads(presentation_replay.STRUCTURE.read_text(encoding='utf-8')))
             conn.execute("INSERT INTO presentation VALUES (1,?,?,?,?,?,?,?,'presentation',1)",
                 (presentation_replay.INITIAL_HOLDOUT, presentation_replay.INITIAL_HOLDOUT,
@@ -308,6 +316,35 @@ def prepare(request: Request, actor: str, reason: str, mode: str = 'full') -> di
     return state(request)
 
 
+def _remove_database(path: Path) -> None:
+    """Delete a database and its WAL sidecars.
+
+    A reader can hold the file for a moment after its request ends (Windows keeps
+    the handle until the connection closes). Retry before refusing. The -wal and
+    -shm must go too: a stale WAL attached to a freshly built file reads as
+    "database disk image is malformed".
+    """
+    for suffix in ("", "-wal", "-shm"):
+        target = Path(str(path) + suffix)
+        if not target.exists():
+            continue
+        for attempt in range(4):
+            try:
+                target.unlink()
+                break
+            except PermissionError as exc:
+                if attempt == 3:
+                    raise ApiError(409, "REPLAY_IN_USE",
+                                   "Replay is still in use. Close Analyst tabs, then retry.") from exc
+                time.sleep(0.5 * (2 ** attempt))
+
+
+def _checkpoint(path: Path) -> None:
+    """Merge a freshly built WAL into the main file so a read-only open works."""
+    with closing(sqlite3.connect(path)) as conn:
+        conn.execute("PRAGMA wal_checkpoint(TRUNCATE)")
+
+
 def reset(request: Request, actor: str, reason: str) -> dict:
     _, control, replay = paths(request)
     conn = _control(control, create=True)
@@ -316,18 +353,7 @@ def reset(request: Request, actor: str, reason: str) -> dict:
         conn.execute("BEGIN IMMEDIATE")
         if conn.execute("SELECT workspace FROM selection WHERE id=1").fetchone()[0] == "v3-1-replay":
             raise ApiError(409, "REPLAY_ACTIVE", "Activate Operational before resetting Replay.")
-        if replay.exists():
-            # A reader can hold the file for a moment after its request ends (Windows keeps the handle until
-            # the connection closes). Retry before refusing: the success path is unchanged.
-            for attempt in range(4):
-                try:
-                    replay.unlink()
-                    break
-                except PermissionError as exc:
-                    if attempt == 3:
-                        raise ApiError(409, "REPLAY_IN_USE",
-                                       "Replay is still in use. Close Analyst tabs, then retry.") from exc
-                    time.sleep(0.5 * (2 ** attempt))
+        _remove_database(replay)
         conn.execute("DELETE FROM replay_meta WHERE id=1")
         conn.execute("DELETE FROM presentation WHERE id=1")
         conn.execute("DELETE FROM presentation_requests")

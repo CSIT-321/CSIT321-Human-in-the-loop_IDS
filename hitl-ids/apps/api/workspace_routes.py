@@ -37,6 +37,7 @@ class WorkspaceInfo(BaseModel):
     name: str
     active: bool
     ready: bool
+    preparedFile: bool = False
     alertCount: int | None
     lastPreparedAt: str | None
     rawRecords: int | None
