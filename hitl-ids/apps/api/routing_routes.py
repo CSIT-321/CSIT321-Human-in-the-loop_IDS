@@ -38,9 +38,30 @@ def _id(conn, ref):
     return row[0]
 
 
+def _effective_priority(conn, row, state):
+    """Display the queue score the order uses: routing priority + verdict delta.
+
+    C1 keeps triage_state.operational_priority fixed at routing time. The queue
+    orders by routing priority plus the verdict delta (combined - detection),
+    so the row shows that same effective value. Nothing is written: the two
+    stores still cannot disagree.
+    """
+    if row['legacy_alert_id'] is None or state.operational_priority is None:
+        return state
+    score = conn.execute('SELECT combined_score, detection_score FROM alerts WHERE id=?',
+                         (row['legacy_alert_id'],)).fetchone()
+    if score is None:
+        return state
+    delta = float(score['combined_score'] or 0) - float(score['detection_score'] or 0)
+    if abs(delta) < 1e-9:
+        return state
+    effective = max(0.0, min(100.0, float(state.operational_priority) + delta))
+    return state.model_copy(update={'operational_priority': round(effective, 2)})
+
+
 def _view(conn, alert_id, principal, review=None):
     row = conn.execute('SELECT * FROM operational_alerts_v2 WHERE id=?', (alert_id,)).fetchone()
-    state = read_triage(conn, alert_id)
+    state = _effective_priority(conn, row, read_triage(conn, alert_id))
     audit = conn.execute('SELECT * FROM operational_routing_audit WHERE operational_alert_id=? '
                          'ORDER BY id DESC LIMIT 1', (alert_id,)).fetchone()
     case = conn.execute('SELECT case_ref FROM tier2_cases WHERE primary_operational_alert_id=?', (alert_id,)).fetchone()
