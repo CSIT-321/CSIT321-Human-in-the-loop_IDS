@@ -83,7 +83,7 @@ describe("current Admin surface", () => {
       "Overview", "Operational Workspace", "HITL Governance", "Users & Access", "Evaluation & Audit",
     ]);
     expect(ROLE_META.security_analyst.nav.map(item => item.label)).toEqual([
-      "Analyst Workstation", "Tier 2 Cases", "Triage Memory", "Selective Review", "Incoming Alerts",
+      "Analyst Workstation", "Escalated", "Triage History", "Deferred Review", "Alert Intake",
     ]);
   });
 

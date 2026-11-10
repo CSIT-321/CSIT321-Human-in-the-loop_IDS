@@ -8,9 +8,9 @@ const admin = { username: "admin", displayName: "LIOW CHEE KUANG", role: "system
 const evaluator = { username: "evaluator", displayName: "Evaluator", role: "evaluator" as const, token: "test" };
 const titles = [
   "Your Analyst Workstation", "Find the next alert", "Claim shared work", "Overview and routing",
-  "Evidence", "Context and review", "Analyst Verdict", "Triage Memory for this alert",
-  "History and notes", "Technical snapshots", "Tier 2 Cases", "Tier 2 investigation and closure",
-  "Triage Memory library", "Selective Review queue", "Incoming Alerts", "Ready to work",
+  "Evidence", "Context and review", "Analyst Verdict", "Triage history for this alert",
+  "History and notes", "Technical snapshots", "Escalated", "Tier 2 investigation and closure",
+  "Triage history library", "Deferred review queue", "Alert intake", "Ready to work",
 ];
 
 function stubReads() {

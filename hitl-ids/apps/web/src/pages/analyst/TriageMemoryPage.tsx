@@ -142,7 +142,7 @@ export function TriageMemoryPage() {
   },[ref,offset]);
   const canWrite=session?.role==="security_analyst"||session?.role==="system_admin";
   return <div className="min-w-0 space-y-5 p-4 sm:p-6">
-    <PageHeader title="Triage Memory"/>
+    <PageHeader title="Triage History"/>
     <p className="text-sm text-muted">Canonical Verdicts and Investigation Conclusions automatically record Exact evidence. Eligible benign Exact lessons are auto-activated by System Policy; Narrow scope is an explicit human extension.</p>
     <p className="text-sm font-semibold text-warn">{warning}</p>
     {ref&&<button className={button} onClick={()=>setSearch({})}>All memory lessons</button>}

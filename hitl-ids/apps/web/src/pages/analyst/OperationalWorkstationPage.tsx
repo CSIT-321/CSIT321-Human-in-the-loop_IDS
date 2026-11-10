@@ -23,7 +23,7 @@ import { useActorName } from "../../session/ActorNames";
 
 type View = Schemas["RoutingView"];
 const button = "rounded-sm border border-border bg-raised px-2.5 py-1.5 text-xs hover:border-border-strong disabled:opacity-40";
-const tabs = ["Overview", "Evidence", "Flow & Score", "Context & Review", "Analyst Verdict", "Triage Memory", "History & Notes", "Technical"] as const;
+const tabs = ["Overview", "Evidence", "Flow & Score", "Context & Review", "Analyst Verdict", "Triage History", "History & Notes", "Technical"] as const;
 type Tab = typeof tabs[number];
 const routeLabel = (value: string) => value === "tier2_candidate" ? "Historical routing record" : value.replaceAll("_", " ");
 
@@ -93,8 +93,8 @@ function Assistance({ view, onReview, active }: { view: View; onReview: (review:
         <p className="text-muted">Inspect provenance and evaluate policy in Context &amp; Review.</p>
       </>}
     </section>
-    <section className="space-y-2 p-4" aria-label="Triage Memory summary">
-      <h2 className="label-mono">Related Triage Memory</h2>
+    <section className="space-y-2 p-4" aria-label="Triage history summary">
+      <h2 className="label-mono">Related history</h2>
       <p className="text-muted">Memory provides guidance; current attention follows Review Disposition.</p>
       {memory.status === "loading" && <p role="status">Looking up lessons…</p>}
       {memory.status === "error" && <p role="alert">{memory.error.message}</p>}
@@ -163,7 +163,7 @@ function AlertWorkspace({ view, onChanged, refresh, onReview, starting }: { view
         <Tier2RecommendationPanel key={view.stateVersion} view={view} onChanged={changed => { onChanged(changed); refresh(); }} />
       </div>
       <div hidden={tab !== "Overview" && tab !== "Analyst Verdict"}>
-        <AnalystVerdictPanel alertRef={view.operationalAlertRef} stateVersion={view.stateVersion+":"+view.work?.revision} onUseMemory={()=>setTab("Triage Memory")} onRecorded={refresh}/>
+        <AnalystVerdictPanel alertRef={view.operationalAlertRef} stateVersion={view.stateVersion+":"+view.work?.revision} onUseMemory={()=>setTab("Triage History")} onRecorded={refresh}/>
       </div>
       {/* Keep this mounted across tabs so draft reasons, retry IDs and success remain stable. */}
       <div hidden={tab !== "Overview"} className="space-y-4">
@@ -172,7 +172,7 @@ function AlertWorkspace({ view, onChanged, refresh, onReview, starting }: { view
       </div>
       {tab === "Flow & Score" && flowAlert && <FlowScorePanel alertRef={view.operationalAlertRef} />}
       {tab === "Context & Review" && <SelectiveReviewPanel key={view.stateVersion} alertRef={view.operationalAlertRef} readOnly={view.work?.status==='in_review'&&!view.work.isOwner} onReview={onReview} />}
-      {tab === "Triage Memory" && <AlertMemoryPanel key={view.stateVersion} view={view} onVerdict={()=>setTab("Analyst Verdict")} onContributed={refresh} />}
+      {tab === "Triage History" && <AlertMemoryPanel key={view.stateVersion} view={view} onVerdict={()=>setTab("Analyst Verdict")} onContributed={refresh} />}
       {tab === "History & Notes" && <section className="space-y-3" aria-label="Operational decision history">
         <AlertNotes key={view.operationalAlertRef} alertRef={view.operationalAlertRef} work={view.work} />
         <AnalystVerdictHistory alertRef={view.operationalAlertRef}/>

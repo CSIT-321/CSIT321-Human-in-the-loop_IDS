@@ -234,7 +234,7 @@ describe("shell: navigation", () => {
     collapse.focus();
     await user.keyboard("{Enter}");
     expect(screen.getByRole("button", { name: "Expand sidebar" })).toHaveAttribute("aria-expanded", "false");
-    expect(screen.getByRole("link", { name: "Incoming Alerts" })).toHaveAttribute("href", "/analyst/external-admission");
+    expect(screen.getByRole("link", { name: "Alert Intake" })).toHaveAttribute("href", "/analyst/external-admission");
     expect(screen.getByRole("link", { name: "Analyst Workstation" })).toHaveAttribute("href", "/analyst/operations");
     screen.getByRole("button", { name: "Light theme" }).focus();
     await user.keyboard(" ");

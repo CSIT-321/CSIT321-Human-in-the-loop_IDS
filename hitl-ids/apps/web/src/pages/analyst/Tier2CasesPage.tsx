@@ -30,7 +30,7 @@ export function Tier2CasesPage() {
   const cases = useApi(signal => unwrap(api.GET("/api/v2/tier2/cases", { params: { query: {
     limit: 50, offset, ...(status === "all" ? {} : { status }), ...(owner === "any" ? {} : { owner }) } }, signal })), [offset, status, owner]);
   return <div className="min-w-0 space-y-5 p-4 sm:p-6">
-    <PageHeader title="Tier 2 Cases" />
+    <PageHeader title="Escalated" />
     <div className="flex flex-wrap items-end gap-3 text-sm">
       <label className="block">Status<select className={input + " block"} aria-label="Status" value={status}
         onChange={e => { setStatus(e.target.value as typeof status); setOffset(0); }}>

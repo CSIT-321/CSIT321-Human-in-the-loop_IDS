@@ -292,7 +292,7 @@ function LatestRunCard({ run }: { run: ApiResource<Run> }) {
           title="No detection run yet"
           hint={
             <>
-              No historical flow run is recorded. Current Suricata intake is available in Incoming Alerts.
+              No historical flow run is recorded. Current Suricata intake is available in Alert Intake.
             </>
           }
         />

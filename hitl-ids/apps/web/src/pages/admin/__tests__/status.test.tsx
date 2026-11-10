@@ -88,7 +88,7 @@ describe("admin status: the latest run", () => {
     renderApp("/admin/status", { session: ADMIN });
 
     expect(await screen.findByText("No detection run yet")).toBeInTheDocument();
-    expect(screen.getByText(/Current Suricata intake is available in Incoming Alerts/)).toBeInTheDocument();
+    expect(screen.getByText(/Current Suricata intake is available in Alert Intake/)).toBeInTheDocument();
     // The historical batch command is documentary, not required for current intake.
     expect(screen.getAllByText(RUN_COMMAND)).toHaveLength(1);
     expect(screen.queryByText("Something went wrong")).toBeNull();

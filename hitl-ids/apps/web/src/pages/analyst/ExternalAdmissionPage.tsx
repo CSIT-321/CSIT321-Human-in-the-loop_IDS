@@ -107,7 +107,7 @@ export function ExternalAdmissionPage() {
   const current = items.find(item => item.externalInboxId === selected) ?? items[0];
   const refresh = () => { setUpdated({}); resource.reload(); };
   return <div className="min-w-0 space-y-5 p-4 sm:p-6">
-    <PageHeader title="Incoming Alerts" />
+    <PageHeader title="Alert Intake" />
     {resource.status === "loading" && <p role="status">Loading staged alerts...</p>}
     {resource.status === "error" && <div><p role="alert">{resource.error.message}</p><button className={button} onClick={resource.reload}>Retry</button></div>}
     {resource.status === "success" && <>

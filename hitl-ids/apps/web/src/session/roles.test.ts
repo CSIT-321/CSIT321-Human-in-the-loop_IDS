@@ -29,7 +29,7 @@ describe("roles", () => {
 
   it("shows one primary analyst workspace and secondary intake", () => {
     expect(ROLE_META.security_analyst.nav.map(item => item.label)).toEqual([
-      "Analyst Workstation", "Tier 2 Cases", "Triage Memory", "Selective Review", "Incoming Alerts",
+      "Analyst Workstation", "Escalated", "Triage History", "Deferred Review", "Alert Intake",
     ]);
     expect(ROLE_META.security_analyst.nav.at(-1)?.to).toBe("/analyst/external-admission");
     expect(ROLE_META.security_analyst.nav.some(item => item.to.endsWith("/workstation") || item.to.endsWith("/v2-triage"))).toBe(false);
