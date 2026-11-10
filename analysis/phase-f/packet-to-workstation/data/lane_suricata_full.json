@@ -1,0 +1,54 @@
+{
+ "db": "C:\\Users\\Glenn Ang\\AppData\\Local\\Temp\\hitl-review\\review-suri-full.db",
+ "rule": "every non-informational Suricata alert of the three Wednesday captures",
+ "window": {
+  "suricata-172.31.69.25": 98,
+  "suricata-172.31.65.56": 1902,
+  "suricata-172.31.64.80": 1068
+ },
+ "import": {
+  "parsed": 3068,
+  "staged": 2443,
+  "duplicate": 0,
+  "preserved": 3068,
+  "duplicate_records": 0,
+  "skipped": 0,
+  "invalid": 0,
+  "rejected_by_policy": 0,
+  "dry_run": false,
+  "issues": [],
+  "operational_admission": "pending"
+ },
+ "counts": {
+  "suricata_eve_records": 3068,
+  "external_alert_inbox": 2443,
+  "external_eligibility_review": 2443,
+  "external_operational_admission": 2443,
+  "operational_alerts_v2": 2443,
+  "tier2_cases": 586,
+  "operational_system_routing": 2443
+ },
+ "admitted": 2443,
+ "failed": [],
+ "failedCount": 0,
+ "routes": {
+  "tier2_case": 586,
+  "tier1_review": 1857
+ },
+ "bands": {
+  "high": 168,
+  "medium": 2188,
+  "critical": 87
+ },
+ "classes": {
+  "unknown_needs_expert": 586,
+  "reconnaissance_port_scan": 673,
+  "malware_exploit": 1184
+ },
+ "queueState": {
+  "tier1_review": 1857,
+  "tier2_case": 586
+ },
+ "tier2Cases": 586,
+ "seconds": 232.6
+}
