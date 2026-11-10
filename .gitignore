@@ -72,3 +72,6 @@ hitl-ids/docs/~$*.docx
 # artifact: generated from tracked sources, never committed.
 _site/
 hitl-ids/_site/
+
+# --- demo media (videos, screenshots) stays local ---------------------------
+analysis/phase-f/dual-chain/recording/

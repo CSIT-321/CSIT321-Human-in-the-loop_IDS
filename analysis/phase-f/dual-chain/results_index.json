@@ -1,0 +1,82 @@
+[
+ {
+  "id": "R1",
+  "title": "FTP Brute Force Flow Pattern",
+  "count": 2,
+  "chain": "flow",
+  "route": "tier2_case",
+  "ref": "448172d5-a667-461c-8e2b-c1fe72316e5b"
+ },
+ {
+  "id": "R2",
+  "title": "XGBoost: Benign",
+  "count": 10776,
+  "chain": "flow",
+  "route": "tier1_review",
+  "ref": "c591a8d6-4260-4d86-9f73-3c959831af80"
+ },
+ {
+  "id": "R3",
+  "title": "XGBoost: Benign",
+  "count": 16,
+  "chain": "flow",
+  "route": "tier1_review",
+  "ref": "a00a6a91-7890-45f4-b0c9-d6bb4658d521"
+ },
+ {
+  "id": "R4",
+  "title": "XGBoost: Infiltration",
+  "count": 2,
+  "chain": "flow",
+  "route": "tier1_review",
+  "ref": "ae8491da-4660-43f3-82fa-6893d0aa9217"
+ },
+ {
+  "id": "R5",
+  "title": "XGBoost: Web Attack",
+  "count": 1,
+  "chain": "flow",
+  "route": "tier1_review",
+  "ref": "ba82414a-6e3b-4737-ad71-dc08160a6a27"
+ },
+ {
+  "id": "R6",
+  "title": "ET SCAN Sipvicious Scan",
+  "count": 8,
+  "chain": "suricata",
+  "route": "tier2_case",
+  "ref": "441ae6e8-371e-5d19-b50e-f3c0c88979e6"
+ },
+ {
+  "id": "R7",
+  "title": "ET JA3 Hash - Possible Malware - Fake Firefox Font Update",
+  "count": 345,
+  "chain": "suricata",
+  "route": "tier1_review",
+  "ref": "9b8d38a2-3a26-5509-91ac-317f2e7bb270"
+ },
+ {
+  "id": "R8",
+  "title": "ET SCAN Behavioral Unusually fast Terminal Server Traffic Potential Scan or Infection (Inbound)",
+  "count": 35,
+  "chain": "suricata",
+  "route": "tier1_review",
+  "ref": "315b0dc7-368f-5696-8930-0ff74c7a9082"
+ },
+ {
+  "id": "R9",
+  "title": "ET SCAN Potential SSH Scan",
+  "count": 6,
+  "chain": "suricata",
+  "route": "tier1_review",
+  "ref": "ddf0c741-c163-5220-adbc-4d522ab4461e"
+ },
+ {
+  "id": "R10",
+  "title": "ET EXPLOIT Possible ETERNALBLUE Probe MS17-010 (MSF style)",
+  "count": 5,
+  "chain": "suricata",
+  "route": "tier1_review",
+  "ref": "891b2d20-e2d3-5a95-80cb-65e38e548780"
+ }
+]
