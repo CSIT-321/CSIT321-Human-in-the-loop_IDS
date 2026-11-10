@@ -1,7 +1,9 @@
-"""Build the workflow layout page: the Suricata-first chain, and the retired CICIDS2018 flow lane.
+"""Build the workflow layout page: the dual chain (flow chain + Suricata chain) from one capture to one queue.
 
-Reads data/lane_suricata_full.json when it exists (population counts). Writes index.html.
-No product code is described that does not exist; every stage names its file or table.
+Input   trace.json (trace_data.py), which reads the scratch database of one whole Packet Replay.
+Output  index.html. Every number on the page comes from trace.json. No external resources.
+
+    hitl-ids/.venv/Scripts/python.exe analysis/phase-f/workflow-layout/build_layout.py
 """
 from __future__ import annotations
 
@@ -10,213 +12,279 @@ import json
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
-DATA = HERE.parent / "packet-to-workstation" / "data" / "lane_suricata_full.json"
+T = json.loads((HERE / "trace.json").read_text(encoding="utf-8"))
+TOT, RESULTS, PROGRESS = T["totals"], T["results"], T["progress"]
 OUT = HERE / "index.html"
 
-STAGES = [
-    ("S0", "Packet capture", "Raw frames on the sensor",
-     "A capture file or a live interface. Nothing is interpreted yet.",
-     "pcap", "sensor / file"),
-    ("S1", "Suricata", "Raw frames",
-     "A standard third-party engine matches its rule set and writes one eve.json record per alert.",
-     "eve.json alert record", "Suricata (external)"),
-    ("S2", "Import and staging", "eve.json lines",
-     "scripts/import_suricata_eve.py validates each record against the canonical alert contract, maps the "
-     "fields and stages it. Admission is a separate, later step.",
-     "suricata_eve_records + external_alert_inbox", "Incoming Alerts"),
-    ("S3", "Eligibility review", "Staged inbox record",
-     "An analyst reads the evidence and records accepted or held, with a reason. Nothing reaches the queue "
-     "without this decision.",
-     "external_eligibility_review", "Incoming Alerts"),
-    ("S4", "Admission", "Reviewed inbox record",
-     "The record becomes an operational alert. Priority comes from the native severity table, not from the "
-     "attack class. Learning is not eligible for external rules.",
-     "external_operational_admission + operational_alerts_v2", "Analyst Workstation"),
-    ("S5", "Classification", "Operational alert",
-     "config/suricata-classification-v3.json maps signature text to one attack category. A signature that "
-     "matches no rule becomes unknown and goes to expert review.",
-     "operational_system_routing.classification", "alert panel"),
-    ("S6", "Triage and routing", "Classification + priority + trusted context",
-     "config/system-routing-v1.json decides tier1_review or tier2_case: unknown class, unresolved context, "
-     "confirmed malicious with response required, high priority on a critical asset, or a repeated campaign.",
-     "operational_triage_state_v2", "queue row, routing panel"),
-    ("S7", "Tier 1 work", "Queue item",
-     "The analyst claims the row, reads evidence, adds notes and records a verdict. External alerts are not "
-     "learning-eligible, so a verdict does not re-score anything.",
-     "analyst_work, analyst_notes, analyst_verdict_events", "Analyst Workstation"),
-    ("S8", "Tier 2 case", "A tier2_case route",
-     "Start investigation, record the conclusion, resolve. The case is read-only after resolution.",
-     "tier2_cases, tier2_case_state, tier2_case_events", "Tier 2 Cases"),
+
+def e(v) -> str:
+    return html.escape("—" if v is None else str(v), quote=True)
+
+
+def n(v) -> str:
+    return f"{v:,}" if isinstance(v, int) else e(v)
+
+
+# Stage ids are used in the diagram, the stage table and the trace cards.
+FLOW_STAGES = [
+    ("F1", "CICFlowMeter", "packets → one flow record per connection, 81 of 82 model features",
+     "data/spike/…/flows/*.csv"),
+    ("F2", "Detection", "signature rules + XGBoost score every flow; evidence class corroborated / ml_only / none",
+     "alerts, flow_data"),
+    ("F3", "Grouping", "flagged flows group by source IP inside the group window; an unflagged flow stays single",
+     "alert_groups, alert_group_members"),
+    ("F4", "Projection", "each group's first member (or each single flow) becomes one operational alert",
+     "operational_alerts_v2"),
+    ("F5", "Flow routing", "E1: rule and model agree at score 100 → whole group to Tier 2; otherwise Tier 1",
+     "operational_system_routing, operational_triage_state_v2"),
+]
+SURI_STAGES = [
+    ("S1", "Suricata", "packets → eve.json alert per rule match (ET Open); informational signatures are dropped",
+     "data/packet-replay/eve.jsonl"),
+    ("S2", "Staging", "canonical alert contract; same flow and signature set = one bundle",
+     "suricata_eve_records, external_alert_inbox"),
+    ("S3", "Eligibility review", "accepted or held, with a reason and an actor",
+     "external_eligibility_review"),
+    ("S4", "Admission", "becomes an operational alert; priority from native severity",
+     "external_operational_admission, operational_alerts_v2"),
+    ("S5", "Classification + routing", "signature → attack category; unknown → Tier 2 expert review",
+     "operational_system_routing, operational_triage_state_v2"),
+]
+SHARED = [
+    ("Q", "One queue", "both chains, one table, one sort by priority", "Analyst Workstation"),
+    ("T1", "Tier 1 review", "claim, read evidence, note, verdict", "analyst_work, analyst_verdict_events"),
+    ("T2", "Tier 2 case", "investigation → conclusion → resolved", "tier2_cases, tier2_case_events"),
 ]
 
+
+def svg() -> str:
+    """Two lanes from one packet source into one queue. Plain SVG, fixed geometry."""
+    w, box_w, box_h = 1180, 170, 62
+    parts = [f'<svg viewBox="0 0 {w} 470" role="img" aria-label="Dual chain diagram">',
+             '<defs><marker id="a" markerWidth="9" markerHeight="9" refX="8" refY="4.5" orient="auto">'
+             '<path d="M0,0 L9,4.5 L0,9 z" fill="#64748b"/></marker></defs>']
+
+    def box(x, y, sid, title, sub, fill, stroke):
+        parts.append(f'<rect x="{x}" y="{y}" width="{box_w}" height="{box_h}" rx="9" fill="{fill}" stroke="{stroke}" stroke-width="1.6"/>'
+                     f'<text x="{x+10}" y="{y+22}" font-size="13" font-weight="700" fill="#16202b">{e(sid)} · {e(title)}</text>'
+                     f'<text x="{x+10}" y="{y+43}" font-size="12" fill="#475569">{e(sub)}</text>')
+
+    def arrow(x1, y1, x2, y2):
+        parts.append(f'<path d="M{x1},{y1} L{x2},{y2}" stroke="#64748b" stroke-width="1.6" fill="none" marker-end="url(#a)"/>')
+
+    # source
+    box(10, 204, "P", "Packet capture", "3 pcaps · 2018-02-14", "#fff", "#0f172a")
+    # flow lane (top) and Suricata lane (bottom)
+    xs = [215, 405, 595, 785]
+    flow_sub = [f"{n(TOT['flowsInWindow'])} flows", f"{n(TOT['flaggedFlows'])} flagged",
+                f"{n(TOT['groups'])} groups", f"{n(TOT['flowQueueItems'])} items"]
+    suri_sub = [f"{n(TOT['suricataAlertsArrived'])} alerts", f"{n(TOT['suricataBundlesAdmitted'])} bundles",
+                "accepted by Admin", f"{n(TOT['suricataQueueItems'])} items"]
+    flow_ids = [("F1", "CICFlowMeter"), ("F2", "Detection"), ("F3", "Grouping"), ("F4+F5", "Project + route")]
+    suri_ids = [("S1", "Suricata"), ("S2", "Staging"), ("S3+S4", "Review + admit"), ("S5", "Classify + route")]
+    for i, x in enumerate(xs):
+        box(x, 60, *flow_ids[i], flow_sub[i], "#eef6ff", "#0b6bcb")
+        box(x, 348, *suri_ids[i], suri_sub[i], "#fff7ed", "#b45309")
+        if i:
+            arrow(xs[i-1] + box_w, 91, x - 4, 91)
+            arrow(xs[i-1] + box_w, 379, x - 4, 379)
+    arrow(10 + box_w, 225, 215 - 4, 100)
+    arrow(10 + box_w, 245, 215 - 4, 370)
+    parts.append('<text x="200" y="40" font-size="13" font-weight="700" fill="#0b6bcb">FLOW CHAIN — detection, grouping, learning</text>'
+                 '<text x="200" y="440" font-size="13" font-weight="700" fill="#b45309">SURICATA CHAIN — second, named opinion</text>')
+    # link line between the chains
+    parts.append('<path d="M480,122 L480,348" stroke="#7c3aed" stroke-width="1.4" stroke-dasharray="5 4" fill="none"/>'
+                 '<text x="488" y="238" font-size="12" fill="#7c3aed">same flow: 5-tuple + time</text>')
+    # queue and tiers
+    box(985, 204, "Q", "One queue", f"{n(TOT['queueItems'])} items", "#f0fdf4", "#15803d")
+    arrow(785 + box_w, 91, 985 + 30, 204 - 4)
+    arrow(785 + box_w, 379, 985 + 30, 266 + 4)
+    box(985, 20, "T1", "Tier 1 review", f"{n(TOT['tier1Items'])} items", "#fff", "#15803d")
+    box(985, 388, "T2", "Tier 2 case", f"{n(TOT['tier2Cases'])} cases", "#fff", "#b91c1c")
+    arrow(1070, 204 - 2, 1070, 20 + box_h + 4)
+    arrow(1070, 266 + 2, 1070, 388 - 4)
+    parts.append("</svg>")
+    return "".join(parts)
+
+
+def stage_rows(stages, cls) -> str:
+    return "".join(f'<tr class="{cls}"><td><b>{e(s)}</b></td><td>{e(t)}</td><td>{e(d)}</td><td><code>{e(where)}</code></td></tr>'
+                   for s, t, d, where in stages)
+
+
+def results_table() -> str:
+    rows = []
+    for r in RESULTS:
+        tr = r["triage"]
+        rows.append(
+            f'<tr class="{r["chain"]}"><td><a href="#{r["id"]}"><b>{r["id"]}</b></a></td><td>{e(r["chain"])}</td>'
+            f'<td class="num">{n(r["count"])}</td><td>{e(r["title"])}</td>'
+            f'<td>{e(r["evidenceClass"] or "external_rule")} · {"group" if r["isGroup"] else "single"}</td>'
+            f'<td>{e(r["classification"]["category"] or r["classification"]["status"])}</td>'
+            f'<td>{e(r["routing"]["routeClass"])}</td><td>{e(tr["band"])} ({e(tr["priority"])})</td>'
+            f'<td><b>{e(tr["route"])}</b></td></tr>')
+    total = sum(r["count"] for r in RESULTS)
+    rows.append(f'<tr class="sum"><td colspan="2">Total</td><td class="num">{n(total)}</td>'
+                f'<td colspan="6">= queue items {n(TOT["queueItems"])} (checked when trace.json was built)</td></tr>')
+    return "".join(rows)
+
+
+def kv(pairs) -> str:
+    return "".join(f"<tr><th>{e(k)}</th><td>{v}</td></tr>" for k, v in pairs)
+
+
+def other_chain_flow(other) -> str:
+    if not other:
+        return '<span class="mut">No Suricata alert on this flow.</span>'
+    return "; ".join(f'{e(o["signature"])} (sid {e(o["sid"])}, severity {e(o["severity"])})' for o in other)
+
+
+def other_chain_suri(other) -> str:
+    if not other:
+        return '<span class="mut">No flow record linked.</span>'
+    flagged = other["evidenceClass"] != "none"
+    verdict = "flagged" if flagged else "not flagged"
+    group = f', group of {n(other["groupMembers"])} flows' if other.get("groupMembers") else ""
+    return (f'<b>{verdict}</b> — flow alert {e(other["flowAlertId"])}: evidence {e(other["evidenceClass"])}, '
+            f'model {e(other["modelClass"])} p={e(other["modelProbability"])}, score {e(other["combinedScore"])}{group}')
+
+
+def card(r) -> str:
+    t, tr, cl, rd = r["trace"], r["triage"], r["classification"], r["routing"]
+    if r["chain"] == "flow":
+        f, d, g = t["flow"], t["detection"], t["group"]
+        steps = [
+            ("P → F1", f'flow <code>{e(f["record"])}</code> at {e(f["time"])} — {e(f["srcIp"])}:{e(f["srcPort"])} → '
+                       f'{e(f["dstIp"])}:{e(f["dstPort"])} {e(f["protocol"])}, {e(f["packets"])} packets, '
+                       f'{e(f["bytes"])} bytes, {e(f["durationSeconds"])} s'),
+            ("F2", f'rules {e(", ".join(d["rules"]) or "none")}; model {e(d["modelClass"])} p={e(d["modelProbability"])}; '
+                   f'score {e(d["combinedScore"])}; evidence <b>{e(d["evidenceClass"])}</b>'),
+            ("F3", (f'group key {e(g["key"])}: {n(g["members"])} flows, {e(g["firstSeen"])} → {e(g["lastSeen"])}; '
+                    f'{n(g["membersWithSuricataAlert"])} members also have a Suricata alert')
+                   if g else 'not grouped — an unflagged flow is its own queue item'),
+            ("F4", f'operational alert {e(r["operationalId"])} <code>{e(r["alertRef"])}</code> “{e(r["title"])}”'),
+            ("F5", f'classification {e(cl["status"])} / {e(cl["category"])} — {e(cl["reasons"][0])}<br>'
+                   f'route <b>{e(rd["routeClass"])} → {e(rd["route"])}</b> ({e(rd["policyVersion"])}) — {e(tr["reason"])}'),
+            ("Other chain", other_chain_flow(t["otherChain"])),
+        ]
+    else:
+        v, s, rv, ad = t["eve"], t["staging"], t["review"], t["admission"]
+        steps = [
+            ("P → S1", f'{e(v["time"])} — {e(v["srcIp"])}:{e(v["srcPort"])} → {e(v["dstIp"])}:{e(v["dstPort"])} '
+                       f'{e(v["protocol"])}; “{e(v["signature"])}”; category “{e(v["category"])}”; severity {e(v["severity"])}; '
+                       f'sids {e(", ".join(map(str, v["sids"])))}; flow_id {e(v["flowId"])}'),
+            ("S2", f'inbox {e(s["inboxId"])}: {n(v["alertsInBundle"])} eve alert{"" if v["alertsInBundle"] == 1 else "s"} in one bundle; '
+                   f'{e(s["decision"])} under {e(s["policyVersion"])}; evidence {e(s["evidenceClass"])}'),
+            ("S3", f'{e(rv["decision"])} by <b>{e(rv["actor"])}</b> — {e(rv["reason"])}'),
+            ("S4", f'{e(ad["event"])} → operational alert {e(r["operationalId"])} <code>{e(r["alertRef"])}</code>'),
+            ("S5", f'classification {e(cl["status"])} / {e(cl["category"])} — {e(cl["reasons"][0])}<br>'
+                   f'route <b>{e(rd["routeClass"])} → {e(rd["route"])}</b> ({e(rd["policyVersion"])}) — {e(rd["reasons"][0])}'),
+            ("Other chain", other_chain_suri(t["otherChain"])),
+        ]
+    steps.append(("Queue", f'priority {e(tr["priority"])} · band <b>{e(tr["band"])}</b> · route <b>{e(tr["route"])}</b> · '
+                           f'stage {e(tr["stage"])}' + (f' · case <code>{e(r["caseRef"])}</code>' if r["caseRef"] else "")))
+    body = "".join(f'<tr><th>{e(k)}</th><td>{v}</td></tr>' for k, v in steps)
+    return (f'<section class="card {r["chain"]}" id="{r["id"]}"><h3>{r["id"]} · {e(r["chain"])} chain · '
+            f'{n(r["count"])} queue item{"" if r["count"] == 1 else "s"} end here</h3><p class="mut">Example record shown. All {n(r["count"])} '
+            f'items share this end result.</p><table class="trace">{body}</table></section>')
+
+
+def progress_rows() -> str:
+    return "".join(f'<tr><td class="num">{p["step"]+1}</td><td class="num">{n(p["flows"])}</td>'
+                   f'<td class="num">{n(p["suricataAdmitted"])}</td><td class="num">{n(p["queue"])}</td>'
+                   f'<td class="num">{n(p["groups"])}</td><td class="num">{n(p["groupMembers"])}</td>'
+                   f'<td class="num">{n(p["tier2Cases"])}</td></tr>' for p in PROGRESS)
+
+
 CSS = """
-:root{--ink:#16202b;--mut:#5b6b7c;--line:#dbe3ec;--bg:#fbfcfe;--accent:#0b6bcb;--warn:#b45309;--dead:#94a3b8}
-*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.55 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
-main{max-width:1120px;margin:0 auto;padding:30px 22px 70px}
-h1{font-size:27px;margin:0 0 8px}h2{font-size:20px;margin:34px 0 10px;padding-bottom:6px;border-bottom:2px solid var(--line)}
-p.lead{color:var(--mut);margin:0 0 18px;font-size:16px}
-table{border-collapse:collapse;width:100%;margin:10px 0;font-size:14px}
-th,td{border:1px solid var(--line);padding:7px 9px;text-align:left;vertical-align:top}th{background:#f3f6fa}
-code{font:13px/1.4 ui-monospace,Consolas,monospace;background:#f3f6fa;padding:1px 4px;border-radius:4px}
-.facts{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;margin:14px 0}
-.fact{border:1px solid var(--line);border-radius:8px;padding:10px 12px;background:#fff}
-.fact b{display:block;font-size:12px;color:var(--mut);text-transform:uppercase;letter-spacing:.05em}
-.fact span{font:600 17px/1.4 ui-monospace,monospace}
-.dead{border:2px dashed var(--dead);border-radius:10px;padding:14px 16px;background:#f8fafc;color:#475569}
-.dead h3{margin:0 0 6px;color:#475569}.dead s{color:#64748b}
-.note{border-left:4px solid var(--accent);background:#f0f6ff;padding:10px 14px;border-radius:0 8px 8px 0;margin:14px 0}
-.warn{border-left:4px solid var(--warn);background:#fff7ed;padding:10px 14px;border-radius:0 8px 8px 0;margin:14px 0}
-footer{margin-top:40px;border-top:1px solid var(--line);padding-top:12px;color:var(--mut);font-size:13px}
-svg{width:780px;max-width:100%;height:auto;display:block;margin:8px 0}
+:root{--ink:#16202b;--mut:#5b6b7c;--line:#dbe3ec;--bg:#fbfcfe;--flow:#0b6bcb;--suri:#b45309}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.55 system-ui,"Segoe UI",Roboto,sans-serif}
+main{max-width:1220px;margin:0 auto;padding:28px 22px 70px}h1{font-size:27px;margin:0 0 6px}
+h2{font-size:20px;margin:34px 0 10px;padding-bottom:6px;border-bottom:2px solid var(--line)}h3{margin:0 0 4px;font-size:16px}
+p.lead{color:var(--mut);margin:0 0 16px;font-size:16px}.mut{color:var(--mut)}
+table{border-collapse:collapse;width:100%;margin:8px 0;font-size:13.5px}
+th,td{border:1px solid var(--line);padding:6px 8px;text-align:left;vertical-align:top}th{background:#f3f6fa;white-space:nowrap}
+td.num{text-align:right;font-variant-numeric:tabular-nums}tr.sum td{font-weight:700;background:#f8fafc}
+tr.flow td:first-child{border-left:4px solid var(--flow)}tr.suricata td:first-child{border-left:4px solid var(--suri)}
+code{font:12.5px/1.4 ui-monospace,Consolas,monospace;background:#f3f6fa;padding:1px 4px;border-radius:4px}
+.facts{display:grid;grid-template-columns:repeat(auto-fit,minmax(165px,1fr));gap:10px;margin:14px 0}
+.fact{border:1px solid var(--line);border-radius:8px;padding:9px 12px;background:#fff}
+.fact b{display:block;font-size:11.5px;color:var(--mut);text-transform:uppercase;letter-spacing:.05em}
+.fact span{font:600 18px/1.4 ui-monospace,monospace}
+.card{border:1px solid var(--line);border-radius:10px;padding:12px 14px;margin:14px 0;background:#fff}
+.card.flow{border-left:5px solid var(--flow)}.card.suricata{border-left:5px solid var(--suri)}
+table.trace th{width:110px}
+.note{border-left:4px solid var(--flow);background:#f0f6ff;padding:10px 14px;border-radius:0 8px 8px 0;margin:14px 0}
+.warn{border-left:4px solid var(--suri);background:#fff7ed;padding:10px 14px;border-radius:0 8px 8px 0;margin:14px 0}
+svg{width:100%;height:auto;display:block;margin:8px 0;background:#fff;border:1px solid var(--line);border-radius:10px}
+ol li{margin:3px 0}footer{margin-top:40px;border-top:1px solid var(--line);padding-top:12px;color:var(--mut);font-size:13px}
 """
 
 
-def esc(v):
-    return html.escape(str(v), quote=True)
+def page() -> str:
+    facts = [("Flows in capture window", TOT["flowsInWindow"]), ("Suricata alerts (non-info)", TOT["suricataAlertsArrived"]),
+             ("Queue items", TOT["queueItems"]), ("Flow chain items", TOT["flowQueueItems"]),
+             ("Suricata chain items", TOT["suricataQueueItems"]), ("Tier 1 items", TOT["tier1Items"]),
+             ("Tier 2 cases", f'{TOT["tier2Cases"]} ({TOT["tier2CasesFlow"]} flow)'), ("Unique end results", len(RESULTS)),
+             ("Unrouted items", TOT["unrouted"])]
+    fact_html = "".join(f'<div class="fact"><b>{e(k)}</b><span>{n(v)}</span></div>' for k, v in facts)
+    return f"""<!doctype html><html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1"><title>Dual chain workflow — packet to analyst</title>
+<style>{CSS}</style></head><body><main>
+<h1>Dual chain workflow: one capture, two detectors, one queue</h1>
+<p class="lead">The same packets feed two chains in parallel. The flow chain detects, groups and learns from analyst
+verdicts. Suricata gives a second, named opinion. Both arrive in <b>one</b> queue, behind <b>one</b> login.</p>
+<div class="facts">{fact_html}</div>
 
+<h2>1. Layout</h2>
+{svg()}
+<div class="note">One sign-in page, one API, one database per workspace. The Admin chooses the workspace:
+<b>Operational</b> or <b>Replay</b>. Every analyst then sees that workspace's single queue.</div>
 
-def chain_svg() -> str:
-    """Vertical chain of stages, with the retired lane drawn beside it and struck out."""
-    row_h, box_w, x = 96, 720, 20
-    height = len(STAGES) * row_h + 30
-    out = [f'<svg viewBox="0 0 {box_w + 60} {height}" role="img" aria-label="Suricata-first workflow">']
-    out.append('<defs><marker id="a" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto">'
-               '<path d="M0,0 L10,4 L0,8 z" fill="#0b6bcb"/></marker></defs>')
-    for i, (sid, name, inp, what, out_store, screen) in enumerate(STAGES):
-        y = 10 + i * row_h
-        fill = "#eef4ff" if i < 7 else "#f1f7f4"
-        stroke = "#0b6bcb" if i < 7 else "#0f766e"
-        out.append(f'<rect x="{x}" y="{y}" width="{box_w}" height="74" rx="9" fill="{fill}" stroke="{stroke}"/>')
-        out.append(f'<text x="{x+14}" y="{y+24}" font-size="13" font-weight="700" fill="{stroke}">{sid}</text>')
-        out.append(f'<text x="{x+52}" y="{y+24}" font-size="15" font-weight="600" fill="#16202b">{esc(name)}</text>')
-        out.append(f'<text x="{x+14}" y="{y+45}" font-size="12" fill="#5b6b7c">in: {esc(inp)}</text>')
-        out.append(f'<text x="{x+14}" y="{y+62}" font-size="12" fill="#334155">stored: {esc(out_store)}</text>')
-        out.append(f'<text x="{x+box_w-12}" y="{y+62}" font-size="11" fill="#7c8b9c" text-anchor="end">{esc(screen)}</text>')
-        if i + 1 < len(STAGES):
-            out.append(f'<line x1="{x+box_w/2}" y1="{y+74}" x2="{x+box_w/2}" y2="{y+row_h}" '
-                       'stroke="#0b6bcb" stroke-width="2" marker-end="url(#a)"/>')
-    out.append("</svg>")
-    return "".join(out)
+<h2>2. Stages</h2>
+<table><tr><th>Id</th><th>Stage</th><th>What happens</th><th>Stored in</th></tr>
+<tr><td colspan="4"><b>P · Packet capture</b> — 3 pcaps of capture day 2018-02-14, replayed in {TOT["steps"]} equal time steps</td></tr>
+{stage_rows(FLOW_STAGES, "flow")}{stage_rows(SURI_STAGES, "suricata")}{stage_rows(SHARED, "")}</table>
 
+<h2>3. Every unique end result on the dashboard</h2>
+<p>An end result is one distinct combination of chain, evidence, group or single, classification, route class,
+priority band and route. The whole replay produces {len(RESULTS)}. Their counts add up to the queue.</p>
+<table><tr><th>Id</th><th>Chain</th><th>Items</th><th>Title (example)</th><th>Evidence</th><th>Class</th>
+<th>Route class</th><th>Band (priority)</th><th>Route</th></tr>{results_table()}</table>
 
-def live_counts(pop):
-    """Counts read from the populated database now, so the page cannot show a stale number."""
-    import sqlite3
-    if not pop or not Path(pop["db"]).exists():
-        return pop
-    c = sqlite3.connect(f"file:{pop['db']}?mode=ro", uri=True)
-    q = lambda s: c.execute(s).fetchone()[0]
-    pop["counts"] = {t: q(f"SELECT count(*) FROM {t}") for t in
-                     ("suricata_eve_records", "external_alert_inbox", "external_eligibility_review",
-                      "external_operational_admission", "operational_alerts_v2", "tier2_cases",
-                      "operational_system_routing")}
-    pop["routes"] = dict(c.execute("SELECT handling_route, count(*) FROM operational_triage_state_v2 GROUP BY 1"))
-    pop["classes"] = {}
-    for raw, n in c.execute("SELECT classification, count(*) FROM operational_system_routing GROUP BY 1"):
-        try:
-            pop["classes"][json.loads(raw)["attackCategory"]] = pop["classes"].get(json.loads(raw)["attackCategory"], 0) + n
-        except Exception:
-            pop["classes"]["unparsed"] = pop["classes"].get("unparsed", 0) + n
-    pop["bands"] = dict(c.execute("SELECT priority_band, count(*) FROM operational_triage_state_v2 GROUP BY 1"))
-    pop["staged"] = q("SELECT count(*) FROM external_alert_inbox WHERE import_status='staged'")
-    c.close()
-    return pop
+<h2>4. Data trace for each end result</h2>
+<p class="mut">For each end result: one real record, every stage it passed, and what the other chain said about the same flow.</p>
+{"".join(card(r) for r in RESULTS)}
 
+<h2>5. Arrival during the replay (every 10 steps)</h2>
+<table><tr><th>Step</th><th>Flows in</th><th>Suricata admitted</th><th>Queue items</th><th>Groups</th>
+<th>Group members</th><th>Tier 2 cases</th></tr>{progress_rows()}</table>
 
-def main() -> None:
-    pop = json.loads(DATA.read_text(encoding="utf-8")) if DATA.exists() else None
-    pop = live_counts(pop)
-    h = [f'<!doctype html><html lang="en"><head><meta charset="utf-8">'
-         f'<meta name="viewport" content="width=device-width,initial-scale=1"><title>Workflow layout</title>'
-         f"<style>{CSS}</style></head><body><main>"]
-    h.append("<h1>Current workflow layout: Suricata-first</h1>")
-    h.append('<p class="lead">One chain, from packet to analyst screen. The CICIDS2018 flow lane is no longer part '
-             "of the demo and must not be shown. The code for it still exists in the repository; nothing in this "
-             "page depends on it.</p>")
+<h2>6. Run it</h2>
+<ol>
+<li>Build the replay input once: <code>python scripts/build_packet_replay.py</code>.</li>
+<li>Sign in as <code>admin</code>. Open <b>Workspaces</b>.</li>
+<li>Choose <b>Packet Replay</b>. Click <b>Prepare</b>, then <b>Activate</b>.</li>
+<li>Click <b>Start</b> for one step every 5 seconds, or <b>Next Step</b> / <b>Next 5 Steps</b>.</li>
+<li>Sign in as <code>g.ang</code> in a second browser. New items arrive in the queue as the steps run.</li>
+</ol>
 
-    if pop:
-        c = pop["counts"]
-        h.append('<div class="facts">')
-        for label, value in (("Suricata alerts imported", f'{c["suricata_eve_records"]:,}'),
-                             ("Inbox records", f'{c["external_alert_inbox"]:,}'),
-                             ("Still staged (backlog)", f'{pop.get("staged", 0):,}'),
-                             ("Admitted to queue", f'{c["operational_alerts_v2"]:,}'),
-                             ("Tier 1 items", f'{pop["routes"].get("tier1_review", 0):,}'),
-                             ("Tier 2 cases", f'{pop["tier2Cases"]:,}'),
-                             ("Queue rows", f'{c["operational_alerts_v2"]:,}')):
-            h.append(f'<div class="fact"><b>{esc(label)}</b><span>{esc(value)}</span></div>')
-        h.append("</div>")
-
-    h.append("<h2>The chain</h2>")
-    h.append(chain_svg())
-    h.append('<p class="note">Each box names the stage, its input, the table it writes, and the screen where an '
-             "analyst sees it. Priority comes from the native severity table at admission; the attack class only "
-             "decides who handles the alert.</p>")
-
-    h.append("<h2>Stage detail</h2>")
-    rows = [[f"<b>{esc(sid)}</b>", esc(name), esc(inp), esc(what), f"<code>{esc(out_store)}</code>", esc(screen)]
-            for sid, name, inp, what, out_store, screen in STAGES]
-    h.append('<table><thead><tr><th>Stage</th><th>Name</th><th>Input</th><th>What happens</th>'
-             '<th>Stored as</th><th>Screen</th></tr></thead><tbody>'
-             + "".join("<tr>" + "".join(f"<td>{c}</td>" for c in r) + "</tr>" for r in rows) + "</tbody></table>")
-
-    if pop:
-        h.append("<h2>What the Suricata-only database holds</h2>")
-        h.append(f"<p>Population rule: {esc(pop['rule'])}. Import result: {pop['import']['parsed']:,} parsed, "
-                 f"{pop['import']['staged']:,} staged, {pop['import']['invalid']:,} invalid, "
-                 f"{pop['import']['rejected_by_policy']:,} rejected by policy.</p>")
-        route_rows = "".join(f"<tr><td><code>{esc(k)}</code></td><td>{v:,}</td></tr>"
-                             for k, v in pop["routes"].items())
-        class_rows = "".join(f"<tr><td><code>{esc(k)}</code></td><td>{v:,}</td></tr>"
-                             for k, v in sorted(pop["classes"].items(), key=lambda kv: -kv[1]))
-        band_rows = "".join(f"<tr><td><code>{esc(k)}</code></td><td>{v:,}</td></tr>"
-                            for k, v in pop["bands"].items())
-        h.append('<table style="width:auto"><thead><tr><th>Route</th><th>Alerts</th></tr></thead><tbody>'
-                 + route_rows + "</tbody></table>")
-        h.append('<table style="width:auto"><thead><tr><th>Attack class from the signature policy</th><th>Alerts</th>'
-                 "</tr></thead><tbody>" + class_rows + "</tbody></table>")
-        h.append('<table style="width:auto"><thead><tr><th>Priority band</th><th>Alerts</th></tr></thead><tbody>'
-                 + band_rows + "</tbody></table>")
-        if pop["failedCount"]:
-            h.append(f'<div class="warn">{pop["failedCount"]} admissions failed. First error: '
-                     f'<code>{esc(pop["failed"][0]["error"])}</code></div>')
-
-    h.append("<h2>Retired from the demo</h2>")
-    h.append('<div class="dead"><h3>CICIDS2018 flow lane (code present, not used)</h3>'
-             "<p><s>CSV flow records, CICFlowMeter features, XGBoost scoring, fusion, alert groups, E1/E3 routing.</s></p>"
-             "<p>Why it is out: it starts from a labelled research dataset, not from packets. Its scores are model "
-             "opinions about research features, and its demo screens show alert groups that Suricata never produced. "
-             "Keeping both lanes doubled every count and made two versions of the same event.</p>"
-             "<p>What remains in the repository: <code>packages/detection/fusion/</code>, "
-             "<code>flow_routing.py</code>, <code>scripts/materialize_flow_queue.py</code> and their tests. They are "
-             "not part of this workflow and must not appear in the demo or the guide.</p></div>")
-
-    h.append('<p class="warn"><b>One consequence to decide:</b> the product currently refuses to hold both lanes in '
-             "one database (<code>packages/detection/system_routing.py:70-75</code>). A Suricata-only database is "
-             "unaffected, so the demo can now be a single database. The mixed-lane case must be resolved before any "
-             "deployment runs both detectors.</p>")
-
-    h.append("<h2>What an analyst can do at each screen</h2>")
-    h.append('<table><thead><tr><th>Screen</th><th>Route</th><th>Actions</th></tr></thead><tbody>'
-             "<tr><td>Incoming Alerts</td><td><code>/analyst/external-admission</code></td>"
-             "<td>read a staged Suricata alert, record the eligibility review, admit it, follow the link to the "
-             "workstation</td></tr>"
-             "<tr><td>Analyst Workstation</td><td><code>/analyst/operations</code></td>"
-             "<td>claim, read evidence, add notes, record a verdict, see routing and classification</td></tr>"
-             "<tr><td>Tier 2 Cases</td><td><code>/analyst/tier2-cases</code></td>"
-             "<td>start the investigation, record the conclusion, resolve</td></tr>"
-             "<tr><td>Admin surfaces</td><td><code>/admin/*</code></td>"
-             "<td>users, governance, audit, guardrails, admission, reports</td></tr>"
-             "</tbody></table>")
-    h.append("<footer>Sources: <code>scripts/import_suricata_eve.py</code>, "
-             "<code>packages/detection/external_admission.py</code>, "
-             "<code>packages/detection/attack_classification.py</code>, "
-             "<code>packages/detection/system_routing.py</code>, <code>config/suricata-classification-v3.json</code>, "
-             "<code>config/system-routing-v1.json</code>, <code>config/external-admission.json</code>.</footer>")
-    h.append("</main></body></html>")
-    OUT.write_text("\n".join(h), encoding="utf-8")
-    print(f"wrote {OUT} ({OUT.stat().st_size} bytes)")
+<h2>7. What this page does not show</h2>
+<div class="warn"><ul>
+<li><b>R2 is large.</b> {n(next(r["count"] for r in RESULTS if r["id"] == "R2"))} unflagged flows each become one low-priority
+Tier 1 item (decision D4). This is product behaviour, not a replay artefact.</li>
+<li><b>Stale reason text on R1.</b> A group is routed once, when its first members arrive. The stored reason gives the group
+size at that time. The group then grows (to 5,100 and 11,613 flows).</li>
+<li><b>Review is automatic in the replay.</b> S3 is recorded in the preparing Admin's name with a fixed reason.
+In Operational, an analyst makes each S3 decision.</li>
+<li>Recorded traffic, not live traffic. The model was trained on this testbed's dataset.</li>
+<li>The other-chain link is by 5-tuple and time. It is shown here; the product does not yet show it in the alert panel.</li>
+</ul></div>
+<footer>Generated by analysis/phase-f/workflow-layout/build_layout.py from trace.json
+({n(TOT["steps"])} steps, replay {e(TOT["replaySeconds"])} s on a scratch database).</footer>
+</main></body></html>"""
 
 
 if __name__ == "__main__":
-    main()
+    OUT.write_text(page(), encoding="utf-8")
+    print(f"wrote {OUT} ({OUT.stat().st_size:,} bytes), {len(RESULTS)} end results")

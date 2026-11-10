@@ -1,0 +1,1607 @@
+{
+ "db": "C:\\Users\\Glenn Ang\\AppData\\Local\\Temp\\hitl-review\\packet-replay-full.db",
+ "flowsInWindow": 27516,
+ "seconds": 155.6,
+ "steps": [
+  {
+   "step": 0,
+   "seconds": 0.15,
+   "flows": 14,
+   "queue": 14,
+   "suricataAdmitted": 0,
+   "groups": 0,
+   "groupMembers": 0,
+   "tier2Cases": 0
+  },
+  {
+   "step": 1,
+   "seconds": 0.34,
+   "flows": 54,
+   "queue": 55,
+   "suricataAdmitted": 1,
+   "groups": 0,
+   "groupMembers": 0,
+   "tier2Cases": 0
+  },
+  {
+   "step": 2,
+   "seconds": 2.14,
+   "flows": 318,
+   "queue": 323,
+   "suricataAdmitted": 5,
+   "groups": 0,
+   "groupMembers": 0,
+   "tier2Cases": 0
+  },
+  {
+   "step": 3,
+   "seconds": 2.26,
+   "flows": 587,
+   "queue": 593,
+   "suricataAdmitted": 6,
+   "groups": 0,
+   "groupMembers": 0,
+   "tier2Cases": 0
+  },
+  {
+   "step": 4,
+   "seconds": 2.31,
+   "flows": 838,
+   "queue": 863,
+   "suricataAdmitted": 25,
+   "groups": 0,
+   "groupMembers": 0,
+   "tier2Cases": 0
+  },
+  {
+   "step": 5,
+   "seconds": 3.01,
+   "flows": 1203,
+   "queue": 1232,
+   "suricataAdmitted": 29,
+   "groups": 1,
+   "groupMembers": 1,
+   "tier2Cases": 0
+  },
+  {
+   "step": 6,
+   "seconds": 2.31,
+   "flows": 1474,
+   "queue": 1509,
+   "suricataAdmitted": 35,
+   "groups": 1,
+   "groupMembers": 1,
+   "tier2Cases": 0
+  },
+  {
+   "step": 7,
+   "seconds": 1.17,
+   "flows": 1613,
+   "queue": 1650,
+   "suricataAdmitted": 37,
+   "groups": 1,
+   "groupMembers": 1,
+   "tier2Cases": 0
+  },
+  {
+   "step": 8,
+   "seconds": 1.21,
+   "flows": 1743,
+   "queue": 1781,
+   "suricataAdmitted": 38,
+   "groups": 1,
+   "groupMembers": 1,
+   "tier2Cases": 0
+  },
+  {
+   "step": 9,
+   "seconds": 1.33,
+   "flows": 1921,
+   "queue": 1961,
+   "suricataAdmitted": 40,
+   "groups": 1,
+   "groupMembers": 1,
+   "tier2Cases": 0
+  },
+  {
+   "step": 10,
+   "seconds": 1.13,
+   "flows": 2072,
+   "queue": 2114,
+   "suricataAdmitted": 42,
+   "groups": 1,
+   "groupMembers": 1,
+   "tier2Cases": 0
+  },
+  {
+   "step": 11,
+   "seconds": 1.2,
+   "flows": 2205,
+   "queue": 2261,
+   "suricataAdmitted": 56,
+   "groups": 1,
+   "groupMembers": 1,
+   "tier2Cases": 0
+  },
+  {
+   "step": 12,
+   "seconds": 0.9,
+   "flows": 2311,
+   "queue": 2370,
+   "suricataAdmitted": 59,
+   "groups": 1,
+   "groupMembers": 1,
+   "tier2Cases": 0
+  },
+  {
+   "step": 13,
+   "seconds": 1.21,
+   "flows": 2451,
+   "queue": 2514,
+   "suricataAdmitted": 63,
+   "groups": 1,
+   "groupMembers": 1,
+   "tier2Cases": 0
+  },
+  {
+   "step": 14,
+   "seconds": 1.95,
+   "flows": 2664,
+   "queue": 2737,
+   "suricataAdmitted": 73,
+   "groups": 1,
+   "groupMembers": 1,
+   "tier2Cases": 0
+  },
+  {
+   "step": 15,
+   "seconds": 3.12,
+   "flows": 3024,
+   "queue": 3110,
+   "suricataAdmitted": 86,
+   "groups": 1,
+   "groupMembers": 1,
+   "tier2Cases": 0
+  },
+  {
+   "step": 16,
+   "seconds": 2.92,
+   "flows": 3329,
+   "queue": 3423,
+   "suricataAdmitted": 94,
+   "groups": 2,
+   "groupMembers": 2,
+   "tier2Cases": 1
+  },
+  {
+   "step": 17,
+   "seconds": 2.38,
+   "flows": 3613,
+   "queue": 3713,
+   "suricataAdmitted": 100,
+   "groups": 2,
+   "groupMembers": 2,
+   "tier2Cases": 2
+  },
+  {
+   "step": 18,
+   "seconds": 0.54,
+   "flows": 3656,
+   "queue": 3759,
+   "suricataAdmitted": 103,
+   "groups": 2,
+   "groupMembers": 2,
+   "tier2Cases": 2
+  },
+  {
+   "step": 19,
+   "seconds": 1.2,
+   "flows": 3779,
+   "queue": 3888,
+   "suricataAdmitted": 109,
+   "groups": 2,
+   "groupMembers": 2,
+   "tier2Cases": 2
+  },
+  {
+   "step": 20,
+   "seconds": 2.03,
+   "flows": 3990,
+   "queue": 4108,
+   "suricataAdmitted": 118,
+   "groups": 2,
+   "groupMembers": 2,
+   "tier2Cases": 5
+  },
+  {
+   "step": 21,
+   "seconds": 2.06,
+   "flows": 4205,
+   "queue": 4334,
+   "suricataAdmitted": 129,
+   "groups": 2,
+   "groupMembers": 2,
+   "tier2Cases": 5
+  },
+  {
+   "step": 22,
+   "seconds": 1.76,
+   "flows": 4395,
+   "queue": 4533,
+   "suricataAdmitted": 138,
+   "groups": 2,
+   "groupMembers": 2,
+   "tier2Cases": 5
+  },
+  {
+   "step": 23,
+   "seconds": 1.35,
+   "flows": 4540,
+   "queue": 4683,
+   "suricataAdmitted": 143,
+   "groups": 2,
+   "groupMembers": 2,
+   "tier2Cases": 5
+  },
+  {
+   "step": 24,
+   "seconds": 1.31,
+   "flows": 4682,
+   "queue": 4829,
+   "suricataAdmitted": 147,
+   "groups": 2,
+   "groupMembers": 2,
+   "tier2Cases": 6
+  },
+  {
+   "step": 25,
+   "seconds": 2.05,
+   "flows": 4901,
+   "queue": 5057,
+   "suricataAdmitted": 156,
+   "groups": 3,
+   "groupMembers": 3,
+   "tier2Cases": 6
+  },
+  {
+   "step": 26,
+   "seconds": 0.73,
+   "flows": 4972,
+   "queue": 5130,
+   "suricataAdmitted": 158,
+   "groups": 3,
+   "groupMembers": 3,
+   "tier2Cases": 6
+  },
+  {
+   "step": 27,
+   "seconds": 0.97,
+   "flows": 5065,
+   "queue": 5225,
+   "suricataAdmitted": 160,
+   "groups": 3,
+   "groupMembers": 3,
+   "tier2Cases": 6
+  },
+  {
+   "step": 28,
+   "seconds": 1.21,
+   "flows": 5166,
+   "queue": 5332,
+   "suricataAdmitted": 166,
+   "groups": 3,
+   "groupMembers": 3,
+   "tier2Cases": 6
+  },
+  {
+   "step": 29,
+   "seconds": 0.58,
+   "flows": 5220,
+   "queue": 5386,
+   "suricataAdmitted": 166,
+   "groups": 3,
+   "groupMembers": 3,
+   "tier2Cases": 6
+  },
+  {
+   "step": 30,
+   "seconds": 1.48,
+   "flows": 5334,
+   "queue": 5513,
+   "suricataAdmitted": 179,
+   "groups": 3,
+   "groupMembers": 3,
+   "tier2Cases": 6
+  },
+  {
+   "step": 31,
+   "seconds": 1.03,
+   "flows": 5428,
+   "queue": 5613,
+   "suricataAdmitted": 185,
+   "groups": 3,
+   "groupMembers": 3,
+   "tier2Cases": 6
+  },
+  {
+   "step": 32,
+   "seconds": 0.68,
+   "flows": 5475,
+   "queue": 5665,
+   "suricataAdmitted": 190,
+   "groups": 3,
+   "groupMembers": 3,
+   "tier2Cases": 6
+  },
+  {
+   "step": 33,
+   "seconds": 1.29,
+   "flows": 5616,
+   "queue": 5809,
+   "suricataAdmitted": 193,
+   "groups": 3,
+   "groupMembers": 3,
+   "tier2Cases": 6
+  },
+  {
+   "step": 34,
+   "seconds": 2.28,
+   "flows": 5849,
+   "queue": 6052,
+   "suricataAdmitted": 204,
+   "groups": 3,
+   "groupMembers": 4,
+   "tier2Cases": 6
+  },
+  {
+   "step": 35,
+   "seconds": 2.48,
+   "flows": 6108,
+   "queue": 6318,
+   "suricataAdmitted": 213,
+   "groups": 3,
+   "groupMembers": 6,
+   "tier2Cases": 6
+  },
+  {
+   "step": 36,
+   "seconds": 3.12,
+   "flows": 6347,
+   "queue": 6582,
+   "suricataAdmitted": 238,
+   "groups": 3,
+   "groupMembers": 6,
+   "tier2Cases": 6
+  },
+  {
+   "step": 37,
+   "seconds": 1.72,
+   "flows": 6501,
+   "queue": 6745,
+   "suricataAdmitted": 247,
+   "groups": 3,
+   "groupMembers": 6,
+   "tier2Cases": 6
+  },
+  {
+   "step": 38,
+   "seconds": 1.02,
+   "flows": 6579,
+   "queue": 6828,
+   "suricataAdmitted": 252,
+   "groups": 3,
+   "groupMembers": 6,
+   "tier2Cases": 6
+  },
+  {
+   "step": 39,
+   "seconds": 0.77,
+   "flows": 6648,
+   "queue": 6898,
+   "suricataAdmitted": 253,
+   "groups": 3,
+   "groupMembers": 6,
+   "tier2Cases": 6
+  },
+  {
+   "step": 40,
+   "seconds": 1.57,
+   "flows": 6735,
+   "queue": 7000,
+   "suricataAdmitted": 268,
+   "groups": 3,
+   "groupMembers": 6,
+   "tier2Cases": 6
+  },
+  {
+   "step": 41,
+   "seconds": 2.52,
+   "flows": 6998,
+   "queue": 7271,
+   "suricataAdmitted": 277,
+   "groups": 3,
+   "groupMembers": 7,
+   "tier2Cases": 6
+  },
+  {
+   "step": 42,
+   "seconds": 1.83,
+   "flows": 7113,
+   "queue": 7402,
+   "suricataAdmitted": 293,
+   "groups": 3,
+   "groupMembers": 7,
+   "tier2Cases": 6
+  },
+  {
+   "step": 43,
+   "seconds": 1.33,
+   "flows": 7243,
+   "queue": 7535,
+   "suricataAdmitted": 296,
+   "groups": 3,
+   "groupMembers": 7,
+   "tier2Cases": 6
+  },
+  {
+   "step": 44,
+   "seconds": 0.89,
+   "flows": 7324,
+   "queue": 7618,
+   "suricataAdmitted": 298,
+   "groups": 3,
+   "groupMembers": 7,
+   "tier2Cases": 6
+  },
+  {
+   "step": 45,
+   "seconds": 0.53,
+   "flows": 7362,
+   "queue": 7657,
+   "suricataAdmitted": 299,
+   "groups": 3,
+   "groupMembers": 7,
+   "tier2Cases": 6
+  },
+  {
+   "step": 46,
+   "seconds": 0.56,
+   "flows": 7398,
+   "queue": 7695,
+   "suricataAdmitted": 301,
+   "groups": 3,
+   "groupMembers": 7,
+   "tier2Cases": 6
+  },
+  {
+   "step": 47,
+   "seconds": 0.63,
+   "flows": 7454,
+   "queue": 7751,
+   "suricataAdmitted": 301,
+   "groups": 3,
+   "groupMembers": 7,
+   "tier2Cases": 6
+  },
+  {
+   "step": 48,
+   "seconds": 0.45,
+   "flows": 7481,
+   "queue": 7779,
+   "suricataAdmitted": 302,
+   "groups": 3,
+   "groupMembers": 7,
+   "tier2Cases": 6
+  },
+  {
+   "step": 49,
+   "seconds": 0.91,
+   "flows": 7561,
+   "queue": 7861,
+   "suricataAdmitted": 304,
+   "groups": 3,
+   "groupMembers": 7,
+   "tier2Cases": 6
+  },
+  {
+   "step": 50,
+   "seconds": 1.88,
+   "flows": 7723,
+   "queue": 8036,
+   "suricataAdmitted": 317,
+   "groups": 3,
+   "groupMembers": 7,
+   "tier2Cases": 6
+  },
+  {
+   "step": 51,
+   "seconds": 1.13,
+   "flows": 7838,
+   "queue": 8154,
+   "suricataAdmitted": 320,
+   "groups": 3,
+   "groupMembers": 7,
+   "tier2Cases": 6
+  },
+  {
+   "step": 52,
+   "seconds": 0.39,
+   "flows": 7865,
+   "queue": 8181,
+   "suricataAdmitted": 320,
+   "groups": 3,
+   "groupMembers": 7,
+   "tier2Cases": 6
+  },
+  {
+   "step": 53,
+   "seconds": 1.15,
+   "flows": 7954,
+   "queue": 8278,
+   "suricataAdmitted": 328,
+   "groups": 3,
+   "groupMembers": 7,
+   "tier2Cases": 6
+  },
+  {
+   "step": 54,
+   "seconds": 1.45,
+   "flows": 8124,
+   "queue": 8448,
+   "suricataAdmitted": 328,
+   "groups": 3,
+   "groupMembers": 7,
+   "tier2Cases": 6
+  },
+  {
+   "step": 55,
+   "seconds": 2.13,
+   "flows": 8347,
+   "queue": 8678,
+   "suricataAdmitted": 336,
+   "groups": 3,
+   "groupMembers": 8,
+   "tier2Cases": 6
+  },
+  {
+   "step": 56,
+   "seconds": 0.73,
+   "flows": 8406,
+   "queue": 8740,
+   "suricataAdmitted": 339,
+   "groups": 3,
+   "groupMembers": 8,
+   "tier2Cases": 6
+  },
+  {
+   "step": 57,
+   "seconds": 0.4,
+   "flows": 8433,
+   "queue": 8767,
+   "suricataAdmitted": 339,
+   "groups": 3,
+   "groupMembers": 8,
+   "tier2Cases": 6
+  },
+  {
+   "step": 58,
+   "seconds": 0.4,
+   "flows": 8468,
+   "queue": 8802,
+   "suricataAdmitted": 339,
+   "groups": 3,
+   "groupMembers": 8,
+   "tier2Cases": 6
+  },
+  {
+   "step": 59,
+   "seconds": 0.45,
+   "flows": 8496,
+   "queue": 8831,
+   "suricataAdmitted": 340,
+   "groups": 3,
+   "groupMembers": 8,
+   "tier2Cases": 6
+  },
+  {
+   "step": 60,
+   "seconds": 0.49,
+   "flows": 8529,
+   "queue": 8865,
+   "suricataAdmitted": 341,
+   "groups": 3,
+   "groupMembers": 8,
+   "tier2Cases": 6
+  },
+  {
+   "step": 61,
+   "seconds": 0.43,
+   "flows": 8561,
+   "queue": 8897,
+   "suricataAdmitted": 341,
+   "groups": 3,
+   "groupMembers": 8,
+   "tier2Cases": 6
+  },
+  {
+   "step": 62,
+   "seconds": 0.49,
+   "flows": 8604,
+   "queue": 8940,
+   "suricataAdmitted": 341,
+   "groups": 3,
+   "groupMembers": 8,
+   "tier2Cases": 6
+  },
+  {
+   "step": 63,
+   "seconds": 1.34,
+   "flows": 8723,
+   "queue": 9063,
+   "suricataAdmitted": 346,
+   "groups": 3,
+   "groupMembers": 9,
+   "tier2Cases": 6
+  },
+  {
+   "step": 64,
+   "seconds": 1.62,
+   "flows": 8889,
+   "queue": 9231,
+   "suricataAdmitted": 350,
+   "groups": 3,
+   "groupMembers": 11,
+   "tier2Cases": 6
+  },
+  {
+   "step": 65,
+   "seconds": 0.73,
+   "flows": 8955,
+   "queue": 9298,
+   "suricataAdmitted": 351,
+   "groups": 3,
+   "groupMembers": 11,
+   "tier2Cases": 6
+  },
+  {
+   "step": 66,
+   "seconds": 0.73,
+   "flows": 9014,
+   "queue": 9359,
+   "suricataAdmitted": 353,
+   "groups": 3,
+   "groupMembers": 11,
+   "tier2Cases": 6
+  },
+  {
+   "step": 67,
+   "seconds": 0.45,
+   "flows": 9049,
+   "queue": 9394,
+   "suricataAdmitted": 353,
+   "groups": 3,
+   "groupMembers": 11,
+   "tier2Cases": 6
+  },
+  {
+   "step": 68,
+   "seconds": 2.15,
+   "flows": 9264,
+   "queue": 9612,
+   "suricataAdmitted": 356,
+   "groups": 3,
+   "groupMembers": 11,
+   "tier2Cases": 6
+  },
+  {
+   "step": 69,
+   "seconds": 1.57,
+   "flows": 9377,
+   "queue": 9734,
+   "suricataAdmitted": 365,
+   "groups": 3,
+   "groupMembers": 11,
+   "tier2Cases": 6
+  },
+  {
+   "step": 70,
+   "seconds": 0.96,
+   "flows": 9449,
+   "queue": 9810,
+   "suricataAdmitted": 369,
+   "groups": 3,
+   "groupMembers": 11,
+   "tier2Cases": 6
+  },
+  {
+   "step": 71,
+   "seconds": 0.51,
+   "flows": 9482,
+   "queue": 9844,
+   "suricataAdmitted": 370,
+   "groups": 3,
+   "groupMembers": 11,
+   "tier2Cases": 6
+  },
+  {
+   "step": 72,
+   "seconds": 0.53,
+   "flows": 9521,
+   "queue": 9883,
+   "suricataAdmitted": 370,
+   "groups": 3,
+   "groupMembers": 11,
+   "tier2Cases": 6
+  },
+  {
+   "step": 73,
+   "seconds": 0.38,
+   "flows": 9543,
+   "queue": 9905,
+   "suricataAdmitted": 370,
+   "groups": 3,
+   "groupMembers": 11,
+   "tier2Cases": 6
+  },
+  {
+   "step": 74,
+   "seconds": 0.42,
+   "flows": 9563,
+   "queue": 9926,
+   "suricataAdmitted": 371,
+   "groups": 3,
+   "groupMembers": 11,
+   "tier2Cases": 6
+  },
+  {
+   "step": 75,
+   "seconds": 0.32,
+   "flows": 9576,
+   "queue": 9939,
+   "suricataAdmitted": 371,
+   "groups": 3,
+   "groupMembers": 11,
+   "tier2Cases": 6
+  },
+  {
+   "step": 76,
+   "seconds": 0.46,
+   "flows": 9678,
+   "queue": 9952,
+   "suricataAdmitted": 371,
+   "groups": 4,
+   "groupMembers": 101,
+   "tier2Cases": 7
+  },
+  {
+   "step": 77,
+   "seconds": 0.45,
+   "flows": 10046,
+   "queue": 9970,
+   "suricataAdmitted": 371,
+   "groups": 4,
+   "groupMembers": 451,
+   "tier2Cases": 7
+  },
+  {
+   "step": 78,
+   "seconds": 0.42,
+   "flows": 10397,
+   "queue": 9981,
+   "suricataAdmitted": 371,
+   "groups": 4,
+   "groupMembers": 791,
+   "tier2Cases": 7
+  },
+  {
+   "step": 79,
+   "seconds": 0.51,
+   "flows": 10768,
+   "queue": 10002,
+   "suricataAdmitted": 371,
+   "groups": 4,
+   "groupMembers": 1141,
+   "tier2Cases": 7
+  },
+  {
+   "step": 80,
+   "seconds": 0.45,
+   "flows": 11129,
+   "queue": 10013,
+   "suricataAdmitted": 371,
+   "groups": 4,
+   "groupMembers": 1491,
+   "tier2Cases": 7
+  },
+  {
+   "step": 81,
+   "seconds": 0.57,
+   "flows": 11493,
+   "queue": 10027,
+   "suricataAdmitted": 371,
+   "groups": 4,
+   "groupMembers": 1841,
+   "tier2Cases": 7
+  },
+  {
+   "step": 82,
+   "seconds": 0.59,
+   "flows": 11872,
+   "queue": 10056,
+   "suricataAdmitted": 371,
+   "groups": 4,
+   "groupMembers": 2191,
+   "tier2Cases": 7
+  },
+  {
+   "step": 83,
+   "seconds": 0.46,
+   "flows": 12220,
+   "queue": 10064,
+   "suricataAdmitted": 371,
+   "groups": 4,
+   "groupMembers": 2531,
+   "tier2Cases": 7
+  },
+  {
+   "step": 84,
+   "seconds": 0.47,
+   "flows": 12581,
+   "queue": 10075,
+   "suricataAdmitted": 371,
+   "groups": 4,
+   "groupMembers": 2881,
+   "tier2Cases": 7
+  },
+  {
+   "step": 85,
+   "seconds": 0.6,
+   "flows": 12952,
+   "queue": 10097,
+   "suricataAdmitted": 372,
+   "groups": 4,
+   "groupMembers": 3231,
+   "tier2Cases": 7
+  },
+  {
+   "step": 86,
+   "seconds": 0.58,
+   "flows": 13310,
+   "queue": 10116,
+   "suricataAdmitted": 373,
+   "groups": 4,
+   "groupMembers": 3571,
+   "tier2Cases": 7
+  },
+  {
+   "step": 87,
+   "seconds": 0.53,
+   "flows": 13680,
+   "queue": 10136,
+   "suricataAdmitted": 373,
+   "groups": 4,
+   "groupMembers": 3921,
+   "tier2Cases": 7
+  },
+  {
+   "step": 88,
+   "seconds": 0.49,
+   "flows": 14031,
+   "queue": 10147,
+   "suricataAdmitted": 373,
+   "groups": 4,
+   "groupMembers": 4261,
+   "tier2Cases": 7
+  },
+  {
+   "step": 89,
+   "seconds": 0.53,
+   "flows": 14391,
+   "queue": 10157,
+   "suricataAdmitted": 373,
+   "groups": 4,
+   "groupMembers": 4611,
+   "tier2Cases": 7
+  },
+  {
+   "step": 90,
+   "seconds": 0.56,
+   "flows": 14753,
+   "queue": 10169,
+   "suricataAdmitted": 373,
+   "groups": 4,
+   "groupMembers": 4961,
+   "tier2Cases": 7
+  },
+  {
+   "step": 91,
+   "seconds": 0.52,
+   "flows": 14921,
+   "queue": 10187,
+   "suricataAdmitted": 373,
+   "groups": 4,
+   "groupMembers": 5111,
+   "tier2Cases": 7
+  },
+  {
+   "step": 92,
+   "seconds": 0.5,
+   "flows": 14938,
+   "queue": 10204,
+   "suricataAdmitted": 373,
+   "groups": 4,
+   "groupMembers": 5111,
+   "tier2Cases": 7
+  },
+  {
+   "step": 93,
+   "seconds": 0.49,
+   "flows": 14982,
+   "queue": 10219,
+   "suricataAdmitted": 373,
+   "groups": 5,
+   "groupMembers": 5141,
+   "tier2Cases": 8
+  },
+  {
+   "step": 94,
+   "seconds": 0.49,
+   "flows": 14997,
+   "queue": 10234,
+   "suricataAdmitted": 373,
+   "groups": 5,
+   "groupMembers": 5141,
+   "tier2Cases": 8
+  },
+  {
+   "step": 95,
+   "seconds": 0.41,
+   "flows": 15012,
+   "queue": 10249,
+   "suricataAdmitted": 373,
+   "groups": 5,
+   "groupMembers": 5141,
+   "tier2Cases": 8
+  },
+  {
+   "step": 96,
+   "seconds": 0.55,
+   "flows": 15182,
+   "queue": 10260,
+   "suricataAdmitted": 374,
+   "groups": 5,
+   "groupMembers": 5301,
+   "tier2Cases": 8
+  },
+  {
+   "step": 97,
+   "seconds": 0.48,
+   "flows": 15369,
+   "queue": 10267,
+   "suricataAdmitted": 374,
+   "groups": 5,
+   "groupMembers": 5481,
+   "tier2Cases": 8
+  },
+  {
+   "step": 98,
+   "seconds": 0.68,
+   "flows": 15566,
+   "queue": 10285,
+   "suricataAdmitted": 375,
+   "groups": 5,
+   "groupMembers": 5661,
+   "tier2Cases": 8
+  },
+  {
+   "step": 99,
+   "seconds": 0.65,
+   "flows": 15760,
+   "queue": 10300,
+   "suricataAdmitted": 376,
+   "groups": 5,
+   "groupMembers": 5841,
+   "tier2Cases": 8
+  },
+  {
+   "step": 100,
+   "seconds": 0.61,
+   "flows": 15956,
+   "queue": 10316,
+   "suricataAdmitted": 376,
+   "groups": 5,
+   "groupMembers": 6021,
+   "tier2Cases": 8
+  },
+  {
+   "step": 101,
+   "seconds": 0.62,
+   "flows": 16152,
+   "queue": 10332,
+   "suricataAdmitted": 376,
+   "groups": 5,
+   "groupMembers": 6201,
+   "tier2Cases": 8
+  },
+  {
+   "step": 102,
+   "seconds": 0.59,
+   "flows": 16345,
+   "queue": 10345,
+   "suricataAdmitted": 376,
+   "groups": 5,
+   "groupMembers": 6381,
+   "tier2Cases": 8
+  },
+  {
+   "step": 103,
+   "seconds": 0.6,
+   "flows": 16548,
+   "queue": 10360,
+   "suricataAdmitted": 376,
+   "groups": 5,
+   "groupMembers": 6569,
+   "tier2Cases": 8
+  },
+  {
+   "step": 104,
+   "seconds": 0.54,
+   "flows": 16736,
+   "queue": 10368,
+   "suricataAdmitted": 376,
+   "groups": 5,
+   "groupMembers": 6749,
+   "tier2Cases": 8
+  },
+  {
+   "step": 105,
+   "seconds": 0.59,
+   "flows": 16932,
+   "queue": 10382,
+   "suricataAdmitted": 376,
+   "groups": 5,
+   "groupMembers": 6931,
+   "tier2Cases": 8
+  },
+  {
+   "step": 106,
+   "seconds": 0.65,
+   "flows": 17124,
+   "queue": 10396,
+   "suricataAdmitted": 376,
+   "groups": 5,
+   "groupMembers": 7109,
+   "tier2Cases": 8
+  },
+  {
+   "step": 107,
+   "seconds": 0.63,
+   "flows": 17314,
+   "queue": 10405,
+   "suricataAdmitted": 377,
+   "groups": 5,
+   "groupMembers": 7291,
+   "tier2Cases": 8
+  },
+  {
+   "step": 108,
+   "seconds": 0.64,
+   "flows": 17511,
+   "queue": 10422,
+   "suricataAdmitted": 377,
+   "groups": 5,
+   "groupMembers": 7471,
+   "tier2Cases": 8
+  },
+  {
+   "step": 109,
+   "seconds": 0.6,
+   "flows": 17702,
+   "queue": 10433,
+   "suricataAdmitted": 377,
+   "groups": 5,
+   "groupMembers": 7651,
+   "tier2Cases": 8
+  },
+  {
+   "step": 110,
+   "seconds": 0.64,
+   "flows": 17892,
+   "queue": 10445,
+   "suricataAdmitted": 378,
+   "groups": 5,
+   "groupMembers": 7830,
+   "tier2Cases": 8
+  },
+  {
+   "step": 111,
+   "seconds": 0.65,
+   "flows": 18083,
+   "queue": 10456,
+   "suricataAdmitted": 378,
+   "groups": 5,
+   "groupMembers": 8010,
+   "tier2Cases": 8
+  },
+  {
+   "step": 112,
+   "seconds": 0.68,
+   "flows": 18279,
+   "queue": 10471,
+   "suricataAdmitted": 378,
+   "groups": 5,
+   "groupMembers": 8191,
+   "tier2Cases": 8
+  },
+  {
+   "step": 113,
+   "seconds": 0.67,
+   "flows": 18474,
+   "queue": 10486,
+   "suricataAdmitted": 378,
+   "groups": 5,
+   "groupMembers": 8371,
+   "tier2Cases": 8
+  },
+  {
+   "step": 114,
+   "seconds": 0.67,
+   "flows": 18662,
+   "queue": 10496,
+   "suricataAdmitted": 378,
+   "groups": 5,
+   "groupMembers": 8549,
+   "tier2Cases": 8
+  },
+  {
+   "step": 115,
+   "seconds": 0.67,
+   "flows": 18858,
+   "queue": 10510,
+   "suricataAdmitted": 378,
+   "groups": 5,
+   "groupMembers": 8731,
+   "tier2Cases": 8
+  },
+  {
+   "step": 116,
+   "seconds": 0.77,
+   "flows": 19056,
+   "queue": 10528,
+   "suricataAdmitted": 378,
+   "groups": 5,
+   "groupMembers": 8911,
+   "tier2Cases": 8
+  },
+  {
+   "step": 117,
+   "seconds": 0.79,
+   "flows": 19258,
+   "queue": 10551,
+   "suricataAdmitted": 379,
+   "groups": 5,
+   "groupMembers": 9091,
+   "tier2Cases": 8
+  },
+  {
+   "step": 118,
+   "seconds": 0.76,
+   "flows": 19450,
+   "queue": 10564,
+   "suricataAdmitted": 380,
+   "groups": 5,
+   "groupMembers": 9271,
+   "tier2Cases": 8
+  },
+  {
+   "step": 119,
+   "seconds": 0.91,
+   "flows": 19651,
+   "queue": 10585,
+   "suricataAdmitted": 383,
+   "groups": 5,
+   "groupMembers": 9454,
+   "tier2Cases": 9
+  },
+  {
+   "step": 120,
+   "seconds": 0.72,
+   "flows": 19858,
+   "queue": 10601,
+   "suricataAdmitted": 383,
+   "groups": 5,
+   "groupMembers": 9645,
+   "tier2Cases": 9
+  },
+  {
+   "step": 121,
+   "seconds": 0.66,
+   "flows": 20050,
+   "queue": 10612,
+   "suricataAdmitted": 383,
+   "groups": 5,
+   "groupMembers": 9826,
+   "tier2Cases": 9
+  },
+  {
+   "step": 122,
+   "seconds": 0.7,
+   "flows": 20249,
+   "queue": 10631,
+   "suricataAdmitted": 383,
+   "groups": 5,
+   "groupMembers": 10006,
+   "tier2Cases": 9
+  },
+  {
+   "step": 123,
+   "seconds": 0.72,
+   "flows": 20444,
+   "queue": 10646,
+   "suricataAdmitted": 383,
+   "groups": 5,
+   "groupMembers": 10186,
+   "tier2Cases": 9
+  },
+  {
+   "step": 124,
+   "seconds": 0.78,
+   "flows": 20639,
+   "queue": 10662,
+   "suricataAdmitted": 384,
+   "groups": 5,
+   "groupMembers": 10366,
+   "tier2Cases": 10
+  },
+  {
+   "step": 125,
+   "seconds": 0.79,
+   "flows": 20838,
+   "queue": 10682,
+   "suricataAdmitted": 385,
+   "groups": 5,
+   "groupMembers": 10546,
+   "tier2Cases": 10
+  },
+  {
+   "step": 126,
+   "seconds": 0.76,
+   "flows": 21037,
+   "queue": 10700,
+   "suricataAdmitted": 385,
+   "groups": 5,
+   "groupMembers": 10727,
+   "tier2Cases": 10
+  },
+  {
+   "step": 127,
+   "seconds": 0.77,
+   "flows": 21243,
+   "queue": 10721,
+   "suricataAdmitted": 385,
+   "groups": 5,
+   "groupMembers": 10912,
+   "tier2Cases": 10
+  },
+  {
+   "step": 128,
+   "seconds": 0.78,
+   "flows": 21446,
+   "queue": 10742,
+   "suricataAdmitted": 385,
+   "groups": 5,
+   "groupMembers": 11094,
+   "tier2Cases": 10
+  },
+  {
+   "step": 129,
+   "seconds": 0.79,
+   "flows": 21646,
+   "queue": 10760,
+   "suricataAdmitted": 385,
+   "groups": 5,
+   "groupMembers": 11276,
+   "tier2Cases": 10
+  },
+  {
+   "step": 130,
+   "seconds": 0.72,
+   "flows": 21834,
+   "queue": 10767,
+   "suricataAdmitted": 386,
+   "groups": 5,
+   "groupMembers": 11458,
+   "tier2Cases": 10
+  },
+  {
+   "step": 131,
+   "seconds": 0.76,
+   "flows": 22031,
+   "queue": 10784,
+   "suricataAdmitted": 386,
+   "groups": 5,
+   "groupMembers": 11638,
+   "tier2Cases": 10
+  },
+  {
+   "step": 132,
+   "seconds": 0.92,
+   "flows": 22222,
+   "queue": 10797,
+   "suricataAdmitted": 389,
+   "groups": 5,
+   "groupMembers": 11819,
+   "tier2Cases": 10
+  },
+  {
+   "step": 133,
+   "seconds": 0.97,
+   "flows": 22422,
+   "queue": 10819,
+   "suricataAdmitted": 392,
+   "groups": 5,
+   "groupMembers": 12000,
+   "tier2Cases": 10
+  },
+  {
+   "step": 134,
+   "seconds": 0.73,
+   "flows": 22613,
+   "queue": 10830,
+   "suricataAdmitted": 392,
+   "groups": 5,
+   "groupMembers": 12180,
+   "tier2Cases": 10
+  },
+  {
+   "step": 135,
+   "seconds": 0.76,
+   "flows": 22807,
+   "queue": 10844,
+   "suricataAdmitted": 392,
+   "groups": 5,
+   "groupMembers": 12360,
+   "tier2Cases": 10
+  },
+  {
+   "step": 136,
+   "seconds": 0.8,
+   "flows": 23004,
+   "queue": 10861,
+   "suricataAdmitted": 392,
+   "groups": 5,
+   "groupMembers": 12540,
+   "tier2Cases": 10
+  },
+  {
+   "step": 137,
+   "seconds": 0.85,
+   "flows": 23219,
+   "queue": 10886,
+   "suricataAdmitted": 392,
+   "groups": 5,
+   "groupMembers": 12730,
+   "tier2Cases": 10
+  },
+  {
+   "step": 138,
+   "seconds": 0.77,
+   "flows": 23416,
+   "queue": 10902,
+   "suricataAdmitted": 392,
+   "groups": 5,
+   "groupMembers": 12911,
+   "tier2Cases": 10
+  },
+  {
+   "step": 139,
+   "seconds": 0.75,
+   "flows": 23607,
+   "queue": 10913,
+   "suricataAdmitted": 392,
+   "groups": 5,
+   "groupMembers": 13091,
+   "tier2Cases": 10
+  },
+  {
+   "step": 140,
+   "seconds": 0.76,
+   "flows": 23804,
+   "queue": 10930,
+   "suricataAdmitted": 392,
+   "groups": 5,
+   "groupMembers": 13271,
+   "tier2Cases": 10
+  },
+  {
+   "step": 141,
+   "seconds": 0.75,
+   "flows": 24001,
+   "queue": 10947,
+   "suricataAdmitted": 392,
+   "groups": 5,
+   "groupMembers": 13451,
+   "tier2Cases": 10
+  },
+  {
+   "step": 142,
+   "seconds": 0.85,
+   "flows": 24197,
+   "queue": 10964,
+   "suricataAdmitted": 393,
+   "groups": 5,
+   "groupMembers": 13631,
+   "tier2Cases": 10
+  },
+  {
+   "step": 143,
+   "seconds": 0.76,
+   "flows": 24391,
+   "queue": 10978,
+   "suricataAdmitted": 393,
+   "groups": 5,
+   "groupMembers": 13811,
+   "tier2Cases": 10
+  },
+  {
+   "step": 144,
+   "seconds": 0.7,
+   "flows": 24583,
+   "queue": 10989,
+   "suricataAdmitted": 393,
+   "groups": 5,
+   "groupMembers": 13992,
+   "tier2Cases": 10
+  },
+  {
+   "step": 145,
+   "seconds": 0.74,
+   "flows": 24780,
+   "queue": 11006,
+   "suricataAdmitted": 393,
+   "groups": 5,
+   "groupMembers": 14172,
+   "tier2Cases": 10
+  },
+  {
+   "step": 146,
+   "seconds": 0.78,
+   "flows": 24982,
+   "queue": 11019,
+   "suricataAdmitted": 393,
+   "groups": 5,
+   "groupMembers": 14361,
+   "tier2Cases": 10
+  },
+  {
+   "step": 147,
+   "seconds": 0.8,
+   "flows": 25181,
+   "queue": 11038,
+   "suricataAdmitted": 394,
+   "groups": 5,
+   "groupMembers": 14542,
+   "tier2Cases": 10
+  },
+  {
+   "step": 148,
+   "seconds": 0.72,
+   "flows": 25372,
+   "queue": 11048,
+   "suricataAdmitted": 394,
+   "groups": 5,
+   "groupMembers": 14723,
+   "tier2Cases": 10
+  },
+  {
+   "step": 149,
+   "seconds": 0.8,
+   "flows": 25568,
+   "queue": 11064,
+   "suricataAdmitted": 394,
+   "groups": 5,
+   "groupMembers": 14903,
+   "tier2Cases": 10
+  },
+  {
+   "step": 150,
+   "seconds": 0.73,
+   "flows": 25761,
+   "queue": 11077,
+   "suricataAdmitted": 394,
+   "groups": 5,
+   "groupMembers": 15083,
+   "tier2Cases": 10
+  },
+  {
+   "step": 151,
+   "seconds": 0.77,
+   "flows": 25964,
+   "queue": 11089,
+   "suricataAdmitted": 394,
+   "groups": 5,
+   "groupMembers": 15274,
+   "tier2Cases": 10
+  },
+  {
+   "step": 152,
+   "seconds": 0.73,
+   "flows": 26157,
+   "queue": 11102,
+   "suricataAdmitted": 394,
+   "groups": 5,
+   "groupMembers": 15454,
+   "tier2Cases": 10
+  },
+  {
+   "step": 153,
+   "seconds": 0.83,
+   "flows": 26348,
+   "queue": 11115,
+   "suricataAdmitted": 396,
+   "groups": 5,
+   "groupMembers": 15634,
+   "tier2Cases": 10
+  },
+  {
+   "step": 154,
+   "seconds": 0.88,
+   "flows": 26545,
+   "queue": 11133,
+   "suricataAdmitted": 397,
+   "groups": 5,
+   "groupMembers": 15814,
+   "tier2Cases": 10
+  },
+  {
+   "step": 155,
+   "seconds": 0.82,
+   "flows": 26745,
+   "queue": 11146,
+   "suricataAdmitted": 398,
+   "groups": 5,
+   "groupMembers": 16002,
+   "tier2Cases": 10
+  },
+  {
+   "step": 156,
+   "seconds": 0.93,
+   "flows": 26946,
+   "queue": 11168,
+   "suricataAdmitted": 399,
+   "groups": 5,
+   "groupMembers": 16182,
+   "tier2Cases": 10
+  },
+  {
+   "step": 157,
+   "seconds": 0.85,
+   "flows": 27141,
+   "queue": 11181,
+   "suricataAdmitted": 399,
+   "groups": 5,
+   "groupMembers": 16364,
+   "tier2Cases": 10
+  },
+  {
+   "step": 158,
+   "seconds": 0.84,
+   "flows": 27324,
+   "queue": 11186,
+   "suricataAdmitted": 399,
+   "groups": 5,
+   "groupMembers": 16542,
+   "tier2Cases": 10
+  },
+  {
+   "step": 159,
+   "seconds": 0.79,
+   "flows": 27516,
+   "queue": 11196,
+   "suricataAdmitted": 399,
+   "groups": 5,
+   "groupMembers": 16724,
+   "tier2Cases": 10
+  }
+ ]
+}

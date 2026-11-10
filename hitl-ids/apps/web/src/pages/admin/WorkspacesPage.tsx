@@ -12,7 +12,7 @@ export function WorkspacesPage() {
   const [error, setError] = useState<string | null>(null);
   // X7 (S8-09): no pre-filled "Prepare ..." sentence; an empty reason records the action that was taken.
   const [reason, setReason] = useState("");
-  const [mode, setMode] = useState<"full" | "presentation">("full");
+  const [mode, setMode] = useState<"full" | "presentation" | "packet">("full");
   const reload = useRef(state.reload); reload.current = state.reload;
   useEffect(() => { const timer = setInterval(() => reload.current(), 5000); return () => clearInterval(timer); }, []);
 
@@ -63,20 +63,27 @@ export function WorkspacesPage() {
                 className="mt-1 block w-full rounded-sm border border-border bg-raised px-3 py-2">
                 <option value="full">Full Replay · all 200 now</option>
                 <option value="presentation">Presentation Replay · progressive Holdout</option>
+                <option value="packet">Packet Replay · Suricata + flow chains, progressive arrivals</option>
               </select>
             </label>}
-            {workspace.ready && <p>Mode: <strong className="text-text">{workspace.preparationMode === "presentation" ? "Presentation Replay" : "Full Replay"}</strong></p>}
-            <p>Raw frozen workload records: {workspace.rawRecords ?? "N/A"}</p>
-            <p>Staged alerts: {workspace.stagedAlerts ?? "N/A"}</p>
+            {workspace.ready && <p>Mode: <strong className="text-text">{workspace.preparationMode === "presentation" ? "Presentation Replay" : workspace.preparationMode === "packet" ? "Packet Replay" : "Full Replay"}</strong></p>}
+            {workspace.preparationMode === "packet"
+              ? <p>Flows in the capture window: {workspace.rawRecords ?? "N/A"}</p>
+              : <p>Raw frozen workload records: {workspace.rawRecords ?? "N/A"}</p>}
+            {workspace.preparationMode === "packet"
+              ? <p>Suricata alerts admitted: {workspace.stagedAlerts ?? "N/A"}</p>
+              : <p>Staged alerts: {workspace.stagedAlerts ?? "N/A"}</p>}
             <p>Last prepared: {workspace.lastPreparedAt ?? "Never"}</p>
-            {workspace.preparationMode === "presentation" && <div className="space-y-1 rounded-sm border border-border bg-raised p-3">
-              <p>Learning history: <strong className="text-text">{workspace.learningProcessed} processed</strong></p>
-              <p>Holdout arrived: <strong className="text-text">{workspace.holdoutArrived} / 160</strong></p>
+            {(workspace.preparationMode === "presentation" || workspace.preparationMode === "packet") && <div className="space-y-1 rounded-sm border border-border bg-raised p-3">
+              {workspace.preparationMode === "presentation" && <p>Learning history: <strong className="text-text">{workspace.learningProcessed} processed</strong></p>}
+              {workspace.preparationMode === "packet"
+                ? <p>Capture steps arrived: <strong className="text-text">{workspace.holdoutArrived} / 160</strong></p>
+                : <p>Holdout arrived: <strong className="text-text">{workspace.holdoutArrived} / 160</strong></p>}
               <p>Remaining: <strong className="text-text">{workspace.holdoutRemaining}</strong></p>
               <p>Playback: <strong className="text-text">{workspace.playbackState === "running" ? "Running" : workspace.playbackState === "complete" ? "Complete" : "Paused"}</strong></p>
               <p>Last arrival: {workspace.lastArrivalAt ?? "Not yet"}</p>
             </div>}
-            <p className="text-xs">Recorded presentation replay, not live network traffic. Official frozen evaluation results are separate.</p>
+            <p className="text-xs">{workspace.preparationMode === "packet" ? "Recorded packet capture (CSE-CIC-IDS2018, 2018-02-14) replayed in capture order. Not live network traffic." : "Recorded presentation replay, not live network traffic. Official frozen evaluation results are separate."}</p>
           </>}
         </div>
         <div className="mt-4 flex flex-wrap gap-2">
@@ -90,18 +97,20 @@ export function WorkspacesPage() {
             <button type="button" disabled={busy !== null || !workspace.ready || workspace.active}
               onClick={() => void act("reset")}
               className="rounded-sm border border-danger/50 px-3 py-1.5 text-sm text-danger disabled:opacity-40">Reset Replay</button>
-            {workspace.preparationMode === "presentation" && <>
+            {(workspace.preparationMode === "presentation" || workspace.preparationMode === "packet") && <>
               <button type="button" disabled={busy !== null || !workspace.active || workspace.playbackState !== "paused" || !workspace.holdoutRemaining}
                 onClick={() => void act("start")}
                 className="rounded-sm border border-accent px-3 py-1.5 text-sm text-accent disabled:opacity-40">Start Arrivals</button>
               <button type="button" disabled={busy !== null || workspace.playbackState !== "running"}
                 onClick={() => void act("pause")}
                 className="rounded-sm border border-border px-3 py-1.5 text-sm text-text disabled:opacity-40">Pause</button>
-              {[1, 5, 150].map(count => <button key={count} type="button"
+              {(workspace.preparationMode === "packet" ? [1, 5] : [1, 5, 150]).map(count => <button key={count} type="button"
                 disabled={busy !== null || !workspace.active || !workspace.holdoutRemaining}
                 onClick={() => void act("advance", "v3-1-replay", count as 1 | 5 | 150)}
                 className="rounded-sm border border-border px-3 py-1.5 text-sm text-text disabled:opacity-40">
-                {count === 1 ? "Next Alert" : count === 5 ? "Next 5" : "Load Remaining"}</button>)}
+                {workspace.preparationMode === "packet"
+                  ? count === 1 ? "Next Step" : "Next 5 Steps"
+                  : count === 1 ? "Next Alert" : count === 5 ? "Next 5" : "Load Remaining"}</button>)}
             </>}
           </>}
         </div>

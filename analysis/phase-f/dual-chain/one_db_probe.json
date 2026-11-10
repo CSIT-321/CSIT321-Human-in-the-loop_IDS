@@ -1,0 +1,68 @@
+{
+ "source": "C:\\Users\\Glenn Ang\\AppData\\Local\\Temp\\hitl-review\\p2w-flow.db",
+ "control": {
+  "tried": 3,
+  "admitted": 0,
+  "errors": {
+   "ValidationError: 3 validation errors for ClassificationPolicy\nconflictPolicy\n  Field required [type=missing, input_value={'cate": 3
+  }
+ },
+ "trial": {
+  "tried": 82,
+  "admitted": 82,
+  "errors": {}
+ },
+ "before": {
+  "alertsBySource": {
+   "legacy_flow_alert": 4085
+  },
+  "routesBySource": [
+   [
+    "legacy_flow_alert",
+    "tier1_review",
+    4082
+   ],
+   [
+    "legacy_flow_alert",
+    "tier2_case",
+    3
+   ]
+  ],
+  "tier2CasesBySource": {
+   "legacy_flow_alert": 3
+  }
+ },
+ "after": {
+  "alertsBySource": {
+   "external_nids_alert": 82,
+   "legacy_flow_alert": 4085
+  },
+  "routesBySource": [
+   [
+    "external_nids_alert",
+    "tier1_review",
+    46
+   ],
+   [
+    "external_nids_alert",
+    "tier2_case",
+    36
+   ],
+   [
+    "legacy_flow_alert",
+    "tier1_review",
+    4082
+   ],
+   [
+    "legacy_flow_alert",
+    "tier2_case",
+    3
+   ]
+  ],
+  "tier2CasesBySource": {
+   "external_nids_alert": 36,
+   "legacy_flow_alert": 3
+  }
+ },
+ "trialDb": "C:\\Users\\Glenn Ang\\AppData\\Local\\Temp\\hitl-review\\dual-probe-trial.db"
+}

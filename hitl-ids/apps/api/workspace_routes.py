@@ -15,7 +15,7 @@ class WorkspaceCommand(BaseModel):
 
 
 class ReplayPrepareCommand(WorkspaceCommand):
-    mode: Literal['full', 'presentation'] = 'full'
+    mode: Literal['full', 'presentation', 'packet'] = 'full'
 
 
 class ReplayAdvanceCommand(WorkspaceCommand):
@@ -33,7 +33,7 @@ class WorkspaceInfo(BaseModel):
     rawRecords: int | None
     stagedAlerts: int | None
     workloadSha256: str | None
-    preparationMode: Literal['full', 'presentation'] | None = None
+    preparationMode: Literal['full', 'presentation', 'packet'] | None = None
     learningProcessed: int | None = None
     holdoutArrived: int | None = None
     holdoutRemaining: int | None = None

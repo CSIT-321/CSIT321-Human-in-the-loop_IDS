@@ -8973,7 +8973,8 @@
             "default": "full",
             "enum": [
               "full",
-              "presentation"
+              "presentation",
+              "packet"
             ],
             "title": "Mode",
             "type": "string"
@@ -12717,7 +12718,8 @@
               {
                 "enum": [
                   "full",
-                  "presentation"
+                  "presentation",
+                  "packet"
                 ],
                 "type": "string"
               },

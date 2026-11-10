@@ -69,7 +69,10 @@ def _snapshot(model):
 
 def _version_guard(conn, column, policy):
     # Configuration cannot silently change under an already-recorded version.
-    for row in conn.execute(f'SELECT {column} FROM operational_system_routing'):
+    # Only this module's own rows are compared. A flow alert's row is written by flow_routing with other policy
+    # types; reading it here made every Suricata admission fail in a database that also holds routed flows.
+    for row in conn.execute(f'SELECT s.{column} FROM operational_system_routing s JOIN operational_alerts_v2 o '
+                            "ON o.id=s.operational_alert_id WHERE o.source_kind='external_nids_alert'"):
         old = type(policy).model_validate_json(row[0])
         if old.version == policy.version and old != policy:
             raise ValueError('changed configuration requires a new policy version')

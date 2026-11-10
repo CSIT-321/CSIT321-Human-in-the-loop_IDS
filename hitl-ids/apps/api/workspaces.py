@@ -26,7 +26,7 @@ from packages.detection.adapters.staging import stage_file
 from packages.detection.external_admission import (
     AdmissionRequest, EligibilityRequest, admit_external, review_eligibility,
 )
-from apps.api import presentation_replay
+from apps.api import packet_replay, presentation_replay
 
 REPOSITORY = Path(__file__).resolve().parents[3]
 WORKLOAD = REPOSITORY / "evaluation/protocol-v3.1/workload/operational-workload.jsonl"
@@ -65,6 +65,8 @@ def _control(path: Path, *, create: bool = False) -> sqlite3.Connection | None:
             created_at TEXT NOT NULL);
         INSERT OR IGNORE INTO selection(id,workspace) VALUES (1,'operational');
         """)
+        if 'mode' not in [column[1] for column in conn.execute('PRAGMA table_info(presentation)')]:
+            conn.execute("ALTER TABLE presentation ADD COLUMN mode TEXT NOT NULL DEFAULT 'presentation'")
     return conn
 
 
@@ -126,6 +128,7 @@ def state(request: Request) -> dict:
     active = active_id(control)
     meta = None
     presentation = None
+    progressive = 'full'
     actions = []
     conn = _control(control)
     if conn is not None:
@@ -135,6 +138,8 @@ def state(request: Request) -> dict:
             if conn.execute("SELECT 1 FROM sqlite_master WHERE type='table' AND name='presentation'").fetchone():
                 row = conn.execute("SELECT * FROM presentation WHERE id=1").fetchone()
                 presentation = dict(row) if row else None
+                if presentation:
+                    progressive = presentation.get('mode', 'presentation')
             actions = [dict(row) for row in conn.execute(
                 "SELECT actor,action,workspace,reason,created_at FROM actions ORDER BY id DESC LIMIT 20")]
         finally:
@@ -147,8 +152,8 @@ def state(request: Request) -> dict:
                  "lastPreparedAt": meta["prepared_at"] if key == "v3-1-replay" and meta else None,
                  "rawRecords": meta["raw_records"] if key == "v3-1-replay" and meta else None,
                  "stagedAlerts": meta["staged_alerts"] if key == "v3-1-replay" and meta else None,
-                 "preparationMode": ('presentation' if presentation else 'full') if key == 'v3-1-replay' and meta else None,
-                 "learningProcessed": 40 if presentation and key == 'v3-1-replay' else 0 if key == 'v3-1-replay' and meta else None,
+                 "preparationMode": progressive if key == 'v3-1-replay' and meta else None,
+                 "learningProcessed": 40 if progressive == 'presentation' and key == 'v3-1-replay' else 0 if key == 'v3-1-replay' and meta else None,
                  "holdoutArrived": presentation['cursor'] if presentation and key == 'v3-1-replay' else 160 if key == 'v3-1-replay' and meta else None,
                  "holdoutRemaining": 160-presentation['cursor'] if presentation and key == 'v3-1-replay' else 0 if key == 'v3-1-replay' and meta else None,
                  "playbackState": presentation['playback_state'] if presentation and key == 'v3-1-replay' else None,
@@ -185,8 +190,8 @@ def activate(request: Request, workspace: str, actor: str, reason: str) -> dict:
 
 
 def prepare(request: Request, actor: str, reason: str, mode: str = 'full') -> dict:
-    if mode not in ('full', 'presentation'):
-        raise ApiError(400, 'INVALID_REPLAY_MODE', 'Choose Full Replay or Presentation Replay.')
+    if mode not in ('full', 'presentation', 'packet'):
+        raise ApiError(400, 'INVALID_REPLAY_MODE', 'Choose Full Replay, Presentation Replay or Packet Replay.')
     operational, control, replay = paths(request)
     conn = _control(control, create=True)
     assert conn is not None
@@ -198,15 +203,26 @@ def prepare(request: Request, actor: str, reason: str, mode: str = 'full') -> di
             raise ApiError(409, "REPLAY_ACTIVE", "Activate Operational before preparing Replay.")
         if replay.exists():
             raise ApiError(409, "REPLAY_ALREADY_PREPARED", "Reset Replay before preparing it again.")
-        try:
-            raw = WORKLOAD.read_bytes()
-        except OSError as exc:
-            raise ApiError(503, "REPLAY_WORKLOAD_UNAVAILABLE", "Frozen V3.1 workload is unavailable.") from exc
-        if len(raw.splitlines()) != 200:
-            raise ApiError(503, "REPLAY_WORKLOAD_INVALID", "Frozen V3.1 workload must contain 200 records.")
-        if mode == 'presentation':
+        records, raw = 200, b''
+        if mode == 'packet':
+            if not packet_replay.available():
+                raise ApiError(503, "REPLAY_WORKLOAD_UNAVAILABLE",
+                               "Packet replay data is missing. Run scripts/build_packet_replay.py.")
+            records, staged, count = packet_replay.build(temporary), 0, 0
+            workload_hash = packet_replay.source_hash()
+        else:
+            try:
+                raw = WORKLOAD.read_bytes()
+            except OSError as exc:
+                raise ApiError(503, "REPLAY_WORKLOAD_UNAVAILABLE", "Frozen V3.1 workload is unavailable.") from exc
+            if len(raw.splitlines()) != 200:
+                raise ApiError(503, "REPLAY_WORKLOAD_INVALID", "Frozen V3.1 workload must contain 200 records.")
+            workload_hash = hashlib.sha256(raw).hexdigest()
+        if mode == 'packet':
+            pass
+        elif mode == 'presentation':
             source_hash, learning_counts, count = presentation_replay.build(temporary, actor)
-            if source_hash != hashlib.sha256(raw).hexdigest():
+            if source_hash != workload_hash:
                 raise ApiError(503, 'REPLAY_WORKLOAD_CHANGED', 'Frozen workload changed during preparation.')
             staged = count
         else:
@@ -235,14 +251,18 @@ def prepare(request: Request, actor: str, reason: str, mode: str = 'full') -> di
                 staged = report.staged
         os.replace(temporary, replay)
         published = True
-        if mode == 'presentation':
+        if mode != 'full':
             configure_presentation_database(replay)
         conn.execute("INSERT OR REPLACE INTO replay_meta VALUES (1,?,?,?,?,?)",
-                     (datetime.now(timezone.utc).isoformat(), 200, staged, count,
-                      hashlib.sha256(raw).hexdigest()))
-        if mode == 'presentation':
+                     (datetime.now(timezone.utc).isoformat(), records, staged, count, workload_hash))
+        if mode == 'packet':
+            # The capture steps arrive in order; nothing has arrived yet.
+            conn.execute("INSERT INTO presentation VALUES (1,0,0,?,'paused',NULL,NULL,?,'packet')",
+                         (json.dumps(list(range(160))), actor))
+            _audit(conn, actor, 'packet_replay_prepared', 'v3-1-replay', reason)
+        elif mode == 'presentation':
             order = presentation_replay.arrival_order(json.loads(presentation_replay.STRUCTURE.read_text(encoding='utf-8')))
-            conn.execute("INSERT INTO presentation VALUES (1,?,?,?,?,?,?,?)",
+            conn.execute("INSERT INTO presentation VALUES (1,?,?,?,?,?,?,?,'presentation')",
                 (presentation_replay.INITIAL_HOLDOUT, presentation_replay.INITIAL_HOLDOUT,
                  json.dumps(order), 'paused', None, datetime.now(timezone.utc).isoformat(), actor))
             _audit(conn, actor, 'presentation_replay_prepared', 'v3-1-replay', reason)
@@ -290,10 +310,15 @@ def _advance_locked(conn: sqlite3.Connection, replay: Path, count: int, actor: s
         raise ApiError(409, 'PRESENTATION_NOT_PREPARED', 'Prepare Presentation Replay first.')
     order = json.loads(row['arrival_order'])
     cursor = row['cursor']
+    packet = 'mode' in row.keys() and row['mode'] == 'packet'   # a control file from before Packet Replay has no column
     for _ in range(min(count, 160-cursor)):
         for attempt in range(3):
             try:
-                presentation_replay.advance_one(replay, order[cursor], row['preparing_admin'])
+                if packet:
+                    staged, total = packet_replay.advance_one(replay, order[cursor], row['preparing_admin'])
+                else:
+                    presentation_replay.advance_one(replay, order[cursor], row['preparing_admin'])
+                    staged = total = 41 + cursor
                 break
             except sqlite3.OperationalError as exc:
                 if 'locked' not in str(exc).lower() and 'busy' not in str(exc).lower():
@@ -305,8 +330,7 @@ def _advance_locked(conn: sqlite3.Connection, replay: Path, count: int, actor: s
         cursor += 1
         stamp = datetime.now(timezone.utc).isoformat()
         conn.execute('UPDATE presentation SET cursor=?,last_arrival_at=? WHERE id=1', (cursor, stamp))
-        conn.execute('UPDATE replay_meta SET staged_alerts=?,operational_alerts=? WHERE id=1',
-                     (40+cursor, 40+cursor))
+        conn.execute('UPDATE replay_meta SET staged_alerts=?,operational_alerts=? WHERE id=1', (staged, total))
     if cursor == 160 and row['playback_state'] != 'complete':
         conn.execute("UPDATE presentation SET playback_state='complete',next_due_at=NULL WHERE id=1")
         _audit(conn, actor, 'presentation_playback_completed', 'v3-1-replay', reason)
@@ -332,7 +356,7 @@ def advance(request: Request, count: int, actor: str, reason: str, request_id: s
             conn.execute('INSERT INTO presentation_requests VALUES (?,?,?,?,?)',
                          (request_id, actor, count, current, datetime.now(timezone.utc).isoformat()))
             _audit(conn, actor, 'presentation_manual_advance', 'v3-1-replay',
-                   f'{reason} · requested {count}; Holdout arrived {current}/160')
+                   f'{reason} · requested {count}; arrived {current}/160')
         conn.commit()
     except sqlite3.OperationalError as exc:
         conn.rollback()

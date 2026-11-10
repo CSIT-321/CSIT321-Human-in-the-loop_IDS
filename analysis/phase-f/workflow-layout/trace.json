@@ -1,0 +1,876 @@
+{
+ "totals": {
+  "flowsInWindow": 27516,
+  "steps": 160,
+  "replaySeconds": 155.6,
+  "suricataAlertsArrived": 408,
+  "suricataBundlesAdmitted": 399,
+  "queueItems": 11196,
+  "flowQueueItems": 10797,
+  "suricataQueueItems": 399,
+  "flaggedFlows": 16724,
+  "unflaggedFlows": 10792,
+  "groups": 5,
+  "groupMembers": 16724,
+  "tier2Cases": 10,
+  "tier2CasesFlow": 2,
+  "tier1Items": 11186,
+  "unrouted": 0
+ },
+ "results": [
+  {
+   "chain": "flow",
+   "count": 2,
+   "operationalId": 9940,
+   "alertRef": "448172d5-a667-461c-8e2b-c1fe72316e5b",
+   "title": "FTP Brute Force Flow Pattern",
+   "evidenceClass": "corroborated",
+   "isGroup": true,
+   "classification": {
+    "status": "mapped",
+    "category": "brute_force",
+    "reasons": [
+     "Rule and model assert Brute Force."
+    ],
+    "policyVersion": "flow-classification-v1"
+   },
+   "routing": {
+    "routeClass": "CRITICAL_ESCALATION",
+    "route": "tier2_case",
+    "reasons": [
+     "E1-flow-rule: the rule and the model agree on Brute Force at score 100.",
+     "The whole group of 90 alerts is escalated; member 1 of 90 qualified."
+    ],
+    "policyVersion": "flow-routing-v1"
+   },
+   "triage": {
+    "priority": 100,
+    "band": "critical",
+    "route": "tier2_case",
+    "stage": "investigation",
+    "tier2Recommended": false,
+    "reason": "E1-flow-rule: the rule and the model agree on Brute Force at score 100. The whole group of 90 alerts is escalated; member 1 of 90 qualified."
+   },
+   "caseRef": "67d5537e-3e18-54b0-ada7-920b71b63aa6",
+   "trace": {
+    "flow": {
+     "record": "PK-172.31.69.25-91",
+     "time": "2018-02-14 14:33:26.718731",
+     "srcIp": "18.221.219.4",
+     "srcPort": 39922,
+     "dstIp": "172.31.69.25",
+     "dstPort": 21,
+     "protocol": "TCP",
+     "packets": 2,
+     "bytes": 0,
+     "durationSeconds": 1.9e-05
+    },
+    "detection": {
+     "rules": [
+      "SIG-FTP-BRUTE-FORCE"
+     ],
+     "ruleCategory": "Brute Force",
+     "modelClass": "Brute Force",
+     "modelProbability": 1.0,
+     "combinedScore": 100,
+     "evidenceClass": "corroborated"
+    },
+    "group": {
+     "key": "18.221.219.4",
+     "members": 5100,
+     "firstSeen": "2018-02-14T14:33:26.718731Z",
+     "lastSeen": "2018-02-14T14:35:59.871829Z",
+     "membersWithSuricataAlert": 0
+    },
+    "otherChain": []
+   },
+   "id": "R1"
+  },
+  {
+   "chain": "flow",
+   "count": 10776,
+   "operationalId": 1,
+   "alertRef": "c591a8d6-4260-4d86-9f73-3c959831af80",
+   "title": "XGBoost: Benign",
+   "evidenceClass": "none",
+   "isGroup": false,
+   "classification": {
+    "status": "informational_policy_signal",
+    "category": null,
+    "reasons": [
+     "No detector asserts an attack class."
+    ],
+    "policyVersion": "flow-classification-v1"
+   },
+   "routing": {
+    "routeClass": "ROUTINE_REVIEW",
+    "route": "tier1_review",
+    "reasons": [
+     "No automatic or candidate rule applies. Routine Tier 1 review."
+    ],
+    "policyVersion": "flow-routing-v1"
+   },
+   "triage": {
+    "priority": 0,
+    "band": "low",
+    "route": "tier1_review",
+    "stage": "triage",
+    "tier2Recommended": false,
+    "reason": "No automatic or candidate rule applies. Routine Tier 1 review."
+   },
+   "caseRef": null,
+   "trace": {
+    "flow": {
+     "record": "PK-172.31.65.56-22615",
+     "time": "2018-02-14 12:34:00.004166",
+     "srcIp": "71.242.248.156",
+     "srcPort": 51557,
+     "dstIp": "172.31.65.56",
+     "dstPort": 3389,
+     "protocol": "TCP",
+     "packets": 16,
+     "bytes": 2719,
+     "durationSeconds": 7.922187
+    },
+    "detection": {
+     "rules": [],
+     "ruleCategory": null,
+     "modelClass": "Benign",
+     "modelProbability": 0.0,
+     "combinedScore": 0,
+     "evidenceClass": "none"
+    },
+    "group": null,
+    "otherChain": []
+   },
+   "id": "R2"
+  },
+  {
+   "chain": "flow",
+   "count": 16,
+   "operationalId": 690,
+   "alertRef": "b8bf0f3f-c2af-45fe-8312-9595d0a96bf2",
+   "title": "XGBoost: Benign",
+   "evidenceClass": "none",
+   "isGroup": false,
+   "classification": {
+    "status": "informational_policy_signal",
+    "category": null,
+    "reasons": [
+     "No detector asserts an attack class."
+    ],
+    "policyVersion": "flow-classification-v1"
+   },
+   "routing": {
+    "routeClass": "ROUTINE_REVIEW",
+    "route": "tier1_review",
+    "reasons": [
+     "No automatic or candidate rule applies. Routine Tier 1 review."
+    ],
+    "policyVersion": "flow-routing-v1"
+   },
+   "triage": {
+    "priority": 48.37,
+    "band": "medium",
+    "route": "tier1_review",
+    "stage": "triage",
+    "tier2Recommended": false,
+    "reason": "No automatic or candidate rule applies. Routine Tier 1 review."
+   },
+   "caseRef": null,
+   "trace": {
+    "flow": {
+     "record": "PK-172.31.64.80-23346",
+     "time": "2018-02-14 12:34:45.765973",
+     "srcIp": "172.31.64.80",
+     "srcPort": 49420,
+     "dstIp": "35.199.42.112",
+     "dstPort": 80,
+     "protocol": "TCP",
+     "packets": 7,
+     "bytes": 1459,
+     "durationSeconds": 0.029259
+    },
+    "detection": {
+     "rules": [],
+     "ruleCategory": null,
+     "modelClass": "Benign",
+     "modelProbability": 0.4837,
+     "combinedScore": 48.37,
+     "evidenceClass": "none"
+    },
+    "group": null,
+    "otherChain": []
+   },
+   "id": "R3"
+  },
+  {
+   "chain": "flow",
+   "count": 2,
+   "operationalId": 864,
+   "alertRef": "2d2a40a2-ef76-473d-825c-addb05d27028",
+   "title": "XGBoost: Infiltration",
+   "evidenceClass": "ml_only",
+   "isGroup": true,
+   "classification": {
+    "status": "mapped",
+    "category": "infiltration",
+    "reasons": [
+     "Rule and model assert Infiltration."
+    ],
+    "policyVersion": "flow-classification-v1"
+   },
+   "routing": {
+    "routeClass": "ROUTINE_REVIEW",
+    "route": "tier1_review",
+    "reasons": [
+     "No automatic or candidate rule applies. Routine Tier 1 review."
+    ],
+    "policyVersion": "flow-routing-v1"
+   },
+   "triage": {
+    "priority": 72.62,
+    "band": "high",
+    "route": "tier1_review",
+    "stage": "triage",
+    "tier2Recommended": false,
+    "reason": "No automatic or candidate rule applies. Routine Tier 1 review."
+   },
+   "caseRef": null,
+   "trace": {
+    "flow": {
+     "record": "PK-172.31.64.80-11457",
+     "time": "2018-02-14 12:34:52.899887",
+     "srcIp": "50.16.227.133",
+     "srcPort": 443,
+     "dstIp": "172.31.64.80",
+     "dstPort": 49493,
+     "protocol": "TCP",
+     "packets": 38,
+     "bytes": 8212,
+     "durationSeconds": 97.34543
+    },
+    "detection": {
+     "rules": [],
+     "ruleCategory": "Infiltration",
+     "modelClass": "Infiltration",
+     "modelProbability": 0.7262,
+     "combinedScore": 72.62,
+     "evidenceClass": "ml_only"
+    },
+    "group": {
+     "key": "50.16.227.133",
+     "members": 1,
+     "firstSeen": "2018-02-14T12:34:52.899887Z",
+     "lastSeen": "2018-02-14T12:34:52.899887Z",
+     "membersWithSuricataAlert": 0
+    },
+    "otherChain": []
+   },
+   "id": "R4"
+  },
+  {
+   "chain": "flow",
+   "count": 1,
+   "operationalId": 4830,
+   "alertRef": "ba82414a-6e3b-4737-ad71-dc08160a6a27",
+   "title": "XGBoost: Web Attack",
+   "evidenceClass": "ml_only",
+   "isGroup": true,
+   "classification": {
+    "status": "mapped",
+    "category": "web_attack",
+    "reasons": [
+     "Rule and model assert Web Attack."
+    ],
+    "policyVersion": "flow-classification-v1"
+   },
+   "routing": {
+    "routeClass": "ROUTINE_REVIEW",
+    "route": "tier1_review",
+    "reasons": [
+     "No automatic or candidate rule applies. Routine Tier 1 review."
+    ],
+    "policyVersion": "flow-routing-v1"
+   },
+   "triage": {
+    "priority": 52.39,
+    "band": "medium",
+    "route": "tier1_review",
+    "stage": "triage",
+    "tier2Recommended": false,
+    "reason": "No automatic or candidate rule applies. Routine Tier 1 review."
+   },
+   "caseRef": null,
+   "trace": {
+    "flow": {
+     "record": "PK-172.31.64.80-23113",
+     "time": "2018-02-14 12:38:28.160476",
+     "srcIp": "172.31.64.80",
+     "srcPort": 50599,
+     "dstIp": "137.254.120.50",
+     "dstPort": 80,
+     "protocol": "TCP",
+     "packets": 9,
+     "bytes": 984,
+     "durationSeconds": 0.150238
+    },
+    "detection": {
+     "rules": [],
+     "ruleCategory": "Web Attack",
+     "modelClass": "Web Attack",
+     "modelProbability": 0.5239,
+     "combinedScore": 52.39,
+     "evidenceClass": "ml_only"
+    },
+    "group": {
+     "key": "172.31.64.80",
+     "members": 9,
+     "firstSeen": "2018-02-14T12:38:28.160476Z",
+     "lastSeen": "2018-02-14T12:45:16.977712Z",
+     "membersWithSuricataAlert": 0
+    },
+    "otherChain": []
+   },
+   "id": "R5"
+  },
+  {
+   "chain": "suricata",
+   "count": 8,
+   "operationalId": 3416,
+   "alertRef": "441ae6e8-371e-5d19-b50e-f3c0c88979e6",
+   "title": "ET SCAN Sipvicious Scan",
+   "evidenceClass": null,
+   "isGroup": false,
+   "classification": {
+    "status": "unmapped",
+    "category": "unknown_needs_expert",
+    "reasons": [
+     "Unresolved evidence: neither a supported attack class nor complete explicit informational/policy identification. Expert review required."
+    ],
+    "policyVersion": "suricata-classification-v3"
+   },
+   "routing": {
+    "routeClass": "EXPERT_REVIEW_REQUIRED",
+    "route": "tier2_case",
+    "reasons": [
+     "Attack classification cannot be resolved safely from current evidence (Unknown / Needs Expert). This is not a maliciousness verdict."
+    ],
+    "policyVersion": "system-routing-v1"
+   },
+   "triage": {
+    "priority": 65,
+    "band": "high",
+    "route": "tier2_case",
+    "stage": "investigation",
+    "tier2Recommended": false,
+    "reason": "Attack classification cannot be resolved safely from current evidence (Unknown / Needs Expert). This is not a maliciousness verdict."
+   },
+   "caseRef": "da9bbaf0-80d1-59d0-a89f-d1e6c9752637",
+   "trace": {
+    "eve": {
+     "time": "2018-02-14T20:36:49.897892+0800",
+     "srcIp": "212.47.252.61",
+     "srcPort": 5101,
+     "dstIp": "172.31.64.80",
+     "dstPort": 5060,
+     "protocol": "UDP",
+     "signature": "ET SCAN Sipvicious Scan",
+     "category": "Attempted Information Leak",
+     "severity": 2,
+     "sids": [
+      2008578,
+      2011716
+     ],
+     "alertsInBundle": 2,
+     "flowId": 478721084327223
+    },
+    "staging": {
+     "inboxId": 87,
+     "decision": "hold_for_review",
+     "policyVersion": "suricata-offline-v1",
+     "evidenceClass": "external_rule"
+    },
+    "review": {
+     "decision": "accepted",
+     "reason": "Packet Replay: non-informational Suricata alert, accepted by the replay rule",
+     "actor": "admin"
+    },
+    "admission": {
+     "event": "V2_EXTERNAL_ALERT_ADMITTED",
+     "at": "2026-11-10T08:52:04.870445Z"
+    },
+    "otherChain": {
+     "flowAlertId": 3082,
+     "evidenceClass": "none",
+     "ruleCategory": null,
+     "modelClass": "Benign",
+     "modelProbability": 0.0132,
+     "combinedScore": 1.32,
+     "groupMembers": null
+    }
+   },
+   "id": "R6"
+  },
+  {
+   "chain": "suricata",
+   "count": 345,
+   "operationalId": 320,
+   "alertRef": "9b8d38a2-3a26-5509-91ac-317f2e7bb270",
+   "title": "ET JA3 Hash - Possible Malware - Fake Firefox Font Update",
+   "evidenceClass": null,
+   "isGroup": false,
+   "classification": {
+    "status": "mapped",
+    "category": "malware_exploit",
+    "reasons": [
+     "Rule malware-exploit: signature 2028369 signature maps to malware_exploit."
+    ],
+    "policyVersion": "suricata-classification-v3"
+   },
+   "routing": {
+    "routeClass": "ROUTINE_REVIEW",
+    "route": "tier1_review",
+    "reasons": [
+     "Known attack classification; no configured trusted critical or expert condition is satisfied. Routine Tier 1 review."
+    ],
+    "policyVersion": "system-routing-v1"
+   },
+   "triage": {
+    "priority": 40,
+    "band": "medium",
+    "route": "tier1_review",
+    "stage": "triage",
+    "tier2Recommended": false,
+    "reason": "Known attack classification; no configured trusted critical or expert condition is satisfied. Routine Tier 1 review."
+   },
+   "caseRef": null,
+   "trace": {
+    "eve": {
+     "time": "2018-02-14T20:34:30.549535+0800",
+     "srcIp": "172.31.64.80",
+     "srcPort": 49256,
+     "dstIp": "69.172.216.56",
+     "dstPort": 443,
+     "protocol": "TCP",
+     "signature": "ET JA3 Hash - Possible Malware - Fake Firefox Font Update",
+     "category": "Unknown Traffic",
+     "severity": 3,
+     "sids": [
+      2028369
+     ],
+     "alertsInBundle": 1,
+     "flowId": 1916187249197603
+    },
+    "staging": {
+     "inboxId": 2,
+     "decision": "hold_for_review",
+     "policyVersion": "suricata-offline-v1",
+     "evidenceClass": "external_rule"
+    },
+    "review": {
+     "decision": "accepted",
+     "reason": "Packet Replay: non-informational Suricata alert, accepted by the replay rule",
+     "actor": "admin"
+    },
+    "admission": {
+     "event": "V2_EXTERNAL_ALERT_ADMITTED",
+     "at": "2026-11-10T08:51:38.839488Z"
+    },
+    "otherChain": {
+     "flowAlertId": 284,
+     "evidenceClass": "none",
+     "ruleCategory": null,
+     "modelClass": "Benign",
+     "modelProbability": 0.0,
+     "combinedScore": 0,
+     "groupMembers": null
+    }
+   },
+   "id": "R7"
+  },
+  {
+   "chain": "suricata",
+   "count": 35,
+   "operationalId": 55,
+   "alertRef": "315b0dc7-368f-5696-8930-0ff74c7a9082",
+   "title": "ET SCAN Behavioral Unusually fast Terminal Server Traffic Potential Scan or Infection (Inbound)",
+   "evidenceClass": null,
+   "isGroup": false,
+   "classification": {
+    "status": "mapped",
+    "category": "reconnaissance_port_scan",
+    "reasons": [
+     "Rule reconnaissance: signature 2001972 native category maps to reconnaissance_port_scan."
+    ],
+    "policyVersion": "suricata-classification-v3"
+   },
+   "routing": {
+    "routeClass": "ROUTINE_REVIEW",
+    "route": "tier1_review",
+    "reasons": [
+     "Known attack classification; no configured trusted critical or expert condition is satisfied. Routine Tier 1 review."
+    ],
+    "policyVersion": "system-routing-v1"
+   },
+   "triage": {
+    "priority": 40,
+    "band": "medium",
+    "route": "tier1_review",
+    "stage": "triage",
+    "tier2Recommended": false,
+    "reason": "Known attack classification; no configured trusted critical or expert condition is satisfied. Routine Tier 1 review."
+   },
+   "caseRef": null,
+   "trace": {
+    "eve": {
+     "time": "2018-02-14T20:34:16.417488+0800",
+     "srcIp": "52.63.87.177",
+     "srcPort": 55428,
+     "dstIp": "172.31.65.56",
+     "dstPort": 3389,
+     "protocol": "TCP",
+     "signature": "ET SCAN Behavioral Unusually fast Terminal Server Traffic Potential Scan or Infection (Inbound)",
+     "category": "Detection of a Network Scan",
+     "severity": 3,
+     "sids": [
+      2001972
+     ],
+     "alertsInBundle": 1,
+     "flowId": 104251424597696
+    },
+    "staging": {
+     "inboxId": 1,
+     "decision": "hold_for_review",
+     "policyVersion": "suricata-offline-v1",
+     "evidenceClass": "external_rule"
+    },
+    "review": {
+     "decision": "accepted",
+     "reason": "Packet Replay: non-informational Suricata alert, accepted by the replay rule",
+     "actor": "admin"
+    },
+    "admission": {
+     "event": "V2_EXTERNAL_ALERT_ADMITTED",
+     "at": "2026-11-10T08:51:36.729732Z"
+    },
+    "otherChain": {
+     "flowAlertId": 42,
+     "evidenceClass": "none",
+     "ruleCategory": null,
+     "modelClass": "Benign",
+     "modelProbability": 0.0,
+     "combinedScore": 0,
+     "groupMembers": null
+    }
+   },
+   "id": "R8"
+  },
+  {
+   "chain": "suricata",
+   "count": 6,
+   "operationalId": 10260,
+   "alertRef": "ddf0c741-c163-5220-adbc-4d522ab4461e",
+   "title": "ET SCAN Potential SSH Scan",
+   "evidenceClass": null,
+   "isGroup": false,
+   "classification": {
+    "status": "mapped",
+    "category": "reconnaissance_port_scan",
+    "reasons": [
+     "Rule reconnaissance: signature 2001219 signature maps to reconnaissance_port_scan."
+    ],
+    "policyVersion": "suricata-classification-v3"
+   },
+   "routing": {
+    "routeClass": "ROUTINE_REVIEW",
+    "route": "tier1_review",
+    "reasons": [
+     "Known attack classification; no configured trusted critical or expert condition is satisfied. Routine Tier 1 review."
+    ],
+    "policyVersion": "system-routing-v1"
+   },
+   "triage": {
+    "priority": 65,
+    "band": "high",
+    "route": "tier1_review",
+    "stage": "triage",
+    "tier2Recommended": false,
+    "reason": "Known attack classification; no configured trusted critical or expert condition is satisfied. Routine Tier 1 review."
+   },
+   "caseRef": null,
+   "trace": {
+    "eve": {
+     "time": "2018-02-15T02:01:50.375719+0800",
+     "srcIp": "13.58.98.64",
+     "srcPort": 43846,
+     "dstIp": "172.31.69.25",
+     "dstPort": 22,
+     "protocol": "TCP",
+     "signature": "ET SCAN Potential SSH Scan",
+     "category": "Attempted Information Leak",
+     "severity": 2,
+     "sids": [
+      2001219
+     ],
+     "alertsInBundle": 1,
+     "flowId": 1895176605453914
+    },
+    "staging": {
+     "inboxId": 374,
+     "decision": "hold_for_review",
+     "policyVersion": "suricata-offline-v1",
+     "evidenceClass": "external_rule"
+    },
+    "review": {
+     "decision": "accepted",
+     "reason": "Packet Replay: non-informational Suricata alert, accepted by the replay rule",
+     "actor": "admin"
+    },
+    "admission": {
+     "event": "V2_EXTERNAL_ALERT_ADMITTED",
+     "at": "2026-11-10T08:53:24.821414Z"
+    },
+    "otherChain": {
+     "flowAlertId": 15018,
+     "evidenceClass": "corroborated",
+     "ruleCategory": "Brute Force",
+     "modelClass": "Brute Force",
+     "modelProbability": 0.9992,
+     "combinedScore": 100,
+     "groupMembers": 11613
+    }
+   },
+   "id": "R9"
+  },
+  {
+   "chain": "suricata",
+   "count": 5,
+   "operationalId": 2261,
+   "alertRef": "891b2d20-e2d3-5a95-80cb-65e38e548780",
+   "title": "ET EXPLOIT Possible ETERNALBLUE Probe MS17-010 (MSF style)",
+   "evidenceClass": null,
+   "isGroup": false,
+   "classification": {
+    "status": "mapped",
+    "category": "malware_exploit",
+    "reasons": [
+     "Rule malware-exploit: signature 2025649 signature maps to malware_exploit.",
+     "Rule malware-exploit: signature 2025649 native category maps to malware_exploit.",
+     "Rule malware-exploit: signature 2025992 signature maps to malware_exploit.",
+     "Rule malware-exploit: signature 2025992 native category maps to malware_exploit.",
+     "Rule malware-exploit: signature 2025650 signature maps to malware_exploit.",
+     "Rule malware-exploit: signature 2025650 native category maps to malware_exploit."
+    ],
+    "policyVersion": "suricata-classification-v3"
+   },
+   "routing": {
+    "routeClass": "ROUTINE_REVIEW",
+    "route": "tier1_review",
+    "reasons": [
+     "Known attack classification; no configured trusted critical or expert condition is satisfied. Routine Tier 1 review."
+    ],
+    "policyVersion": "system-routing-v1"
+   },
+   "triage": {
+    "priority": 85,
+    "band": "critical",
+    "route": "tier1_review",
+    "stage": "triage",
+    "tier2Recommended": false,
+    "reason": "Known attack classification; no configured trusted critical or expert condition is satisfied. Routine Tier 1 review."
+   },
+   "caseRef": null,
+   "trace": {
+    "eve": {
+     "time": "2018-02-14T20:36:01.153878+0800",
+     "srcIp": "197.51.213.242",
+     "srcPort": 51921,
+     "dstIp": "172.31.65.56",
+     "dstPort": 445,
+     "protocol": "TCP",
+     "signature": "ET EXPLOIT Possible ETERNALBLUE Probe MS17-010 (MSF style)",
+     "category": "A Network Trojan was detected",
+     "severity": 1,
+     "sids": [
+      2025649,
+      2025992
+     ],
+     "alertsInBundle": 2,
+     "flowId": 93609915503669
+    },
+    "staging": {
+     "inboxId": 56,
+     "decision": "hold_for_review",
+     "policyVersion": "suricata-offline-v1",
+     "evidenceClass": "external_rule"
+    },
+    "review": {
+     "decision": "accepted",
+     "reason": "Packet Replay: non-informational Suricata alert, accepted by the replay rule",
+     "actor": "admin"
+    },
+    "admission": {
+     "event": "V2_EXTERNAL_ALERT_ADMITTED",
+     "at": "2026-11-10T08:51:54.900432Z"
+    },
+    "otherChain": {
+     "flowAlertId": 2161,
+     "evidenceClass": "none",
+     "ruleCategory": null,
+     "modelClass": "Benign",
+     "modelProbability": 0.0,
+     "combinedScore": 0,
+     "groupMembers": null
+    }
+   },
+   "id": "R10"
+  }
+ ],
+ "progress": [
+  {
+   "step": 9,
+   "flows": 1921,
+   "queue": 1961,
+   "suricataAdmitted": 40,
+   "groups": 1,
+   "groupMembers": 1,
+   "tier2Cases": 0
+  },
+  {
+   "step": 19,
+   "flows": 3779,
+   "queue": 3888,
+   "suricataAdmitted": 109,
+   "groups": 2,
+   "groupMembers": 2,
+   "tier2Cases": 2
+  },
+  {
+   "step": 29,
+   "flows": 5220,
+   "queue": 5386,
+   "suricataAdmitted": 166,
+   "groups": 3,
+   "groupMembers": 3,
+   "tier2Cases": 6
+  },
+  {
+   "step": 39,
+   "flows": 6648,
+   "queue": 6898,
+   "suricataAdmitted": 253,
+   "groups": 3,
+   "groupMembers": 6,
+   "tier2Cases": 6
+  },
+  {
+   "step": 49,
+   "flows": 7561,
+   "queue": 7861,
+   "suricataAdmitted": 304,
+   "groups": 3,
+   "groupMembers": 7,
+   "tier2Cases": 6
+  },
+  {
+   "step": 59,
+   "flows": 8496,
+   "queue": 8831,
+   "suricataAdmitted": 340,
+   "groups": 3,
+   "groupMembers": 8,
+   "tier2Cases": 6
+  },
+  {
+   "step": 69,
+   "flows": 9377,
+   "queue": 9734,
+   "suricataAdmitted": 365,
+   "groups": 3,
+   "groupMembers": 11,
+   "tier2Cases": 6
+  },
+  {
+   "step": 79,
+   "flows": 10768,
+   "queue": 10002,
+   "suricataAdmitted": 371,
+   "groups": 4,
+   "groupMembers": 1141,
+   "tier2Cases": 7
+  },
+  {
+   "step": 89,
+   "flows": 14391,
+   "queue": 10157,
+   "suricataAdmitted": 373,
+   "groups": 4,
+   "groupMembers": 4611,
+   "tier2Cases": 7
+  },
+  {
+   "step": 99,
+   "flows": 15760,
+   "queue": 10300,
+   "suricataAdmitted": 376,
+   "groups": 5,
+   "groupMembers": 5841,
+   "tier2Cases": 8
+  },
+  {
+   "step": 109,
+   "flows": 17702,
+   "queue": 10433,
+   "suricataAdmitted": 377,
+   "groups": 5,
+   "groupMembers": 7651,
+   "tier2Cases": 8
+  },
+  {
+   "step": 119,
+   "flows": 19651,
+   "queue": 10585,
+   "suricataAdmitted": 383,
+   "groups": 5,
+   "groupMembers": 9454,
+   "tier2Cases": 9
+  },
+  {
+   "step": 129,
+   "flows": 21646,
+   "queue": 10760,
+   "suricataAdmitted": 385,
+   "groups": 5,
+   "groupMembers": 11276,
+   "tier2Cases": 10
+  },
+  {
+   "step": 139,
+   "flows": 23607,
+   "queue": 10913,
+   "suricataAdmitted": 392,
+   "groups": 5,
+   "groupMembers": 13091,
+   "tier2Cases": 10
+  },
+  {
+   "step": 149,
+   "flows": 25568,
+   "queue": 11064,
+   "suricataAdmitted": 394,
+   "groups": 5,
+   "groupMembers": 14903,
+   "tier2Cases": 10
+  },
+  {
+   "step": 159,
+   "flows": 27516,
+   "queue": 11196,
+   "suricataAdmitted": 399,
+   "groups": 5,
+   "groupMembers": 16724,
+   "tier2Cases": 10
+  }
+ ]
+}

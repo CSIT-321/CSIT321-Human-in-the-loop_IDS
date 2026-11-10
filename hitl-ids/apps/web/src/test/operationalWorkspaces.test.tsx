@@ -103,6 +103,23 @@ describe("operational workspace controls", () => {
     expect(screen.queryByText(/oracle outcome/i)).toBeNull();
   });
 
+  it("renders Packet Replay progress with step controls only", async () => {
+    stubFetch(() => {
+      const state = workspaceState("v3-1-replay", true);
+      Object.assign(state.workspaces[1]!, {
+        preparationMode: "packet", holdoutArrived: 12, holdoutRemaining: 148,
+        learningProcessed: 0, playbackState: "paused", lastArrivalAt: "2026-11-03T01:00:00Z",
+      });
+      return jsonResponse(state);
+    });
+    renderApp("/admin/workspaces", { session: ADMIN });
+    expect(await screen.findByText(/Capture steps arrived:/)).toBeVisible();
+    expect(screen.getByText("12 / 160")).toBeVisible();
+    expect(screen.getByRole("button", { name: "Next Step" })).toBeVisible();
+    expect(screen.queryByRole("button", { name: "Load Remaining" })).toBeNull();
+    expect(screen.queryByText(/Learning history/)).toBeNull();
+  });
+
   it("routes Admin and Evaluator to the same frozen evidence module", async () => {
     const summary = { total: 200, learning: 40, holdout: 160, primary: 140, supplementary: 20,
       unknown: 10, drift: 10, primaryBaselineImmediateReview: 140, primaryAdaptiveImmediateReview: 103,

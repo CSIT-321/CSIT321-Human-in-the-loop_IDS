@@ -5644,7 +5644,7 @@ export interface components {
              * @default full
              * @enum {string}
              */
-            mode: "full" | "presentation";
+            mode: "full" | "presentation" | "packet";
             /** Reason */
             reason: string;
         };
@@ -7098,7 +7098,7 @@ export interface components {
              * Preparationmode
              * @default null
              */
-            preparationMode: ("full" | "presentation") | null;
+            preparationMode: ("full" | "presentation" | "packet") | null;
             /** Rawrecords */
             rawRecords: number | null;
             /** Ready */

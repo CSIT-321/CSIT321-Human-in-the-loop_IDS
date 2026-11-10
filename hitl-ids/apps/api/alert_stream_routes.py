@@ -51,6 +51,15 @@ def _arrivals(database: Path, cursor: int) -> list[sqlite3.Row]:
         alert.operational_alert_ref {_ARRIVALS} AND admission.id>? ORDER BY admission.id LIMIT 100""", (cursor,))
 
 
+# A flow alert has no admission row: it enters the queue when its routing decision commits (Packet Replay).
+# One notification for the newest is enough; the workstation reloads the queue on any arrival.
+def _flow_arrival(database: Path, cursor: int) -> sqlite3.Row | None:
+    rows = _read(database, """SELECT alert.id, system.created_at, alert.operational_alert_ref
+        FROM operational_system_routing system JOIN operational_alerts_v2 alert ON alert.id=system.operational_alert_id
+        WHERE alert.source_kind='legacy_flow_alert' AND alert.id>? ORDER BY alert.id DESC LIMIT 1""", (cursor,))
+    return rows[0] if rows else None
+
+
 async def stream_arrivals(request: Request, database: Path, control: Path,
                           workspace_id: str, epoch: int):
     selected, current_epoch = _selection(control)
@@ -58,6 +67,8 @@ async def stream_arrivals(request: Request, database: Path, control: Path,
         yield "event: workspace_changed\ndata: " + json.dumps({"workspaceId": selected}) + "\n\n"
         return
     cursor = _last_id(database)
+    newest_flow = _flow_arrival(database, 0)
+    flow_cursor = int(newest_flow["id"]) if newest_flow else 0
     yield ": connected\n\n"
     ticks = 0
     while not await request.is_disconnected():
@@ -71,6 +82,12 @@ async def stream_arrivals(request: Request, database: Path, control: Path,
             payload = {"eventId": f"{workspace_id}:{cursor}", "workspaceId": workspace_id,
                        "operationalAlertRef": row["operational_alert_ref"],
                        "timestamp": row["created_at"]}
+            yield f"id: {payload['eventId']}\nevent: alert_arrived\ndata: {json.dumps(payload)}\n\n"
+        flow = _flow_arrival(database, flow_cursor)
+        if flow is not None:
+            flow_cursor = int(flow["id"])
+            payload = {"eventId": f"{workspace_id}:flow:{flow_cursor}", "workspaceId": workspace_id,
+                       "operationalAlertRef": flow["operational_alert_ref"], "timestamp": flow["created_at"]}
             yield f"id: {payload['eventId']}\nevent: alert_arrived\ndata: {json.dumps(payload)}\n\n"
         ticks += 1
         if ticks % 15 == 0:
