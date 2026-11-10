@@ -178,6 +178,10 @@ MIGRATIONS += ((24, "audited release of a claimed Tier 1 item (owner, administra
                 Path(__file__).with_name("work_release.sql").read_text(encoding="utf-8")),)
 MIGRATIONS += ((25, "append-only, owner-guarded Tier 1 notes on V2 operational alerts (C6)",
                 Path(__file__).with_name("operational_alert_notes.sql").read_text(encoding="utf-8")),)
+MIGRATIONS += ((26, "per-account queue scope: a second analyst sees Tier 2 only", """
+ALTER TABLE users ADD COLUMN queue_scope TEXT NOT NULL DEFAULT 'all'
+    CHECK (queue_scope IN ('all', 'tier2'));
+"""),)
 SCHEMA_VERSION = MIGRATIONS[-1][0]
 
 

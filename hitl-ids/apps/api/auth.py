@@ -44,10 +44,11 @@ _ALGORITHM = "HS256"
 
 #: (username, password, display_name, role, email). The evaluator seed remains only for
 #: historical/academic compatibility; current product users are Analyst and Administrator.
-DEMO_ACCOUNTS: tuple[tuple[str, str, str, str, str], ...] = (
-    ("g.ang", "analyst-demo", "Glenn Ang", "security_analyst", "g.ang@demo.local"),
-    ("admin", "admin-demo", "LIOW CHEE KUANG", "system_admin", "admin@demo.local"),
-    ("evaluator", "evaluator-demo", "Evaluator", "evaluator", "evaluator@demo.local"),
+DEMO_ACCOUNTS: tuple[tuple[str, str, str, str, str, str], ...] = (
+    ("g.ang", "analyst-demo", "Glenn Ang", "security_analyst", "g.ang@demo.local", "all"),
+    ("t2.ang", "tier2-demo", "Tier 2 Analyst", "security_analyst", "t2.ang@demo.local", "tier2"),
+    ("admin", "admin-demo", "LIOW CHEE KUANG", "system_admin", "admin@demo.local", "all"),
+    ("evaluator", "evaluator-demo", "Evaluator", "evaluator", "evaluator@demo.local", "all"),
 )
 
 
@@ -93,6 +94,7 @@ class Principal:
     username: str
     display_name: str
     role: str
+    queue_scope: str = "all"
 
 
 def sync_seeded_admin_identity(conn: sqlite3.Connection) -> bool:
@@ -122,9 +124,10 @@ def ensure_demo_accounts(conn: sqlite3.Connection) -> None:
     missing = [account for account in DEMO_ACCOUNTS if account[0] not in present]
     if missing:
         with conn:
-            for username, password, display_name, role, email in missing:
+            for username, password, display_name, role, email, scope in missing:
                 db.insert(conn, m.User(username=username, password_hash=_seed_hash(password),
-                                       display_name=display_name, email=email, role=role))
+                                       display_name=display_name, email=email, role=role,
+                                       queue_scope=scope))
     sync_seeded_admin_identity(conn)
 
 
@@ -212,7 +215,8 @@ def _authenticated_user(credentials, conn) -> Principal:
     if user.status != "active":
         raise _unauthorized(f"Account {user.username} is {user.status}.")
     return Principal(user_id=user.id or 0, username=user.username,
-                     display_name=user.display_name, role=user.role)
+                     display_name=user.display_name, role=user.role,
+                     queue_scope=user.queue_scope)
 
 
 def require_role(*allowed: str, readonly: bool = False):

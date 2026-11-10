@@ -243,3 +243,10 @@ The console is identical, but the machine is not. Before the audience:
 Screen resolution is the one thing that differs and cannot be tested from here:
 the workstation is a three-column layout, and below about 1280 px wide the
 context rail drops. Open it on the actual projector resolution once.
+
+## Second analyst account (Tier 2 only)
+
+`t2.ang` / `tier2-demo`
+
+It is a `security_analyst` whose `users.queue_scope` is `tier2`. The API forces its queue and
+summary to `tier2_case`, and a direct read of a Tier 1 alert returns 404.

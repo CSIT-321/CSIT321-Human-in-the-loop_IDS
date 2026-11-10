@@ -121,7 +121,8 @@ def queue_page(conn, *, limit, offset, review_required=None, review_disposition=
     return total, [row[0] for row in ids]
 
 
-def summary(conn):
+def summary(conn, tier2_only=False):
+    where = " WHERE t.handling_route='tier2_case'" if tier2_only else ""
     row = conn.execute(f'''SELECT count(*) AS total_alerts,
         count(CASE WHEN {CRITICAL} THEN 1 END) AS critical_alerts,
         count(CASE WHEN t.handling_route='tier1_review' AND (w.status IS NULL OR w.status NOT IN ('completed','escalated')) THEN 1 END) AS tier1_review,
@@ -130,7 +131,7 @@ def summary(conn):
         count(CASE WHEN t.handling_route='tier2_case' AND t.decision_source='system_policy' THEN 1 END) AS auto_escalated,
         count(CASE WHEN {RECOMMENDATION_OPEN_SQL} AND {ACTIVE_WORK} THEN 1 END) AS tier2_candidates,
         count(CASE WHEN {EXPERT} THEN 1 END) AS expert_review
-        {SOURCE}''').fetchone()
+        {SOURCE}{where}''').fetchone()
     open_cases = conn.execute("SELECT count(*) FROM tier2_cases c JOIN tier2_case_state cs ON cs.case_id=c.id WHERE cs.status IN ('open','investigating')").fetchone()[0]
     values = dict(row)
     work=conn.execute(f'''SELECT
@@ -139,11 +140,11 @@ def summary(conn):
         count(CASE WHEN w.status='escalated' THEN 1 END) AS escalated_work,
         count(CASE WHEN w.status='in_review' THEN 1 END) AS in_review_work,
         count(CASE WHEN {CURRENT_TIER1_SQL} AND (w.status IS NULL OR w.status='available') THEN 1 END) AS available_work
-        {SOURCE}''').fetchone()
+        {SOURCE}{where}''').fetchone()
     values.update(dict(work))
     # Available means claim-eligible attention, not an unowned deferred item. Only an alert with a persisted
     # review decision can be deferred, so the policy runs once per such alert, never per alert in the table.
-    deferred_ids = {item[0] for item in conn.execute(
+    deferred_ids = set() if tier2_only else {item[0] for item in conn.execute(
         'SELECT DISTINCT a.id, a.operational_alert_ref FROM selective_review_events e '
         'JOIN operational_alerts_v2 a ON a.id = e.operational_alert_id').fetchall()
         if effective_review(conn, item[1]).disposition == 'no_immediate_review'}

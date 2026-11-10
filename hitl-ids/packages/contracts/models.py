@@ -338,6 +338,7 @@ class User(Contract):
     display_name: str = Field(min_length=1, max_length=200)
     email: str = Field(pattern=r"^[^@\s]+@[^@\s]+$", max_length=255)
     role: Role
+    queue_scope: Literal["all", "tier2"] = "all"
     status: UserStatus = "active"
     created_at: AwareDatetime = Field(default_factory=utc_now)
     last_login: AwareDatetime | None = None

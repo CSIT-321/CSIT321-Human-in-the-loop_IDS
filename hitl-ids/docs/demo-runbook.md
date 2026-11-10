@@ -21,6 +21,7 @@ Read the **five traps** before you start. Four of them will bite you otherwise.
 |---|---|
 | **Open** | `http://localhost:5173` |
 | **Analyst** | `g.ang` / `analyst-demo` → lands on `/analyst/workstation` |
+| **Tier 2 Analyst** | `t2.ang` / `tier2-demo` → the same workstation, Tier 2 cases only |
 | **Admin** | `admin` / `admin-demo` → lands on `/admin/status` |
 | **Evaluator** | `evaluator` / `evaluator-demo` → lands on `/evaluator/scenarios` |
 | **The arc** | one alert you dismiss → one you confirm → three that agree → the family moves two alerts nobody judged |

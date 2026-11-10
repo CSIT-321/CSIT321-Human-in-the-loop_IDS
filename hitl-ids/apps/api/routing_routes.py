@@ -105,6 +105,9 @@ def list_routing(request: Request, response: Response, conn: ReadConn, principal
     """Filter the full V2 dataset before paging. Order: Operational Priority DESC (null last),
     occurredAt instant DESC, operationalAlertRef ASC. Attention is evaluated read-only."""
     response.headers['X-Operational-Workspace'] = workspaces.selected_id(request)
+    # A Tier 2 analyst receives the Tier 2 cases only, whatever the query asks for.
+    if principal.queue_scope == 'tier2':
+        handlingRoute = 'tier2_case'
     with conn:
         conn.execute('BEGIN')
         reviews = {}
@@ -122,14 +125,17 @@ def get_summary(conn: ReadConn, principal: ReadPrincipal):
     One read-only snapshot; evaluate effective attention without changing stored state."""
     with conn:
         conn.execute('BEGIN')
-        return operational_queue.summary(conn)
+        return operational_queue.summary(conn, tier2_only=principal.queue_scope == 'tier2')
 
 
 @router.get('/{alertRef}/triage-state', response_model=RoutingView, operation_id='getV2Routing')
 def get_routing(alertRef: UUID, conn: ReadConn, principal: ReadPrincipal):
     with conn:
         conn.execute('BEGIN')
-        return _view(conn, _id(conn, alertRef), principal)
+        view = _view(conn, _id(conn, alertRef), principal)
+        if principal.queue_scope == 'tier2' and view.state.handling_route != 'tier2_case':
+            raise ApiError(404, 'NOT_FOUND', 'V2 alert not found')
+        return view
 
 
 @router.get('/{alertRef}/evidence', response_model=OperationalAlertV2, operation_id='getV2AlertEvidence')
