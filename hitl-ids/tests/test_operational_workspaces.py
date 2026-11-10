@@ -4,6 +4,7 @@ from __future__ import annotations
 import hashlib
 import sqlite3
 from contextlib import closing
+from types import SimpleNamespace
 from pathlib import Path
 from uuid import uuid4
 
@@ -279,3 +280,30 @@ def test_a_stored_off_switch_is_adopted_once(tmp_path):
 
     with closing(workspaces._control(directory / 'control.db')) as conn:
         assert workspaces.detection(conn)['flowChainEnabled'] is False
+
+
+def test_reset_retries_a_transient_handle(tmp_path, monkeypatch):
+    """Windows keeps a reader's handle briefly after its request. Reset retries, then succeeds."""
+    import pathlib
+    operational = tmp_path / 'operational.db'
+    operational.touch()
+    directory = tmp_path / 'workspaces'
+    directory.mkdir()
+    replay = directory / 'v3-1-replay.db'
+    replay.write_bytes(b'')
+    with closing(workspaces._control(directory / 'control.db', create=True)) as conn:
+        conn.execute("UPDATE selection SET workspace='operational' WHERE id=1")
+        conn.commit()
+    original = pathlib.Path.unlink
+    attempts = {'n': 0}
+
+    def flaky(self, *args, **kwargs):
+        if self == replay and attempts['n'] < 2:
+            attempts['n'] += 1
+            raise PermissionError(13, 'in use')
+        return original(self, *args, **kwargs)
+
+    monkeypatch.setattr(pathlib.Path, 'unlink', flaky)
+    request = SimpleNamespace(app=SimpleNamespace(state=SimpleNamespace(database_path=str(operational))))
+    workspaces.reset(request, 'admin', 'Retry test')
+    assert attempts['n'] == 2 and not replay.exists()

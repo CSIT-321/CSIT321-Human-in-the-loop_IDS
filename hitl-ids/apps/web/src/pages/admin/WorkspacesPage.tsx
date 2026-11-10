@@ -53,6 +53,11 @@ export function WorkspacesPage() {
           className="mt-1 block w-full rounded-sm border border-border bg-raised px-3 py-2 text-sm text-text" />
       </label>
       {error && <p role="alert" className="rounded-sm border border-danger p-3 text-sm text-danger">{error}</p>}
+      {data.workspaces[1]?.ready && !data.workspaces[1]?.active && <p role="status"
+        className="rounded-sm border border-warn/50 bg-raised p-3 text-sm text-text">
+        Replay is prepared but not active — Analysts currently see the Operational workspace.
+        Click <strong>Activate</strong> on the Replay card to show it.
+      </p>}
       <Card title="Detection chains" subtitle="Program settings. They apply to every workspace and to both data sources.">
         <div className="flex flex-wrap items-center gap-3 text-sm text-text">
           <button type="button" role="switch" aria-checked={data.detection.flowChainEnabled}

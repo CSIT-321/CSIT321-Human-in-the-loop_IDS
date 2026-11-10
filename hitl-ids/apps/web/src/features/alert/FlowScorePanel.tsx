@@ -25,7 +25,7 @@ export function FlowScorePanel({ alertRef }: { alertRef: string }) {
     <Part resource={detail}>{data => <>
       <Card title="Score and band">
         <KeyValues rows={[
-          ["Operational score", <ScorePair detection={data.alert.detectionScore} combined={data.alert.combinedScore} />],
+          ["Reranked detection score", <ScorePair detection={data.alert.detectionScore} combined={data.alert.combinedScore} />],
           ["Severity", <SeverityBadge severity={data.alert.severity} />],
           ["Queue band", <BandBadge queueClass={data.alert.queueClass} />],
           ["Fusion scheme", `${EVIDENCE_LABEL[data.alert.evidenceClass]} · confidence ${formatPercent(data.alert.confidence)}`],

@@ -31,8 +31,8 @@ export const attackCategories = [
 export const categoryLabel = (value: string) => attackCategories.find(([key]) => key === value)?.[1] ?? "Not classified";
 const number = (value: number | undefined) => value === undefined ? "—" : value.toLocaleString();
 // D4 condition 3: the Tier 1 count shows groups and singles apart. Falls back to the total if the split is absent.
-const tier1Split = (data?: Summary) => data?.tier1Groups === undefined || data.tier1Singles === undefined ? null
-  : `${number(data.tier1Groups)} groups · ${number(data.tier1Singles)} single`;
+const tier1Split = (data?: Summary) => data?.tier1Groups === undefined || data?.tier1Singles === undefined ? null
+  : `${number(data.tier1Groups)} flow groups · ${number(data.tier1Singles)} single`;
 const shown = (data: Summary | undefined, key: keyof Summary) => key === "tier1Review" ? tier1Split(data) ?? number(data?.[key]) : number(data?.[key]);
 const metrics = [
   ["active", "Active Alerts", "activeAlerts", "Alerts without completed or escalated Tier 1 work; attention and Tier 2 remain separate"],

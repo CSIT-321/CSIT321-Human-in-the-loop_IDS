@@ -317,10 +317,17 @@ def reset(request: Request, actor: str, reason: str) -> dict:
         if conn.execute("SELECT workspace FROM selection WHERE id=1").fetchone()[0] == "v3-1-replay":
             raise ApiError(409, "REPLAY_ACTIVE", "Activate Operational before resetting Replay.")
         if replay.exists():
-            try:
-                replay.unlink()
-            except PermissionError as exc:
-                raise ApiError(409, "REPLAY_IN_USE", "Replay is still in use; retry after active requests finish.") from exc
+            # A reader can hold the file for a moment after its request ends (Windows keeps the handle until
+            # the connection closes). Retry before refusing: the success path is unchanged.
+            for attempt in range(4):
+                try:
+                    replay.unlink()
+                    break
+                except PermissionError as exc:
+                    if attempt == 3:
+                        raise ApiError(409, "REPLAY_IN_USE",
+                                       "Replay is still in use. Close Analyst tabs, then retry.") from exc
+                    time.sleep(0.5 * (2 ** attempt))
         conn.execute("DELETE FROM replay_meta WHERE id=1")
         conn.execute("DELETE FROM presentation WHERE id=1")
         conn.execute("DELETE FROM presentation_requests")
