@@ -9003,11 +9003,6 @@
       },
       "ReplayPrepareCommand": {
         "properties": {
-          "flowChain": {
-            "default": true,
-            "title": "Flowchain",
-            "type": "boolean"
-          },
           "mode": {
             "default": "full",
             "enum": [

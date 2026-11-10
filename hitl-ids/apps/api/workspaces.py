@@ -41,39 +41,51 @@ def paths(request: Request) -> tuple[Path, Path, Path]:
 
 
 def _control(path: Path, *, create: bool = False) -> sqlite3.Connection | None:
-    if not create and not path.exists():
-        return None
-    if create:
+    """Open the control file. Any existing file is brought to the current schema, because readers
+    (including the 0.5 s playback tick) must find every table they use."""
+    if not path.exists():
+        if not create:
+            return None
         path.parent.mkdir(parents=True, exist_ok=True)
     conn = sqlite3.connect(path, timeout=60, check_same_thread=False)
     conn.row_factory = sqlite3.Row
-    if create:
-        conn.executescript("""
-        CREATE TABLE IF NOT EXISTS selection (id INTEGER PRIMARY KEY CHECK (id=1), workspace TEXT NOT NULL);
-        CREATE TABLE IF NOT EXISTS replay_meta (id INTEGER PRIMARY KEY CHECK (id=1), prepared_at TEXT NOT NULL,
-            raw_records INTEGER NOT NULL, staged_alerts INTEGER NOT NULL, operational_alerts INTEGER NOT NULL,
-            workload_sha256 TEXT NOT NULL);
-        CREATE TABLE IF NOT EXISTS actions (id INTEGER PRIMARY KEY, actor TEXT NOT NULL, action TEXT NOT NULL,
-            workspace TEXT NOT NULL, reason TEXT NOT NULL, created_at TEXT NOT NULL);
-        CREATE TABLE IF NOT EXISTS presentation (id INTEGER PRIMARY KEY CHECK(id=1),
-            cursor INTEGER NOT NULL CHECK(cursor BETWEEN 0 AND 160), initial_holdout INTEGER NOT NULL,
-            arrival_order TEXT NOT NULL CHECK(json_valid(arrival_order)),
-            playback_state TEXT NOT NULL CHECK(playback_state IN ('paused','running','complete')),
-            next_due_at TEXT, last_arrival_at TEXT, preparing_admin TEXT NOT NULL);
-        CREATE TABLE IF NOT EXISTS presentation_requests (request_id TEXT PRIMARY KEY,
-            actor TEXT NOT NULL, count INTEGER NOT NULL, resulting_cursor INTEGER NOT NULL,
-            created_at TEXT NOT NULL);
-        CREATE TABLE IF NOT EXISTS settings (key TEXT PRIMARY KEY, value TEXT NOT NULL,
-            updated_at TEXT NOT NULL, actor TEXT NOT NULL);
-        INSERT OR IGNORE INTO selection(id,workspace) VALUES (1,'operational');
-        INSERT OR IGNORE INTO settings(key,value,updated_at,actor)
-            VALUES ('flow_chain_enabled','1',datetime('now'),'system');
-        """)
-        if 'mode' not in [column[1] for column in conn.execute('PRAGMA table_info(presentation)')]:
-            conn.execute("ALTER TABLE presentation ADD COLUMN mode TEXT NOT NULL DEFAULT 'presentation'")
-        if 'flow_chain' not in [column[1] for column in conn.execute('PRAGMA table_info(presentation)')]:
-            conn.execute("ALTER TABLE presentation ADD COLUMN flow_chain INTEGER NOT NULL DEFAULT 1")
+    _ensure_control_schema(conn)
     return conn
+
+
+def _ensure_control_schema(conn: sqlite3.Connection) -> None:
+    """Idempotent. Runs on every open so a control file from an older version still serves its readers."""
+    conn.executescript("""
+    CREATE TABLE IF NOT EXISTS selection (id INTEGER PRIMARY KEY CHECK (id=1), workspace TEXT NOT NULL);
+    CREATE TABLE IF NOT EXISTS replay_meta (id INTEGER PRIMARY KEY CHECK (id=1), prepared_at TEXT NOT NULL,
+        raw_records INTEGER NOT NULL, staged_alerts INTEGER NOT NULL, operational_alerts INTEGER NOT NULL,
+        workload_sha256 TEXT NOT NULL);
+    CREATE TABLE IF NOT EXISTS actions (id INTEGER PRIMARY KEY, actor TEXT NOT NULL, action TEXT NOT NULL,
+        workspace TEXT NOT NULL, reason TEXT NOT NULL, created_at TEXT NOT NULL);
+    CREATE TABLE IF NOT EXISTS presentation (id INTEGER PRIMARY KEY CHECK(id=1),
+        cursor INTEGER NOT NULL CHECK(cursor BETWEEN 0 AND 160), initial_holdout INTEGER NOT NULL,
+        arrival_order TEXT NOT NULL CHECK(json_valid(arrival_order)),
+        playback_state TEXT NOT NULL CHECK(playback_state IN ('paused','running','complete')),
+        next_due_at TEXT, last_arrival_at TEXT, preparing_admin TEXT NOT NULL);
+    CREATE TABLE IF NOT EXISTS presentation_requests (request_id TEXT PRIMARY KEY,
+        actor TEXT NOT NULL, count INTEGER NOT NULL, resulting_cursor INTEGER NOT NULL,
+        created_at TEXT NOT NULL);
+    CREATE TABLE IF NOT EXISTS settings (key TEXT PRIMARY KEY, value TEXT NOT NULL,
+        updated_at TEXT NOT NULL, actor TEXT NOT NULL);
+    INSERT OR IGNORE INTO selection(id,workspace) VALUES (1,'operational');
+    """)
+    columns = [column[1] for column in conn.execute('PRAGMA table_info(presentation)')]
+    if 'mode' not in columns:
+        conn.execute("ALTER TABLE presentation ADD COLUMN mode TEXT NOT NULL DEFAULT 'presentation'")
+    if 'flow_chain' not in columns:
+        conn.execute("ALTER TABLE presentation ADD COLUMN flow_chain INTEGER NOT NULL DEFAULT 1")
+    # A replay prepared while the switch sat on the presentation row keeps that choice once.
+    conn.execute("INSERT OR IGNORE INTO settings(key,value,updated_at,actor) "
+                 "SELECT 'flow_chain_enabled', CASE WHEN flow_chain=1 THEN '1' ELSE '0' END, "
+                 "datetime('now'), 'system' FROM presentation WHERE id=1")
+    conn.execute("INSERT OR IGNORE INTO settings(key,value,updated_at,actor) "
+                 "VALUES ('flow_chain_enabled','1',datetime('now'),'system')")
+    conn.commit()
 
 
 def detection(conn: sqlite3.Connection) -> dict:
@@ -204,7 +216,7 @@ def activate(request: Request, workspace: str, actor: str, reason: str) -> dict:
     return state(request)
 
 
-def prepare(request: Request, actor: str, reason: str, mode: str = 'full', flow_chain: bool = True) -> dict:
+def prepare(request: Request, actor: str, reason: str, mode: str = 'full') -> dict:
     if mode not in ('full', 'presentation', 'packet'):
         raise ApiError(400, 'INVALID_REPLAY_MODE', 'Choose Full Replay, Presentation Replay or Packet Replay.')
     operational, control, replay = paths(request)
@@ -272,8 +284,8 @@ def prepare(request: Request, actor: str, reason: str, mode: str = 'full', flow_
                      (datetime.now(timezone.utc).isoformat(), records, staged, count, workload_hash))
         if mode == 'packet':
             # The capture steps arrive in order; nothing has arrived yet.
-            conn.execute("INSERT INTO presentation VALUES (1,0,0,?,'paused',NULL,NULL,?,'packet',?)",
-                         (json.dumps(list(range(160))), actor, int(flow_chain)))
+            conn.execute("INSERT INTO presentation VALUES (1,0,0,?,'paused',NULL,NULL,?,'packet',1)",
+                         (json.dumps(list(range(160))), actor))
             _audit(conn, actor, 'packet_replay_prepared', 'v3-1-replay', reason)
         elif mode == 'presentation':
             order = presentation_replay.arrival_order(json.loads(presentation_replay.STRUCTURE.read_text(encoding='utf-8')))

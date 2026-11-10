@@ -5672,11 +5672,6 @@ export interface components {
         /** ReplayPrepareCommand */
         ReplayPrepareCommand: {
             /**
-             * Flowchain
-             * @default true
-             */
-            flowChain: boolean;
-            /**
              * Mode
              * @default full
              * @enum {string}

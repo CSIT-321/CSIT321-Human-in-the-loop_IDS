@@ -230,3 +230,52 @@ def test_analyst_claims_stay_in_selected_database_and_oracle_is_absent(tmp_path)
     with closing(sqlite3.connect(operational)) as conn:
         assert conn.execute("SELECT count(*) FROM analyst_claim_intents").fetchone()[0] == 1
     assert _hash(replay) == replay_after_claim
+
+
+def _legacy_control(path, flow_chain=None):
+    """A control.db as an older install left it: no settings table, maybe a stored per-replay switch."""
+    conn = sqlite3.connect(path)
+    conn.executescript("""
+        CREATE TABLE selection (id INTEGER PRIMARY KEY CHECK (id=1), workspace TEXT NOT NULL);
+        INSERT INTO selection VALUES (1,'v3-1-replay');
+        CREATE TABLE presentation (id INTEGER PRIMARY KEY CHECK(id=1), cursor INTEGER NOT NULL,
+            initial_holdout INTEGER NOT NULL, arrival_order TEXT NOT NULL, playback_state TEXT NOT NULL,
+            next_due_at TEXT, last_arrival_at TEXT, preparing_admin TEXT NOT NULL);
+        INSERT INTO presentation VALUES (1,0,0,'[]','running',NULL,NULL,'admin');
+    """)
+    if flow_chain is not None:
+        conn.execute("ALTER TABLE presentation ADD COLUMN flow_chain INTEGER NOT NULL DEFAULT 1")
+        conn.execute("UPDATE presentation SET flow_chain=?", (flow_chain,))
+    conn.commit()
+    conn.close()
+
+
+def test_tick_migrates_a_control_file_that_predates_the_program_setting(tmp_path):
+    """The 0.5 s playback tick opens the control file read-only for schema purposes. It must still find
+    every table it uses, or an older install's playback pauses on an OperationalError."""
+    operational = tmp_path / 'operational.db'
+    operational.touch()
+    directory = tmp_path / 'workspaces'
+    directory.mkdir()
+    _legacy_control(directory / 'control.db')
+
+    workspaces.tick(operational)
+
+    with closing(sqlite3.connect(directory / 'control.db')) as conn:
+        assert conn.execute("SELECT value FROM settings WHERE key='flow_chain_enabled'").fetchone()[0] == '1'
+        reason = conn.execute("SELECT reason FROM actions WHERE action='presentation_playback_paused' "
+                              "ORDER BY id DESC LIMIT 1").fetchone()
+    # It got past the settings lookup into the replay work: the pause names the missing replay, not a schema error.
+    assert reason and 'PRESENTATION_NOT_PREPARED' in reason[0] and 'OperationalError' not in reason[0]
+
+
+def test_a_stored_off_switch_is_adopted_once(tmp_path):
+    """A replay prepared while the switch sat on the presentation row keeps its choice on upgrade."""
+    operational = tmp_path / 'operational.db'
+    operational.touch()
+    directory = tmp_path / 'workspaces'
+    directory.mkdir()
+    _legacy_control(directory / 'control.db', flow_chain=0)
+
+    with closing(workspaces._control(directory / 'control.db')) as conn:
+        assert workspaces.detection(conn)['flowChainEnabled'] is False

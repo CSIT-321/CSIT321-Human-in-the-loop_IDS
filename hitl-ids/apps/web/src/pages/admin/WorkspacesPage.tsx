@@ -26,7 +26,7 @@ export function WorkspacesPage() {
         activate: `Activate workspace ${id}`, start: "Start replay playback", pause: "Pause replay playback",
         advance: `Advance replay by ${count}`, flowChain: "Set the CICFlowMeter flow chain" } as const;
       const body = { reason: reason.trim() || defaults[action] };
-      if (action === "prepare") await unwrap(api.POST("/api/admin/workspaces/v3-1-replay/prepare", { body: { ...body, mode, flowChain: true } }));
+      if (action === "prepare") await unwrap(api.POST("/api/admin/workspaces/v3-1-replay/prepare", { body: { ...body, mode } }));
       else if (action === "flowChain") await unwrap(api.POST("/api/admin/detection/flow-chain", { body: { ...body, enabled } }));
       else if (action === "reset") await unwrap(api.POST("/api/admin/workspaces/v3-1-replay/reset", { body }));
       else if (action === "start") await unwrap(api.POST("/api/admin/workspaces/v3-1-replay/start", { body }));
