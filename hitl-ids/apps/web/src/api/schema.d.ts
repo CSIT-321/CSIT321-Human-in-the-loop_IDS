@@ -146,6 +146,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/admin/workspaces/v3-1-replay/flow-chain": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** setV31ReplayFlowChain */
+        post: operations["setV31ReplayFlowChain"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/admin/workspaces/v3-1-replay/pause": {
         parameters: {
             query?: never;
@@ -5637,6 +5654,13 @@ export interface components {
              */
             requestId: string;
         };
+        /** ReplayFlowChainCommand */
+        ReplayFlowChainCommand: {
+            /** Enabled */
+            enabled: boolean;
+            /** Reason */
+            reason: string;
+        };
         /** ReplayPrepareCommand */
         ReplayPrepareCommand: {
             /**
@@ -7589,6 +7613,78 @@ export interface operations {
         requestBody: {
             content: {
                 "application/json": components["schemas"]["ReplayAdvanceCommand"];
+            };
+        };
+        responses: {
+            /** @description Presentation Replay state */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WorkspaceState"];
+                };
+            };
+            /** @description Validation failed */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not signed in, or the token expired */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Role not permitted */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Database unavailable or schema unsupported; read-only requests never migrate */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    setV31ReplayFlowChain: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description `Bearer <token>` from POST /api/auth/login */
+                Authorization?: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReplayFlowChainCommand"];
             };
         };
         responses: {

@@ -45,7 +45,8 @@ from packages.detection.trusted_context import ResolvedTrustedContext
 from packages.detection.prospective_collection import RunCreate,RunView,RunPage,RunCommand,ObservationRequest
 from packages.evaluation.prospective_recorded import RecordedArchive
 from apps.api.collection_routes import CollectionDocument
-from apps.api.workspace_routes import WorkspaceCommand, ReplayPrepareCommand, ReplayAdvanceCommand, WorkspaceCurrent, WorkspaceState
+from apps.api.workspace_routes import (WorkspaceCommand, ReplayPrepareCommand, ReplayAdvanceCommand,
+    ReplayFlowChainCommand, WorkspaceCurrent, WorkspaceState)
 from apps.api.contract.admin_current import AdminOverview, AdminGovernance, AdminUsers
 from apps.api.contract.current_audit import CurrentAuditEvent, CurrentAuditPage
 from apps.api.final_v3_records import FinalSummary, FinalRecord, FinalRecordPage, MemoryImpactPage
@@ -69,7 +70,7 @@ SCHEMA_REF = "#/components/schemas/{model}"
 #: Every model that appears on the wire. Listed explicitly rather than discovered, so adding a
 #: model to the API is a deliberate act.
 MODELS: tuple[type[BaseModel], ...] = (
-    WorkspaceCommand, ReplayPrepareCommand, ReplayAdvanceCommand, WorkspaceCurrent, WorkspaceState,
+    WorkspaceCommand, ReplayPrepareCommand, ReplayAdvanceCommand, ReplayFlowChainCommand, WorkspaceCurrent, WorkspaceState,
     AdminOverview, AdminGovernance, AdminUsers, CurrentAuditEvent, CurrentAuditPage,
     FinalSummary, FinalRecord, FinalRecordPage, MemoryImpactPage,
     InvestigationAssistance,
@@ -886,6 +887,7 @@ def _paths() -> dict[str, Any]:
         ('advance', 'advancePresentationReplay', ReplayAdvanceCommand),
         ('start', 'startPresentationReplay', WorkspaceCommand),
         ('pause', 'pausePresentationReplay', WorkspaceCommand),
+        ('flow-chain', 'setV31ReplayFlowChain', ReplayFlowChainCommand),
     ]:
         paths[workspace_root + '/v3-1-replay/' + suffix] = {'post': {
             'operationId': operation, 'summary': operation, 'tags': ['Operational workspaces'],

@@ -107,9 +107,12 @@ def test_packet_replay_without_the_flow_chain(tmp_path, grouped_database, monkey
     """flowChain=false: the capture's flows never enter the database; the queue holds only Suricata alerts."""
     client, _, tokens = _client(tmp_path)
     replay_data(tmp_path, grouped_database, monkeypatch)
-    prepared = replay_state(client.post('/api/admin/workspaces/v3-1-replay/prepare', headers=tokens['admin'],
-                                        json={**ADMIN, 'flowChain': False}))
-    assert prepared['flowChainEnabled'] is False
+    prepared = replay_state(client.post('/api/admin/workspaces/v3-1-replay/prepare', headers=tokens['admin'], json=ADMIN))
+    assert prepared['flowChainEnabled'] is True
+    # A live Admin control: turn the flow chain off after preparation, before any step.
+    off = replay_state(client.post('/api/admin/workspaces/v3-1-replay/flow-chain', headers=tokens['admin'],
+                                   json={'reason': 'Pure Suricata test', 'enabled': False}))
+    assert off['flowChainEnabled'] is False
     client.post('/api/admin/workspaces/v3-1-replay/activate', headers=tokens['admin'], json=ADMIN)
     replay = tmp_path / 'workspaces/v3-1-replay.db'
     for _ in range(2):

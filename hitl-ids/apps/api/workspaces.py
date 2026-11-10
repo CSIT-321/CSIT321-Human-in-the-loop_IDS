@@ -315,11 +315,14 @@ def _advance_locked(conn: sqlite3.Connection, replay: Path, count: int, actor: s
     cursor = row['cursor']
     packet = 'mode' in row.keys() and row['mode'] == 'packet'   # a control file from before Packet Replay has no column
     for _ in range(min(count, 160-cursor)):
+        # The flow-chain toggle is a live Admin control: every step reads the current setting.
+        flow_on = 'flow_chain' in row.keys() and bool(conn.execute(
+            'SELECT flow_chain FROM presentation WHERE id=1').fetchone()[0])
         for attempt in range(3):
             try:
                 if packet:
                     staged, total = packet_replay.advance_one(replay, order[cursor], row['preparing_admin'],
-                                                              flow_chain=bool(row['flow_chain']))
+                                                              flow_chain=flow_on)
                 else:
                     presentation_replay.advance_one(replay, order[cursor], row['preparing_admin'])
                     staged = total = 41 + cursor
@@ -399,6 +402,34 @@ def playback(request: Request, actor: str, reason: str, action: str) -> dict:
                 _audit(conn, actor, 'presentation_playback_paused', 'v3-1-replay', reason)
         else:
             raise ApiError(400, 'INVALID_PLAYBACK_ACTION', 'Unknown presentation playback action.')
+        conn.commit()
+    except Exception:
+        conn.rollback()
+        raise
+    finally:
+        conn.close()
+    return state(request)
+
+
+def flow_chain(request: Request, actor: str, reason: str, enabled: bool) -> dict:
+    """Live Admin control: include or exclude the CICFlowMeter flow chain from later Packet Replay steps.
+
+    Later steps obey the new setting at once; what already arrived stays. The toggle is not part of
+    preparation and needs no reset.
+    """
+    _, control, _ = paths(request)
+    conn = _control(control, create=True)
+    assert conn is not None
+    try:
+        conn.execute('BEGIN IMMEDIATE')
+        row = conn.execute('SELECT * FROM presentation WHERE id=1').fetchone()
+        if row is None:
+            raise ApiError(409, 'PRESENTATION_NOT_PREPARED', 'Prepare Replay first.')
+        if not ('mode' in row.keys() and row['mode'] == 'packet'):
+            raise ApiError(400, 'NOT_PACKET_REPLAY', 'The flow chain toggle applies to Packet Replay only.')
+        conn.execute('UPDATE presentation SET flow_chain=? WHERE id=1', (int(enabled),))
+        _audit(conn, actor, 'packet_replay_flow_chain_set', 'v3-1-replay',
+               f'{reason} · flow chain {"on" if enabled else "off"}')
         conn.commit()
     except Exception:
         conn.rollback()

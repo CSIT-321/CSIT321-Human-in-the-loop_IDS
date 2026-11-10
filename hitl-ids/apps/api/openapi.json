@@ -8967,6 +8967,26 @@
         "title": "ReplayAdvanceCommand",
         "type": "object"
       },
+      "ReplayFlowChainCommand": {
+        "properties": {
+          "enabled": {
+            "title": "Enabled",
+            "type": "boolean"
+          },
+          "reason": {
+            "maxLength": 500,
+            "minLength": 3,
+            "title": "Reason",
+            "type": "string"
+          }
+        },
+        "required": [
+          "reason",
+          "enabled"
+        ],
+        "title": "ReplayFlowChainCommand",
+        "type": "object"
+      },
       "ReplayPrepareCommand": {
         "properties": {
           "flowChain": {
@@ -13710,6 +13730,102 @@
           }
         },
         "summary": "advancePresentationReplay",
+        "tags": [
+          "Operational workspaces"
+        ],
+        "x-required-roles": [
+          "system_admin"
+        ]
+      }
+    },
+    "/api/admin/workspaces/v3-1-replay/flow-chain": {
+      "post": {
+        "operationId": "setV31ReplayFlowChain",
+        "parameters": [
+          {
+            "description": "`Bearer <token>` from POST /api/auth/login",
+            "in": "header",
+            "name": "Authorization",
+            "required": false,
+            "schema": {
+              "example": "Bearer eyJhbGciOiJIUzI1NiJ9...",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReplayFlowChainCommand"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorkspaceState"
+                }
+              }
+            },
+            "description": "Presentation Replay state"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Validation failed"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not signed in, or the token expired"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Role not permitted"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Database unavailable or schema unsupported; read-only requests never migrate"
+          }
+        },
+        "summary": "setV31ReplayFlowChain",
         "tags": [
           "Operational workspaces"
         ],

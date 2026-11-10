@@ -24,6 +24,10 @@ class ReplayAdvanceCommand(WorkspaceCommand):
     count: Literal[1, 5, 150]
 
 
+class ReplayFlowChainCommand(WorkspaceCommand):
+    enabled: bool
+
+
 class WorkspaceInfo(BaseModel):
     id: str
     name: str
@@ -111,6 +115,12 @@ def advance(body: ReplayAdvanceCommand, request: Request, principal: Admin) -> W
              operation_id='startPresentationReplay')
 def start(body: WorkspaceCommand, request: Request, principal: Admin) -> WorkspaceState:
     return WorkspaceState.model_validate(workspaces.playback(request, principal.username, body.reason, 'start'))
+
+
+@router.post('/api/admin/workspaces/v3-1-replay/flow-chain', response_model=WorkspaceState,
+             operation_id='setV31ReplayFlowChain')
+def set_flow_chain(body: ReplayFlowChainCommand, request: Request, principal: Admin) -> WorkspaceState:
+    return WorkspaceState.model_validate(workspaces.flow_chain(request, principal.username, body.reason, body.enabled))
 
 
 @router.post('/api/admin/workspaces/v3-1-replay/pause', response_model=WorkspaceState,
