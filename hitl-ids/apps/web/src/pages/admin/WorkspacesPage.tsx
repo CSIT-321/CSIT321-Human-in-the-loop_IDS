@@ -54,15 +54,21 @@ export function WorkspacesPage() {
       </label>
       {error && <p role="alert" className="rounded-sm border border-danger p-3 text-sm text-danger">{error}</p>}
       <Card title="Detection chains" subtitle="Program settings. They apply to every workspace and to both data sources.">
-        <label className="flex items-center gap-2 text-sm text-text">
-          <input type="checkbox" aria-label="CICFlowMeter flow chain" checked={data.detection.flowChainEnabled}
-            disabled={busy !== null}
-            onChange={event => void act("flowChain", "program", 1, event.target.checked)} />
-          CICFlowMeter flow chain
+        <div className="flex flex-wrap items-center gap-3 text-sm text-text">
+          <button type="button" role="switch" aria-checked={data.detection.flowChainEnabled}
+            aria-label="CICFlowMeter flow chain" disabled={busy !== null}
+            onClick={() => void act("flowChain", "program", 1, !data.detection.flowChainEnabled)}
+            className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full border transition-colors disabled:opacity-40 ${
+              data.detection.flowChainEnabled ? "border-accent bg-accent" : "border-border bg-raised"}`}>
+            <span aria-hidden="true" className={`inline-block h-4 w-4 rounded-full bg-white transition-transform ${
+              data.detection.flowChainEnabled ? "translate-x-6" : "translate-x-1"}`} />
+          </button>
+          <span>CICFlowMeter flow chain</span>
           <span className="text-xs text-muted">{data.detection.flowChainEnabled
             ? "on — flow records are grouped, queued and routed"
             : "off — flow records still arrive, but the program does not process them"}</span>
-        </label>
+          <span className="text-xs font-semibold uppercase tracking-wide text-dim">{data.detection.flowChainEnabled ? "On" : "Off"}</span>
+        </div>
       </Card>
       <div className="grid gap-4 lg:grid-cols-2">{data.workspaces.map(workspace => <Card key={workspace.id}
         title={<span className="flex items-center gap-2">{workspace.name}<Pill tone={workspace.active ? "ok" : "muted"}>{workspace.active ? "Active" : "Inactive"}</Pill></span>}>

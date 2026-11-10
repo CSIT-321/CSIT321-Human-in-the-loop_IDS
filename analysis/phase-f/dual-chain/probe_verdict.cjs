@@ -1,0 +1,30 @@
+
+const { chromium } = require("playwright");
+(async () => {
+  const b = await chromium.launch(); const p = await b.newPage({ viewport: { width: 1440, height: 950 } });
+  const out = {};
+  await p.goto("http://127.0.0.1:5173/login");
+  await p.locator("#username").fill("g.ang"); await p.locator("#password").fill("analyst-demo");
+  await p.getByRole("button", { name: /sign in/i }).click(); await p.waitForTimeout(2000);
+  await p.goto("http://127.0.0.1:5173/analyst/operations?view=all&q=" + encodeURIComponent("XGBoost: Infiltration"));
+  await p.waitForTimeout(2500);
+  const row = p.getByRole("list", { name: "Operational alerts" }).getByRole("button").first();
+  out.row = (await row.innerText()).replace(/\s+/g, " ");
+  await row.click(); await p.waitForTimeout(2000);
+  const ws = p.getByRole("region", { name: "Operational alert workspace", exact: true });
+  out.headerBefore = (await ws.innerText()).replace(/\s+/g, " ").slice(0, 160);
+  await ws.getByRole("tab", { name: "Analyst Verdict", exact: true }).click();
+  await p.waitForTimeout(1500);
+  const verdict = ws.getByRole("region", { name: "Analyst Verdict", exact: true });
+  await verdict.getByLabel("Verdict outcome").selectOption("false_positive");
+  await verdict.getByLabel("Verdict reason").fill("Model-only signal, no rule matched; outbound web traffic from an internal host.");
+  await verdict.getByRole("button", { name: "Record Verdict", exact: true }).click();
+  await p.waitForTimeout(3000);
+  await ws.getByRole("tab", { name: "Flow & Score", exact: true }).click();
+  await p.waitForTimeout(2000);
+  out.afterPanel = (await ws.innerText()).replace(/\s+/g, " ").match(/SCORE ADJUSTMENT.{0,500}/i)?.[0];
+  await p.screenshot({ path: process.env.LOCALAPPDATA + "/Temp/hitl-review/verdict-rerank.png" });
+  out.headerAfter = (await ws.innerText()).replace(/\s+/g, " ").slice(0, 160);
+  console.log(JSON.stringify(out, null, 1));
+  await b.close();
+})();

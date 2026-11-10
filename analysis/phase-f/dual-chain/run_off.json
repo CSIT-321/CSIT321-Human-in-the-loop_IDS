@@ -1,0 +1,24 @@
+{
+ "state": "off",
+ "detection": {
+  "flowChainEnabled": false
+ },
+ "workspace": {
+  "id": "v3-1-replay",
+  "name": "V3.1 Demo Replay",
+  "active": true,
+  "ready": true,
+  "alertCount": 399,
+  "lastPreparedAt": "2026-11-10T11:02:55.695694+00:00",
+  "rawRecords": 27516,
+  "stagedAlerts": 399,
+  "workloadSha256": "edc3ecad7e3e306165fd66f63b2cf83363c85ebde445a0cc7f88f4755db6aad3",
+  "preparationMode": "packet",
+  "learningProcessed": 0,
+  "holdoutArrived": 160,
+  "holdoutRemaining": 0,
+  "playbackState": "complete",
+  "lastArrivalAt": "2026-11-10T11:03:17.673909+00:00"
+ },
+ "seconds": 23.8
+}

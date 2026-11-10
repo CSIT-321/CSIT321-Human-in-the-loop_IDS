@@ -138,13 +138,13 @@ describe("operational workspace controls", () => {
       return jsonResponse(state);
     });
     renderApp("/admin/workspaces", { session: ADMIN });
-    const chain = await screen.findByLabelText("CICFlowMeter flow chain");
-    expect(chain).toBeChecked();
+    const chain = await screen.findByRole("switch", { name: "CICFlowMeter flow chain" });
+    expect(chain).toHaveAttribute("aria-checked", "true");
     await user.click(chain);
     await waitFor(() => expect(seen).toHaveLength(1));
     expect(seen[0]!.path).toBe("/api/admin/detection/flow-chain");
     expect(seen[0]!.body).toMatchObject({ enabled: false });
-    expect(await screen.findByLabelText("CICFlowMeter flow chain")).not.toBeChecked();
+    expect(await screen.findByRole("switch", { name: "CICFlowMeter flow chain" })).toHaveAttribute("aria-checked", "false");
   });
 
   it("routes Admin and Evaluator to the same frozen evidence module", async () => {
