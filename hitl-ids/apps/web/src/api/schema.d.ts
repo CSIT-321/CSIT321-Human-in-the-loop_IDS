@@ -5287,10 +5287,25 @@ export interface components {
             /** Expertreview */
             expertReview: number;
             /**
+             * Highalerts
+             * @default 0
+             */
+            highAlerts: number;
+            /**
              * Inreviewwork
              * @default 0
              */
             inReviewWork: number;
+            /**
+             * Lowalerts
+             * @default 0
+             */
+            lowAlerts: number;
+            /**
+             * Mediumalerts
+             * @default 0
+             */
+            mediumAlerts: number;
             /** Noimmediatereview */
             noImmediateReview: number;
             /** Opentier2Cases */
@@ -9830,6 +9845,7 @@ export interface operations {
                 reviewDisposition?: "must_review" | "recommended_review" | "no_immediate_review";
                 reviewRequired?: boolean;
                 tier2Candidate?: boolean;
+                grouped?: boolean;
                 decisionSource?: "system_policy" | "analyst";
                 workScope?: "all" | "active" | "completed" | "escalated" | "in_review";
                 q?: string;

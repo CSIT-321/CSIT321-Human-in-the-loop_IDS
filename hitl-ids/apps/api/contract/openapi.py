@@ -632,6 +632,7 @@ def _paths() -> dict[str, Any]:
                 ('reviewDisposition', ['must_review', 'recommended_review', 'no_immediate_review']))],
             {'name': 'reviewRequired', 'in': 'query', 'schema': {'type': 'boolean'}},
             {'name': 'tier2Candidate', 'in': 'query', 'schema': {'type': 'boolean'}},
+            {'name': 'grouped', 'in': 'query', 'schema': {'type': 'boolean'}},
             {'name': 'decisionSource', 'in': 'query', 'schema': {'type': 'string', 'enum': ['system_policy', 'analyst']}},
             {'name':'workScope','in':'query','schema':{'type':'string','enum':['all','active','completed','escalated','in_review'],'default':'all'}},
             {'name': 'q', 'in': 'query', 'schema': {'type': 'string', 'maxLength': 200}},

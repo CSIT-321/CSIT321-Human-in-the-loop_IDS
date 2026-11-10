@@ -303,7 +303,7 @@ describe("intentional queue selection auto-claim", () => {
     renderApp(`/analyst/operations?alertRef=${second}`, { session: analyst });
     expect(await screen.findByText("Second available alert", { selector: "h2" })).toBeVisible();
     expect(claims(seen)).toHaveLength(0);
-    await userEvent.click(screen.getByRole("tab", { name: /^Tier 1 / }));
+    await userEvent.click(screen.getAllByRole("tab")[0]!);
     expect(claims(seen)).toHaveLength(0);
   });
 

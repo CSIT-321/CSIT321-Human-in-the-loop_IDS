@@ -8170,9 +8170,24 @@
             "title": "Expertreview",
             "type": "integer"
           },
+          "highAlerts": {
+            "default": 0,
+            "title": "Highalerts",
+            "type": "integer"
+          },
           "inReviewWork": {
             "default": 0,
             "title": "Inreviewwork",
+            "type": "integer"
+          },
+          "lowAlerts": {
+            "default": 0,
+            "title": "Lowalerts",
+            "type": "integer"
+          },
+          "mediumAlerts": {
+            "default": 0,
+            "title": "Mediumalerts",
             "type": "integer"
           },
           "noImmediateReview": {
@@ -17800,6 +17815,13 @@
           {
             "in": "query",
             "name": "tier2Candidate",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "in": "query",
+            "name": "grouped",
             "schema": {
               "type": "boolean"
             }

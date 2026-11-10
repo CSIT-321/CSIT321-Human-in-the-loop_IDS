@@ -52,7 +52,7 @@ const SUMMARY: Schemas["DashboardSummary"] = {
 const CURRENT: Schemas["AdminOverview"] = {
   detectorSource: "Suricata", activeWorkspaceId: "operational", activeWorkspaceName: "Operational",
   workspaceReady: true, databaseReady: true, workspaceAlertCount: 0,
-  operational: { totalAlerts: 0, criticalAlerts: 0, tier1Review: 0, tier2Cases: 0,
+  operational: { totalAlerts: 0, criticalAlerts: 0, highAlerts: 0, mediumAlerts: 0, lowAlerts: 0, tier1Review: 0, tier2Cases: 0,
     expertReview: 0, reviewRequired: 0, noImmediateReview: 0, openTier2Cases: 0,
     activeAlerts: 0, completedWork: 0, escalatedWork: 0, availableWork: 0, inReviewWork: 0,
     tier2Candidates: 0, autoEscalated: 0, tier1Groups: 0, tier1Singles: 0 },

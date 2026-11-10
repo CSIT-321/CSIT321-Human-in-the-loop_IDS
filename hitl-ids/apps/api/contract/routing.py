@@ -13,6 +13,9 @@ class OperationalSummary(ApiModel):
     """Whole persisted V2 dataset; categories overlap, never a sum of queue pages."""
     total_alerts: int
     critical_alerts: int
+    high_alerts: int = 0
+    medium_alerts: int = 0
+    low_alerts: int = 0
     tier1_review: int
     tier2_cases: int
     expert_review: int

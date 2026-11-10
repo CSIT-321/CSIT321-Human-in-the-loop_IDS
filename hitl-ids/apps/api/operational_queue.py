@@ -68,7 +68,7 @@ def reviewed_ids(conn):
     return {row[0] for row in conn.execute('SELECT DISTINCT operational_alert_id FROM selective_review_events')}
 
 
-def matching(*, handling_route=None, priority_band=None, work_scope='all',
+def matching(*, handling_route=None, priority_band=None, work_scope='all', grouped=None,
              route_class=None, attack_category=None, q=None, tier2_candidate=None, decision_source=None):
     clauses, params = [], []
     if work_scope=='active': clauses.append(ACTIVE_WORK)
@@ -82,6 +82,8 @@ def matching(*, handling_route=None, priority_band=None, work_scope='all',
         clauses.append(RECOMMENDATION_OPEN_SQL if tier2_candidate else f'NOT {RECOMMENDATION_OPEN_SQL}')
     if priority_band is not None:
         clauses.append('t.priority_band=?'); params.append(POLICY_BAND_STORAGE.get(priority_band, priority_band))
+    if grouped is not None:
+        clauses.append(IS_GROUP if grouped else f'NOT {IS_GROUP}')
     if route_class == 'EXPERT_REVIEW_REQUIRED':
         clauses.append(EXPERT)
     elif route_class is not None:
@@ -125,6 +127,9 @@ def summary(conn, tier2_only=False):
     where = " WHERE t.handling_route='tier2_case'" if tier2_only else ""
     row = conn.execute(f'''SELECT count(*) AS total_alerts,
         count(CASE WHEN {CRITICAL} THEN 1 END) AS critical_alerts,
+        count(CASE WHEN t.priority_band='high' THEN 1 END) AS high_alerts,
+        count(CASE WHEN t.priority_band='medium' THEN 1 END) AS medium_alerts,
+        count(CASE WHEN t.priority_band='low' THEN 1 END) AS low_alerts,
         count(CASE WHEN t.handling_route='tier1_review' AND (w.status IS NULL OR w.status NOT IN ('completed','escalated')) THEN 1 END) AS tier1_review,
         count(CASE WHEN t.handling_route='tier1_review' AND {ACTIVE_WORK} AND {IS_GROUP} THEN 1 END) AS tier1_groups,
         count(CASE WHEN t.handling_route='tier2_case' THEN 1 END) AS tier2_cases,

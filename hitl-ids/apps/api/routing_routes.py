@@ -98,7 +98,7 @@ def list_routing(request: Request, response: Response, conn: ReadConn, principal
                  priorityBand: PriorityBandV2 | None = None,
                  routeClass: Literal['ROUTINE_REVIEW', 'CRITICAL_ESCALATION', 'EXPERT_REVIEW_REQUIRED'] | None = None,
                  attackCategory: AttackCategory | None = None, q: str | None = Query(None, max_length=200),
-                 workScope: Scope = 'all',
+                 workScope: Scope = 'all', grouped: bool | None = None,
                  tier2Candidate: bool | None = None,
                  decisionSource: Literal['system_policy', 'analyst'] | None = None,
                  sort: Literal['priority_desc'] = 'priority_desc'):
@@ -114,7 +114,7 @@ def list_routing(request: Request, response: Response, conn: ReadConn, principal
         total, ids = operational_queue.queue_page(conn, limit=limit, offset=offset, reviews=reviews,
             handling_route=handlingRoute, review_required=reviewRequired, priority_band=priorityBand,
             review_disposition=reviewDisposition, tier2_candidate=tier2Candidate, decision_source=decisionSource,
-            route_class=routeClass, attack_category=attackCategory, q=q, work_scope=workScope)
+            route_class=routeClass, attack_category=attackCategory, q=q, work_scope=workScope, grouped=grouped)
         items = [_view(conn, alert_id, principal, reviews.get(alert_id)) for alert_id in ids]
         return Page(items=items, page=PageInfo(total=total, limit=limit, offset=offset, returned=len(items)))
 
