@@ -114,7 +114,7 @@ def main() -> int:
             bundle = event.get("flow_id", len(events))
             bundle_step[bundle] = max(step, bundle_step.get(bundle, 0))
             events.append((bundle, linked, event))
-    with (OUT / "eve.jsonl").open("w", encoding="utf-8") as out:
+    with (OUT / "eve.jsonl").open("w", encoding="utf-8", newline="\n") as out:
         for bundle, linked, event in sorted(events, key=lambda item: bundle_step[item[0]]):
             out.write(json.dumps({"step": bundle_step[bundle], "linkedRecord": linked, "event": event}) + "\n")
     print(f"steps: {STEPS} over {total:,.0f} s of capture; flows: {len(rows):,}; suricata alerts kept: "

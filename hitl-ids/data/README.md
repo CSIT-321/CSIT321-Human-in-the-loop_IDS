@@ -84,8 +84,11 @@ cd hitl-ids
 .venv/Scripts/python scripts/build_packet_replay.py
 ```
 
-The build is deterministic: the recorded run produced `steps.json`
-`8b934e4bf24aa26d…` and `eve.jsonl` `284d1483b3775128…`, and a rebuild reproduces both byte for byte.
+The build is deterministic in content. `steps.json` and `eve.jsonl` are byte-identical on Windows and
+Linux (LF line endings since commit "Make the packet replay eve output identical on Windows and Linux"):
+`steps.json` `8b934e4bf24aa26d…`, `eve.jsonl` `fd90bd7c22ff02e5…`. `base.db` holds the same 27,516
+alerts with the same detection scores, but its bytes differ, because every alert identity is a fresh
+UUIDv4 (`packages/contracts/models.py:408`).
 
 Check that the Replay can prepare:
 
