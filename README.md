@@ -21,6 +21,21 @@ From `hitl-ids`, activate a Python 3.11 environment, install `requirements.txt`,
 `python -m uvicorn apps.api.main:app`. From `hitl-ids/apps/web`, run `npm ci` and `npm run dev`.
 The manual describes accounts, intake and the review sequence. A legacy flow batch is not required.
 
+### Fresh clone: build the data, then run
+
+A clone holds the 5,000-flow demo sample, the trained model, the rule set and the packet replay
+window. Two commands build every database the demo uses; neither downloads the 10.4 GB dataset.
+
+```
+cd hitl-ids
+python scripts/run_detection.py            # data/demo.db, 5,000 alerts, about 25 s
+python scripts/build_packet_replay.py      # data/packet-replay/, 27,516 flows, about 3 min
+```
+
+`data/demo.db` is the Operational workspace. `data/packet-replay/` feeds the Admin Packet Replay.
+Accounts are seeded on API start. Sizes, hashes and the one-command check are in
+[`hitl-ids/data/README.md`](hitl-ids/data/README.md).
+
 ## Validation and evidence
 
 - [Final Golden Path](hitl-ids/docs/final-golden-path-e2e.md)
