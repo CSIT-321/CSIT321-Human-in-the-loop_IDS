@@ -19,6 +19,7 @@ from packages.contracts.operational_v2 import OperationalAlertV2, HandlingRouteV
 from packages.contracts.suricata_bundle import AttackCategory
 from packages.detection.selective_review import Disposition, effective_review
 from packages.detection.analyst_work import read_work, Scope
+from packages.detection import suricata_learning
 from packages.detection.tier1_eligibility import tier1_status
 from packages.detection.routing import (
     RoutingRequest, RoutingAction, RoutingConflict, allowed_actions, decode_audit,
@@ -46,13 +47,18 @@ def _effective_priority(conn, row, state):
     so the row shows that same effective value. Nothing is written: the two
     stores still cannot disagree.
     """
-    if row['legacy_alert_id'] is None or state.operational_priority is None:
+    if state.operational_priority is None:
         return state
-    score = conn.execute('SELECT combined_score, detection_score FROM alerts WHERE id=?',
-                         (row['legacy_alert_id'],)).fetchone()
-    if score is None:
-        return state
-    delta = float(score['combined_score'] or 0) - float(score['detection_score'] or 0)
+    if row['legacy_alert_id'] is None:
+        # A Suricata alert: the same delta the queue order adds (packages/detection/suricata_learning.py).
+        external = 'source_kind' in row.keys() and row['source_kind'] == 'external_nids_alert'
+        delta = suricata_learning.delta_for(conn, row['id']) if external else 0.0
+    else:
+        score = conn.execute('SELECT combined_score, detection_score FROM alerts WHERE id=?',
+                             (row['legacy_alert_id'],)).fetchone()
+        if score is None:
+            return state
+        delta = float(score['combined_score'] or 0) - float(score['detection_score'] or 0)
     if abs(delta) < 1e-9:
         return state
     effective = max(0.0, min(100.0, float(state.operational_priority) + delta))
@@ -61,7 +67,10 @@ def _effective_priority(conn, row, state):
 
 def _view(conn, alert_id, principal, review=None):
     row = conn.execute('SELECT * FROM operational_alerts_v2 WHERE id=?', (alert_id,)).fetchone()
-    state = _effective_priority(conn, row, read_triage(conn, alert_id))
+    stored = read_triage(conn, alert_id)
+    # Display only. The version and every rule read the stored state: the server checks a write against it,
+    # so a verdict delta in the shown priority must not change the version the client sends back.
+    state = _effective_priority(conn, row, stored)
     audit = conn.execute('SELECT * FROM operational_routing_audit WHERE operational_alert_id=? '
                          'ORDER BY id DESC LIMIT 1', (alert_id,)).fetchone()
     case = conn.execute('SELECT case_ref FROM tier2_cases WHERE primary_operational_alert_id=?', (alert_id,)).fetchone()
@@ -70,8 +79,8 @@ def _view(conn, alert_id, principal, review=None):
     bundle = json.loads(row['detector_evidence']).get('structured_evidence', {}).get('suricataBundle')
     attention=review or effective_review(conn,row['operational_alert_ref'])
     work=read_work(conn,alert_id,principal.user_id,attention)
-    status=tier1_status(conn, alert_id, state)
-    actions=list(allowed_actions(state, status)) if principal.role in ('security_analyst','system_admin') else []
+    status=tier1_status(conn, alert_id, stored)
+    actions=list(allowed_actions(stored, status)) if principal.role in ('security_analyst','system_admin') else []
     if system and state.handling_route=='tier1_review' and work.status!='completed' and not work.can_mutate: actions=[]
     # A completed judgment may still go to Tier 2 (route_alert), but "Keep in Tier 1" needs the open claim.
     if system and work.status=='completed': actions=[a for a in actions if a!='reject_tier2']
@@ -82,11 +91,11 @@ def _view(conn, alert_id, principal, review=None):
             related_signature_count=len(bundle['relatedSignatures']) if bundle else None,
             evidence_types=bundle['evidenceTypes'] if bundle else []),
         system_routing=json.loads(system['routing_decision']) if system else None, operational_alert_ref=row['operational_alert_ref'], title=row['detection_title'],
-        detector_name=row['detector_name'], detector_source=row['detector_source'], state=state, state_version=state_version(state),
+        detector_name=row['detector_name'], detector_source=row['detector_source'], state=state, state_version=state_version(stored),
         review_reasons=[state.review_reason], latest_decision=decode_audit(audit) if audit else None,
         allowed_actions=actions, work=work,
         # The C3 panel is for current (system-routed) alerts only; historical rows keep their read-only history.
-        tier2_recommendation_open=status=='current' and recommendation_open(state, status),
+        tier2_recommendation_open=status=='current' and recommendation_open(stored, status),
         case_ref=case['case_ref'] if case else None, group_member_count=group[0] if group else None)
 
 

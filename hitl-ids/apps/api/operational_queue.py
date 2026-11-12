@@ -3,6 +3,7 @@ from datetime import datetime, timezone
 
 from apps.api.contract.routing import OperationalSummary
 from packages.contracts.operational_v2 import POLICY_BAND_STORAGE
+from packages.detection import suricata_learning
 from packages.detection.selective_review import effective_review
 from packages.detection.queue_severity import severity_rank
 from packages.detection.routing import RECOMMENDATION_OPEN_SQL
@@ -38,8 +39,10 @@ SEVERITY = ("queue_severity_rank(a.source_kind, (SELECT v.severity FROM alerts v
 # (combined_score - detection_score; 0 before any verdict and for non-flow alerts), clamped to 0-100.
 # Read-only: no second score is stored, so the two stores cannot disagree. Justification: PHASE-C-STATUS.md, C1.
 ROUTING_PRIORITY = VALID_PRIORITY
-VERDICT_DELTA = ("COALESCE((SELECT d.combined_score - d.detection_score FROM alerts d "
-                 "WHERE d.id = a.legacy_alert_id), 0)")
+# A Suricata alert has no legacy row; its verdict delta is derived from its verdicts and its family's by
+# packages/detection/suricata_learning.py (same guardrails and gate), registered per read as a function.
+VERDICT_DELTA = ("(COALESCE((SELECT d.combined_score - d.detection_score FROM alerts d "
+                 "WHERE d.id = a.legacy_alert_id), 0) + external_verdict_delta(a.id))")
 QUEUE_SCORE = f"max(0, min(100, ({ROUTING_PRIORITY}) + {VERDICT_DELTA}))"
 QUEUE_ORDER = (f"{SEVERITY} DESC, {UNFLAGGED_LAST} ASC, {QUEUE_SCORE} DESC, queue_occurred_at(a.occurred_at) DESC, "
                "a.operational_alert_ref ASC")
@@ -98,6 +101,8 @@ def queue_page(conn, *, limit, offset, review_required=None, review_disposition=
     where, params = matching(**filters)
     conn.create_function('queue_occurred_at', 1, occurred_key, deterministic=True)
     conn.create_function('queue_severity_rank', 4, severity_rank, deterministic=True)
+    external = suricata_learning.all_deltas(conn)
+    conn.create_function('external_verdict_delta', 1, lambda alert_id: external.get(alert_id, 0.0), deterministic=True)
     if review_required is not None or review_disposition is not None:
         # Attention is derived before pagination. O(matching alerts * review lookup)
         # is deliberate at FYP scale; no stale persisted deferral cache or SQL policy.

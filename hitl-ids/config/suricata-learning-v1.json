@@ -1,0 +1,6 @@
+{
+  "version": "suricata-learning-v1",
+  "homeNet": ["192.168.0.0/16", "10.0.0.0/8", "172.16.0.0/12"],
+  "familyKey": ["detectionTitle", "internalHost"],
+  "note": "homeNet is the HOME_NET of the Suricata configuration that produced the replay (.tools/suricata-spike.yaml line 18). A family is one signature on one internal asset."
+}
