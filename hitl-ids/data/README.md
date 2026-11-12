@@ -63,3 +63,35 @@ the one every reported figure used.
 `run_detection.py` recomputes predictions and TreeSHAP itself, so it does not need
 `demo_ml_predictions_shap.json`; pass `--replay <that file>` to reuse an earlier run's predictions on
 a machine without xgboost.
+
+## Packet Replay — inputs in git, base rebuilt on demand
+
+The Admin **Packet Replay** needs three files in `packet-replay/`. One of them is 471 MB, so it stays
+out of git and is rebuilt from committed inputs. No pcaps, no Suricata and no CICFlowMeter are needed.
+
+| File | Size | In git |
+|---|---:|---|
+| `spike/Wednesday-14-02-2018/replay-window/flows.csv` | 17.9 MB | **Yes** |
+| `spike/Wednesday-14-02-2018/replay-window/eve.jsonl` | 5.2 MB | **Yes** |
+| `packet-replay/base.db` | 471 MB | No — over GitHub's 100 MB file limit |
+| `packet-replay/steps.json` | 11 KB | No — rebuilt with the base |
+| `packet-replay/eve.jsonl` | 613 KB | No — rebuilt with the base |
+
+Rebuild all three outputs (about 3.5 minutes on the project machine):
+
+```
+cd hitl-ids
+.venv/Scripts/python scripts/build_packet_replay.py
+```
+
+The build is deterministic: the recorded run produced `steps.json`
+`8b934e4bf24aa26d…` and `eve.jsonl` `284d1483b3775128…`, and a rebuild reproduces both byte for byte.
+
+Check that the Replay can prepare:
+
+```
+.venv/Scripts/python -c "from apps.api import packet_replay; print(packet_replay.available())"
+```
+
+`True` means `base.db`, `steps.json` and `eve.jsonl` are present. Until then the API answers Packet
+Replay preparation with `503 REPLAY_WORKLOAD_UNAVAILABLE`.

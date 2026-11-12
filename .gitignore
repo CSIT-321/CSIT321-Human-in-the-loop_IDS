@@ -39,7 +39,14 @@ hitl-ids/data/*.db-journal
 
 # packet captures and spike outputs - download with scripts/fetch_capture.py (see data/raw/PCAP-DOWNLOAD.md)
 hitl-ids/data/raw/pcap/
-hitl-ids/data/spike/
+# spike outputs: only the packet replay window inputs are committed (23 MB), the rest is local
+hitl-ids/data/spike/*
+!hitl-ids/data/spike/Wednesday-14-02-2018/
+hitl-ids/data/spike/Wednesday-14-02-2018/*
+!hitl-ids/data/spike/Wednesday-14-02-2018/replay-window/
+hitl-ids/data/spike/Wednesday-14-02-2018/replay-window/*
+!hitl-ids/data/spike/Wednesday-14-02-2018/replay-window/flows.csv
+!hitl-ids/data/spike/Wednesday-14-02-2018/replay-window/eve.jsonl
 # regenerable packet replay base (471 MB) - rebuild with scripts/build_packet_replay.py
 hitl-ids/data/packet-replay/
 # local detector tools (Suricata, Npcap DLLs, ET Open rules, CICFlowMeter build) - see data/raw/PCAP-DOWNLOAD.md

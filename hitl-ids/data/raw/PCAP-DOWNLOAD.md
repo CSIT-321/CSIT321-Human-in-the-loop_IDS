@@ -3,6 +3,9 @@
 The packet captures are **not in git**. They are large (one capture day is 36–55 GiB) and public.
 Download them with the script; nothing else needs an account or a key.
 
+The Admin **Packet Replay** does not need this folder. Its window inputs are committed and the replay
+base is rebuilt with `scripts/build_packet_replay.py`; see `data/README.md`.
+
 ## What you need
 
 | Item | Where | Size | Check |
