@@ -1,45 +1,37 @@
+# Python
 __pycache__/
-.compile-check/
-.tmp-stage-3-tests/
-.tmp-stage-3-artifacts/
-.tmp-stage-3-artifacts*/
 *.py[cod]
+*.egg-info/
 .venv/
-archive.zip
-*.zip
-*.csv
-stage-3/notebooks/*Colab*.pdf
-stage-3/notebooks/*.pdf
-stage-3/outputs/ml-predictions.regenerated.json
-dashboard/node_modules/
-dashboard/dist/
+.pytest_cache/
+hitl-ids/.pytest-tmp/
+
+# Web console
 hitl-ids/apps/web/node_modules/
 hitl-ids/apps/web/src/node_modules/
 hitl-ids/apps/web/dist/
 hitl-ids/apps/web/*.tsbuildinfo
 hitl-ids/apps/web/test-results/
 hitl-ids/apps/web/playwright-report/
-# pip install -e . build output
-*.egg-info/
 
-# hitl-ids: agent state, never tracked
-.omc/
-hitl-ids/**/.omc/
-stage-5/evaluation/feedback-evaluation-records.json
+# Archives and CSV (the two committed CSV inputs are tracked explicitly)
+*.zip
+*.csv
 
-# regenerable inference output (16 MB)
-hitl-ids/data/processed/demo_ml_predictions_shap.json
-
-# regenerable synthetic stress predictions - rebuild with scripts/build_stress_detection.py
-hitl-ids/data/processed/stress_ml_predictions.json
-
-# regenerable demo database - rebuild with scripts/run_detection.py (S9)
+# Generated data - rebuilt by the setup steps in README.md
 hitl-ids/data/*.db
 hitl-ids/data/*.db-journal
+hitl-ids/data/*.db-wal
+hitl-ids/data/*.db-shm
+hitl-ids/data/packet-replay/
+hitl-ids/data/processed/demo_ml_predictions_shap.json
+hitl-ids/data/processed/stress_ml_predictions.json
 
-# packet captures and spike outputs - download with scripts/fetch_capture.py (see data/raw/PCAP-DOWNLOAD.md)
+# Raw packet captures and local detector tools (not needed for the demo)
 hitl-ids/data/raw/pcap/
-# spike outputs: only the packet replay window inputs are committed (23 MB), the rest is local
+hitl-ids/.tools/
+
+# Replay inputs: only the two packet-replay window files are committed
 hitl-ids/data/spike/*
 !hitl-ids/data/spike/Wednesday-14-02-2018/
 hitl-ids/data/spike/Wednesday-14-02-2018/*
@@ -47,38 +39,11 @@ hitl-ids/data/spike/Wednesday-14-02-2018/*
 hitl-ids/data/spike/Wednesday-14-02-2018/replay-window/*
 !hitl-ids/data/spike/Wednesday-14-02-2018/replay-window/flows.csv
 !hitl-ids/data/spike/Wednesday-14-02-2018/replay-window/eve.jsonl
-# regenerable packet replay base (471 MB) - rebuild with scripts/build_packet_replay.py
-hitl-ids/data/packet-replay/
-# local detector tools (Suricata, Npcap DLLs, ET Open rules, CICFlowMeter build) - see data/raw/PCAP-DOWNLOAD.md
-hitl-ids/.tools/
-.pytest_cache/
-# pytest --basetemp scratch dir, needed when the session sandbox blocks the OS temp dir
-hitl-ids/.pytest-tmp/
 
-# Generated deliverable - rebuild with: python scripts/build_user_manual.py
-hitl-ids/docs/~$*.docx
-
-# --- agent / AI state: never tracked -----------------------------------------
-# The omc rules above cover .omc/; this closes the other agent home, which was
-# the one gap. Session transcripts and replay logs must not reach the repo.
+# Local tool state, editor lock files, backups
+.omc/
+**/.omc/
 .claude/
 **/.claude/
-
-# --- editor and Office lock files -------------------------------------------
-# Word and PowerPoint drop a ~$ owner file beside any open document. They are
-# transient, machine-specific, and were showing up as untracked noise.
 ~$*
-
-# --- backups and scratch ----------------------------------------------------
-# *.bak matches both a file (build_deck.py.bak) and a directory of stale
-# screenshots (docs/img/demo-guide.bak/), so one rule covers both.
 *.bak
-
-# --- local Pages build ------------------------------------------------------
-# site/serve.py and the Pages workflow both assemble the site here. It is a build
-# artifact: generated from tracked sources, never committed.
-_site/
-hitl-ids/_site/
-
-# --- demo media (videos, screenshots) stays local ---------------------------
-analysis/phase-f/dual-chain/recording/

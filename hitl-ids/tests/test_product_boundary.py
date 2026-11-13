@@ -36,5 +36,5 @@ def test_no_product_module_trips_the_preflight_boundary_rule():
 def test_the_replay_keeps_the_frozen_sensor_and_scope():
     """The values must not drift from the frozen protocol, or a replay stages records under another scope."""
     from apps.api import presentation_replay
-    from scripts.protocol_v3.common import SCOPE, SENSOR   # tests may read runner code; the product may not
-    assert (presentation_replay.SENSOR, presentation_replay.SCOPE) == (SENSOR, SCOPE)
+    # The values frozen with protocol V3.1 (evaluation/protocol-v3.1). The runner code is not shipped.
+    assert (presentation_replay.SENSOR, presentation_replay.SCOPE) == ('controlled-v3-sensor', 'controlled-v3-final')

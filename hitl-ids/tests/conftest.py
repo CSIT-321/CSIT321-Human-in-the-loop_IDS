@@ -20,23 +20,6 @@ import pytest
 
 from packages.contracts import models as m
 
-# E2 (S9-01): these four tests run the operator-facing preflight against the LIVE tree, which equals the
-# 2026-11 freeze commit only at that commit. tests/test_frozen_evidence.py proves the same evidence chain
-# (hashes, structure, amendment equivalence, no runtime-dependency words) on any development commit.
-FROZEN_LIVE_TREE_TESTS = (
-    'tests/test_protocol_v3.py::test_frozen_manifest_and_no_runtime_dependency',
-    'tests/test_protocol_v3.py::test_final_run_requires_opening_without_creating_database',
-    'tests/test_protocol_v3.py::test_changed_manifest_expected_hash_rejected',
-    'tests/test_protocol_v3_1.py::test_only_environment_amended',
-)
-
-
-def pytest_collection_modifyitems(config, items):
-    for item in items:
-        if item.nodeid in FROZEN_LIVE_TREE_TESTS:
-            item.add_marker(pytest.mark.skip(reason='E2 (S9-01): live-tree runtime comparison only holds at the frozen commit; see tests/test_frozen_evidence.py'))
-
-
 T0 = datetime(2026, 9, 12, 9, 0, tzinfo=UTC)
 
 FTP_RULE = m.SignatureRule(

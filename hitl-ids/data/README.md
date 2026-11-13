@@ -45,7 +45,6 @@ evaluation only. They must never reach a detector.**
 
 | File | In git | Produced by |
 |---|---|---|
-| `processed/label_scan.json` | yes | `scan_labels.py` — label census of all 63M flows |
 | `processed/sample_manifest.json` | yes | `build_samples.py` |
 | `processed/demo_detection_input.csv` | no | `build_demo_detection.py` — the observable fields detectors see |
 | `processed/demo_ground_truth.json`, `demo_ml_predictions.json`, `corrected_findings.json` | yes | `build_demo_detection.py` |
@@ -55,7 +54,7 @@ evaluation only. They must never reach a detector.**
 | `processed/ml-explainability-summary.json` | yes | `run_ml_inference.py` |
 | `demo.db` | no (42 MB, regenerable) | `run_detection.py` — the populated demo database: 5,000 alerts with their flows, SHAP and queue bands (S9) |
 
-Order from a fresh clone: download the zip → `scan_labels.py` → `build_samples.py` →
+Order from a fresh clone: download the zip → `build_samples.py` →
 `build_demo_detection.py` → `run_ml_inference.py` → `run_detection.py` (the demo database).
 `train_model.py` rebuilds the model from `train_sample.csv`; the committed model in `../models/` is
 the one every reported figure used.
@@ -68,6 +67,10 @@ a machine without xgboost.
 
 The Admin **Packet Replay** needs three files in `packet-replay/`. One of them is 471 MB, so it stays
 out of git and is rebuilt from committed inputs. No pcaps, no Suricata and no CICFlowMeter are needed.
+
+The two committed inputs come from CSE-CIC-IDS2018 capture day 2018-02-14 (public AWS bucket
+`cse-cic-ids2018`). Suricata 8.0.7 with Emerging Threats Open rules produced `eve.jsonl`, and the
+Engelen et al. CICFlowMeter fork produced `flows.csv`, from the same packets.
 
 | File | Size | In git |
 |---|---:|---|

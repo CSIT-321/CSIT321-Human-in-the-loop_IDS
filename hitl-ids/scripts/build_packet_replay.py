@@ -1,6 +1,6 @@
 """Build the packet replay base for the Admin-controlled dual-chain replay (Operational Workspace page).
 
-Both chains start from the same packets of capture day 2018-02-14 (see data/raw/PCAP-DOWNLOAD.md):
+Both chains start from the same packets of capture day 2018-02-14 (see data/README.md):
   flow chain      CICFlowMeter flows  -> the unchanged detection engine (rules + XGBoost + fusion)
   Suricata chain  eve.json alerts     -> staged and admitted at replay time, not here
 

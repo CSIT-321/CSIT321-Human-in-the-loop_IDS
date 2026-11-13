@@ -1,7 +1,6 @@
-# Three-arm evaluation — method (plan step S15)
+# Three-arm evaluation — method
 
-What is kept here, and how to read it. The findings themselves are in
-[`../../docs/evaluation-report.md`](../../docs/evaluation-report.md).
+What is kept here, and how to read it. The Evaluator's **Scenarios** page reads these runs.
 
 ## The design
 
@@ -37,14 +36,13 @@ a result. Rule `s15-preregistration-1`:
 its gate and the treatment arm would be inert by construction. Families must retain untouched
 members, or an effect on *similar* alerts is unmeasurable.
 
-Changing the rule means changing its identifier and logging it in `plan-changelog.md`. A rule
-changed to improve a result is the v0.2 exit criterion returning by the back door.
+Changing the rule means changing its identifier. A rule changed to improve a result is not allowed.
 
-## Exit criterion (plan v0.3)
+## Exit criterion
 
 Whatever arm C shows is recorded **as measured**. A suppression count of zero means the guardrails
 did not bind on that sequence: a publishable result, never grounds for re-sampling. The *guarantee*
-that a floor binds lives in S7's unit tests, not here.
+that a floor binds lives in the guardrail unit tests, not here.
 
 ## Layout
 
@@ -67,7 +65,7 @@ python scripts/run_evaluation.py --dry-run     # print the sequence, run nothing
 python -m pytest tests/test_evaluation.py
 ```
 
-Use `C:/ProgramData/miniconda3/python.exe` — see HANDOVER §6 on the two interpreters.
+Run these from `hitl-ids/` with the project virtual environment active.
 
 ## Reading the metrics
 
