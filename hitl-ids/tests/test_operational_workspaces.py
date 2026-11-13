@@ -139,7 +139,6 @@ def test_prepare_switch_and_reset_preserve_operational(tmp_path):
     alerts = client.get("/api/v2/alerts?limit=1", headers=tokens["analyst"])
     assert alerts.status_code == 200, alerts.text
     assert alerts.json()["page"]["total"] == 200
-    assert client.post("/api/admin/workspaces/v3-1-replay/reset", headers=tokens["admin"], json=body).status_code == 409
     response = client.post("/api/admin/workspaces/operational/activate", headers=tokens["admin"], json=body)
     assert response.status_code == 200, response.text
     assert client.get("/api/v2/alerts?limit=1", headers=tokens["analyst"]).json()["page"]["total"] == 0
@@ -148,6 +147,64 @@ def test_prepare_switch_and_reset_preserve_operational(tmp_path):
     assert response.status_code == 200, response.text
     assert not replay.exists()
     assert _hash(operational) == initial
+
+
+def test_admin_reset_supersedes_an_active_replay_and_open_claims(tmp_path):
+    """The Administrator resets Replay in one action, even while it is active and an Analyst holds a claim."""
+    client, operational, tokens = _client(tmp_path)
+    initial = _hash(operational)
+    body = {"reason": "Reset during a demo"}
+    assert client.post("/api/admin/workspaces/v3-1-replay/prepare", headers=tokens["admin"], json=body).status_code == 200
+    assert client.post("/api/admin/workspaces/v3-1-replay/activate", headers=tokens["admin"], json=body).status_code == 200
+    replay = tmp_path / "workspaces/v3-1-replay.db"
+    ref = _claimable(client, replay, tokens["analyst"])
+    claim = client.post(f"/api/v2/alerts/{ref}/work/claim", headers=tokens["analyst"],
+                        json={"requestId": str(uuid4()), "expectedRevision": 0})
+    assert claim.status_code == 200 and claim.json()["outcome"] == "claimed", claim.text
+
+    response = client.post("/api/admin/workspaces/v3-1-replay/reset", headers=tokens["admin"], json=body)
+
+    assert response.status_code == 200, response.text
+    status = response.json()
+    assert status["activeWorkspaceId"] == "operational"
+    assert status["workspaces"][1]["ready"] is False and not replay.exists()
+    assert client.get("/api/workspace/current", headers=tokens["analyst"]).json()["id"] == "operational"
+    assert client.get("/api/v2/alerts/summary", headers=tokens["analyst"]).json()["totalAlerts"] == 0
+    actions = [(a["action"], a["workspace"], a["reason"]) for a in status["actions"][:2]]
+    assert actions[0][0] == "replay_reset" and "released 1 open Analyst claim" in actions[0][2]
+    assert actions[1][:2] == ("workspace_activated", "operational")
+    assert _hash(operational) == initial
+
+
+def test_reset_waits_for_in_flight_requests_then_refuses_cleanly(tmp_path, monkeypatch):
+    """A handle that never closes ends in a clear 409 after the drain window, with nothing reset."""
+    import pathlib
+    operational = tmp_path / 'operational.db'
+    operational.touch()
+    directory = tmp_path / 'workspaces'
+    directory.mkdir()
+    replay = directory / 'v3-1-replay.db'
+    replay.write_bytes(b'')
+    with closing(workspaces._control(directory / 'control.db', create=True)) as conn:
+        conn.execute("UPDATE selection SET workspace='operational' WHERE id=1")
+        conn.commit()
+    original = pathlib.Path.unlink
+
+    def held(self, *args, **kwargs):
+        if self == replay:
+            raise PermissionError(13, 'in use')
+        return original(self, *args, **kwargs)
+
+    monkeypatch.setattr(pathlib.Path, 'unlink', held)
+    monkeypatch.setattr(workspaces, 'DRAIN_SECONDS', 0.6)
+    request = SimpleNamespace(app=SimpleNamespace(state=SimpleNamespace(database_path=str(operational))))
+    try:
+        workspaces.reset(request, 'admin', 'Held handle')
+    except workspaces.ApiError as exc:
+        assert exc.status_code == 409 and exc.code == 'REPLAY_IN_USE'
+    else:
+        raise AssertionError('reset must refuse while the file stays open')
+    assert replay.exists()
 
 
 def _one_operational_alert(operational: Path, tmp_path: Path) -> None:

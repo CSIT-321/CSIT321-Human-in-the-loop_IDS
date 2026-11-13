@@ -19,7 +19,7 @@ export function WorkspacesPage() {
   async function act(action: "prepare" | "reset" | "activate" | "start" | "pause" | "advance" | "flowChain",
                      id = "v3-1-replay", count: 1 | 5 | 150 = 1, enabled = true) {
     if (action === "reset" && !window.confirm(
-      "Reset V3.1 Demo Replay? This permanently removes only its isolated operational alerts, verdicts, memory and cases. The Operational workspace and official frozen evaluation remain unchanged.")) return;
+      "Reset V3.1 Demo Replay to 0 alerts? Analysts are moved to the Operational workspace, and their open claims, verdicts, memory and cases in Replay are removed. The Operational workspace and official frozen evaluation remain unchanged.")) return;
     setBusy(`${action}:${id}`); setError(null);
     try {
       const defaults = { prepare: "Prepare isolated V3.1 analyst demonstration", reset: "Reset V3.1 Demo Replay",
@@ -118,10 +118,10 @@ export function WorkspacesPage() {
               title={workspace.preparedFile ? "Reset Replay before preparing it again." : undefined}
               onClick={() => void act("prepare")}
               className="rounded-sm border border-border px-3 py-1.5 text-sm text-text disabled:opacity-40">Prepare Replay</button>
-            <button type="button" disabled={busy !== null || !workspace.preparedFile || workspace.active}
-              title={workspace.active ? "Activate Operational before resetting Replay." : undefined}
+            <button type="button" disabled={busy !== null || !workspace.preparedFile}
+              title={workspace.active ? "Moves Analysts to Operational, then resets Replay to 0 alerts." : undefined}
               onClick={() => void act("reset")}
-              className="rounded-sm border border-danger/50 px-3 py-1.5 text-sm text-danger disabled:opacity-40">Reset Replay</button>
+              className="rounded-sm border border-danger/50 px-3 py-1.5 text-sm text-danger disabled:opacity-40">{busy === "reset:v3-1-replay" ? "Resetting…" : "Reset Replay"}</button>
             {(workspace.preparationMode === "presentation" || workspace.preparationMode === "packet") && <>
               <button type="button" disabled={busy !== null || !workspace.active || workspace.playbackState !== "paused" || !workspace.holdoutRemaining}
                 onClick={() => void act("start")}

@@ -14,7 +14,7 @@ function workspaceState(active: "operational" | "v3-1-replay", prepared: boolean
     actions: [], detection: { flowChainEnabled: true }, workspaces: [
       { id: "operational", name: "Operational", active: active === "operational", ready: true,
         alertCount: 13, rawRecords: null, stagedAlerts: null, lastPreparedAt: null, workloadSha256: null },
-      { id: "v3-1-replay", name: "V3.1 Demo Replay", active: active === "v3-1-replay", ready: prepared,
+      { id: "v3-1-replay", name: "V3.1 Demo Replay", active: active === "v3-1-replay", ready: prepared, preparedFile: prepared,
         alertCount: prepared ? 200 : null, rawRecords: prepared ? 200 : null, stagedAlerts: prepared ? 200 : null,
         lastPreparedAt: prepared ? "2026-11-03T01:00:00Z" : null, workloadSha256: prepared ? "workload-hash" : null },
     ],
@@ -68,7 +68,7 @@ describe("operational workspace controls", () => {
       const path = new URL(request.url).pathname;
       if (request.method === "POST") {
         if (path.endsWith("/prepare")) prepared = true;
-        if (path.endsWith("/reset")) prepared = false;
+        if (path.endsWith("/reset")) { prepared = false; active = "operational"; }
         if (path.endsWith("/activate")) active = path.includes("v3-1-replay") ? "v3-1-replay" : "operational";
       }
       return jsonResponse(workspaceState(active, prepared));
@@ -83,7 +83,10 @@ describe("operational workspace controls", () => {
     expect(await screen.findByText(/Last prepared: 2026-11-03T01:00:00Z/)).toBeVisible();
     await user.click(screen.getAllByRole("button", { name: "Activate" }).find(button => !button.hasAttribute("disabled"))!);
     expect(await screen.findByText("V3.1 Demo Replay", { selector: "p" })).toBeVisible();
-    expect(screen.getByRole("button", { name: "Reset Replay" })).toBeDisabled();
+    // The Administrator supersedes Analysts: Reset stays available while Replay is active.
+    expect(screen.getByRole("button", { name: "Reset Replay" })).toBeEnabled();
+    await user.click(screen.getByRole("button", { name: "Reset Replay" }));
+    expect(await screen.findByText("Not prepared")).toBeInTheDocument();
     expect(seen.some(request => request.method === "POST" && new URL(request.url).pathname.endsWith("/prepare"))).toBe(true);
   });
 

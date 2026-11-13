@@ -104,7 +104,13 @@ def prepare(body: ReplayPrepareCommand, request: Request, principal: Admin) -> W
 
 @router.post("/api/admin/workspaces/v3-1-replay/reset", response_model=WorkspaceState,
              operation_id="resetV31Replay")
-def reset(body: WorkspaceCommand, request: Request, principal: Admin) -> WorkspaceState:
+def reset(body: WorkspaceCommand, request: Request,
+          principal: auth.Principal = Depends(auth.current_stream_user)) -> WorkspaceState:
+    # current_stream_user closes its database handle before the handler runs. The reset deletes the
+    # Replay file, and when Replay is active this request's own auth handle would otherwise hold it.
+    if principal.role != "system_admin":
+        raise workspaces.ApiError(403, "FORBIDDEN_ROLE", "This action requires the system_admin role",
+                                  {"role": principal.role, "required": ["system_admin"]})
     return WorkspaceState.model_validate(workspaces.reset(request, principal.username, body.reason))
 
 

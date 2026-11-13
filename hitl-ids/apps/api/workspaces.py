@@ -316,27 +316,37 @@ def prepare(request: Request, actor: str, reason: str, mode: str = 'full') -> di
     return state(request)
 
 
+# Requests that started before the switch to Operational finish in Replay and hold the file
+# (Windows refuses to delete an open file). Measured 2026-11-13: 6 Analyst tabs on the 11,064-alert
+# packet replay released it 6.9 s after the switch. Wait for them instead of asking Analysts to leave.
+DRAIN_SECONDS = 30
+
+
 def _remove_database(path: Path) -> None:
     """Delete a database and its WAL sidecars.
 
     A reader can hold the file for a moment after its request ends (Windows keeps
-    the handle until the connection closes). Retry before refusing. The -wal and
-    -shm must go too: a stale WAL attached to a freshly built file reads as
-    "database disk image is malformed".
+    the handle until the connection closes). Wait for in-flight requests to drain
+    before refusing. The -wal and -shm must go too: a stale WAL attached to a
+    freshly built file reads as "database disk image is malformed".
     """
+    deadline = time.monotonic() + DRAIN_SECONDS
     for suffix in ("", "-wal", "-shm"):
         target = Path(str(path) + suffix)
         if not target.exists():
             continue
-        for attempt in range(4):
+        delay = 0.25
+        while True:
             try:
                 target.unlink()
                 break
             except PermissionError as exc:
-                if attempt == 3:
+                if time.monotonic() >= deadline:
                     raise ApiError(409, "REPLAY_IN_USE",
-                                   "Replay is still in use. Close Analyst tabs, then retry.") from exc
-                time.sleep(0.5 * (2 ** attempt))
+                                   f"Replay requests did not finish within {DRAIN_SECONDS} s. "
+                                   "Nothing was reset. Retry Reset Replay.") from exc
+                time.sleep(delay)
+                delay = min(delay * 2, 1.0)
 
 
 def _checkpoint(path: Path) -> None:
@@ -345,19 +355,37 @@ def _checkpoint(path: Path) -> None:
         conn.execute("PRAGMA wal_checkpoint(TRUNCATE)")
 
 
+def _open_claims(replay: Path) -> int:
+    """Analyst claims the reset discards (for the audit line). 0 when the file or table is absent."""
+    if not replay.exists():
+        return 0
+    try:
+        with closing(sqlite3.connect(replay.resolve().as_uri() + "?mode=ro", uri=True)) as conn:
+            return int(conn.execute("SELECT count(*) FROM analyst_work WHERE status='in_review'").fetchone()[0])
+    except sqlite3.Error:
+        return 0
+
+
 def reset(request: Request, actor: str, reason: str) -> dict:
+    """Administrator reset. Supersedes Analysts: an active Replay is switched to Operational first,
+    open claims are discarded with the file, and in-flight Analyst requests are waited for."""
     _, control, replay = paths(request)
+    if active_id(control) == "v3-1-replay":
+        activate(request, "operational", actor, f"{reason} · Reset Replay moved Analysts to Operational")
+    claims = _open_claims(replay)
     conn = _control(control, create=True)
     assert conn is not None
     try:
         conn.execute("BEGIN IMMEDIATE")
         if conn.execute("SELECT workspace FROM selection WHERE id=1").fetchone()[0] == "v3-1-replay":
-            raise ApiError(409, "REPLAY_ACTIVE", "Activate Operational before resetting Replay.")
+            # Only if another Administrator re-activated Replay between the switch and this transaction.
+            raise ApiError(409, "REPLAY_ACTIVE", "Replay was activated again during the reset. Retry Reset Replay.")
         _remove_database(replay)
         conn.execute("DELETE FROM replay_meta WHERE id=1")
         conn.execute("DELETE FROM presentation WHERE id=1")
         conn.execute("DELETE FROM presentation_requests")
-        _audit(conn, actor, "replay_reset", "v3-1-replay", reason)
+        _audit(conn, actor, "replay_reset", "v3-1-replay",
+               f"{reason} · released {claims} open Analyst claim{'s' if claims != 1 else ''}" if claims else reason)
         conn.commit()
     finally:
         conn.close()
