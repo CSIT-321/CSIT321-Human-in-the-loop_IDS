@@ -86,8 +86,8 @@ def steps(f: dict) -> list[tuple[str, str, str, str, str, str]]:
         ("13-verdict", "Analyst", "Record a verdict",
          "Open **Analyst Verdict**. Pick an outcome, type a reason, click **Record Verdict**.",
          "Work status **Completed — Reviewed by Glenn Ang**.",
-         "A flow verdict feeds the learning loop: each outcome moves the score within the guardrails. "
-         "One verdict alone does not re-rank a family (3-vote gate). A Suricata verdict is recorded but does not re-score."),
+         "A verdict feeds the learning loop for **both** chains: it moves this alert at once, inside the guardrails. "
+         "One verdict alone does not re-rank its family; three agreeing verdicts do (steps 19–21)."),
         ("14-case-list", "Tier 2", "The case list",
          "Left menu: **Escalated**.",
          "Default filter Active. Rule cases say **Rule** with the rule sentence. Your case shows **Glenn Ang** and your reason.",
@@ -108,6 +108,39 @@ def steps(f: dict) -> list[tuple[str, str, str, str, str, str]]:
     ]
 
 
+def extra_steps(x: dict) -> list[tuple[str, str, str, str, str, str]]:
+    """Steps captured by capture_guide_extra.mjs on the live demo app: family learning and the one-click reset."""
+    if not x:
+        return []
+    return [
+        ("f1-suri-before", "Family learning", "A Suricata family before the third verdict",
+         "In the queue search, type **Terminal Server**.",
+         "Every row is the same signature on the same internal host (172.31.65.56): one Suricata **family**. "
+         "All rows read **40**. Two earlier false-positive verdicts already sit on this family; nothing else has moved yet.",
+         "One verdict is an opinion. The system waits for three agreeing verdicts before it applies a lesson to alerts "
+         "nobody judged."),
+        ("f2-suri-after", "Family learning", "The third verdict teaches the whole family",
+         "Open a row marked **Available**. **Analyst Verdict** → **False Positive**, type a reason, **Record Verdict**.",
+         "The judged row reads **Completed — Reviewed by Glenn Ang · false positive**. The rows **nobody judged**, still "
+         "marked **Available**, drop from **40** to **10** — every member of the family moves down the queue at once.",
+         "This is the alert-fatigue reduction: three decisions cleared a 31-item family. The guardrail caps the change at "
+         "−30, and a critical alert never falls below 70."),
+        ("f3-flow-after", "Family learning", "The flow chain learns by the same rule",
+         "Search **131.202.240.72**. Record **False Positive** on an **Available** row at **36.49** (third verdict on the "
+         "family).",
+         "The judged row reads **Completed**. The other row, still **Available**, drops from **36.49** to **6.49**. This "
+         "family is CICFlowMeter + XGBoost flows on port 443 to one external server.",
+         "One verdict form, one rule, both chains. The analyst does not need to know which detector raised the alert."),
+        ("a0-reset", "Admin", "Reset the replay to 0 alerts in one click",
+         "As **admin**, open **Operational Workspace**. Click **Reset Replay** and confirm.",
+         f"**Reset Replay** is available while the Replay is **Active** (here at {html.escape(x['reset']['arrived'] or '')}). "
+         "Analysts move to the Operational workspace, their open claims are released, and their dashboards read **0** "
+         "without a reload. Then **Prepare Replay**, **Activate**, **Start Arrivals** to play from 0.",
+         "The Administrator supersedes analysts: a demo can restart even while analysts are working. The audit log "
+         "records how many claims the reset released."),
+    ]
+
+
 def bold(text: str) -> str:
     parts = text.split("**")
     return "".join(f"<strong>{p}</strong>" if i % 2 else p for i, p in enumerate(parts))
@@ -116,12 +149,17 @@ def bold(text: str) -> str:
 def main(src: Path, out: Path) -> None:
     pins = json.loads((src / "pins.json").read_text(encoding="utf-8"))
     facts = json.loads((src / "facts.json").read_text(encoding="utf-8"))
+    extra_file = src / "extra-facts.json"
+    extra = json.loads(extra_file.read_text(encoding="utf-8")) if extra_file.exists() else {}
+    if extra:
+        pins.update(json.loads((src / "extra-pins.json").read_text(encoding="utf-8")))
+    all_steps = steps(facts) + extra_steps(extra)
     img = out / "img"
     if img.exists():
         shutil.rmtree(img)
     img.mkdir(parents=True)
     cards, part = [], None
-    for n, (name, section, title, click, see, why) in enumerate(steps(facts), 1):
+    for n, (name, section, title, click, see, why) in enumerate(all_steps, 1):
         shutil.copyfile(src / f"{name}.png", img / f"{name}.png")
         marks, legend = [], []
         for k, pin in enumerate(pins.get(name, []), 1):
@@ -131,9 +169,13 @@ def main(src: Path, out: Path) -> None:
                 continue
             left, top = 100 * box["x"] / W, 100 * box["y"] / H
             wid, hei = 100 * box["width"] / W, 100 * box["height"] / H
-            if box["y"] + box["height"] > H or box["x"] + box["width"] > W or box["y"] < 0 or box["x"] < 0:
+            if box["y"] >= H or box["x"] >= W or box["y"] + box["height"] <= 0 or box["x"] + box["width"] <= 0:
                 legend.append(f"<li class=missing>{k}. {html.escape(pin['label'])} (outside the visible area — scroll)</li>")
                 continue
+            # partly visible: clip to the frame (a row cut by the bottom edge still shows its priority)
+            x0, y0 = max(0, box["x"]), max(0, box["y"])
+            x1, y1 = min(W, box["x"] + box["width"]), min(H, box["y"] + box["height"])
+            left, top, wid, hei = 100 * x0 / W, 100 * y0 / H, 100 * (x1 - x0) / W, 100 * (y1 - y0) / H
             marks.append(f'<span class=box style="left:{left:.2f}%;top:{top:.2f}%;width:{wid:.2f}%;height:{hei:.2f}%"></span>'
                          f'<span class=pin style="left:{left:.2f}%;top:{top:.2f}%">{k}</span>')
             legend.append(f"<li>{k}. {html.escape(pin['label'])}</li>")
@@ -171,14 +213,21 @@ behind <b>one</b> login. The Admin controls the replay; the analyst works the qu
 Use two browser windows (or one normal and one private window), because one browser keeps one session.<br>
 <b>Full capture</b>: {d['queue']:,} queue items ({d['flow']:,} flow, {d['suricata']:,} Suricata),
 {d['groups']} flow groups, {d['tier2Cases'] if 'tier2Cases' in d else d['autoCases']} Tier 2 cases opened by rule.
-Data flow per stage, all ten end results and the reranking flow: see <code>analysis/phase-f/dual-chain-guide/index.html</code>.</div>
+Open the app at <code>http://127.0.0.1:5173</code>.<br>
+<b>Family learning</b> (steps 19–21): three agreeing verdicts on one family move every member that nobody judged, in
+<b>both</b> chains, inside the guardrails (−30 at most; a critical alert stays at 70 or above).<br>
+Where the two chains combine, the family keys and every family on the capture:
+<a href="../workflow-layout/index.html"><code>analysis/phase-f/workflow-layout/index.html</code></a>
+(sections 3 and 4).</div>
 <p>Built from an automated run of <code>soc-packet.spec.ts</code> on a copy of the demo data. Every screenshot is
 from that run, and the run checked the database after each write. Orange boxes mark what to click or read; their
-positions were measured by the browser. The run fast-forwards the replay after step 4; in a demo, let it play.</p>
+positions were measured by the browser. The run fast-forwards the replay after step 4; in a demo, let it play.
+Steps 19–22 were captured later on the live demo app (replay step 150) by <code>capture_guide_extra.mjs</code>, with
+two earlier verdicts per family recorded through the same API first.</p>
 {''.join(cards)}
 </html>"""
     (out / "index.html").write_text(page, encoding="utf-8")
-    print(f"wrote {out / 'index.html'}: {len(steps(facts))} steps, {sum(len(v) for v in pins.values())} pins")
+    print(f"wrote {out / 'index.html'}: {len(all_steps)} steps, {sum(len(v) for v in pins.values())} pins")
 
 
 if __name__ == "__main__":

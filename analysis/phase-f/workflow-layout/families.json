@@ -1,0 +1,405 @@
+{
+ "source": {
+  "db": "C:\\Users\\Glenn Ang\\AppData\\Local\\Temp\\hitl-review\\packet-replay-full.db",
+  "steps": 160,
+  "eve": "hitl-ids\\data\\packet-replay\\eve.jsonl"
+ },
+ "split": {
+  "suricataAlerts": 408,
+  "linkedToFlagged": 6,
+  "linkedByEvidence": {
+   "none": 402,
+   "corroborated": 6
+  },
+  "bundles": 399,
+  "alertsPerBundle": {
+   "1": 392,
+   "2": 5,
+   "3": 2
+  },
+  "suricataAlertsInFlowGroups": 6,
+  "flowGroupsWithSuricata": 1
+ },
+ "compression": {
+  "flowsInWindow": 27516,
+  "flagged": 16724,
+  "unflagged": 10792,
+  "groups": [
+   {
+    "id": 5,
+    "grouping_key": "13.58.98.64",
+    "member_count": 11613,
+    "first_seen_at": "2018-02-14T18:01:21.199541Z",
+    "last_seen_at": "2018-02-14T18:12:59.850749Z",
+    "handling_route": "tier2_case",
+    "operational_priority": 100,
+    "detection_title": "FTP Brute Force Flow Pattern",
+    "suricataAlertsOnMembers": 6
+   },
+   {
+    "id": 4,
+    "grouping_key": "18.221.219.4",
+    "member_count": 5100,
+    "first_seen_at": "2018-02-14T14:33:26.718731Z",
+    "last_seen_at": "2018-02-14T14:35:59.871829Z",
+    "handling_route": "tier2_case",
+    "operational_priority": 100,
+    "detection_title": "FTP Brute Force Flow Pattern",
+    "suricataAlertsOnMembers": 0
+   },
+   {
+    "id": 3,
+    "grouping_key": "172.31.64.80",
+    "member_count": 9,
+    "first_seen_at": "2018-02-14T12:38:28.160476Z",
+    "last_seen_at": "2018-02-14T12:45:16.977712Z",
+    "handling_route": "tier1_review",
+    "operational_priority": 52.39,
+    "detection_title": "XGBoost: Web Attack",
+    "suricataAlertsOnMembers": 0
+   },
+   {
+    "id": 1,
+    "grouping_key": "50.16.227.133",
+    "member_count": 1,
+    "first_seen_at": "2018-02-14T12:34:52.899887Z",
+    "last_seen_at": "2018-02-14T12:34:52.899887Z",
+    "handling_route": "tier1_review",
+    "operational_priority": 72.62,
+    "detection_title": "XGBoost: Infiltration",
+    "suricataAlertsOnMembers": 0
+   },
+   {
+    "id": 2,
+    "grouping_key": "74.121.136.233",
+    "member_count": 1,
+    "first_seen_at": "2018-02-14T12:36:55.613103Z",
+    "last_seen_at": "2018-02-14T12:36:55.613103Z",
+    "handling_route": "tier1_review",
+    "operational_priority": 67.25,
+    "detection_title": "XGBoost: Infiltration",
+    "suricataAlertsOnMembers": 0
+   }
+  ],
+  "suricataBundlesAdmitted": 399
+ },
+ "queue": {
+  "byChain": {
+   "external_nids_alert": {
+    "chain": "external_nids_alert",
+    "items": 399,
+    "tier1": 391,
+    "tier2": 8,
+    "routed": 399
+   },
+   "legacy_flow_alert": {
+    "chain": "legacy_flow_alert",
+    "items": 10797,
+    "tier1": 10795,
+    "tier2": 2,
+    "routed": 10797
+   }
+  },
+  "bands": {
+   "external_nids_alert": {
+    "critical": 5,
+    "high": 14,
+    "medium": 380
+   },
+   "legacy_flow_alert": {
+    "critical": 2,
+    "high": 2,
+    "low": 10776,
+    "medium": 17
+   }
+  },
+  "unrouted": 0,
+  "tier2ByRule": [
+   {
+    "routeClass": "EXPERT_REVIEW_REQUIRED",
+    "reason": "Attack classification cannot be resolved safely from current evidence (Unknown / Needs Exp",
+    "cases": 8
+   },
+   {
+    "routeClass": "CRITICAL_ESCALATION",
+    "reason": "E1-flow-rule: the rule and the model agree on Brute Force at score 100.",
+    "cases": 2
+   }
+  ]
+ },
+ "families": {
+  "flow": {
+   "items": 10795,
+   "families": 1274,
+   "quorumFamilies": 335,
+   "quorumItems": 9574,
+   "singletons": 657,
+   "top": [
+    {
+     "key": "[\"Benign\",53,\"udp\",\"-\",\"172.31.0.2\"]",
+     "attack": "Benign",
+     "port": 53,
+     "protocol": "udp",
+     "rule": null,
+     "host": "172.31.0.2",
+     "members": 5068,
+     "priorityMin": 0,
+     "priorityMax": 0.02
+    },
+    {
+     "key": "[\"Benign\",3389,\"tcp\",\"-\",\"172.31.65.56\"]",
+     "attack": "Benign",
+     "port": 3389,
+     "protocol": "tcp",
+     "rule": null,
+     "host": "172.31.65.56",
+     "members": 1832,
+     "priorityMin": 0,
+     "priorityMax": 0.04
+    },
+    {
+     "key": "[\"Benign\",80,\"tcp\",\"-\",\"169.254.169.254\"]",
+     "attack": "Benign",
+     "port": 80,
+     "protocol": "tcp",
+     "rule": null,
+     "host": "169.254.169.254",
+     "members": 117,
+     "priorityMin": 0,
+     "priorityMax": 6.83
+    },
+    {
+     "key": "[\"Benign\",445,\"tcp\",\"-\",\"172.31.64.80\"]",
+     "attack": "Benign",
+     "port": 445,
+     "protocol": "tcp",
+     "rule": null,
+     "host": "172.31.64.80",
+     "members": 78,
+     "priorityMin": 0,
+     "priorityMax": 0
+    },
+    {
+     "key": "[\"Benign\",80,\"tcp\",\"-\",\"23.52.91.27\"]",
+     "attack": "Benign",
+     "port": 80,
+     "protocol": "tcp",
+     "rule": null,
+     "host": "23.52.91.27",
+     "members": 61,
+     "priorityMin": 0,
+     "priorityMax": 0.07
+    },
+    {
+     "key": "[\"Benign\",3389,\"tcp\",\"-\",\"172.31.64.80\"]",
+     "attack": "Benign",
+     "port": 3389,
+     "protocol": "tcp",
+     "rule": null,
+     "host": "172.31.64.80",
+     "members": 49,
+     "priorityMin": 0,
+     "priorityMax": 0.45
+    },
+    {
+     "key": "[\"Benign\",80,\"tcp\",\"-\",\"178.255.83.1\"]",
+     "attack": "Benign",
+     "port": 80,
+     "protocol": "tcp",
+     "rule": null,
+     "host": "178.255.83.1",
+     "members": 39,
+     "priorityMin": 0.01,
+     "priorityMax": 0.18
+    },
+    {
+     "key": "[\"Benign\",80,\"tcp\",\"-\",\"72.167.239.239\"]",
+     "attack": "Benign",
+     "port": 80,
+     "protocol": "tcp",
+     "rule": null,
+     "host": "72.167.239.239",
+     "members": 38,
+     "priorityMin": 0.01,
+     "priorityMax": 0.08
+    }
+   ]
+  },
+  "flowFlagged": {
+   "items": 3,
+   "families": 3,
+   "quorumFamilies": 0,
+   "quorumItems": 0,
+   "singletons": 3,
+   "top": [
+    {
+     "key": "[\"Infiltration\",49493,\"tcp\",\"-\"]",
+     "attack": "Infiltration",
+     "port": 49493,
+     "protocol": "tcp",
+     "rule": null,
+     "host": null,
+     "members": 1,
+     "priorityMin": 72.62,
+     "priorityMax": 72.62
+    },
+    {
+     "key": "[\"Infiltration\",49525,\"tcp\",\"-\"]",
+     "attack": "Infiltration",
+     "port": 49525,
+     "protocol": "tcp",
+     "rule": null,
+     "host": null,
+     "members": 1,
+     "priorityMin": 67.25,
+     "priorityMax": 67.25
+    },
+    {
+     "key": "[\"Web Attack\",80,\"tcp\",\"-\"]",
+     "attack": "Web Attack",
+     "port": 80,
+     "protocol": "tcp",
+     "rule": null,
+     "host": null,
+     "members": 1,
+     "priorityMin": 52.39,
+     "priorityMax": 52.39
+    }
+   ]
+  },
+  "suricata": {
+   "items": 391,
+   "families": 7,
+   "quorumFamilies": 4,
+   "quorumItems": 388,
+   "singletons": 3,
+   "top": [
+    {
+     "key": [
+      "ET JA3 Hash - Possible Malware - Fake Firefox Font Update",
+      "172.31.64.80"
+     ],
+     "signature": "ET JA3 Hash - Possible Malware - Fake Firefox Font Update",
+     "internalHost": "172.31.64.80",
+     "members": 344,
+     "priorityMin": 40,
+     "priorityMax": 40,
+     "weight": 0.1,
+     "familyDelta": -30.0,
+     "predictedAfterThreeFP": 10.0,
+     "thirdMemberStep": 3
+    },
+    {
+     "key": [
+      "ET SCAN Behavioral Unusually fast Terminal Server Traffic Potential Scan or Infection (Inbound)",
+      "172.31.65.56"
+     ],
+     "signature": "ET SCAN Behavioral Unusually fast Terminal Server Traffic Potential Scan or Infection (Inbound)",
+     "internalHost": "172.31.65.56",
+     "members": 35,
+     "priorityMin": 40,
+     "priorityMax": 40,
+     "weight": 0.3,
+     "familyDelta": -30.0,
+     "predictedAfterThreeFP": 10.0,
+     "thirdMemberStep": 9
+    },
+    {
+     "key": [
+      "ET SCAN Potential SSH Scan",
+      "172.31.69.25"
+     ],
+     "signature": "ET SCAN Potential SSH Scan",
+     "internalHost": "172.31.69.25",
+     "members": 6,
+     "priorityMin": 65,
+     "priorityMax": 65,
+     "weight": 0.3,
+     "familyDelta": -30.0,
+     "predictedAfterThreeFP": 35.0,
+     "thirdMemberStep": 120
+    },
+    {
+     "key": [
+      "ET EXPLOIT Possible ETERNALBLUE Probe MS17-010 (MSF style)",
+      "172.31.65.56"
+     ],
+     "signature": "ET EXPLOIT Possible ETERNALBLUE Probe MS17-010 (MSF style)",
+     "internalHost": "172.31.65.56",
+     "members": 3,
+     "priorityMin": 85,
+     "priorityMax": 85,
+     "weight": 0.9,
+     "familyDelta": -9.0,
+     "predictedAfterThreeFP": 76.0,
+     "thirdMemberStep": 52
+    },
+    {
+     "key": [
+      "ET EXPLOIT_KIT Evil Redirector Leading to EK September 04 2015",
+      "172.31.64.80"
+     ],
+     "signature": "ET EXPLOIT_KIT Evil Redirector Leading to EK September 04 2015",
+     "internalHost": "172.31.64.80",
+     "members": 1,
+     "priorityMin": 85,
+     "priorityMax": 85,
+     "weight": 0.85,
+     "familyDelta": -13.5,
+     "predictedAfterThreeFP": 71.5,
+     "thirdMemberStep": null
+    },
+    {
+     "key": [
+      "ET EXPLOIT Possible ETERNALBLUE Probe MS17-010 (Generic Flags)",
+      "172.31.65.56"
+     ],
+     "signature": "ET EXPLOIT Possible ETERNALBLUE Probe MS17-010 (Generic Flags)",
+     "internalHost": "172.31.65.56",
+     "members": 1,
+     "priorityMin": 85,
+     "priorityMax": 85,
+     "weight": 0.9,
+     "familyDelta": -9.0,
+     "predictedAfterThreeFP": 76.0,
+     "thirdMemberStep": null
+    },
+    {
+     "key": [
+      "ET JA3 Hash - Possible Malware - Fake Firefox Font Update",
+      "172.31.65.56"
+     ],
+     "signature": "ET JA3 Hash - Possible Malware - Fake Firefox Font Update",
+     "internalHost": "172.31.65.56",
+     "members": 1,
+     "priorityMin": 40,
+     "priorityMax": 40,
+     "weight": 0.1,
+     "familyDelta": -30.0,
+     "predictedAfterThreeFP": 10.0,
+     "thirdMemberStep": null
+    }
+   ]
+  }
+ },
+ "guardrails": {
+  "max_feedback_reduction": 30,
+  "critical_alert_floor": 70,
+  "critical_alert_threshold": 80,
+  "learned_exception_min_occurrences": 3,
+  "learned_exception_min_confidence": 60,
+  "infiltration_alert_floor": 75,
+  "max_feedback_increase": 20,
+  "review_threshold": 70,
+  "high_risk_threshold": 70,
+  "aggregation_min_feedback_count": 3,
+  "aggregation_min_agreement_ratio": 0.67,
+  "aggregation_strong_agreement_ratio": 0.8
+ },
+ "homeNet": [
+  "192.168.0.0/16",
+  "10.0.0.0/8",
+  "172.16.0.0/12"
+ ],
+ "suricataConfig": "suricata-learning-v1"
+}

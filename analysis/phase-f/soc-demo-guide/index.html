@@ -22,10 +22,17 @@ behind <b>one</b> login. The Admin controls the replay; the analyst works the qu
 Use two browser windows (or one normal and one private window), because one browser keeps one session.<br>
 <b>Full capture</b>: 11,196 queue items (10,797 flow, 399 Suricata),
 5 flow groups, 10 Tier 2 cases opened by rule.
-Data flow per stage, all ten end results and the reranking flow: see <code>analysis/phase-f/dual-chain-guide/index.html</code>.</div>
+Open the app at <code>http://127.0.0.1:5173</code>.<br>
+<b>Family learning</b> (steps 19–21): three agreeing verdicts on one family move every member that nobody judged, in
+<b>both</b> chains, inside the guardrails (−30 at most; a critical alert stays at 70 or above).<br>
+Where the two chains combine, the family keys and every family on the capture:
+<a href="../workflow-layout/index.html"><code>analysis/phase-f/workflow-layout/index.html</code></a>
+(sections 3 and 4).</div>
 <p>Built from an automated run of <code>soc-packet.spec.ts</code> on a copy of the demo data. Every screenshot is
 from that run, and the run checked the database after each write. Orange boxes mark what to click or read; their
-positions were measured by the browser. The run fast-forwards the replay after step 4; in a demo, let it play.</p>
+positions were measured by the browser. The run fast-forwards the replay after step 4; in a demo, let it play.
+Steps 19–22 were captured later on the live demo app (replay step 150) by <code>capture_guide_extra.mjs</code>, with
+two earlier verdicts per family recorded through the same API first.</p>
 <h2 class=part>Admin</h2><section class=step id="s1">
 <h3>Step 1. Sign in as the Admin</h3>
 <div class=shot><img src="img/00-login.png" alt="Sign in as the Admin"><span class=box style="left:36.18%;top:61.61%;width:27.64%;height:4.11%"></span><span class=pin style="left:36.18%;top:61.61%">1</span></div>
@@ -58,8 +65,8 @@ positions were measured by the browser. The run fast-forwards the replay after s
 <p><b>Click:</b> Let the arrivals run to the end (about 13 minutes), or click <strong>Next 5 Steps</strong> to go faster.</p><p><b>You see:</b> <strong>Capture steps arrived: 160 / 160</strong>, <strong>Playback: Complete</strong>. The queue holds <strong>11,196</strong> items: <strong>10,797</strong> flow and <strong>399</strong> Suricata. <strong>16,724</strong> flagged flows became <strong>5</strong> groups. <strong>10</strong> Tier 2 cases opened by rule.</p><p class=why><b>Why (SOC):</b> Grouping turns thousands of flagged flows into a few work items.</p>
 </section><h2 class=part>Analyst</h2><section class=step id="s7">
 <h3>Step 7. Both chains in one queue</h3>
-<div class=shot><img src="img/06-both-chains.png" alt="Both chains in one queue"><span class=box style="left:26.81%;top:30.61%;width:4.31%;height:2.78%"></span><span class=pin style="left:26.81%;top:30.61%">1</span></div>
-<ol class=legend><li>1. Tier 2</li><li class=missing>2. Queue (outside the visible area — scroll)</li></ol>
+<div class=shot><img src="img/06-both-chains.png" alt="Both chains in one queue"><span class=box style="left:26.81%;top:30.61%;width:4.31%;height:2.78%"></span><span class=pin style="left:26.81%;top:30.61%">1</span><span class=box style="left:14.44%;top:53.94%;width:19.93%;height:46.06%"></span><span class=pin style="left:14.44%;top:53.94%">2</span></div>
+<ol class=legend><li>1. Tier 2</li><li>2. Queue</li></ol>
 <p><b>Click:</b> Click the <strong>Auto-escalated</strong> tab.</p><p><b>You see:</b> <strong>10</strong> cases. <strong>2</strong> are flow brute-force groups, escalated because the rule and the model agree at score 100. <strong>8</strong> are Suricata alerts with a signature that the system cannot classify (Expert Review).</p><p class=why><b>Why (SOC):</b> The machine routes the clear cases. A human decides the rest.</p>
 </section><section class=step id="s8">
 <h3>Step 8. Open a Suricata alert (this claims it)</h3>
@@ -95,7 +102,7 @@ positions were measured by the browser. The run fast-forwards the replay after s
 <h3>Step 14. Record a verdict</h3>
 <div class=shot><img src="img/13-verdict.png" alt="Record a verdict"><span class=box style="left:35.56%;top:75.24%;width:46.67%;height:4.22%"></span><span class=pin style="left:35.56%;top:75.24%">1</span><span class=box style="left:35.56%;top:95.02%;width:8.47%;height:4.22%"></span><span class=pin style="left:35.56%;top:95.02%">2</span></div>
 <ol class=legend><li>1. Verdict outcome</li><li>2. Record Verdict</li></ol>
-<p><b>Click:</b> Open <strong>Analyst Verdict</strong>. Pick an outcome, type a reason, click <strong>Record Verdict</strong>.</p><p><b>You see:</b> Work status <strong>Completed — Reviewed by Glenn Ang</strong>.</p><p class=why><b>Why (SOC):</b> A flow verdict feeds the learning loop: each outcome moves the score within the guardrails. One verdict alone does not re-rank a family (3-vote gate). A Suricata verdict is recorded but does not re-score.</p>
+<p><b>Click:</b> Open <strong>Analyst Verdict</strong>. Pick an outcome, type a reason, click <strong>Record Verdict</strong>.</p><p><b>You see:</b> Work status <strong>Completed — Reviewed by Glenn Ang</strong>.</p><p class=why><b>Why (SOC):</b> A verdict feeds the learning loop for <strong>both</strong> chains: it moves this alert at once, inside the guardrails. One verdict alone does not re-rank its family; three agreeing verdicts do (steps 19–21).</p>
 </section><h2 class=part>Tier 2</h2><section class=step id="s15">
 <h3>Step 15. The case list</h3>
 <div class=shot><img src="img/14-case-list.png" alt="The case list"><span class=box style="left:16.11%;top:17.44%;width:15.14%;height:4.22%"></span><span class=pin style="left:16.11%;top:17.44%">1</span><span class=box style="left:16.11%;top:56.72%;width:82.22%;height:9.44%"></span><span class=pin style="left:16.11%;top:56.72%">2</span><span class=box style="left:16.11%;top:30.17%;width:82.22%;height:7.67%"></span><span class=pin style="left:16.11%;top:30.17%">3</span></div>
@@ -116,5 +123,25 @@ positions were measured by the browser. The run fast-forwards the replay after s
 <div class=shot><img src="img/17-release.png" alt="Release a claim"><span class=box style="left:37.08%;top:61.41%;width:4.58%;height:3.33%"></span><span class=pin style="left:37.08%;top:61.41%">1</span></div>
 <ol class=legend><li>1. Release</li></ol>
 <p><b>Click:</b> On an alert you own, click <strong>Release claim</strong>, then <strong>Release</strong>.</p><p><b>You see:</b> The alert is available to others again.</p><p class=why><b>Why (SOC):</b> Shift change or wrong pick: work returns to the queue. Idle claims also expire after 15 minutes.</p>
+</section><h2 class=part>Family learning</h2><section class=step id="s19">
+<h3>Step 19. A Suricata family before the third verdict</h3>
+<div class=shot><img src="img/f1-suri-before.png" alt="A Suricata family before the third verdict"><span class=box style="left:15.28%;top:44.50%;width:18.26%;height:3.78%"></span><span class=pin style="left:15.28%;top:44.50%">1</span><span class=box style="left:14.44%;top:53.94%;width:19.93%;height:25.07%"></span><span class=pin style="left:14.44%;top:53.94%">2</span></div>
+<ol class=legend><li>1. Search</li><li>2. Unjudged row at 40</li></ol>
+<p><b>Click:</b> In the queue search, type <strong>Terminal Server</strong>.</p><p><b>You see:</b> Every row is the same signature on the same internal host (172.31.65.56): one Suricata <strong>family</strong>. All rows read <strong>40</strong>. Two earlier false-positive verdicts already sit on this family; nothing else has moved yet.</p><p class=why><b>Why (SOC):</b> One verdict is an opinion. The system waits for three agreeing verdicts before it applies a lesson to alerts nobody judged.</p>
+</section><section class=step id="s20">
+<h3>Step 20. The third verdict teaches the whole family</h3>
+<div class=shot><img src="img/f2-suri-after.png" alt="The third verdict teaches the whole family"><span class=box style="left:14.44%;top:53.94%;width:19.93%;height:26.85%"></span><span class=pin style="left:14.44%;top:53.94%">1</span><span class=box style="left:14.44%;top:80.80%;width:19.93%;height:19.20%"></span><span class=pin style="left:14.44%;top:80.80%">2</span></div>
+<ol class=legend><li>1. Judged (verdict)</li><li>2. Unjudged: 40 → 10</li></ol>
+<p><b>Click:</b> Open a row marked <strong>Available</strong>. <strong>Analyst Verdict</strong> → <strong>False Positive</strong>, type a reason, <strong>Record Verdict</strong>.</p><p><b>You see:</b> The judged row reads <strong>Completed — Reviewed by Glenn Ang · false positive</strong>. The rows <strong>nobody judged</strong>, still marked <strong>Available</strong>, drop from <strong>40</strong> to <strong>10</strong> — every member of the family moves down the queue at once.</p><p class=why><b>Why (SOC):</b> This is the alert-fatigue reduction: three decisions cleared a 31-item family. The guardrail caps the change at −30, and a critical alert never falls below 70.</p>
+</section><section class=step id="s21">
+<h3>Step 21. The flow chain learns by the same rule</h3>
+<div class=shot><img src="img/f3-flow-after.png" alt="The flow chain learns by the same rule"><span class=box style="left:14.44%;top:53.94%;width:19.93%;height:23.30%"></span><span class=pin style="left:14.44%;top:53.94%">1</span><span class=box style="left:14.44%;top:77.24%;width:19.93%;height:21.52%"></span><span class=pin style="left:14.44%;top:77.24%">2</span></div>
+<ol class=legend><li>1. Judged (verdict)</li><li>2. Unjudged: 36.49 → 6.49</li></ol>
+<p><b>Click:</b> Search <strong>131.202.240.72</strong>. Record <strong>False Positive</strong> on an <strong>Available</strong> row at <strong>36.49</strong> (third verdict on the family).</p><p><b>You see:</b> The judged row reads <strong>Completed</strong>. The other row, still <strong>Available</strong>, drops from <strong>36.49</strong> to <strong>6.49</strong>. This family is CICFlowMeter + XGBoost flows on port 443 to one external server.</p><p class=why><b>Why (SOC):</b> One verdict form, one rule, both chains. The analyst does not need to know which detector raised the alert.</p>
+</section><h2 class=part>Admin</h2><section class=step id="s22">
+<h3>Step 22. Reset the replay to 0 alerts in one click</h3>
+<div class=shot><img src="img/a0-reset.png" alt="Reset the replay to 0 alerts in one click"><span class=box style="left:73.89%;top:50.78%;width:7.57%;height:3.78%"></span><span class=pin style="left:73.89%;top:50.78%">1</span><span class=box style="left:59.86%;top:32.89%;width:36.39%;height:2.22%"></span><span class=pin style="left:59.86%;top:32.89%">2</span></div>
+<ol class=legend><li>1. Reset Replay</li><li>2. Steps arrived</li></ol>
+<p><b>Click:</b> As <strong>admin</strong>, open <strong>Operational Workspace</strong>. Click <strong>Reset Replay</strong> and confirm.</p><p><b>You see:</b> <strong>Reset Replay</strong> is available while the Replay is <strong>Active</strong> (here at 150 / 160). Analysts move to the Operational workspace, their open claims are released, and their dashboards read <strong>0</strong> without a reload. Then <strong>Prepare Replay</strong>, <strong>Activate</strong>, <strong>Start Arrivals</strong> to play from 0.</p><p class=why><b>Why (SOC):</b> The Administrator supersedes analysts: a demo can restart even while analysts are working. The audit log records how many claims the reset released.</p>
 </section>
 </html>
