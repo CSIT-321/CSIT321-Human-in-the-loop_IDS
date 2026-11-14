@@ -14,12 +14,13 @@ from __future__ import annotations
 import hashlib
 import json
 from contextlib import closing
+from datetime import datetime, timezone
 from pathlib import Path
 from uuid import NAMESPACE_URL, uuid5
 
 from apps.api import auth
 from packages.contracts import db
-from packages.detection import flow_queue
+from packages.detection import cross_chain, flow_queue
 from packages.detection.adapters.staging import stage_file
 from packages.detection.external_admission import (
     AdmissionRequest, EligibilityRequest, admit_external, review_eligibility,
@@ -100,5 +101,8 @@ def advance_one(path: Path, step: int, admin_name: str, project_flows: bool = Tr
             admit_external(conn, inbox_id, actor_id=admin['id'], request=AdmissionRequest(
                 request_id=uuid5(NAMESPACE_URL, f'packet-replay:admit:{inbox_id}'),
                 expected_review_id=review['id'], reason=REASON))
+        # Cross-chain join: one queue item per connection, the more severe reading shown (cross_chain.py).
+        if cross_chain.link_new(conn, datetime.now(timezone.utc).isoformat()):
+            conn.commit()
         return (conn.execute('SELECT count(*) FROM external_operational_admission').fetchone()[0],
-                conn.execute('SELECT count(*) FROM operational_alerts_v2').fetchone()[0])
+                conn.execute(f'SELECT count(*) FROM {cross_chain.VISIBLE}').fetchone()[0])

@@ -4,6 +4,7 @@ from datetime import datetime, timezone
 from apps.api.contract.routing import OperationalSummary
 from packages.contracts.operational_v2 import POLICY_BAND_STORAGE
 from packages.detection import suricata_learning
+from packages.detection.cross_chain import VISIBLE
 from packages.detection.selective_review import effective_review
 from packages.detection.queue_severity import severity_rank
 from packages.detection.routing import RECOMMENDATION_OPEN_SQL
@@ -14,7 +15,8 @@ ACTIVE_WORK = "(w.status IS NULL OR w.status NOT IN ('completed','escalated'))"
 IS_GROUP = 'EXISTS (SELECT 1 FROM alert_groups g WHERE g.representative_operational_alert_id = a.id)'
 
 
-SOURCE = '''FROM operational_alerts_v2 a
+# Cross-chain join: an item whose connection the other chain reads more severely is hidden (cross_chain.VISIBLE).
+SOURCE = f'''FROM {VISIBLE} a
     LEFT JOIN operational_triage_state_v2 t ON t.operational_alert_id=a.id
     LEFT JOIN operational_system_routing s ON s.operational_alert_id=a.id
     LEFT JOIN analyst_work w ON w.operational_alert_id=a.id'''

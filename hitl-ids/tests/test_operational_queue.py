@@ -119,7 +119,8 @@ def test_exact_requested_scores_ties_offsets_microseconds_and_invalid_priority()
             CREATE TABLE alerts(id,evidence_class,severity,detection_score,combined_score);
             CREATE TABLE operational_triage_state_v2(operational_alert_id,operational_priority);
             CREATE TABLE operational_system_routing(operational_alert_id);
-            CREATE TABLE analyst_work(operational_alert_id,status);''')
+            CREATE TABLE analyst_work(operational_alert_id,status);
+            CREATE TABLE cross_chain_links(hidden_operational_alert_id);''')
         for i, score, stamp, ref in [(1,95,'2026-10-31T12:00:00.000001+08:00','z'),
                 (2,95,'2026-10-31T04:00:00.000002Z','b'), (3,72,'2026-11-01T00:00:00Z','c'),
                 (4,60,'2026-11-02T00:00:00Z','d'), (5,40,'2026-11-03T00:00:00Z','e'),
