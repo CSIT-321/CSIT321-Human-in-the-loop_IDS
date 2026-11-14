@@ -69,6 +69,8 @@ DEVIATION_TABLES = {
     # Migration 22; analysis/phase-b/GROUPING-METHOD-REVIEW.md (method B: one queue item per flow group).
     "alert_groups": {"id","group_ref","grouping_key","first_seen_at","last_seen_at","member_count","representative_operational_alert_id","qualifying_member_alert_id","case_ref","created_at"},
     "alert_group_members": {"id","group_id","legacy_alert_id","source_ip","occurred_at","joined_at"},
+    "cross_chain_links": {"id","community_id","suricata_operational_alert_id","flow_operational_alert_id","flow_alert_id",
+                          "shown_operational_alert_id","hidden_operational_alert_id","reason","created_at"},
     # Migration 21; docs/shared-analyst-workstation-claim.md.
     "analyst_work": {"operational_alert_id","status","revision","owner_actor_id","owner_name","claimed_at","round_ref","finished_at","finished_by_actor_id","finished_by_name","verdict_ref"},
     "analyst_claim_rounds": {"round_ref","operational_alert_id","work_revision","policy_version","window_ms","started_at","closes_at","status","finalized_at","owner_actor_id"},
@@ -330,7 +332,7 @@ def test_columns_are_tdm_names_plus_logged_deviations(conn):
 def test_every_table_model_matches_its_columns(conn):
     # The inbox uses the canonical contract and staging writer, not a legacy operational model.
     assert set(db.TABLE_MODELS) == table_names(conn) - {
-        "alert_groups", "alert_group_members",
+        "alert_groups", "alert_group_members", "cross_chain_links",
         "analyst_work", "analyst_claim_rounds", "analyst_claim_intents", "analyst_work_events", "operational_alert_notes",
         "conclusion_memory_contributions", "conclusion_memory_evidence", "verdict_memory_contributions", "verdict_memory_evidence", "analyst_verdict_events", "suricata_eve_records", "operational_system_routing",
         "prospective_runs", "prospective_run_events", "prospective_decisions", "prospective_observations",
@@ -347,6 +349,11 @@ EXPECTED_FOREIGN_KEYS = {
     ('alert_groups', 'qualifying_member_alert_id', 'alerts', 'id'),
     ('alert_group_members', 'group_id', 'alert_groups', 'id'),
     ('alert_group_members', 'legacy_alert_id', 'alerts', 'id'),
+    ('cross_chain_links', 'suricata_operational_alert_id', 'operational_alerts_v2', 'id'),
+    ('cross_chain_links', 'flow_operational_alert_id', 'operational_alerts_v2', 'id'),
+    ('cross_chain_links', 'flow_alert_id', 'alerts', 'id'),
+    ('cross_chain_links', 'shown_operational_alert_id', 'operational_alerts_v2', 'id'),
+    ('cross_chain_links', 'hidden_operational_alert_id', 'operational_alerts_v2', 'id'),
     ('analyst_work', 'operational_alert_id', 'operational_alerts_v2', 'id'),
     ('analyst_work', 'owner_actor_id', 'users', 'id'),
     ('analyst_work', 'finished_by_actor_id', 'users', 'id'),

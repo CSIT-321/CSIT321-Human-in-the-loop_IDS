@@ -27,7 +27,8 @@ QUEUE = """SELECT o.id, o.operational_alert_ref, o.source_kind, o.legacy_alert_i
     s.classification, s.routing_decision, s.case_ref,
     (SELECT g.id FROM alert_groups g WHERE g.representative_operational_alert_id=o.id) AS group_id,
     (SELECT a.evidence_class FROM alerts a WHERE a.id=o.legacy_alert_id) AS evidence
-    FROM operational_alerts_v2 o JOIN operational_triage_state_v2 t ON t.operational_alert_id=o.id
+    FROM (SELECT * FROM operational_alerts_v2 WHERE id NOT IN (SELECT hidden_operational_alert_id FROM cross_chain_links)) o
+    JOIN operational_triage_state_v2 t ON t.operational_alert_id=o.id
     JOIN operational_system_routing s ON s.operational_alert_id=o.id ORDER BY o.id"""
 
 
@@ -154,16 +155,19 @@ def main() -> None:
     totals = {
         "flowsInWindow": RUN["flowsInWindow"], "steps": len(RUN["steps"]), "replaySeconds": RUN["seconds"],
         "suricataAlertsArrived": arrived, "suricataBundlesAdmitted": one("SELECT count(*) FROM external_operational_admission"),
-        "queueItems": one("SELECT count(*) FROM operational_alerts_v2"),
-        "flowQueueItems": one("SELECT count(*) FROM operational_alerts_v2 WHERE source_kind='legacy_flow_alert'"),
-        "suricataQueueItems": one("SELECT count(*) FROM operational_alerts_v2 WHERE source_kind='external_nids_alert'"),
+        "queueItems": one("SELECT count(*) FROM (SELECT * FROM operational_alerts_v2 WHERE id NOT IN (SELECT hidden_operational_alert_id FROM cross_chain_links))"),
+        "queueItemsBeforeJoin": one("SELECT count(*) FROM operational_alerts_v2"),
+        "joinedConnections": one("SELECT count(*) FROM cross_chain_links"),
+        "flowQueueItems": one("SELECT count(*) FROM (SELECT * FROM operational_alerts_v2 WHERE id NOT IN (SELECT hidden_operational_alert_id FROM cross_chain_links)) WHERE source_kind='legacy_flow_alert'"),
+        "suricataQueueItems": one("SELECT count(*) FROM (SELECT * FROM operational_alerts_v2 WHERE id NOT IN (SELECT hidden_operational_alert_id FROM cross_chain_links)) WHERE source_kind='external_nids_alert'"),
         "flaggedFlows": one("SELECT count(*) FROM alerts WHERE evidence_class!='none'"),
         "unflaggedFlows": one("SELECT count(*) FROM alerts WHERE evidence_class='none'"),
         "groups": one("SELECT count(*) FROM alert_groups"), "groupMembers": one("SELECT count(*) FROM alert_group_members"),
         "tier2Cases": one("SELECT count(*) FROM tier2_cases"),
         "tier2CasesFlow": one("SELECT count(*) FROM tier2_cases k JOIN operational_alerts_v2 o "
                               "ON o.id=k.primary_operational_alert_id WHERE o.source_kind='legacy_flow_alert'"),
-        "tier1Items": one("SELECT count(*) FROM operational_triage_state_v2 WHERE handling_route='tier1_review'"),
+        "tier1Items": one("SELECT count(*) FROM (SELECT * FROM operational_alerts_v2 WHERE id NOT IN (SELECT hidden_operational_alert_id FROM cross_chain_links)) o JOIN operational_triage_state_v2 t ON t.operational_alert_id=o.id "
+                           "WHERE t.handling_route='tier1_review'"),
         "unrouted": one("SELECT count(*) FROM operational_alerts_v2 o LEFT JOIN operational_system_routing s "
                         "ON s.operational_alert_id=o.id WHERE s.operational_alert_id IS NULL"),
     }

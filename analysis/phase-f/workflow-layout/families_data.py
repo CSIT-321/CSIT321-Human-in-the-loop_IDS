@@ -73,17 +73,42 @@ def main() -> None:
     for g in groups:
         g["suricataAlertsOnMembers"] = groups_touched.get(g["id"], 0)
 
-    # ---- 3. one table, one routing audit, one sort
+    # ---- 3. one table, one routing audit, one sort (the visible queue: after the cross-chain join)
+    visible = "(SELECT * FROM operational_alerts_v2 WHERE id NOT IN (SELECT hidden_operational_alert_id FROM cross_chain_links))"
     by_chain = {r[0]: dict(r) for r in conn.execute(
         "SELECT o.source_kind AS chain, count(*) AS items, "
         "sum(t.handling_route='tier1_review') AS tier1, sum(t.handling_route='tier2_case') AS tier2, "
         "sum(s.operational_alert_id IS NOT NULL) AS routed "
-        "FROM operational_alerts_v2 o JOIN operational_triage_state_v2 t ON t.operational_alert_id=o.id "
+        f"FROM {visible} o JOIN operational_triage_state_v2 t ON t.operational_alert_id=o.id "
         "LEFT JOIN operational_system_routing s ON s.operational_alert_id=o.id GROUP BY o.source_kind")}
+    raw_by_chain = {r[0]: r[1] for r in conn.execute(
+        "SELECT source_kind, count(*) FROM operational_alerts_v2 GROUP BY 1")}
     bands = collections.defaultdict(dict)
-    for r in conn.execute("SELECT o.source_kind, t.priority_band, count(*) FROM operational_alerts_v2 o "
+    for r in conn.execute(f"SELECT o.source_kind, t.priority_band, count(*) FROM {visible} o "
                           "JOIN operational_triage_state_v2 t ON t.operational_alert_id=o.id GROUP BY 1,2"):
         bands[r[0]][r[1] or "none"] = r[2]
+    # ---- 3b. the cross-chain join (packages/detection/cross_chain.py)
+    join_rows = conn.execute(
+        "SELECT l.reason, ts.priority_band AS sb, tf.priority_band AS fb, ts.handling_route AS sr, "
+        "tf.handling_route AS fr, (SELECT a.evidence_class FROM alerts a WHERE a.id=l.flow_alert_id) AS ev, "
+        "(l.flow_operational_alert_id IN (SELECT representative_operational_alert_id FROM alert_groups)) AS grp "
+        "FROM cross_chain_links l "
+        "JOIN operational_triage_state_v2 ts ON ts.operational_alert_id=l.suricata_operational_alert_id "
+        "JOIN operational_triage_state_v2 tf ON tf.operational_alert_id=l.flow_operational_alert_id").fetchall()
+    join_cases = collections.Counter(
+        (r["reason"], "flow group" if r["grp"] else f"flow single ({r['ev']})", f"{r['fb']} / {r['fr']}",
+         f"{r['sb']} / {r['sr']}") for r in join_rows)
+    join = {"links": len(join_rows),
+            "distinctFlowItems": one("SELECT count(DISTINCT flow_operational_alert_id) FROM cross_chain_links"),
+            "hidden": one("SELECT count(DISTINCT hidden_operational_alert_id) FROM cross_chain_links"),
+            "suricataShown": sum(1 for r in join_rows if r["reason"] == "suricata more severe"),
+            "flowShown": sum(1 for r in join_rows if r["reason"] != "suricata more severe"),
+            "unlinkedSuricata": one("SELECT count(*) FROM operational_alerts_v2 WHERE source_kind='external_nids_alert' "
+                                    "AND id NOT IN (SELECT suricata_operational_alert_id FROM cross_chain_links)"),
+            "rawItems": one("SELECT count(*) FROM operational_alerts_v2"), "rawByChain": raw_by_chain,
+            "visibleItems": one(f"SELECT count(*) FROM {visible}"),
+            "cases": [{"shown": k[0], "flowSide": k[1], "flowBandRoute": k[2], "suricataBandRoute": k[3], "links": v}
+                      for k, v in join_cases.most_common()]}
     escalation_rules = collections.Counter()
     for (decision,) in conn.execute("SELECT s.routing_decision FROM operational_system_routing s "
                                     "JOIN tier2_cases k ON k.primary_operational_alert_id=s.operational_alert_id"):
@@ -92,13 +117,13 @@ def main() -> None:
 
     # ---- 4. family learning: Tier 1 items only (a verdict needs a Tier 1 claim)
     flow_rows = conn.execute(
-        f"SELECT a.family_key, a.evidence_class, t.operational_priority FROM operational_alerts_v2 o "
+        f"SELECT a.family_key, a.evidence_class, t.operational_priority FROM (SELECT * FROM operational_alerts_v2 WHERE id NOT IN (SELECT hidden_operational_alert_id FROM cross_chain_links)) o "
         f"JOIN alerts a ON a.id=o.legacy_alert_id JOIN operational_triage_state_v2 t ON t.operational_alert_id=o.id "
         f"WHERE {TIER1}").fetchall()
     suri_rows = conn.execute(
         f"SELECT o.detection_title, o.source_ip, o.destination_ip, o.detection_category, o.native_severity, "
         f"t.operational_priority "
-        f"FROM operational_alerts_v2 o JOIN operational_triage_state_v2 t ON t.operational_alert_id=o.id "
+        f"FROM (SELECT * FROM operational_alerts_v2 WHERE id NOT IN (SELECT hidden_operational_alert_id FROM cross_chain_links)) o JOIN operational_triage_state_v2 t ON t.operational_alert_id=o.id "
         f"WHERE o.source_kind='external_nids_alert' AND {TIER1}").fetchall()
 
     def summarise(keyed: dict[str, list[float]], describe) -> dict:
@@ -162,7 +187,7 @@ def main() -> None:
                         "flagged": one("SELECT count(*) FROM alerts WHERE evidence_class!='none'"),
                         "unflagged": one("SELECT count(*) FROM alerts WHERE evidence_class='none'"),
                         "groups": groups, "suricataBundlesAdmitted": one("SELECT count(*) FROM external_operational_admission")},
-        "queue": {"byChain": by_chain, "bands": bands,
+        "queue": {"byChain": by_chain, "bands": bands, "join": join,
                   "unrouted": one("SELECT count(*) FROM operational_alerts_v2 o LEFT JOIN operational_system_routing s "
                                   "ON s.operational_alert_id=o.id WHERE s.operational_alert_id IS NULL"),
                   "tier2ByRule": [{"routeClass": k[0], "reason": k[1], "cases": v} for k, v in escalation_rules.most_common()]},
@@ -175,6 +200,9 @@ def main() -> None:
     (HERE / "families.json").write_text(json.dumps(out, indent=1, default=str), encoding="utf-8")
     print(json.dumps({k: out[k] for k in ("split",)}, default=str))
     print("bychain", json.dumps(by_chain)); print("tier2", out["queue"]["tier2ByRule"])
+    print("join", json.dumps({k: v for k, v in join.items() if k != "cases"}))
+    for c in join["cases"]:
+        print("   ", c)
     for chain in ("flow", "flowFlagged", "suricata"):
         f = out["families"][chain]
         print(chain, {k: f[k] for k in ("items", "families", "quorumFamilies", "quorumItems", "singletons")})

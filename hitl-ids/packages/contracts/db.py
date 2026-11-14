@@ -182,6 +182,24 @@ MIGRATIONS += ((26, "per-account queue scope: a second analyst sees Tier 2 only"
 ALTER TABLE users ADD COLUMN queue_scope TEXT NOT NULL DEFAULT 'all'
     CHECK (queue_scope IN ('all', 'tier2'));
 """),)
+MIGRATIONS += ((27, "cross-chain join: one queue item per connection (packages/detection/cross_chain.py)", """
+CREATE TABLE cross_chain_links (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    community_id TEXT NOT NULL,
+    suricata_operational_alert_id INTEGER NOT NULL UNIQUE REFERENCES operational_alerts_v2(id),
+    flow_operational_alert_id INTEGER NOT NULL REFERENCES operational_alerts_v2(id),
+    flow_alert_id INTEGER NOT NULL REFERENCES alerts(id),
+    shown_operational_alert_id INTEGER NOT NULL REFERENCES operational_alerts_v2(id),
+    hidden_operational_alert_id INTEGER NOT NULL REFERENCES operational_alerts_v2(id),
+    reason TEXT NOT NULL,
+    created_at TEXT NOT NULL
+);
+CREATE INDEX idx_cross_chain_hidden ON cross_chain_links(hidden_operational_alert_id);
+CREATE TRIGGER trg_cross_chain_no_update BEFORE UPDATE ON cross_chain_links
+BEGIN SELECT RAISE(ABORT, 'cross_chain_links is append-only'); END;
+CREATE TRIGGER trg_cross_chain_no_delete BEFORE DELETE ON cross_chain_links
+BEGIN SELECT RAISE(ABORT, 'cross_chain_links is append-only'); END;
+"""),)
 SCHEMA_VERSION = MIGRATIONS[-1][0]
 
 

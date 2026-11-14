@@ -27,7 +27,7 @@ def census(conn: sqlite3.Connection) -> dict:
     one = lambda sql: conn.execute(sql).fetchone()[0]  # noqa: E731
     return {
         "flows": one("SELECT count(*) FROM alerts"),
-        "queue": one("SELECT count(*) FROM operational_alerts_v2"),
+        "queue": one("SELECT count(*) FROM (SELECT * FROM operational_alerts_v2 WHERE id NOT IN (SELECT hidden_operational_alert_id FROM cross_chain_links))"),
         "suricataAdmitted": one("SELECT count(*) FROM external_operational_admission"),
         "groups": one("SELECT count(*) FROM alert_groups"),
         "groupMembers": one("SELECT count(*) FROM alert_group_members"),

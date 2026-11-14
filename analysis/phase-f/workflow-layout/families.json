@@ -87,31 +87,75 @@
   "byChain": {
    "external_nids_alert": {
     "chain": "external_nids_alert",
-    "items": 399,
-    "tier1": 391,
+    "items": 393,
+    "tier1": 385,
     "tier2": 8,
-    "routed": 399
+    "routed": 393
    },
    "legacy_flow_alert": {
     "chain": "legacy_flow_alert",
-    "items": 10797,
-    "tier1": 10795,
+    "items": 10404,
+    "tier1": 10402,
     "tier2": 2,
-    "routed": 10797
+    "routed": 10404
    }
   },
   "bands": {
    "external_nids_alert": {
     "critical": 5,
-    "high": 14,
+    "high": 8,
     "medium": 380
    },
    "legacy_flow_alert": {
     "critical": 2,
     "high": 2,
-    "low": 10776,
+    "low": 10383,
     "medium": 17
    }
+  },
+  "join": {
+   "links": 399,
+   "distinctFlowItems": 394,
+   "hidden": 399,
+   "suricataShown": 393,
+   "flowShown": 6,
+   "unlinkedSuricata": 0,
+   "rawItems": 11196,
+   "rawByChain": {
+    "external_nids_alert": 399,
+    "legacy_flow_alert": 10797
+   },
+   "visibleItems": 10797,
+   "cases": [
+    {
+     "shown": "suricata more severe",
+     "flowSide": "flow single (none)",
+     "flowBandRoute": "low / tier1_review",
+     "suricataBandRoute": "medium / tier1_review",
+     "links": 380
+    },
+    {
+     "shown": "suricata more severe",
+     "flowSide": "flow single (none)",
+     "flowBandRoute": "low / tier1_review",
+     "suricataBandRoute": "high / tier2_case",
+     "links": 8
+    },
+    {
+     "shown": "flow as severe or more",
+     "flowSide": "flow group",
+     "flowBandRoute": "critical / tier2_case",
+     "suricataBandRoute": "high / tier1_review",
+     "links": 6
+    },
+    {
+     "shown": "suricata more severe",
+     "flowSide": "flow single (none)",
+     "flowBandRoute": "low / tier1_review",
+     "suricataBandRoute": "critical / tier1_review",
+     "links": 5
+    }
+   ]
   },
   "unrouted": 0,
   "tier2ByRule": [
@@ -129,11 +173,11 @@
  },
  "families": {
   "flow": {
-   "items": 10795,
-   "families": 1274,
-   "quorumFamilies": 335,
-   "quorumItems": 9574,
-   "singletons": 657,
+   "items": 10402,
+   "families": 1270,
+   "quorumFamilies": 301,
+   "quorumItems": 9158,
+   "singletons": 694,
    "top": [
     {
      "key": "[\"Benign\",53,\"udp\",\"-\",\"172.31.0.2\"]",
@@ -142,7 +186,7 @@
      "protocol": "udp",
      "rule": null,
      "host": "172.31.0.2",
-     "members": 5068,
+     "members": 5065,
      "priorityMin": 0,
      "priorityMax": 0.02
     },
@@ -153,7 +197,7 @@
      "protocol": "tcp",
      "rule": null,
      "host": "172.31.65.56",
-     "members": 1832,
+     "members": 1797,
      "priorityMin": 0,
      "priorityMax": 0.04
     },
@@ -268,10 +312,10 @@
    ]
   },
   "suricata": {
-   "items": 391,
-   "families": 7,
-   "quorumFamilies": 4,
-   "quorumItems": 388,
+   "items": 385,
+   "families": 6,
+   "quorumFamilies": 3,
+   "quorumItems": 382,
    "singletons": 3,
    "top": [
     {
@@ -303,21 +347,6 @@
      "familyDelta": -30.0,
      "predictedAfterThreeFP": 10.0,
      "thirdMemberStep": 9
-    },
-    {
-     "key": [
-      "ET SCAN Potential SSH Scan",
-      "172.31.69.25"
-     ],
-     "signature": "ET SCAN Potential SSH Scan",
-     "internalHost": "172.31.69.25",
-     "members": 6,
-     "priorityMin": 65,
-     "priorityMax": 65,
-     "weight": 0.3,
-     "familyDelta": -30.0,
-     "predictedAfterThreeFP": 35.0,
-     "thirdMemberStep": 120
     },
     {
      "key": [

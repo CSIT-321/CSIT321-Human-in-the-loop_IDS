@@ -2,19 +2,21 @@
  "totals": {
   "flowsInWindow": 27516,
   "steps": 160,
-  "replaySeconds": 155.6,
+  "replaySeconds": 179.2,
   "suricataAlertsArrived": 408,
   "suricataBundlesAdmitted": 399,
-  "queueItems": 11196,
-  "flowQueueItems": 10797,
-  "suricataQueueItems": 399,
+  "queueItems": 10797,
+  "queueItemsBeforeJoin": 11196,
+  "joinedConnections": 399,
+  "flowQueueItems": 10404,
+  "suricataQueueItems": 393,
   "flaggedFlows": 16724,
   "unflaggedFlows": 10792,
   "groups": 5,
   "groupMembers": 16724,
   "tier2Cases": 10,
   "tier2CasesFlow": 2,
-  "tier1Items": 11186,
+  "tier1Items": 10787,
   "unrouted": 0
  },
  "results": [
@@ -22,7 +24,7 @@
    "chain": "flow",
    "count": 2,
    "operationalId": 9940,
-   "alertRef": "448172d5-a667-461c-8e2b-c1fe72316e5b",
+   "alertRef": "3d97e539-2d14-4134-aeda-fb51e26b1ae7",
    "title": "FTP Brute Force Flow Pattern",
    "evidenceClass": "corroborated",
    "isGroup": true,
@@ -51,7 +53,7 @@
     "tier2Recommended": false,
     "reason": "E1-flow-rule: the rule and the model agree on Brute Force at score 100. The whole group of 90 alerts is escalated; member 1 of 90 qualified."
    },
-   "caseRef": "67d5537e-3e18-54b0-ada7-920b71b63aa6",
+   "caseRef": "48628f24-a1c9-5754-9fbf-0988c5d87aaa",
    "trace": {
     "flow": {
      "record": "PK-172.31.69.25-91",
@@ -88,9 +90,9 @@
   },
   {
    "chain": "flow",
-   "count": 10776,
+   "count": 10383,
    "operationalId": 1,
-   "alertRef": "c591a8d6-4260-4d86-9f73-3c959831af80",
+   "alertRef": "498db86a-225a-493f-ac76-3390c28296b0",
    "title": "XGBoost: Benign",
    "evidenceClass": "none",
    "isGroup": false,
@@ -149,7 +151,7 @@
    "chain": "flow",
    "count": 16,
    "operationalId": 690,
-   "alertRef": "b8bf0f3f-c2af-45fe-8312-9595d0a96bf2",
+   "alertRef": "2677e3a5-38d0-4d2d-9845-32436fde6f1a",
    "title": "XGBoost: Benign",
    "evidenceClass": "none",
    "isGroup": false,
@@ -208,7 +210,7 @@
    "chain": "flow",
    "count": 2,
    "operationalId": 864,
-   "alertRef": "2d2a40a2-ef76-473d-825c-addb05d27028",
+   "alertRef": "d52bd4f7-a55f-4ddc-b3ba-958bde037918",
    "title": "XGBoost: Infiltration",
    "evidenceClass": "ml_only",
    "isGroup": true,
@@ -273,7 +275,7 @@
    "chain": "flow",
    "count": 1,
    "operationalId": 4830,
-   "alertRef": "ba82414a-6e3b-4737-ad71-dc08160a6a27",
+   "alertRef": "6dad1561-4ecb-4965-9b85-76d868a01615",
    "title": "XGBoost: Web Attack",
    "evidenceClass": "ml_only",
    "isGroup": true,
@@ -398,7 +400,7 @@
     },
     "admission": {
      "event": "V2_EXTERNAL_ALERT_ADMITTED",
-     "at": "2026-11-10T08:52:04.870445Z"
+     "at": "2026-11-14T06:28:11.579387Z"
     },
     "otherChain": {
      "flowAlertId": 3082,
@@ -475,7 +477,7 @@
     },
     "admission": {
      "event": "V2_EXTERNAL_ALERT_ADMITTED",
-     "at": "2026-11-10T08:51:38.839488Z"
+     "at": "2026-11-14T06:27:45.379774Z"
     },
     "otherChain": {
      "flowAlertId": 284,
@@ -552,7 +554,7 @@
     },
     "admission": {
      "event": "V2_EXTERNAL_ALERT_ADMITTED",
-     "at": "2026-11-10T08:51:36.729732Z"
+     "at": "2026-11-14T06:27:43.445800Z"
     },
     "otherChain": {
      "flowAlertId": 42,
@@ -565,83 +567,6 @@
     }
    },
    "id": "R8"
-  },
-  {
-   "chain": "suricata",
-   "count": 6,
-   "operationalId": 10260,
-   "alertRef": "ddf0c741-c163-5220-adbc-4d522ab4461e",
-   "title": "ET SCAN Potential SSH Scan",
-   "evidenceClass": null,
-   "isGroup": false,
-   "classification": {
-    "status": "mapped",
-    "category": "reconnaissance_port_scan",
-    "reasons": [
-     "Rule reconnaissance: signature 2001219 signature maps to reconnaissance_port_scan."
-    ],
-    "policyVersion": "suricata-classification-v3"
-   },
-   "routing": {
-    "routeClass": "ROUTINE_REVIEW",
-    "route": "tier1_review",
-    "reasons": [
-     "Known attack classification; no configured trusted critical or expert condition is satisfied. Routine Tier 1 review."
-    ],
-    "policyVersion": "system-routing-v1"
-   },
-   "triage": {
-    "priority": 65,
-    "band": "high",
-    "route": "tier1_review",
-    "stage": "triage",
-    "tier2Recommended": false,
-    "reason": "Known attack classification; no configured trusted critical or expert condition is satisfied. Routine Tier 1 review."
-   },
-   "caseRef": null,
-   "trace": {
-    "eve": {
-     "time": "2018-02-15T02:01:50.375719+0800",
-     "srcIp": "13.58.98.64",
-     "srcPort": 43846,
-     "dstIp": "172.31.69.25",
-     "dstPort": 22,
-     "protocol": "TCP",
-     "signature": "ET SCAN Potential SSH Scan",
-     "category": "Attempted Information Leak",
-     "severity": 2,
-     "sids": [
-      2001219
-     ],
-     "alertsInBundle": 1,
-     "flowId": 1895176605453914
-    },
-    "staging": {
-     "inboxId": 374,
-     "decision": "hold_for_review",
-     "policyVersion": "suricata-offline-v1",
-     "evidenceClass": "external_rule"
-    },
-    "review": {
-     "decision": "accepted",
-     "reason": "Packet Replay: non-informational Suricata alert, accepted by the replay rule",
-     "actor": "admin"
-    },
-    "admission": {
-     "event": "V2_EXTERNAL_ALERT_ADMITTED",
-     "at": "2026-11-10T08:53:24.821414Z"
-    },
-    "otherChain": {
-     "flowAlertId": 15018,
-     "evidenceClass": "corroborated",
-     "ruleCategory": "Brute Force",
-     "modelClass": "Brute Force",
-     "modelProbability": 0.9992,
-     "combinedScore": 100,
-     "groupMembers": 11613
-    }
-   },
-   "id": "R9"
   },
   {
    "chain": "suricata",
@@ -712,7 +637,7 @@
     },
     "admission": {
      "event": "V2_EXTERNAL_ALERT_ADMITTED",
-     "at": "2026-11-10T08:51:54.900432Z"
+     "at": "2026-11-14T06:28:01.315769Z"
     },
     "otherChain": {
      "flowAlertId": 2161,
@@ -724,14 +649,14 @@
      "groupMembers": null
     }
    },
-   "id": "R10"
+   "id": "R9"
   }
  ],
  "progress": [
   {
    "step": 9,
    "flows": 1921,
-   "queue": 1961,
+   "queue": 1921,
    "suricataAdmitted": 40,
    "groups": 1,
    "groupMembers": 1,
@@ -740,7 +665,7 @@
   {
    "step": 19,
    "flows": 3779,
-   "queue": 3888,
+   "queue": 3779,
    "suricataAdmitted": 109,
    "groups": 2,
    "groupMembers": 2,
@@ -749,7 +674,7 @@
   {
    "step": 29,
    "flows": 5220,
-   "queue": 5386,
+   "queue": 5220,
    "suricataAdmitted": 166,
    "groups": 3,
    "groupMembers": 3,
@@ -758,7 +683,7 @@
   {
    "step": 39,
    "flows": 6648,
-   "queue": 6898,
+   "queue": 6645,
    "suricataAdmitted": 253,
    "groups": 3,
    "groupMembers": 6,
@@ -767,7 +692,7 @@
   {
    "step": 49,
    "flows": 7561,
-   "queue": 7861,
+   "queue": 7557,
    "suricataAdmitted": 304,
    "groups": 3,
    "groupMembers": 7,
@@ -776,7 +701,7 @@
   {
    "step": 59,
    "flows": 8496,
-   "queue": 8831,
+   "queue": 8491,
    "suricataAdmitted": 340,
    "groups": 3,
    "groupMembers": 8,
@@ -785,7 +710,7 @@
   {
    "step": 69,
    "flows": 9377,
-   "queue": 9734,
+   "queue": 9369,
    "suricataAdmitted": 365,
    "groups": 3,
    "groupMembers": 11,
@@ -794,7 +719,7 @@
   {
    "step": 79,
    "flows": 10768,
-   "queue": 10002,
+   "queue": 9631,
    "suricataAdmitted": 371,
    "groups": 4,
    "groupMembers": 1141,
@@ -803,7 +728,7 @@
   {
    "step": 89,
    "flows": 14391,
-   "queue": 10157,
+   "queue": 9784,
    "suricataAdmitted": 373,
    "groups": 4,
    "groupMembers": 4611,
@@ -812,7 +737,7 @@
   {
    "step": 99,
    "flows": 15760,
-   "queue": 10300,
+   "queue": 9924,
    "suricataAdmitted": 376,
    "groups": 5,
    "groupMembers": 5841,
@@ -821,7 +746,7 @@
   {
    "step": 109,
    "flows": 17702,
-   "queue": 10433,
+   "queue": 10056,
    "suricataAdmitted": 377,
    "groups": 5,
    "groupMembers": 7651,
@@ -830,7 +755,7 @@
   {
    "step": 119,
    "flows": 19651,
-   "queue": 10585,
+   "queue": 10202,
    "suricataAdmitted": 383,
    "groups": 5,
    "groupMembers": 9454,
@@ -839,7 +764,7 @@
   {
    "step": 129,
    "flows": 21646,
-   "queue": 10760,
+   "queue": 10375,
    "suricataAdmitted": 385,
    "groups": 5,
    "groupMembers": 11276,
@@ -848,7 +773,7 @@
   {
    "step": 139,
    "flows": 23607,
-   "queue": 10913,
+   "queue": 10521,
    "suricataAdmitted": 392,
    "groups": 5,
    "groupMembers": 13091,
@@ -857,7 +782,7 @@
   {
    "step": 149,
    "flows": 25568,
-   "queue": 11064,
+   "queue": 10670,
    "suricataAdmitted": 394,
    "groups": 5,
    "groupMembers": 14903,
@@ -866,7 +791,7 @@
   {
    "step": 159,
    "flows": 27516,
-   "queue": 11196,
+   "queue": 10797,
    "suricataAdmitted": 399,
    "groups": 5,
    "groupMembers": 16724,

@@ -23,6 +23,7 @@ from apps.api import auth
 from apps.api.deps import ApiError, database_path
 from packages.contracts import db
 from packages.detection.adapters.staging import stage_file
+from packages.detection.cross_chain import VISIBLE
 from packages.detection.external_admission import (
     AdmissionRequest, EligibilityRequest, admit_external, review_eligibility,
 )
@@ -142,7 +143,10 @@ def _count(path: Path) -> int | None:
         return None
     try:
         with closing(sqlite3.connect(path.resolve().as_uri() + "?mode=ro", uri=True)) as conn:
-            return int(conn.execute("SELECT count(*) FROM operational_alerts_v2").fetchone()[0])
+            try:   # the visible queue: an item hidden by the cross-chain join is not counted
+                return int(conn.execute(f"SELECT count(*) FROM {VISIBLE}").fetchone()[0])
+            except sqlite3.OperationalError:   # a database from before migration 27 has no join table
+                return int(conn.execute("SELECT count(*) FROM operational_alerts_v2").fetchone()[0])
     except sqlite3.DatabaseError:
         return None
 

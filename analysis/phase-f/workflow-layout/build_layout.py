@@ -70,7 +70,9 @@ SURI_STAGES = [
      "operational_system_routing, operational_triage_state_v2"),
 ]
 SHARED = [
-    ("Q", "One queue", "both chains, one table, one sort by priority", "Analyst Workstation"),
+    ("J", "Join", "same Community ID + time: one item per connection, the more severe reading shown; the other hidden, not deleted",
+     "cross_chain_links"),
+    ("Q", "One queue", "both chains, one table, one sort by severity then priority", "Analyst Workstation"),
     ("T1", "Tier 1 review", "claim, read evidence, note, verdict", "analyst_work, analyst_verdict_events"),
     ("T2", "Tier 2 case", "investigation → conclusion → resolved", "tier2_cases, tier2_case_events"),
 ]
@@ -95,10 +97,11 @@ def svg() -> str:
     box(10, 204, "P", "Packet capture", "3 pcaps · 2018-02-14", "#fff", "#0f172a")
     # flow lane (top) and Suricata lane (bottom)
     xs = [215, 405, 595, 785]
+    raw = QUEUE["join"]["rawByChain"]     # per chain, before the join (section 3.6)
     flow_sub = [f"{n(TOT['flowsInWindow'])} flows", f"{n(TOT['flaggedFlows'])} flagged",
-                f"{n(TOT['groups'])} groups", f"{n(TOT['flowQueueItems'])} items"]
+                f"{n(TOT['groups'])} groups", f"{n(raw['legacy_flow_alert'])} items"]
     suri_sub = [f"{n(TOT['suricataAlertsArrived'])} alerts", f"{n(TOT['suricataBundlesAdmitted'])} bundles",
-                "accepted by Admin", f"{n(TOT['suricataQueueItems'])} items"]
+                "accepted by Admin", f"{n(raw['external_nids_alert'])} items"]
     flow_ids = [("F1", "CICFlowMeter"), ("F2", "Detection"), ("F3", "Grouping"), ("F4+F5", "Project + route")]
     suri_ids = [("S1", "Suricata"), ("S2", "Staging"), ("S3+S4", "Review + admit"), ("S5", "Classify + route")]
     for i, x in enumerate(xs):
@@ -113,9 +116,10 @@ def svg() -> str:
                  '<text x="200" y="440" font-size="13" font-weight="700" fill="#b45309">SURICATA CHAIN — second, named opinion</text>')
     # link line between the chains
     parts.append('<path d="M480,122 L480,348" stroke="#7c3aed" stroke-width="1.4" stroke-dasharray="5 4" fill="none"/>'
-                 '<text x="488" y="238" font-size="12" fill="#7c3aed">same flow: 5-tuple + time</text>')
+                 '<text x="488" y="232" font-size="12" fill="#7c3aed">join: Community ID + time</text>'
+                 '<text x="488" y="248" font-size="12" fill="#7c3aed">more severe reading shown</text>')
     # queue and tiers
-    box(985, 204, "Q", "One queue", f"{n(TOT['queueItems'])} items", "#f0fdf4", "#15803d")
+    box(985, 204, "Q", "One queue", f"{n(TOT['queueItems'])} items (joined)", "#f0fdf4", "#15803d")
     arrow(785 + box_w, 91, 985 + 30, 204 - 4)
     arrow(785 + box_w, 379, 985 + 30, 266 + 4)
     box(985, 20, "T1", "Tier 1 review", f"{n(TOT['tier1Items'])} items", "#fff", "#15803d")
@@ -235,16 +239,21 @@ def combine_section() -> str:
     band_names = ["critical", "high", "medium", "low"]
     band_rows = rows([[b.title(), n(bands["legacy_flow_alert"].get(b, 0)), n(bands["external_nids_alert"].get(b, 0))]
                       for b in band_names])
+    J = QUEUE["join"]
+    join_rows = rows([[("Suricata" if c["shown"] == "suricata more severe" else "Flow"), e(c["flowSide"]),
+                       e(c["flowBandRoute"]), e(c["suricataBandRoute"]), f'<span class="num">{n(c["links"])}</span>']
+                      for c in J["cases"]])
     return f"""
 <h2>3. Where the two chains combine</h2>
-<p>The chains run apart from packet to routing. They meet at <b>five</b> points. Each point below gives the
-mechanism, the table or file, and what it did on the full capture.</p>
+<p>The chains run apart from packet to routing. They meet at <b>six</b> points. The last one, the join (3.6),
+makes one queue item per connection. Each point below gives the mechanism, the table or file, and what it did on
+the full capture.</p>
 
 <h3>3.1 One packet, two readings</h3>
 <p>Every packet is read twice. CICFlowMeter turns each connection into one flow record. Suricata matches the same
 packets against the ET Open rules. The replay builder (<code>scripts/build_packet_replay.py</code>) links each
-Suricata alert to the flow record of the same connection (5-tuple and time). That link is the only place where
-the two chains point at the same traffic.</p>
+Suricata alert to the flow record of the same connection (5-tuple and time). The queue joins the two on the
+connection's Community ID (section 3.6), so a connection that both chains read is one queue item, not two.</p>
 <table><tr><th>Suricata alerts (non-informational)</th><th>Linked to a flow record</th>
 <th>… that the flow chain did <b>not</b> flag</th><th>… that the flow chain <b>also</b> flagged</th></tr>
 <tr><td class="num">{n(SPLIT["suricataAlerts"])}</td><td class="num">{n(sum(linked.values()))}</td>
@@ -264,20 +273,22 @@ of its <b>source IP</b> when it arrives within 30 minutes of that group's last m
 <table><tr><th>Group key (source IP)</th><th>Flows</th><th>Title</th><th>Time (UTC)</th><th>Route (priority)</th>
 <th>Suricata alerts on its members</th></tr>{group_rows}</table>
 <p class="mut">{n(COMP["flowsInWindow"])} flows → {n(COMP["flagged"])} flagged → <b>{len(COMP["groups"])}</b> groups;
-{n(COMP["unflagged"])} unflagged → {n(COMP["unflagged"])} single items. Flow chain total: {n(fl["items"])} queue items.</p>
+{n(COMP["unflagged"])} unflagged → {n(COMP["unflagged"])} single items. Flow chain total: {n(J["rawByChain"]["legacy_flow_alert"])} queue items
+before the join.</p>
 <p><b>Suricata chain — bundling</b> (<code>packages/detection/adapters/suricata_bundle.py</code>). Alerts with the
 same capture scope and Suricata <code>flow_id</code> become one bundle, so several signatures on one connection are
 one queue item. The bundle keeps every signature; the most severe one gives the title.</p>
 <table><tr><th>Bundle size</th><th>Bundles</th></tr>{bundle_rows}</table>
 <p class="mut">{n(SPLIT["suricataAlerts"])} alerts → <b>{n(SPLIT["bundles"])}</b> bundles → {n(COMP["suricataBundlesAdmitted"])}
-admitted → {n(su["items"])} queue items.</p>
+admitted → {n(J["rawByChain"]["external_nids_alert"])} queue items before the join.</p>
 
-<h3>3.3 The join point: one table and one routing audit</h3>
+<h3>3.3 One table and one routing audit</h3>
 <p>This is where the chains become one product. Both write the same three tables: <code>operational_alerts_v2</code>
 (the item), <code>operational_triage_state_v2</code> (priority, band, route, stage) and
 <code>operational_system_routing</code> (the routing decision and its reason). A column <code>source_kind</code>
 records the chain: <code>legacy_flow_alert</code> or <code>external_nids_alert</code>. Nothing downstream reads a
-separate table per chain.</p>
+separate table per chain. The counts below are the <b>visible</b> queue, after the join of section 3.6
+({n(J["rawItems"])} rows before the join; {n(J["hidden"])} hidden, none deleted).</p>
 <table><tr><th>Chain</th><th>Queue items</th><th>Tier 1</th><th>Tier 2</th><th>Routed</th></tr>
 <tr class="flow"><td>Flow (CICFlowMeter + rules + XGBoost)</td><td class="num">{n(fl["items"])}</td><td class="num">{n(fl["tier1"])}</td>
 <td class="num">{n(fl["tier2"])}</td><td class="num">{n(fl["routed"])}</td></tr>
@@ -290,6 +301,7 @@ separate table per chain.</p>
 <p>Both chains map to <b>one</b> approved severity chart (<code>config/severity-chart.json</code>): the flow chain by
 attack type, Suricata by classtype. The queue then sorts every item with one rule
 (<code>apps/api/operational_queue.py</code>, <code>QUEUE_ORDER</code>):</p>
+<p>Only visible items are sorted: an item the join hid (section 3.6) is not in the list.</p>
 <ol><li>severity band, high first;</li><li>flagged before unflagged;</li>
 <li><b>queue score</b> = operational priority + verdict delta (section 4), clamped 0–100, high first;</li>
 <li>arrival time, newest first.</li></ol>
@@ -305,8 +317,47 @@ flows. The analyst sees one list, not two.</p>
 <b>E1-suricata</b>: escalate a flow group when a linked Suricata alert of severity ≤ 2 agrees with the model at
 score ≥ 80. The rule is in <code>packages/detection/flow_routing.py</code> and has a unit test, but the replay path
 (<code>flow_queue.route_flagged</code>) does not pass it the Suricata severities. So on this capture no item was
-escalated because the <i>other</i> chain agreed. The chains combine in the queue, the severity scale, routing format and
-learning; they do not yet escalate each other.</div>
+escalated because the <i>other</i> chain agreed. The chains combine in the queue, the severity scale, the routing format, the join
+and learning; they do not yet escalate each other. The join chooses which reading the analyst sees; it never changes
+either item's route or score.</div>
+
+<h3>3.6 The join: one queue item per connection, the more severe reading shown</h3>
+<p><b>Match</b> (<code>packages/detection/cross_chain.py</code>, run by the Packet Replay after each step's
+Suricata admission). Each admitted Suricata item gets the <b>Community ID</b> of its connection: version 1 of the
+open standard that Suricata, Zeek and most SIEMs use (<code>1:</code> + base64 of the SHA-1 of seed, the two
+addresses, the protocol number and the two ports, with the endpoints ordered so both directions give the same ID).
+The flow records with the same Community ID are the candidates. A 5-tuple can repeat within the capture
+({n(TOT["flowsInWindow"])} flows, fewer distinct 5-tuples), so the flow that started last at or before the Suricata
+alert is the connection. The implementation reproduces the specification's published test vector.</p>
+<p><b>Winner</b>. The two items are compared on three keys, in order:</p>
+<ol><li>severity band on the one queue scale (<code>queue_severity.py</code>: critical, high, medium, low);</li>
+<li>route: <code>tier2_case</code> before <code>tier1_review</code>;</li>
+<li>operational priority.</li></ol>
+<p>The higher item is shown; on a full tie the flow item is kept. The scores are <b>never averaged or added</b>:
+the two chains measure different things (deck: "evidence-aware fusion, not a weighted sum"), and severity-first
+is the queue's existing rule (decision C9). A flow <i>group</i> is compared as a whole: its representative item.</p>
+<p><b>Effect</b>. The weaker item is hidden from the queue, the summary counts and the workspace count. It is
+<b>not deleted</b>: its row, scores, routing, audit and family learning stay, and the link is stored in the
+append-only table <code>cross_chain_links</code> (migration 27) with the Community ID, both items, the item shown,
+the item hidden and the reason.</p>
+<table><tr><th>Shown</th><th>Flow side</th><th>Flow band / route</th><th>Suricata band / route</th><th>Connections</th></tr>
+{join_rows}</table>
+<table><tr><th>Suricata items</th><th>Joined to a flow item</th><th>Suricata reading shown</th>
+<th>Flow reading shown</th><th>Queue rows</th><th>Hidden</th><th>Visible queue</th></tr>
+<tr><td class="num">{n(J["rawByChain"].get("external_nids_alert", 0))}</td><td class="num">{n(J["links"])}</td>
+<td class="num">{n(J["suricataShown"])}</td><td class="num">{n(J["flowShown"])}</td>
+<td class="num">{n(J["rawItems"])}</td><td class="num">{n(J["hidden"])}</td>
+<td class="num"><b>{n(J["visibleItems"])}</b></td></tr></table>
+<div class="note"><b>What this means.</b> {n(J["suricataShown"])} connections were an unflagged flow (scored benign,
+low band) that Suricata named: the Suricata alert is shown and the benign flow row is hidden. {n(J["flowShown"])}
+were <i>ET SCAN Potential SSH Scan</i> alerts on flows inside the FTP brute-force group, which is already a
+critical Tier 2 case: the group is shown and the Suricata alert is hidden, so Tier 1 does not judge an alert that
+Tier 2 already holds. Every connection is now one item. The Tier 2 cases stay at {n(TOT["tier2Cases"])}.</div>
+<div class="warn"><b>Limits.</b> The join runs in the Packet Replay only: it is the one workspace where both
+chains read one capture. A verdict on the shown item teaches that item's family; the hidden item's family does not
+learn from it. The alert panel does not yet show the hidden reading as evidence; it is in
+<code>cross_chain_links</code>. ICMP Community IDs (type and code as ports) are not implemented; this capture's
+Suricata alerts are TCP and UDP.</div>
 """
 
 
@@ -463,7 +514,8 @@ priority band and route. The whole replay produces {len(RESULTS)}. Their counts 
 <th>Route class</th><th>Band (priority)</th><th>Route</th></tr>{results_table()}</table>
 
 <h2 id="s6">6. Data trace for each end result</h2>
-<p class="mut">For each end result: one real record, every stage it passed, and what the other chain said about the same flow.</p>
+<p class="mut">For each end result: one real record, every stage it passed, and what the other chain said about the same flow.
+End results count visible queue items only (after the join, section 3.6).</p>
 {"".join(card(r) for r in RESULTS)}
 
 <h2 id="s7">7. Arrival during the replay (every 10 steps)</h2>
@@ -490,7 +542,8 @@ size at that time. The group then grows (to 5,100 and 11,613 flows).</li>
 <li><b>Review is automatic in the replay.</b> S3 is recorded in the preparing Admin's name with a fixed reason.
 In Operational, an analyst makes each S3 decision.</li>
 <li>Recorded traffic, not live traffic. The model was trained on this testbed's dataset.</li>
-<li>The other-chain link is by 5-tuple and time. It is shown here; the product does not yet show it in the alert panel.</li>
+<li>The join (section 3.6) hides the weaker reading of a connection. The alert panel does not yet show the hidden
+reading; it is stored in <code>cross_chain_links</code>. The data trace below still shows both readings.</li>
 <li>The cross-chain escalation rule E1-suricata is not wired into the replay path (section 3.5).</li>
 <li>Family predictions in 4.4 are computed with the product's functions, not run; the runs are in 4.6.</li>
 </ul></div>
